@@ -1,0 +1,77 @@
+import type { Sheet, Section, Row, NewSheet } from '@/types';
+
+// Firestore n'accepte pas les tableaux imbriqués
+// On convertit rows[][] en rows[{cells:[]}] pour la sauvegarde
+
+interface FirestoreRow {
+  cells: Row;
+}
+
+interface FirestoreSection {
+  id: string;
+  label: string;
+  repeat: number;
+  rows: FirestoreRow[];
+}
+
+interface FirestoreSheet {
+  title: string;
+  artist: string;
+  key: string;
+  tempo: string;
+  ownerId: string;
+  ownerName: string;
+  isPublic: boolean;
+  sections: FirestoreSection[];
+  tags: string[];
+}
+
+// Convertir Sheet vers format Firestore (pour sauvegarde)
+export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
+  return {
+    title: sheet.title,
+    artist: sheet.artist,
+    key: sheet.key,
+    tempo: sheet.tempo,
+    ownerId: sheet.ownerId,
+    ownerName: sheet.ownerName,
+    isPublic: sheet.isPublic,
+    sections: sheet.sections.map((section) => ({
+      id: section.id,
+      label: section.label,
+      repeat: section.repeat,
+      rows: section.rows.map((row) => ({ cells: row })),
+    })),
+    tags: sheet.tags,
+  };
+}
+
+// Convertir format Firestore vers Sheet (pour lecture)
+export function fromFirestore(
+  id: string,
+  data: Record<string, unknown>
+): Sheet {
+  const sections = (data.sections as FirestoreSection[]) || [];
+
+  return {
+    id,
+    title: (data.title as string) || '',
+    artist: (data.artist as string) || '',
+    key: (data.key as string) || '',
+    tempo: (data.tempo as string) || '',
+    ownerId: (data.ownerId as string) || '',
+    ownerName: (data.ownerName as string) || '',
+    isPublic: (data.isPublic as boolean) || false,
+    sections: sections.map((section) => ({
+      id: section.id,
+      label: section.label,
+      repeat: section.repeat,
+      // Convertir {cells:[]} en tableau simple
+      rows: section.rows.map((row) => row.cells || row),
+    })) as Section[],
+    tags: (data.tags as string[]) || [],
+    createdAt: (data.createdAt as { toDate: () => Date })?.toDate?.() || new Date(),
+    updatedAt: (data.updatedAt as { toDate: () => Date })?.toDate?.() || new Date(),
+    viewCount: (data.viewCount as number) || 0,
+  };
+}
