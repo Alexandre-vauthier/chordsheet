@@ -53,7 +53,7 @@ export function SheetCard({ sheet, showOwner = false, onDelete }: SheetCardProps
 
       {/* Infos */}
       <div className="p-4">
-        <Link href={`/sheet/${sheet.id}/edit`} className="block group-hover:text-[var(--accent)] transition-colors">
+        <Link href={`/sheet/${sheet.id}`} className="block group-hover:text-[var(--accent)] transition-colors">
           <h3 className="font-semibold text-[var(--ink)] truncate">
             {sheet.title || 'Sans titre'}
           </h3>
@@ -83,24 +83,26 @@ export function SheetCard({ sheet, showOwner = false, onDelete }: SheetCardProps
         {/* Actions */}
         <div className="flex items-center gap-2 mt-4 pt-3 border-t border-[var(--line)]">
           <Link
-            href={`/sheet/${sheet.id}/edit`}
-            className="text-xs text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors"
-          >
-            Modifier
-          </Link>
-          <Link
             href={`/sheet/${sheet.id}`}
             className="text-xs text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors"
           >
             Consulter
           </Link>
           {onDelete && (
-            <button
-              onClick={onDelete}
-              className="text-xs text-[var(--ink-light)] hover:text-red-600 transition-colors ml-auto"
-            >
-              Supprimer
-            </button>
+            <>
+              <Link
+                href={`/sheet/${sheet.id}/edit`}
+                className="text-xs text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors"
+              >
+                Modifier
+              </Link>
+              <button
+                onClick={onDelete}
+                className="text-xs text-[var(--ink-light)] hover:text-red-600 transition-colors ml-auto"
+              >
+                Supprimer
+              </button>
+            </>
           )}
         </div>
       </div>
