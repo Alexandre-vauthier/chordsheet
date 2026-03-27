@@ -6,12 +6,14 @@ import { collection, query, where, orderBy, getDocs, deleteDoc, doc } from 'fire
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
+import { useBookmarks } from '@/lib/use-bookmarks';
 import { Button } from '@/components/ui/button';
 import { SheetCard } from '@/components/explore/sheet-card';
 import type { Sheet } from '@/types';
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
   const [sheets, setSheets] = useState<Sheet[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -90,6 +92,8 @@ export default function DashboardPage() {
               key={sheet.id}
               sheet={sheet}
               onDelete={() => handleDelete(sheet.id!)}
+              isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
+              onToggleBookmark={sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
             />
           ))}
         </div>

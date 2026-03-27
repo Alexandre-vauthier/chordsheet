@@ -1,4 +1,4 @@
-import type { Sheet, Section, Row, NewSheet } from '@/types';
+import type { Sheet, Section, Row, NewSheet, Difficulty, BeatsPerMeasure } from '@/types';
 
 // Firestore n'accepte pas les tableaux imbriqués
 // On convertit rows[][] en rows[{cells:[]}] pour la sauvegarde
@@ -11,6 +11,7 @@ interface FirestoreSection {
   id: string;
   label: string;
   repeat: number;
+  beatsPerMeasure: BeatsPerMeasure;
   rows: FirestoreRow[];
 }
 
@@ -24,6 +25,10 @@ interface FirestoreSheet {
   isPublic: boolean;
   sections: FirestoreSection[];
   tags: string[];
+  // Métadonnées V2
+  genres: string[];
+  difficulty: Difficulty | null;
+  capo: number | null;
 }
 
 // Convertir Sheet vers format Firestore (pour sauvegarde)
@@ -40,9 +45,13 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
       id: section.id,
       label: section.label,
       repeat: section.repeat,
+      beatsPerMeasure: section.beatsPerMeasure || 4,
       rows: section.rows.map((row) => ({ cells: row })),
     })),
     tags: sheet.tags,
+    genres: sheet.genres || [],
+    difficulty: sheet.difficulty ?? null,
+    capo: sheet.capo ?? null,
   };
 }
 
@@ -66,10 +75,14 @@ export function fromFirestore(
       id: section.id,
       label: section.label,
       repeat: section.repeat,
+      beatsPerMeasure: (section.beatsPerMeasure as BeatsPerMeasure) || 4,
       // Convertir {cells:[]} en tableau simple
       rows: section.rows.map((row) => row.cells || row),
     })) as Section[],
     tags: (data.tags as string[]) || [],
+    genres: (data.genres as string[]) || [],
+    difficulty: (data.difficulty as Difficulty) || null,
+    capo: (data.capo as number) ?? null,
     createdAt: (data.createdAt as { toDate: () => Date })?.toDate?.() || new Date(),
     updatedAt: (data.updatedAt as { toDate: () => Date })?.toDate?.() || new Date(),
     viewCount: (data.viewCount as number) || 0,

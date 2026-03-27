@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import type { Sheet, Section, NewSheet } from '@/types';
-import { createEmptySection } from '@/types';
+import type { Sheet, Section, NewSheet, Difficulty } from '@/types';
+import { createEmptySection, GENRES } from '@/types';
 import { SectionBlock } from './section-block';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -112,9 +112,82 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
         </div>
       </div>
 
-      {/* Options */}
-      <div className="flex items-center gap-4 mb-6 p-3 bg-white rounded-lg border border-[var(--line)]">
-        <label className="flex items-center gap-2 cursor-pointer">
+      {/* Métadonnées */}
+      <div className="mb-6 p-4 bg-white rounded-lg border border-[var(--line)] space-y-4">
+        {/* Capo & Difficulté */}
+        <div className="flex flex-wrap items-center gap-6">
+          {/* Capo */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-[var(--ink-light)]">Capo :</span>
+            <select
+              value={sheet.capo ?? ''}
+              onChange={(e) => updateSheet({ capo: e.target.value ? Number(e.target.value) : null })}
+              className="px-2 py-1 rounded border border-[var(--line)] text-sm bg-white
+                focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            >
+              <option value="">Aucun</option>
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((n) => (
+                <option key={n} value={n}>Capo {n}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Difficulté */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-[var(--ink-light)]">Difficulté :</span>
+            <div className="flex gap-0.5">
+              {[1, 2, 3, 4, 5].map((level) => (
+                <button
+                  key={level}
+                  type="button"
+                  onClick={() => updateSheet({ difficulty: (sheet.difficulty === level ? null : level) as Difficulty | null })}
+                  className={`text-lg transition-colors ${
+                    sheet.difficulty && sheet.difficulty >= level
+                      ? 'text-amber-400'
+                      : 'text-gray-300 hover:text-amber-200'
+                  }`}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+            {sheet.difficulty && (
+              <span className="text-xs text-[var(--ink-faint)]">({sheet.difficulty}/5)</span>
+            )}
+          </div>
+        </div>
+
+        {/* Genres */}
+        <div>
+          <span className="text-sm text-[var(--ink-light)] block mb-2">Genres :</span>
+          <div className="flex flex-wrap gap-2">
+            {GENRES.map((genre) => {
+              const isSelected = sheet.genres?.includes(genre);
+              return (
+                <button
+                  key={genre}
+                  type="button"
+                  onClick={() => {
+                    const newGenres = isSelected
+                      ? (sheet.genres || []).filter((g) => g !== genre)
+                      : [...(sheet.genres || []), genre];
+                    updateSheet({ genres: newGenres });
+                  }}
+                  className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                    isSelected
+                      ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
+                      : 'bg-white text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)]'
+                  }`}
+                >
+                  {genre}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Visibilité */}
+        <label className="flex items-center gap-2 cursor-pointer pt-2 border-t border-[var(--line)]">
           <input
             type="checkbox"
             checked={sheet.isPublic}

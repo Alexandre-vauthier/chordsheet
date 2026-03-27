@@ -2,13 +2,17 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
+import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
+import { useBookmarks } from '@/lib/use-bookmarks';
 import { Input } from '@/components/ui/input';
 import { SheetCard } from '@/components/explore/sheet-card';
 import type { Sheet } from '@/types';
 
 export default function ExplorePage() {
+  const { user } = useAuth();
+  const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
   const [sheets, setSheets] = useState<Sheet[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -89,7 +93,13 @@ export default function ExplorePage() {
       ) : filteredSheets.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredSheets.map((sheet) => (
-            <SheetCard key={sheet.id} sheet={sheet} showOwner />
+            <SheetCard
+              key={sheet.id}
+              sheet={sheet}
+              showOwner
+              isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
+              onToggleBookmark={user && sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
+            />
           ))}
         </div>
       ) : sheets.length > 0 ? (

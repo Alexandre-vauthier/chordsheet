@@ -7,9 +7,11 @@ interface SheetCardProps {
   sheet: Sheet;
   showOwner?: boolean;
   onDelete?: () => void;
+  isBookmarked?: boolean;
+  onToggleBookmark?: () => void;
 }
 
-export function SheetCard({ sheet, showOwner = false, onDelete }: SheetCardProps) {
+export function SheetCard({ sheet, showOwner = false, onDelete, isBookmarked, onToggleBookmark }: SheetCardProps) {
   // Compter le nombre total d'accords
   const chordCount = sheet.sections.reduce(
     (total, section) =>
@@ -27,7 +29,26 @@ export function SheetCard({ sheet, showOwner = false, onDelete }: SheetCardProps
     .slice(0, 8);
 
   return (
-    <div className="bg-white rounded-xl border border-[var(--line)] overflow-hidden hover:shadow-md transition-shadow group">
+    <div className="bg-white rounded-xl border border-[var(--line)] overflow-hidden hover:shadow-md transition-shadow group relative">
+      {/* Bouton bookmark */}
+      {onToggleBookmark && (
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggleBookmark();
+          }}
+          className={`absolute top-2 right-2 z-10 p-1.5 rounded-full transition-all
+            ${isBookmarked
+              ? 'bg-amber-100 text-amber-500'
+              : 'bg-white/80 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-amber-500 hover:bg-amber-50'
+            }`}
+          title={isBookmarked ? 'Retirer du book' : 'Ajouter au book'}
+        >
+          {isBookmarked ? '★' : '☆'}
+        </button>
+      )}
+
       {/* Aperçu des accords */}
       <div className="p-4 bg-gradient-to-br from-[var(--cell-bg)] to-white border-b border-[var(--line)]">
         <div className="flex flex-wrap gap-2">
@@ -63,16 +84,41 @@ export function SheetCard({ sheet, showOwner = false, onDelete }: SheetCardProps
           <p className="text-sm text-[var(--ink-light)] truncate mt-0.5">{sheet.artist}</p>
         )}
 
-        <div className="flex items-center gap-3 mt-3 text-xs text-[var(--ink-faint)]">
+        <div className="flex flex-wrap items-center gap-2 mt-3 text-xs text-[var(--ink-faint)]">
           {sheet.key && <span>{sheet.key}</span>}
           {sheet.tempo && <span>{sheet.tempo}</span>}
-          <span>{sheet.sections.length} section{sheet.sections.length > 1 ? 's' : ''}</span>
+          {sheet.capo && (
+            <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded">
+              Capo {sheet.capo}
+            </span>
+          )}
+          {sheet.difficulty && (
+            <span className="text-amber-400">
+              {'★'.repeat(sheet.difficulty)}
+              <span className="text-gray-300">{'★'.repeat(5 - sheet.difficulty)}</span>
+            </span>
+          )}
           {sheet.isPublic && (
             <span className="px-1.5 py-0.5 bg-green-50 text-green-700 rounded text-[10px] uppercase tracking-wider">
               Public
             </span>
           )}
         </div>
+        {sheet.genres && sheet.genres.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {sheet.genres.slice(0, 3).map((genre) => (
+              <span
+                key={genre}
+                className="px-1.5 py-0.5 bg-gray-100 text-[var(--ink-light)] rounded text-[10px]"
+              >
+                {genre}
+              </span>
+            ))}
+            {sheet.genres.length > 3 && (
+              <span className="text-[10px] text-[var(--ink-faint)]">+{sheet.genres.length - 3}</span>
+            )}
+          </div>
+        )}
 
         {showOwner && (
           <p className="text-xs text-[var(--ink-faint)] mt-2">

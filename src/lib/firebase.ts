@@ -1,6 +1,7 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 
 // Configuration Firebase - À remplacer par tes propres credentials
 // Va sur https://console.firebase.google.com pour créer un projet
@@ -17,6 +18,7 @@ const firebaseConfig = {
 let app: FirebaseApp | undefined;
 let auth: Auth | undefined;
 let db: Firestore | undefined;
+let storage: FirebaseStorage | undefined;
 
 // Fonction pour obtenir l'app Firebase (initialisation lazy)
 function getFirebaseApp(): FirebaseApp {
@@ -46,4 +48,12 @@ function getFirebaseDb(): Firestore {
   return db;
 }
 
-export { getFirebaseApp as getApp, getFirebaseAuth as getAuth, getFirebaseDb as getDb };
+// Fonction pour obtenir Storage
+function getFirebaseStorage(): FirebaseStorage {
+  if (!storage) {
+    storage = getStorage(getFirebaseApp());
+  }
+  return storage;
+}
+
+export { getFirebaseApp as getApp, getFirebaseAuth as getAuth, getFirebaseDb as getDb, getFirebaseStorage as getStorage };

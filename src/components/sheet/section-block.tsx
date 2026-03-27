@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import type { Section, Cell } from '@/types';
+import { useState } from 'react';
+import type { Section, Cell, BeatsPerMeasure } from '@/types';
 import { GridRow } from './grid-row';
 import { createEmptyRow } from '@/types';
 
@@ -84,8 +84,17 @@ export function SectionBlock({
 
   // Ajouter une mesure
   const addRow = () => {
-    const newRows = [...section.rows, createEmptyRow()];
+    const newRows = [...section.rows, createEmptyRow(section.beatsPerMeasure || 4)];
     onUpdate({ rows: newRows });
+  };
+
+  // Changer le nombre de temps par mesure
+  const changeBeatsPerMeasure = (newBeats: BeatsPerMeasure) => {
+    if (newBeats === section.beatsPerMeasure) return;
+
+    // Reconstruire toutes les mesures avec le nouveau nombre de temps
+    const newRows = section.rows.map(() => createEmptyRow(newBeats));
+    onUpdate({ beatsPerMeasure: newBeats, rows: newRows });
   };
 
   // Supprimer une mesure
@@ -125,6 +134,32 @@ export function SectionBlock({
           />
         </span>
 
+        {/* Toggle binaire/ternaire */}
+        <div className="flex rounded overflow-hidden border border-[var(--line)]">
+          <button
+            onClick={() => changeBeatsPerMeasure(4)}
+            className={`px-2 py-0.5 text-[10px] transition-colors ${
+              (section.beatsPerMeasure || 4) === 4
+                ? 'bg-[var(--accent)] text-white'
+                : 'bg-white text-[var(--ink-light)] hover:bg-gray-50'
+            }`}
+            title="4 temps (binaire)"
+          >
+            4/4
+          </button>
+          <button
+            onClick={() => changeBeatsPerMeasure(3)}
+            className={`px-2 py-0.5 text-[10px] transition-colors ${
+              section.beatsPerMeasure === 3
+                ? 'bg-[var(--accent)] text-white'
+                : 'bg-white text-[var(--ink-light)] hover:bg-gray-50'
+            }`}
+            title="3 temps (ternaire - valse, 6/8)"
+          >
+            3/4
+          </button>
+        </div>
+
         <div
           className={`flex gap-1.5 ml-auto transition-opacity duration-150 ${
             isHovered ? 'opacity-100' : 'opacity-0'
@@ -154,6 +189,7 @@ export function SectionBlock({
             <GridRow
               row={row}
               rowIndex={rowIndex}
+              beatsPerMeasure={section.beatsPerMeasure || 4}
               onCellChange={(cellIndex, updates) => updateCell(rowIndex, cellIndex, updates)}
               onSplitCell={(cellIndex) => splitCell(rowIndex, cellIndex)}
               onExtendCell={(cellIndex) => extendCell(rowIndex, cellIndex)}

@@ -4,19 +4,19 @@ import { Providers } from "@/components/providers";
 import "./globals.css";
 
 const dmSans = DM_Sans({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   variable: "--font-dm-sans",
   weight: ["300", "400", "500"],
 });
 
 const dmMono = DM_Mono({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   variable: "--font-dm-mono",
   weight: ["400", "500"],
 });
 
 const playfair = Playfair_Display({
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   variable: "--font-playfair",
   weight: ["700"],
   style: ["normal", "italic"],

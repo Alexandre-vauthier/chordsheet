@@ -20,11 +20,34 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
         <h1 className="font-playfair text-3xl font-bold text-[var(--ink)] print:text-2xl">
           {sheet.title || 'Sans titre'}
         </h1>
-        <div className="flex flex-wrap gap-4 mt-2 text-sm text-[var(--ink-light)]">
+        <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-[var(--ink-light)]">
           {sheet.artist && <span>{sheet.artist}</span>}
           {sheet.key && <span>• {sheet.key}</span>}
           {sheet.tempo && <span>• {sheet.tempo}</span>}
+          {sheet.capo && (
+            <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs print:bg-transparent print:text-[var(--ink)]">
+              Capo {sheet.capo}
+            </span>
+          )}
+          {sheet.difficulty && (
+            <span className="text-amber-400 print:text-[var(--ink)]">
+              {'★'.repeat(sheet.difficulty)}
+              <span className="text-gray-300 print:text-[var(--ink-faint)]">{'★'.repeat(5 - sheet.difficulty)}</span>
+            </span>
+          )}
         </div>
+        {sheet.genres && sheet.genres.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-2 print:hidden">
+            {sheet.genres.map((genre) => (
+              <span
+                key={genre}
+                className="px-2 py-0.5 bg-gray-100 text-[var(--ink-light)] rounded text-xs"
+              >
+                {genre}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Sections */}
@@ -36,6 +59,11 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
               <span className="text-xs font-medium uppercase tracking-wider text-[var(--ink-light)]">
                 {section.label}
               </span>
+              {section.beatsPerMeasure === 3 && (
+                <span className="text-[10px] px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded">
+                  3/4
+                </span>
+              )}
               {section.repeat > 1 && (
                 <span className="font-playfair text-sm italic text-[var(--ink-light)]">
                   ×{section.repeat}
@@ -48,7 +76,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
               {section.rows.map((row, rowIndex) => (
                 <div
                   key={rowIndex}
-                  className="grid grid-cols-8 gap-1"
+                  className={`grid gap-1 ${section.beatsPerMeasure === 3 ? 'grid-cols-6' : 'grid-cols-8'}`}
                 >
                   {row.map((cell, cellIndex) => (
                     <div

@@ -7,6 +7,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
+import { useBookmarks } from '@/lib/use-bookmarks';
 import { SheetViewer } from '@/components/sheet/sheet-viewer';
 import { Button } from '@/components/ui/button';
 import type { Sheet } from '@/types';
@@ -19,9 +20,11 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
   const { id } = use(params);
   const router = useRouter();
   const { user } = useAuth();
+  const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isTogglingBookmark, setIsTogglingBookmark] = useState(false);
 
   useEffect(() => {
     async function loadSheet() {
@@ -58,6 +61,18 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
   const handlePrint = () => {
     window.print();
   };
+
+  const handleToggleBookmark = async () => {
+    if (!user || !sheet?.id) return;
+    setIsTogglingBookmark(true);
+    try {
+      await toggleBookmark(sheet.id);
+    } finally {
+      setIsTogglingBookmark(false);
+    }
+  };
+
+  const sheetIsBookmarked = sheet?.id ? isBookmarked(sheet.id) : false;
 
   if (loading) {
     return (
@@ -96,6 +111,16 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
             </Button>
           </div>
           <div className="flex items-center gap-3">
+            {user && (
+              <Button
+                variant="ghost"
+                onClick={handleToggleBookmark}
+                disabled={isTogglingBookmark}
+                className={sheetIsBookmarked ? 'text-amber-500' : ''}
+              >
+                {sheetIsBookmarked ? '★ Dans mon book' : '☆ Ajouter à mon book'}
+              </Button>
+            )}
             {isOwner && (
               <Link href={`/sheet/${id}/edit`}>
                 <Button variant="ghost">Modifier</Button>

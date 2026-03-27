@@ -1,11 +1,12 @@
 'use client';
 
-import type { Row, Cell } from '@/types';
+import type { Row, Cell, BeatsPerMeasure } from '@/types';
 import { BeatCell } from './beat-cell';
 
 interface GridRowProps {
   row: Row;
   rowIndex: number;
+  beatsPerMeasure: BeatsPerMeasure;
   onCellChange: (cellIndex: number, updates: Partial<Cell>) => void;
   onSplitCell: (cellIndex: number) => void;
   onExtendCell: (cellIndex: number) => void;
@@ -18,6 +19,7 @@ interface GridRowProps {
 export function GridRow({
   row,
   rowIndex,
+  beatsPerMeasure,
   onCellChange,
   onSplitCell,
   onExtendCell,
@@ -26,10 +28,13 @@ export function GridRow({
   onNavigateToCell,
   totalRows,
 }: GridRowProps) {
+  // 3 temps = 6 colonnes, 4 temps = 8 colonnes (chaque temps = 2 cols)
+  const gridCols = beatsPerMeasure === 3 ? 'grid-cols-6' : 'grid-cols-8';
+
   return (
     <div className="mb-2">
-      {/* Grille de cellules : 8 colonnes (chaque temps = 2 cols, demi-temps = 1 col) */}
-      <div className="grid grid-cols-8 gap-1">
+      {/* Grille de cellules : 6 ou 8 colonnes selon le nombre de temps */}
+      <div className={`grid ${gridCols} gap-1`}>
         {row.map((cell, cellIndex) => (
           <BeatCell
             key={cellIndex}
