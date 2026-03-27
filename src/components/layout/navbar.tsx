@@ -55,12 +55,6 @@ export function Navbar() {
                 >
                   Explorer
                 </Link>
-                <Link
-                  href="/sheet/new"
-                  className="text-sm px-3 py-1.5 bg-[var(--accent)] rounded-md hover:opacity-90 transition-opacity"
-                >
-                  + Nouvelle
-                </Link>
                 <div className="flex items-center gap-3 ml-2 pl-4 border-l border-white/20">
                   {isAdmin && (
                     <Link
@@ -74,17 +68,9 @@ export function Navbar() {
                     href="/profile"
                     className="flex items-center gap-2 text-sm text-[var(--cream)]/70 hover:text-[var(--cream)] transition-colors hidden sm:flex"
                   >
-                    {user.photoURL ? (
-                      <img
-                        src={user.photoURL}
-                        alt={user.displayName}
-                        className="w-6 h-6 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-6 h-6 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-xs font-bold">
-                        {user.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
-                      </div>
-                    )}
+                    <div className="w-6 h-6 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-xs font-bold">
+                      {user.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
+                    </div>
                     <span>{user.displayName || user.email}</span>
                   </Link>
                   <button

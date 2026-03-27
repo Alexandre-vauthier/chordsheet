@@ -9,6 +9,7 @@ import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
 import { useSet } from '@/lib/use-sets';
 import { useSets } from '@/lib/use-sets';
+import { useBookmarks } from '@/lib/use-bookmarks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { Sheet } from '@/types';
@@ -23,6 +24,7 @@ export default function SetPage({ params }: SetPageProps) {
   const { user } = useAuth();
   const { set, sheets, isLoading, error } = useSet(id);
   const { updateSet, reorderSheets, removeSheetFromSet, addSheetToSet } = useSets(user?.id);
+  const { bookmarkedSheets } = useBookmarks(user?.id);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -53,7 +55,7 @@ export default function SetPage({ params }: SetPageProps) {
     setLocalSheets(sheets);
   }, [sheets]);
 
-  // Charger les grilles disponibles (du book ou propres grilles)
+  // Charger les grilles disponibles (propres grilles + book/favoris)
   useEffect(() => {
     async function loadAvailableSheets() {
       if (!user) return;
@@ -67,18 +69,25 @@ export default function SetPage({ params }: SetPageProps) {
         );
 
         const snapshot = await getDocs(q);
-        const loadedSheets: Sheet[] = snapshot.docs.map((docSnap) =>
+        const ownSheets: Sheet[] = snapshot.docs.map((docSnap) =>
           fromFirestore(docSnap.id, docSnap.data())
         );
 
-        setAvailableSheets(loadedSheets);
+        // Combiner grilles propres + favoris (sans doublons)
+        const ownSheetIds = new Set(ownSheets.map(s => s.id));
+        const allSheets = [
+          ...ownSheets,
+          ...bookmarkedSheets.filter(s => !ownSheetIds.has(s.id))
+        ];
+
+        setAvailableSheets(allSheets);
       } catch (error) {
         console.error('Error loading sheets:', error);
       }
     }
 
     loadAvailableSheets();
-  }, [user]);
+  }, [user, bookmarkedSheets]);
 
   const handleSave = async () => {
     if (!set?.id) return;

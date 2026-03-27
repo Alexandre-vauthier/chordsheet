@@ -9,7 +9,7 @@ import {
   signOut as firebaseSignOut,
   updateProfile,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, getDocs, collection, query, where, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { getAuth, getDb } from './firebase';
 import type { User, UserRole } from '@/types';
 import { isAdminEmail } from '@/types';
@@ -131,11 +131,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Mettre à jour Firebase Auth
     await updateProfile(currentUser, updates);
 
-    // Mettre à jour Firestore
+    // Mettre à jour Firestore user doc
     await setDoc(doc(db, 'users', currentUser.uid), {
       ...updates,
       updatedAt: serverTimestamp(),
     }, { merge: true });
+
+    // Si le displayName change, mettre à jour ownerName sur toutes les grilles et sets
+    if (updates.displayName) {
+      const batch = writeBatch(db);
+
+      // Mettre à jour les grilles
+      const sheetsQuery = query(
+        collection(db, 'sheets'),
+        where('ownerId', '==', currentUser.uid)
+      );
+      const sheetsSnapshot = await getDocs(sheetsQuery);
+      sheetsSnapshot.docs.forEach((docSnap) => {
+        batch.update(doc(db, 'sheets', docSnap.id), {
+          ownerName: updates.displayName,
+        });
+      });
+
+      // Mettre à jour les sets
+      const setsQuery = query(
+        collection(db, 'sets'),
+        where('ownerId', '==', currentUser.uid)
+      );
+      const setsSnapshot = await getDocs(setsQuery);
+      setsSnapshot.docs.forEach((docSnap) => {
+        batch.update(doc(db, 'sets', docSnap.id), {
+          ownerName: updates.displayName,
+        });
+      });
+
+      await batch.commit();
+    }
 
     // Mettre à jour l'état local
     setUser({
