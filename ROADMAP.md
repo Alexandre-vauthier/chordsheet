@@ -1,94 +1,92 @@
-# ChordSheet - Roadmap V2
+# ChordSheet - Roadmap
 
-## Priorité 1 - Corrections urgentes
+## V2 - Complété
 
-- [ ] **Bug caractères spéciaux** : Le "é" dans les noms d'utilisateur est cassé
+- [x] Bug caractères spéciaux (latin-ext fonts)
+- [x] Métadonnées : genre, difficulté, capo
+- [x] Grille ternaire (3/4, 6/8)
+- [x] Mon Book (favoris)
+- [x] Mes Sets (setlists avec drag-and-drop et mode concert)
+- [x] Page profil (modification nom, avatar initiale)
+- [x] Administration (rôle admin, stats, suppression grilles)
+- [x] Validation création grille (titre, artiste, 1 accord minimum)
 
-## Priorité 2 - Enrichissement des métadonnées
+---
 
-### Infos musique
-- [ ] **Date de sortie** : Champ année + filtre dans l'explorateur
-- [ ] **Genre musical** : Tags multiples (Rock, Jazz, Pop, etc.) + filtre
-- [ ] **Difficulté** : Niveau 1-5 étoiles + filtre
-- [ ] **Capo** : Champ dans l'éditeur (affichage "Capo 2" sur la grille)
+## V3 - En cours
 
-### Éditeur
-- [ ] **Grille ternaire** : Option 3 temps par mesure (valse, 6/8, etc.)
+### Bugs à corriger
 
-## Priorité 3 - Fonctionnalités sociales
+- [ ] **Sets disparaissent** : Problème d'index Firestore composite ?
+- [ ] **Admin stats à 0** : Vérifier le chargement des données
 
-### Mon Book (favoris)
-- [ ] Collection `bookmarks` : `{ userId, sheetId, addedAt }`
-- [ ] Bouton "Ajouter à mon book" sur les grilles publiques
-- [ ] Page `/book` : Mes grilles likées
+### Gestion des accords (diagrammes)
 
-### Mes Sets / Listes
-- [ ] Collection `sets` : `{ name, ownerId, sheetIds[], isPublic, createdAt }`
-- [ ] Page `/sets` : Liste des sets
-- [ ] Page `/sets/[id]` : Détail d'un set avec ordre des morceaux
-- [ ] Glisser-déposer pour réorganiser
-- [ ] Mode "Concert" : Navigation rapide entre les grilles
+- [ ] **Diagrammes SVG** : Positions d'accords guitare et piano
+  - Format : `Am-guitare-1.svg`, `Am-guitare-2.svg`, `Am-piano-1.svg`...
+  - Plusieurs variantes par accord (positions différentes)
+- [ ] **Switch guitare/piano** : Dans la consultation de grille
+- [ ] **Préférence notation** : Américain (Am, C, G) ou Français (La m, Do, Sol)
+  - Tableau de correspondance dans le profil utilisateur
+  - Affichage adapté selon la préférence
 
-## Priorité 4 - Gestion utilisateur
+### Page Explorer améliorée
 
-### Page profil
-- [ ] Page `/profile` : Modifier nom, photo, etc.
-- [ ] Changer d'email / mot de passe
-- [ ] Supprimer son compte
+- [ ] **Système de notation** : Étoiles/notes sur les grilles publiques
+- [ ] **Filtres avancés** :
+  - Par genre musical
+  - Par difficulté (1-5 étoiles)
+  - Mieux notés
+  - Plus récents
+  - Plus consultés (viewCount)
 
-### Administration
-- [ ] Champ `role` dans la collection `users` : "user" | "moderator" | "admin"
-- [ ] Admin par défaut : `alex.vauthier@gmail.com`
-- [ ] Page `/admin` : Gestion des utilisateurs, modération des grilles
+### Détection des doublons
 
-## Priorité 5 - Pages artistes (optionnel)
+- [ ] Alerter si une grille existe déjà (même titre + même artiste)
+- [ ] Suggérer les grilles similaires lors de la création
+
+---
+
+## V4 - Futur
+
+### Pages artistes
 
 - [ ] Collection `artists` : `{ name, genres[], imageUrl, bio }`
 - [ ] Page `/artists` : Liste des artistes
 - [ ] Page `/artists/[slug]` : Toutes les grilles d'un artiste
 - [ ] Auto-complétion artiste dans l'éditeur
 
----
+### Autres idées
 
-## Modèle de données à ajouter
-
-```
-// Collection bookmarks
-bookmarks/{bookmarkId}
-├── userId: string
-├── sheetId: string
-└── addedAt: timestamp
-
-// Collection sets
-sets/{setId}
-├── name: string
-├── ownerId: string
-├── sheetIds: string[]
-├── isPublic: boolean
-├── createdAt: timestamp
-└── updatedAt: timestamp
-
-// Champs à ajouter dans sheets
-sheets/{sheetId}
-├── ... (existants)
-├── releaseYear: number | null
-├── genres: string[]
-├── difficulty: 1 | 2 | 3 | 4 | 5 | null
-└── capo: number | null
-
-// Champ à ajouter dans users
-users/{userId}
-├── ... (existants)
-└── role: "user" | "moderator" | "admin"
-```
+- [ ] Transposition automatique des accords
+- [ ] Mode sombre
+- [ ] PWA (offline)
+- [ ] Export PDF amélioré
+- [ ] Partage par QR code
 
 ---
 
-## Par où commencer ?
+## Correspondance notation accords
 
-Je recommande de commencer par :
-1. **Fixer le bug des caractères spéciaux** (rapide)
-2. **Ajouter les métadonnées simples** (genre, difficulté, capo)
-3. **Implémenter Mon Book** (favoris)
+| Américain | Français |
+|-----------|----------|
+| C | Do |
+| D | Ré |
+| E | Mi |
+| F | Fa |
+| G | Sol |
+| A | La |
+| B | Si |
+| m (minor) | m (mineur) |
+| M (major) | M (majeur) |
+| 7 | 7 |
+| maj7 | maj7 |
+| sus4 | sus4 |
+| dim | dim |
+| aug | aug |
 
-Tu veux qu'on commence par quoi ?
+Exemples :
+- Am = La m
+- C#m7 = Do# m7
+- Gmaj7 = Sol maj7
+- Fsus4 = Fa sus4

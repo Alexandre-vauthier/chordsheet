@@ -45,7 +45,7 @@ export default function AdminPage() {
 
   // Charger les données
   useEffect(() => {
-    if (!isAdmin) return;
+    if (loading || !isAdmin) return;
 
     const loadData = async () => {
       const db = getDb();
@@ -118,7 +118,7 @@ export default function AdminPage() {
     };
 
     loadData();
-  }, [isAdmin]);
+  }, [loading, isAdmin]);
 
   // Supprimer une grille
   const handleDeleteSheet = async (sheetId: string) => {

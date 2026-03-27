@@ -64,13 +64,29 @@ export function useSets(userId: string | undefined): UseSetsReturn {
       orderBy('updatedAt', 'desc')
     );
 
-    const unsubscribe = onSnapshot(setsQuery, (snapshot) => {
-      const loadedSets = snapshot.docs.map((doc) =>
-        setFromFirestore(doc.id, doc.data())
-      );
-      setSets(loadedSets);
-      setIsLoading(false);
-    });
+    const unsubscribe = onSnapshot(
+      setsQuery,
+      (snapshot) => {
+        const loadedSets = snapshot.docs.map((doc) =>
+          setFromFirestore(doc.id, doc.data())
+        );
+        setSets(loadedSets);
+        setIsLoading(false);
+      },
+      (error) => {
+        console.error('Error loading sets:', error);
+        // Fallback: charger sans orderBy si l'index n'existe pas
+        getDocs(query(collection(db, 'sets'), where('ownerId', '==', userId)))
+          .then((snapshot) => {
+            const loadedSets = snapshot.docs
+              .map((doc) => setFromFirestore(doc.id, doc.data()))
+              .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+            setSets(loadedSets);
+          })
+          .catch((err) => console.error('Fallback error:', err))
+          .finally(() => setIsLoading(false));
+      }
+    );
 
     return () => unsubscribe();
   }, [userId]);
