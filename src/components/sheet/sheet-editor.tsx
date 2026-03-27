@@ -18,6 +18,30 @@ const SECTION_LABELS = ['Intro', 'Couplet', 'Refrain', 'Bridge', 'Pré-refrain',
 export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEditorProps) {
   const [sheet, setSheet] = useState<NewSheet | Sheet>(initialSheet);
   const [hasChanges, setHasChanges] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Vérifier si la grille a au moins un accord
+  const hasAtLeastOneChord = () => {
+    return sheet.sections.some(section =>
+      section.rows.some(row =>
+        row.some(cell => cell.chord.trim() !== '')
+      )
+    );
+  };
+
+  // Valider la grille avant sauvegarde
+  const validateSheet = (): string | null => {
+    if (!sheet.title.trim()) {
+      return 'Le titre est obligatoire';
+    }
+    if (!sheet.artist.trim()) {
+      return 'L\'artiste est obligatoire';
+    }
+    if (!hasAtLeastOneChord()) {
+      return 'La grille doit contenir au moins un accord';
+    }
+    return null;
+  };
 
   const updateSheet = useCallback((updates: Partial<NewSheet | Sheet>) => {
     setSheet((prev) => ({ ...prev, ...updates }));
@@ -68,6 +92,12 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
 
   // Sauvegarder
   const handleSave = async () => {
+    const error = validateSheet();
+    if (error) {
+      setValidationError(error);
+      return;
+    }
+    setValidationError(null);
     await onSave(sheet);
     setHasChanges(false);
   };
@@ -229,7 +259,9 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--line)] py-4 px-6 z-50">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="text-sm text-[var(--ink-light)]">
-            {hasChanges ? (
+            {validationError ? (
+              <span className="text-red-600">⚠ {validationError}</span>
+            ) : hasChanges ? (
               <span className="text-[var(--accent)]">● Modifications non sauvegardées</span>
             ) : (
               <span>Toutes les modifications sont sauvegardées</span>

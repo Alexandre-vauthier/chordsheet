@@ -6,6 +6,7 @@ import {
   query,
   where,
   getDocs,
+  getDoc,
   addDoc,
   deleteDoc,
   doc,
@@ -53,12 +54,13 @@ export function useBookmarks(userId: string | undefined): UseBookmarksReturn {
       // Charger les détails des sheets bookmarkées
       if (sheetIds.length > 0) {
         const sheetsPromises = sheetIds.map(async (sheetId) => {
-          const sheetDoc = await getDocs(
-            query(collection(db, 'sheets'), where('__name__', '==', sheetId))
-          );
-          if (!sheetDoc.empty) {
-            const doc = sheetDoc.docs[0];
-            return fromFirestore(doc.id, doc.data());
+          try {
+            const sheetDoc = await getDoc(doc(db, 'sheets', sheetId));
+            if (sheetDoc.exists()) {
+              return fromFirestore(sheetDoc.id, sheetDoc.data());
+            }
+          } catch (error) {
+            console.error('Error loading sheet:', sheetId, error);
           }
           return null;
         });
