@@ -86,5 +86,7 @@ export function fromFirestore(
     createdAt: (data.createdAt as { toDate: () => Date })?.toDate?.() || new Date(),
     updatedAt: (data.updatedAt as { toDate: () => Date })?.toDate?.() || new Date(),
     viewCount: (data.viewCount as number) || 0,
+    averageRating: (data.averageRating as number) ?? null,
+    ratingCount: (data.ratingCount as number) || 0,
   };
 }

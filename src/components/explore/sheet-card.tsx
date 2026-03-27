@@ -6,12 +6,20 @@ import type { Sheet } from '@/types';
 interface SheetCardProps {
   sheet: Sheet;
   showOwner?: boolean;
+  showRating?: boolean;
   onDelete?: () => void;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
 }
 
-export function SheetCard({ sheet, showOwner = false, onDelete, isBookmarked, onToggleBookmark }: SheetCardProps) {
+export function SheetCard({
+  sheet,
+  showOwner = false,
+  showRating = false,
+  onDelete,
+  isBookmarked,
+  onToggleBookmark,
+}: SheetCardProps) {
   // Compter le nombre total d'accords
   const chordCount = sheet.sections.reduce(
     (total, section) =>
@@ -27,6 +35,12 @@ export function SheetCard({ sheet, showOwner = false, onDelete, isBookmarked, on
     .flatMap((s) => s.rows.flatMap((r) => r.map((c) => c.chord)))
     .filter(Boolean)
     .slice(0, 8);
+
+  // Formater la note moyenne
+  const formatRating = (rating: number | null) => {
+    if (rating === null) return null;
+    return rating.toFixed(1);
+  };
 
   return (
     <div className="bg-white rounded-xl border border-[var(--line)] overflow-hidden hover:shadow-md transition-shadow group relative">
@@ -104,6 +118,21 @@ export function SheetCard({ sheet, showOwner = false, onDelete, isBookmarked, on
             </span>
           )}
         </div>
+
+        {/* Note communautaire */}
+        {showRating && sheet.ratingCount > 0 && (
+          <div className="flex items-center gap-1.5 mt-2">
+            <span className="text-amber-500">★</span>
+            <span className="text-sm font-medium text-[var(--ink)]">
+              {formatRating(sheet.averageRating)}
+            </span>
+            <span className="text-xs text-[var(--ink-faint)]">
+              ({sheet.ratingCount} avis)
+            </span>
+          </div>
+        )}
+
+        {/* Genres */}
         {sheet.genres && sheet.genres.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
             {sheet.genres.slice(0, 3).map((genre) => (
@@ -123,6 +152,13 @@ export function SheetCard({ sheet, showOwner = false, onDelete, isBookmarked, on
         {showOwner && (
           <p className="text-xs text-[var(--ink-faint)] mt-2">
             par {sheet.ownerName}
+          </p>
+        )}
+
+        {/* Vues */}
+        {showRating && sheet.viewCount > 0 && (
+          <p className="text-xs text-[var(--ink-faint)] mt-1">
+            {sheet.viewCount} vue{sheet.viewCount > 1 ? 's' : ''}
           </p>
         )}
 

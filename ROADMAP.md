@@ -32,8 +32,8 @@
 
 ### Page Explorer améliorée
 
-- [ ] **Système de notation** : Étoiles/notes sur les grilles publiques
-- [ ] **Filtres avancés** :
+- [x] **Système de notation** : Étoiles/notes sur les grilles publiques
+- [x] **Filtres avancés** :
   - Par genre musical
   - Par difficulté (1-5 étoiles)
   - Mieux notés

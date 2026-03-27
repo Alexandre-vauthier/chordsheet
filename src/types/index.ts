@@ -65,10 +65,13 @@ export interface Sheet {
   createdAt: Date;
   updatedAt: Date;
   viewCount: number;
+  // Système de notation
+  averageRating: number | null;
+  ratingCount: number;
 }
 
 // Type pour la création d'une nouvelle grille
-export type NewSheet = Omit<Sheet, 'id' | 'createdAt' | 'updatedAt' | 'viewCount'>;
+export type NewSheet = Omit<Sheet, 'id' | 'createdAt' | 'updatedAt' | 'viewCount' | 'averageRating' | 'ratingCount'>;
 
 // Rôles utilisateur
 export type UserRole = 'user' | 'admin';
@@ -114,6 +117,16 @@ export interface Bookmark {
   userId: string;
   sheetId: string;
   addedAt: Date;
+}
+
+// Type pour une note (rating) - V3
+export interface Rating {
+  id?: string;
+  userId: string;
+  sheetId: string;
+  rating: 1 | 2 | 3 | 4 | 5;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Helpers pour créer des objets par défaut
