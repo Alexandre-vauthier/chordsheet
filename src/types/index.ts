@@ -70,15 +70,27 @@ export interface Sheet {
 // Type pour la création d'une nouvelle grille
 export type NewSheet = Omit<Sheet, 'id' | 'createdAt' | 'updatedAt' | 'viewCount'>;
 
+// Rôles utilisateur
+export type UserRole = 'user' | 'admin';
+
+// Emails des administrateurs
+export const ADMIN_EMAILS = ['alex.vauthier@gmail.com'] as const;
+
 // Type utilisateur
 export interface User {
   id: string;
   displayName: string;
   email: string;
   photoURL: string | null;
+  role: UserRole;
   createdAt: Date;
   updatedAt: Date;
 }
+
+// Vérifier si un email est admin
+export const isAdminEmail = (email: string): boolean => {
+  return ADMIN_EMAILS.includes(email as typeof ADMIN_EMAILS[number]);
+};
 
 // Type pour un set (setlist) - V2
 export interface Set {

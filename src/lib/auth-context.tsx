@@ -11,12 +11,14 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { getAuth, getDb } from './firebase';
-import type { User } from '@/types';
+import type { User, UserRole } from '@/types';
+import { isAdminEmail } from '@/types';
 
 interface AuthContextType {
   user: User | null;
   firebaseUser: FirebaseUser | null;
   loading: boolean;
+  isAdmin: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -43,20 +45,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
         if (userDoc.exists()) {
           const userData = userDoc.data();
+          const email = userData.email || fbUser.email || '';
+          const role: UserRole = userData.role || (isAdminEmail(email) ? 'admin' : 'user');
           setUser({
             id: fbUser.uid,
             displayName: userData.displayName || fbUser.displayName || '',
-            email: userData.email || fbUser.email || '',
+            email,
             photoURL: userData.photoURL || fbUser.photoURL,
+            role,
             createdAt: userData.createdAt?.toDate() || new Date(),
             updatedAt: userData.updatedAt?.toDate() || new Date(),
           });
         } else {
           // Créer le document utilisateur s'il n'existe pas
+          const email = fbUser.email || '';
+          const role: UserRole = isAdminEmail(email) ? 'admin' : 'user';
           const newUser: Omit<User, 'id'> = {
             displayName: fbUser.displayName || '',
-            email: fbUser.email || '',
+            email,
             photoURL: fbUser.photoURL,
+            role,
             createdAt: new Date(),
             updatedAt: new Date(),
           };
@@ -93,10 +101,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await updateProfile(credential.user, { displayName });
 
     // Créer le document utilisateur dans Firestore
+    const role: UserRole = isAdminEmail(email) ? 'admin' : 'user';
     await setDoc(doc(db, 'users', credential.user.uid), {
       displayName,
       email,
       photoURL: null,
+      role,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
@@ -135,8 +145,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const isAdmin = user?.role === 'admin';
+
   return (
-    <AuthContext.Provider value={{ user, firebaseUser, loading, signIn, signUp, signOut, updateUser }}>
+    <AuthContext.Provider value={{ user, firebaseUser, loading, isAdmin, signIn, signUp, signOut, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 
 export function Navbar() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, isAdmin, signOut } = useAuth();
   const router = useRouter();
 
   const handleSignOut = async () => {
@@ -62,6 +62,14 @@ export function Navbar() {
                   + Nouvelle
                 </Link>
                 <div className="flex items-center gap-3 ml-2 pl-4 border-l border-white/20">
+                  {isAdmin && (
+                    <Link
+                      href="/admin"
+                      className="text-sm px-2 py-1 bg-red-500/20 text-red-300 rounded hover:bg-red-500/30 transition-colors hidden sm:block"
+                    >
+                      Admin
+                    </Link>
+                  )}
                   <Link
                     href="/profile"
                     className="flex items-center gap-2 text-sm text-[var(--cream)]/70 hover:text-[var(--cream)] transition-colors hidden sm:flex"
