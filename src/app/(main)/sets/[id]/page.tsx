@@ -186,6 +186,9 @@ export default function SetPage({ params }: SetPageProps) {
     );
   }
 
+  // Nombre de grilles non accessibles (privées)
+  const hiddenSheetsCount = set ? set.sheetIds.length - sheets.length : 0;
+
   // Vue lecture seule pour les visiteurs
   if (!isOwner) {
     return (
@@ -196,15 +199,27 @@ export default function SetPage({ params }: SetPageProps) {
             <p className="text-[var(--ink-light)] mt-1">{set.description}</p>
           )}
           <p className="text-sm text-[var(--ink-faint)] mt-2">
-            par {set.ownerName} • {sheets.length} grille{sheets.length > 1 ? 's' : ''}
+            par {set.ownerName} • {sheets.length} grille{sheets.length > 1 ? 's' : ''} accessible{sheets.length > 1 ? 's' : ''}
           </p>
         </div>
+
+        {hiddenSheetsCount > 0 && (
+          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm">
+            {hiddenSheetsCount} grille{hiddenSheetsCount > 1 ? 's' : ''} de ce set {hiddenSheetsCount > 1 ? 'sont privées' : 'est privée'} et non accessible{hiddenSheetsCount > 1 ? 's' : ''}.
+          </div>
+        )}
 
         {sheets.length > 0 && (
           <div className="flex gap-3 mb-6">
             <Link href={`/sets/${id}/play`}>
               <Button>▶ Lancer le set</Button>
             </Link>
+          </div>
+        )}
+
+        {sheets.length === 0 && (
+          <div className="bg-white rounded-xl border border-[var(--line)] p-8 text-center">
+            <p className="text-[var(--ink-light)]">Aucune grille accessible dans ce set.</p>
           </div>
         )}
 

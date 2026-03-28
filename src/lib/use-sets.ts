@@ -219,11 +219,17 @@ export function useSet(setId: string | undefined): UseSetReturn {
         // Charger les grilles du set
         if (setData.sheetIds.length > 0) {
           const sheetsPromises = setData.sheetIds.map(async (sheetId) => {
-            const sheetDoc = await getDoc(doc(db, 'sheets', sheetId));
-            if (sheetDoc.exists()) {
-              return fromFirestore(sheetDoc.id, sheetDoc.data());
+            try {
+              const sheetDoc = await getDoc(doc(db, 'sheets', sheetId));
+              if (sheetDoc.exists()) {
+                return fromFirestore(sheetDoc.id, sheetDoc.data());
+              }
+              return null;
+            } catch (err) {
+              // Permission denied - grille privée non accessible
+              console.warn('Cannot access sheet:', sheetId, err);
+              return null;
             }
-            return null;
           });
 
           const loadedSheets = (await Promise.all(sheetsPromises)).filter(
