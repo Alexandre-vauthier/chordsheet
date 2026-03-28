@@ -144,23 +144,24 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
               ← Retour
             </Button>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {user && (
               <Button
                 variant="ghost"
                 onClick={handleToggleBookmark}
                 disabled={isTogglingBookmark}
-                className={sheetIsBookmarked ? 'text-amber-500' : ''}
+                className={`${sheetIsBookmarked ? 'text-amber-500' : ''} text-xs sm:text-sm`}
               >
-                {sheetIsBookmarked ? '★ Dans mon book' : '☆ Ajouter à mon book'}
+                {sheetIsBookmarked ? '★' : '☆'}
+                <span className="hidden sm:inline ml-1">{sheetIsBookmarked ? 'Dans mon book' : 'Ajouter au book'}</span>
               </Button>
             )}
             {isOwner && (
-              <Link href={`/sheet/${id}/edit`}>
+              <Link href={`/sheet/${id}/edit`} className="hidden sm:block">
                 <Button variant="ghost">Modifier</Button>
               </Link>
             )}
-            <Button onClick={handlePrint}>
+            <Button onClick={handlePrint} className="hidden sm:flex">
               Imprimer / PDF
             </Button>
           </div>
@@ -169,23 +170,23 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
 
       {/* Section notation (masquée à l'impression) */}
       {sheet.isPublic && (
-        <div className="bg-gray-50 border-b border-[var(--line)] py-3 px-6 print:hidden">
-          <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <div className="bg-gray-50 border-b border-[var(--line)] py-3 px-4 sm:px-6 print:hidden">
+          <div className="max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex items-center gap-3 sm:gap-4">
               {/* Note moyenne */}
               <div className="flex items-center gap-2">
-                <span className="text-sm text-[var(--ink-light)]">Note :</span>
+                <span className="text-xs sm:text-sm text-[var(--ink-light)]">Note :</span>
                 <RatingStars
                   value={sheet.averageRating}
                   readonly
-                  size="md"
+                  size="sm"
                   showCount={sheet.ratingCount}
                 />
               </div>
 
               {/* Vues */}
               {sheet.viewCount > 0 && (
-                <span className="text-sm text-[var(--ink-faint)]">
+                <span className="text-xs sm:text-sm text-[var(--ink-faint)]">
                   {sheet.viewCount} vue{sheet.viewCount > 1 ? 's' : ''}
                 </span>
               )}
@@ -194,13 +195,13 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
             {/* Noter cette grille */}
             {canRate && !ratingLoading && (
               <div className="flex items-center gap-2">
-                <span className="text-sm text-[var(--ink-light)]">
-                  {userRating ? 'Votre note :' : 'Noter cette grille :'}
+                <span className="text-xs sm:text-sm text-[var(--ink-light)]">
+                  {userRating ? 'Votre note :' : 'Noter :'}
                 </span>
                 <RatingStars
                   value={userRating}
                   onChange={handleRate}
-                  size="md"
+                  size="sm"
                 />
               </div>
             )}

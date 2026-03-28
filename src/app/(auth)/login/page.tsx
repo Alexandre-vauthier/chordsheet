@@ -23,7 +23,7 @@ export default function LoginPage() {
 
     try {
       await signIn(email, password);
-      router.push('/dashboard');
+      router.push('/book');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur de connexion';
       if (errorMessage.includes('user-not-found') || errorMessage.includes('wrong-password')) {

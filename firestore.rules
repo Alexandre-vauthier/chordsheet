@@ -1,0 +1,63 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Utilisateurs - lecture/écriture pour soi-même
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Grilles d'accords
+    match /sheets/{sheetId} {
+      // Lecture : publique ou propriétaire
+      allow read: if resource.data.isPublic == true ||
+                     (request.auth != null && request.auth.uid == resource.data.ownerId);
+
+      // Création : utilisateur authentifié
+      allow create: if request.auth != null &&
+                       request.resource.data.ownerId == request.auth.uid;
+
+      // Mise à jour : propriétaire OU mise à jour viewCount/rating uniquement
+      allow update: if request.auth != null && (
+        // Propriétaire peut tout modifier
+        request.auth.uid == resource.data.ownerId ||
+        // Tout utilisateur peut incrémenter viewCount sur une grille publique
+        (resource.data.isPublic == true &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount'])) ||
+        // Tout utilisateur peut modifier averageRating et ratingCount
+        (resource.data.isPublic == true &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['averageRating', 'ratingCount']))
+      );
+
+      // Suppression : propriétaire uniquement
+      allow delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
+    }
+
+    // Sets (setlists)
+    match /sets/{setId} {
+      allow read: if resource.data.isPublic == true ||
+                     (request.auth != null && request.auth.uid == resource.data.ownerId);
+      allow create: if request.auth != null &&
+                       request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if request.auth != null &&
+                               request.auth.uid == resource.data.ownerId;
+    }
+
+    // Favoris (bookmarks)
+    match /bookmarks/{bookmarkId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null &&
+                       request.resource.data.userId == request.auth.uid;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
+    // Notes (ratings)
+    match /ratings/{ratingId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null &&
+                       request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null &&
+                       request.auth.uid == resource.data.userId;
+    }
+  }
+}

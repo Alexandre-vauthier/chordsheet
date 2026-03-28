@@ -71,7 +71,7 @@ export default function DashboardPage() {
               : 'Gérez vos grilles d\'accords'}
           </p>
         </div>
-        <Link href="/sheet/new">
+        <Link href="/sheet/new" className="hidden sm:block">
           <Button>+ Nouvelle grille</Button>
         </Link>
       </div>

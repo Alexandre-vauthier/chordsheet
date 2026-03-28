@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
@@ -8,50 +9,54 @@ import { Button } from '@/components/ui/button';
 export function Navbar() {
   const { user, loading, isAdmin, signOut } = useAuth();
   const router = useRouter();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
+    setMobileMenuOpen(false);
     router.push('/');
   };
+
+  const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
     <nav className="bg-[var(--ink)] text-[var(--cream)] sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
-          <Link href={user ? '/dashboard' : '/'} className="flex items-center">
+          <Link href={user ? '/book' : '/'} className="flex items-center" onClick={closeMobileMenu}>
             <span className="font-playfair text-xl font-bold">
               Chord<span className="text-[var(--accent)]">Sheet</span>
             </span>
           </Link>
 
-          {/* Navigation */}
-          <div className="flex items-center gap-2 sm:gap-4">
+          {/* Navigation Desktop */}
+          <div className="hidden sm:flex items-center gap-4">
             {loading ? (
               <div className="h-8 w-24 bg-white/10 rounded animate-pulse" />
             ) : user ? (
               <>
                 <Link
-                  href="/dashboard"
-                  className="text-sm text-[var(--cream)]/80 hover:text-[var(--cream)] transition-colors hidden sm:block"
-                >
-                  Mes grilles
-                </Link>
-                <Link
                   href="/book"
-                  className="text-sm text-[var(--cream)]/80 hover:text-[var(--cream)] transition-colors hidden sm:block"
+                  className="text-sm text-[var(--cream)]/80 hover:text-[var(--cream)] transition-colors"
                 >
                   Mon book
                 </Link>
                 <Link
+                  href="/dashboard"
+                  className="text-sm text-[var(--cream)]/80 hover:text-[var(--cream)] transition-colors"
+                >
+                  Mes grilles
+                </Link>
+                <Link
                   href="/sets"
-                  className="text-sm text-[var(--cream)]/80 hover:text-[var(--cream)] transition-colors hidden sm:block"
+                  className="text-sm text-[var(--cream)]/80 hover:text-[var(--cream)] transition-colors"
                 >
                   Mes sets
                 </Link>
                 <Link
                   href="/explore"
-                  className="text-sm text-[var(--cream)]/80 hover:text-[var(--cream)] transition-colors hidden sm:block"
+                  className="text-sm text-[var(--cream)]/80 hover:text-[var(--cream)] transition-colors"
                 >
                   Explorer
                 </Link>
@@ -59,14 +64,14 @@ export function Navbar() {
                   {isAdmin && (
                     <Link
                       href="/admin"
-                      className="text-sm px-2 py-1 bg-red-500/20 text-red-300 rounded hover:bg-red-500/30 transition-colors hidden sm:block"
+                      className="text-sm px-2 py-1 bg-red-500/20 text-red-300 rounded hover:bg-red-500/30 transition-colors"
                     >
                       Admin
                     </Link>
                   )}
                   <Link
                     href="/profile"
-                    className="flex items-center gap-2 text-sm text-[var(--cream)]/70 hover:text-[var(--cream)] transition-colors hidden sm:flex"
+                    className="flex items-center gap-2 text-sm text-[var(--cream)]/70 hover:text-[var(--cream)] transition-colors"
                   >
                     <div className="w-6 h-6 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-xs font-bold">
                       {user.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
@@ -96,8 +101,98 @@ export function Navbar() {
               </>
             )}
           </div>
+
+          {/* Mobile: Burger + Actions */}
+          <div className="flex sm:hidden items-center gap-2">
+            {!loading && user && (
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 text-[var(--cream)] hover:bg-white/10 rounded-lg transition-colors"
+                aria-label="Menu"
+              >
+                {mobileMenuOpen ? (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                ) : (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                )}
+              </button>
+            )}
+            {!loading && !user && (
+              <Link href="/login">
+                <Button variant="ghost" size="sm" className="border-white/25 text-[var(--cream)]">
+                  Connexion
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Mobile Menu */}
+      {mobileMenuOpen && user && (
+        <div className="sm:hidden bg-[var(--ink)] border-t border-white/10">
+          <div className="px-4 py-3 space-y-1">
+            <Link
+              href="/book"
+              onClick={closeMobileMenu}
+              className="block px-3 py-2 text-[var(--cream)]/80 hover:text-[var(--cream)] hover:bg-white/10 rounded-lg transition-colors"
+            >
+              Mon book
+            </Link>
+            <Link
+              href="/dashboard"
+              onClick={closeMobileMenu}
+              className="block px-3 py-2 text-[var(--cream)]/80 hover:text-[var(--cream)] hover:bg-white/10 rounded-lg transition-colors"
+            >
+              Mes grilles
+            </Link>
+            <Link
+              href="/sets"
+              onClick={closeMobileMenu}
+              className="block px-3 py-2 text-[var(--cream)]/80 hover:text-[var(--cream)] hover:bg-white/10 rounded-lg transition-colors"
+            >
+              Mes sets
+            </Link>
+            <Link
+              href="/explore"
+              onClick={closeMobileMenu}
+              className="block px-3 py-2 text-[var(--cream)]/80 hover:text-[var(--cream)] hover:bg-white/10 rounded-lg transition-colors"
+            >
+              Explorer
+            </Link>
+            <div className="border-t border-white/10 my-2" />
+            <Link
+              href="/profile"
+              onClick={closeMobileMenu}
+              className="flex items-center gap-2 px-3 py-2 text-[var(--cream)]/80 hover:text-[var(--cream)] hover:bg-white/10 rounded-lg transition-colors"
+            >
+              <div className="w-6 h-6 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-xs font-bold">
+                {user.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
+              </div>
+              <span>Profil</span>
+            </Link>
+            {isAdmin && (
+              <Link
+                href="/admin"
+                onClick={closeMobileMenu}
+                className="block px-3 py-2 text-red-300 hover:bg-red-500/20 rounded-lg transition-colors"
+              >
+                Administration
+              </Link>
+            )}
+            <button
+              onClick={handleSignOut}
+              className="w-full text-left px-3 py-2 text-[var(--cream)]/60 hover:text-[var(--cream)] hover:bg-white/10 rounded-lg transition-colors"
+            >
+              Déconnexion
+            </button>
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
