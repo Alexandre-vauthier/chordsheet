@@ -4,8 +4,8 @@ import { useState, useCallback } from 'react';
 import type { Sheet, Section, NewSheet, Difficulty } from '@/types';
 import { createEmptySection, GENRES } from '@/types';
 import { SectionBlock } from './section-block';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { InstrumentSelector } from '@/components/chord';
 
 interface SheetEditorProps {
   initialSheet: NewSheet | Sheet;
@@ -144,6 +144,15 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
 
       {/* Métadonnées */}
       <div className="mb-6 p-4 bg-white rounded-lg border border-[var(--line)] space-y-4">
+        {/* Instrument pour les diagrammes */}
+        <div>
+          <span className="text-sm text-[var(--ink-light)] block mb-2">Instrument :</span>
+          <InstrumentSelector
+            value={sheet.instrumentId || 'guitar'}
+            onChange={(instrumentId) => updateSheet({ instrumentId })}
+          />
+        </div>
+
         {/* Capo & Difficulté */}
         <div className="flex flex-wrap items-center gap-6">
           {/* Capo */}
@@ -237,6 +246,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
           <SectionBlock
             key={section.id}
             section={section}
+            instrumentId={sheet.instrumentId || 'guitar'}
             onUpdate={(updates) => updateSection(section.id, updates)}
             onDelete={() => deleteSection(section.id)}
             onNavigateToCell={navigateToCell}

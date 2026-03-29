@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import type { Cell, CellSpan } from '@/types';
+import type { Cell, CellSpan, InstrumentId } from '@/types';
+import { ChordSuggestions } from '@/components/chord';
 
 interface BeatCellProps {
   cell: Cell;
+  instrumentId: InstrumentId;
   onChordChange: (chord: string) => void;
   onSplit: () => void;
   onExtend: () => void;
@@ -26,6 +28,7 @@ const spanToGridCols: Record<CellSpan, number> = {
 
 export function BeatCell({
   cell,
+  instrumentId,
   onChordChange,
   onSplit,
   onExtend,
@@ -40,7 +43,9 @@ export function BeatCell({
 }: BeatCellProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(cell.chord);
+  const [showDiagram, setShowDiagram] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const cellRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setValue(cell.chord);
@@ -53,8 +58,22 @@ export function BeatCell({
     }
   }, [isEditing]);
 
+  // Fermer le diagramme quand on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (cellRef.current && !cellRef.current.contains(e.target as Node)) {
+        setShowDiagram(false);
+      }
+    };
+    if (showDiagram) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showDiagram]);
+
   const handleClick = () => {
     setIsEditing(true);
+    setShowDiagram(false);
   };
 
   const handleBlur = () => {
@@ -76,11 +95,16 @@ export function BeatCell({
     }
   };
 
+  const toggleDiagram = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowDiagram(!showDiagram);
+  };
+
   const cols = spanToGridCols[cell.span];
   const isHalf = cell.span === 0.5;
 
   return (
-    <div className="flex flex-col" style={{ gridColumn: `span ${cols}` }}>
+    <div ref={cellRef} className="flex flex-col relative" style={{ gridColumn: `span ${cols}` }}>
       {/* Cellule */}
       <div
         onClick={handleClick}
@@ -127,7 +151,27 @@ export function BeatCell({
             ½
           </span>
         )}
+
+        {/* Bouton pour afficher le diagramme */}
+        {cell.chord && !isEditing && (
+          <button
+            onClick={toggleDiagram}
+            className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded bg-[var(--paper)] hover:bg-[var(--line)] text-[var(--ink-faint)] hover:text-[var(--ink-light)] text-xs transition-colors"
+            title="Voir le diagramme"
+          >
+            ♫
+          </button>
+        )}
       </div>
+
+      {/* Diagramme d'accord */}
+      {showDiagram && cell.chord && (
+        <ChordSuggestions
+          chordName={cell.chord}
+          instrumentId={instrumentId}
+          position="bottom"
+        />
+      )}
 
       {/* Actions */}
       <div className="flex gap-1 justify-center flex-wrap mt-1">

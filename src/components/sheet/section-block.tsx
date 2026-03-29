@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import type { Section, Cell, BeatsPerMeasure } from '@/types';
+import type { Section, Cell, BeatsPerMeasure, InstrumentId } from '@/types';
 import { GridRow } from './grid-row';
 import { createEmptyRow } from '@/types';
 
 interface SectionBlockProps {
   section: Section;
+  instrumentId: InstrumentId;
   onUpdate: (updates: Partial<Section>) => void;
   onDelete: () => void;
   onNavigateToCell: (sectionId: string, rowIndex: number, cellIndex: number) => void;
@@ -14,6 +15,7 @@ interface SectionBlockProps {
 
 export function SectionBlock({
   section,
+  instrumentId,
   onUpdate,
   onDelete,
   onNavigateToCell,
@@ -190,6 +192,7 @@ export function SectionBlock({
               row={row}
               rowIndex={rowIndex}
               beatsPerMeasure={section.beatsPerMeasure || 4}
+              instrumentId={instrumentId}
               onCellChange={(cellIndex, updates) => updateCell(rowIndex, cellIndex, updates)}
               onSplitCell={(cellIndex) => splitCell(rowIndex, cellIndex)}
               onExtendCell={(cellIndex) => extendCell(rowIndex, cellIndex)}

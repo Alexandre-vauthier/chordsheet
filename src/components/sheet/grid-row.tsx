@@ -1,12 +1,13 @@
 'use client';
 
-import type { Row, Cell, BeatsPerMeasure } from '@/types';
+import type { Row, Cell, BeatsPerMeasure, InstrumentId } from '@/types';
 import { BeatCell } from './beat-cell';
 
 interface GridRowProps {
   row: Row;
   rowIndex: number;
   beatsPerMeasure: BeatsPerMeasure;
+  instrumentId: InstrumentId;
   onCellChange: (cellIndex: number, updates: Partial<Cell>) => void;
   onSplitCell: (cellIndex: number) => void;
   onExtendCell: (cellIndex: number) => void;
@@ -20,6 +21,7 @@ export function GridRow({
   row,
   rowIndex,
   beatsPerMeasure,
+  instrumentId,
   onCellChange,
   onSplitCell,
   onExtendCell,
@@ -39,6 +41,7 @@ export function GridRow({
           <BeatCell
             key={cellIndex}
             cell={cell}
+            instrumentId={instrumentId}
             onChordChange={(chord) => onCellChange(cellIndex, { chord })}
             onSplit={() => onSplitCell(cellIndex)}
             onExtend={() => onExtendCell(cellIndex)}

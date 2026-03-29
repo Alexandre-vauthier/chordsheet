@@ -46,6 +46,75 @@ export const GENRES = [
 
 export type Genre = typeof GENRES[number];
 
+// ─── Types pour les diagrammes d'accords ────────────────────────────────────
+
+// Instruments supportés
+export const INSTRUMENTS = ['guitar', 'mandolin', 'banjo', 'ukulele', 'piano'] as const;
+export type InstrumentId = typeof INSTRUMENTS[number];
+
+export interface Instrument {
+  id: InstrumentId;
+  label: string;
+  strings: number; // 0 pour piano
+}
+
+// Barré (barre) sur le manche
+export interface ChordBarre {
+  fret: number;
+  fromString: number;
+  toString: number;
+}
+
+// Position d'un doigt : [corde, case, numéro de doigt]
+export type FingerPosition = [number, number, number];
+
+// Accord pour instruments à cordes
+export interface StringChord {
+  id: string;
+  name: string;
+  full: string;
+  category: string;
+  fingers: FingerPosition[];
+  barre?: ChordBarre;
+  open: number[];   // cordes jouées à vide
+  muted: number[];  // cordes mutées
+  startFret: number;
+}
+
+// Accord pour piano
+export interface PianoChord {
+  id: string;
+  name: string;
+  full: string;
+  category: string;
+  notes: string[]; // ex: ["C4", "E4", "G4"]
+}
+
+// Union type pour tout accord
+export type ChordData = StringChord | PianoChord;
+
+// Helper pour vérifier si c'est un accord piano
+export const isPianoChord = (chord: ChordData): chord is PianoChord => {
+  return 'notes' in chord;
+};
+
+// Accord personnalisé créé par l'utilisateur
+export interface CustomChord extends StringChord {
+  createdBy: string;
+  instrumentId: InstrumentId;
+}
+
+// Préférences de notation
+export type NotationPreference = 'american' | 'french';
+
+// Correspondance notation américaine ↔ française
+export const NOTATION_MAP: Record<string, string> = {
+  'C': 'Do', 'D': 'Ré', 'E': 'Mi', 'F': 'Fa',
+  'G': 'Sol', 'A': 'La', 'B': 'Si',
+};
+
+// ─── Types pour les grilles d'accords ────────────────────────────────────────
+
 // Type pour une grille d'accords complète
 export interface Sheet {
   id?: string;
@@ -68,6 +137,9 @@ export interface Sheet {
   // Système de notation
   averageRating: number | null;
   ratingCount: number;
+  // V3 - Diagrammes d'accords
+  instrumentId?: InstrumentId;
+  customChords?: Record<string, CustomChord>; // accords personnalisés par nom
 }
 
 // Type pour la création d'une nouvelle grille
@@ -88,6 +160,9 @@ export interface User {
   role: UserRole;
   createdAt: Date;
   updatedAt: Date;
+  // V3 - Préférences d'accords
+  preferredInstrument?: InstrumentId;
+  notationPreference?: NotationPreference;
 }
 
 // Vérifier si un email est admin
@@ -129,7 +204,8 @@ export interface Rating {
   updatedAt: Date;
 }
 
-// Helpers pour créer des objets par défaut
+// ─── Helpers pour créer des objets par défaut ────────────────────────────────
+
 export const createEmptyCell = (span: CellSpan = 1): Cell => ({
   chord: '',
   span,
