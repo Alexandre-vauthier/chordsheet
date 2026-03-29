@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ChordEditor, ChordCard } from '@/components/chord';
 import type { StringChord, PianoChord, InstrumentId } from '@/types';
 
@@ -9,9 +9,36 @@ interface SavedChord {
   instrumentId: InstrumentId;
 }
 
+const STORAGE_KEY = 'chordsheet-custom-chords';
+
 export default function ChordsPage() {
   const [savedChords, setSavedChords] = useState<SavedChord[]>([]);
   const [showEditor, setShowEditor] = useState(true);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Charger les accords depuis localStorage au montage
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        setSavedChords(JSON.parse(stored));
+      }
+    } catch (e) {
+      console.error('Error loading chords from localStorage:', e);
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Sauvegarder dans localStorage quand les accords changent
+  useEffect(() => {
+    if (isLoaded) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedChords));
+      } catch (e) {
+        console.error('Error saving chords to localStorage:', e);
+      }
+    }
+  }, [savedChords, isLoaded]);
 
   const handleSaveChord = (chord: StringChord | PianoChord, instrumentId: InstrumentId) => {
     setSavedChords(prev => [...prev, { chord, instrumentId }]);
