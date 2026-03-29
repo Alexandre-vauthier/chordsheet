@@ -1,7 +1,43 @@
-import type { Sheet, Section, Row, NewSheet, Difficulty, BeatsPerMeasure, InstrumentId, CustomChord } from '@/types';
+import type { Sheet, Section, Row, NewSheet, Difficulty, BeatsPerMeasure, InstrumentId, CustomChord, StringChord, PianoChord, FingerPosition } from '@/types';
+import { isPianoChord } from '@/types';
 
 // Firestore n'accepte pas les tableaux imbriqués
 // On convertit rows[][] en rows[{cells:[]}] pour la sauvegarde
+
+// Type pour stocker les positions de doigts en format Firestore (objets au lieu de tuples)
+interface FirestoreFinger {
+  s: number; // string
+  f: number; // fret
+  d: number; // digit
+}
+
+// Convertir les accords personnalisés pour Firestore (éviter les tableaux imbriqués)
+function chordToFirestore(chord: StringChord | PianoChord): Record<string, unknown> {
+  if (isPianoChord(chord)) {
+    // Piano chords n'ont pas de tableaux imbriqués
+    return { ...chord };
+  }
+  // Pour les accords à cordes, convertir fingers en objets
+  return {
+    ...chord,
+    fingers: chord.fingers.map(([s, f, d]) => ({ s, f, d })),
+  };
+}
+
+// Convertir les accords Firestore vers le format app
+function chordFromFirestore(data: Record<string, unknown>): StringChord | PianoChord {
+  if ('notes' in data) {
+    return data as unknown as PianoChord;
+  }
+  // Convertir fingers d'objets vers tuples
+  const fingers = (data.fingers as FirestoreFinger[])?.map(
+    (f) => [f.s, f.f, f.d] as FingerPosition
+  ) || [];
+  return {
+    ...data,
+    fingers,
+  } as unknown as StringChord;
+}
 
 interface FirestoreRow {
   cells: Row;
@@ -62,7 +98,12 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
     base.instrumentId = sheet.instrumentId;
   }
   if (sheet.customChords && Object.keys(sheet.customChords).length > 0) {
-    base.customChords = sheet.customChords;
+    // Convertir les accords pour éviter les tableaux imbriqués
+    const firestoreChords: Record<string, Record<string, unknown>> = {};
+    for (const [key, chord] of Object.entries(sheet.customChords)) {
+      firestoreChords[key] = chordToFirestore(chord);
+    }
+    base.customChords = firestoreChords as unknown as Record<string, CustomChord>;
   }
 
   return base;
@@ -103,6 +144,12 @@ export function fromFirestore(
     ratingCount: (data.ratingCount as number) || 0,
     // V3 - Diagrammes d'accords
     instrumentId: (data.instrumentId as InstrumentId) || undefined,
-    customChords: (data.customChords as Record<string, CustomChord>) || undefined,
+    customChords: data.customChords
+      ? Object.fromEntries(
+          Object.entries(data.customChords as Record<string, Record<string, unknown>>).map(
+            ([key, chord]) => [key, chordFromFirestore(chord)]
+          )
+        ) as Record<string, CustomChord>
+      : undefined,
   };
 }
