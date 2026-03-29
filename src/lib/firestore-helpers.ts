@@ -1,4 +1,4 @@
-import type { Sheet, Section, Row, NewSheet, Difficulty, BeatsPerMeasure } from '@/types';
+import type { Sheet, Section, Row, NewSheet, Difficulty, BeatsPerMeasure, InstrumentId, CustomChord } from '@/types';
 
 // Firestore n'accepte pas les tableaux imbriqués
 // On convertit rows[][] en rows[{cells:[]}] pour la sauvegarde
@@ -29,6 +29,9 @@ interface FirestoreSheet {
   genres: string[];
   difficulty: Difficulty | null;
   capo: number | null;
+  // V3 - Diagrammes d'accords
+  instrumentId?: InstrumentId;
+  customChords?: Record<string, CustomChord>;
 }
 
 // Convertir Sheet vers format Firestore (pour sauvegarde)
@@ -52,6 +55,9 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
     genres: sheet.genres || [],
     difficulty: sheet.difficulty ?? null,
     capo: sheet.capo ?? null,
+    // V3 - Diagrammes d'accords
+    instrumentId: sheet.instrumentId,
+    customChords: sheet.customChords,
   };
 }
 
@@ -88,5 +94,8 @@ export function fromFirestore(
     viewCount: (data.viewCount as number) || 0,
     averageRating: (data.averageRating as number) ?? null,
     ratingCount: (data.ratingCount as number) || 0,
+    // V3 - Diagrammes d'accords
+    instrumentId: (data.instrumentId as InstrumentId) || undefined,
+    customChords: (data.customChords as Record<string, CustomChord>) || undefined,
   };
 }
