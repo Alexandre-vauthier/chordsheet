@@ -36,7 +36,7 @@ interface FirestoreSheet {
 
 // Convertir Sheet vers format Firestore (pour sauvegarde)
 export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
-  return {
+  const base: FirestoreSheet = {
     title: sheet.title,
     artist: sheet.artist,
     key: sheet.key,
@@ -55,10 +55,17 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
     genres: sheet.genres || [],
     difficulty: sheet.difficulty ?? null,
     capo: sheet.capo ?? null,
-    // V3 - Diagrammes d'accords
-    instrumentId: sheet.instrumentId,
-    customChords: sheet.customChords,
   };
+
+  // V3 - Ajouter uniquement si défini (Firestore n'accepte pas undefined)
+  if (sheet.instrumentId) {
+    base.instrumentId = sheet.instrumentId;
+  }
+  if (sheet.customChords && Object.keys(sheet.customChords).length > 0) {
+    base.customChords = sheet.customChords;
+  }
+
+  return base;
 }
 
 // Convertir format Firestore vers Sheet (pour lecture)
