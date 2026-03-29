@@ -1,6 +1,8 @@
 'use client';
 
-import type { Sheet, CellSpan } from '@/types';
+import { useState } from 'react';
+import type { Sheet, CellSpan, InstrumentId } from '@/types';
+import { ChordSummary, InstrumentSelector } from '@/components/chord';
 
 interface SheetViewerProps {
   sheet: Sheet;
@@ -13,6 +15,8 @@ const spanToGridCols: Record<CellSpan, number> = {
 };
 
 export function SheetViewer({ sheet }: SheetViewerProps) {
+  const [instrumentId, setInstrumentId] = useState<InstrumentId>(sheet.instrumentId || 'guitar');
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 print:p-0 print:max-w-none">
       {/* Header */}
@@ -114,6 +118,21 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Rappel des accords utilisés */}
+      <div className="mt-8 print:hidden">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-medium text-[var(--ink-light)]">Diagrammes des accords</h2>
+          <InstrumentSelector
+            value={instrumentId}
+            onChange={setInstrumentId}
+          />
+        </div>
+        <ChordSummary
+          sections={sheet.sections}
+          instrumentId={instrumentId}
+        />
       </div>
 
       {/* Footer (visible uniquement à l'impression) */}

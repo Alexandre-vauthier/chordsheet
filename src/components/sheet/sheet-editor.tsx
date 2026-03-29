@@ -5,7 +5,7 @@ import type { Sheet, Section, NewSheet, Difficulty } from '@/types';
 import { createEmptySection, GENRES } from '@/types';
 import { SectionBlock } from './section-block';
 import { Button } from '@/components/ui/button';
-import { InstrumentSelector } from '@/components/chord';
+import { InstrumentSelector, ChordSummary } from '@/components/chord';
 
 interface SheetEditorProps {
   initialSheet: NewSheet | Sheet;
@@ -264,6 +264,14 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
       >
         + Ajouter une section
       </button>
+
+      {/* Rappel des accords utilisés */}
+      <div className="mt-8">
+        <ChordSummary
+          sections={sheet.sections}
+          instrumentId={sheet.instrumentId || 'guitar'}
+        />
+      </div>
 
       {/* Barre de sauvegarde fixe */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--line)] py-4 px-6 z-50">
