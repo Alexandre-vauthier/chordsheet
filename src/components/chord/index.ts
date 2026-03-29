@@ -5,3 +5,5 @@ export { ChordSuggestions } from './chord-suggestions';
 export { InstrumentSelector } from './instrument-selector';
 export { ChordEditor } from './chord-editor';
 export { ChordSummary } from './chord-summary';
+export { ChordEditorModal } from './chord-editor-modal';
+export type { CustomChordMap } from './chord-summary';

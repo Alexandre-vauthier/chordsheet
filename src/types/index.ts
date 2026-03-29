@@ -98,11 +98,20 @@ export const isPianoChord = (chord: ChordData): chord is PianoChord => {
   return 'notes' in chord;
 };
 
-// Accord personnalisé créé par l'utilisateur
-export interface CustomChord extends StringChord {
-  createdBy: string;
+// Accord personnalisé créé par l'utilisateur (cordes)
+export interface CustomStringChord extends StringChord {
+  createdBy?: string;
   instrumentId: InstrumentId;
 }
+
+// Accord personnalisé créé par l'utilisateur (piano)
+export interface CustomPianoChord extends PianoChord {
+  createdBy?: string;
+  instrumentId: 'piano';
+}
+
+// Union des accords personnalisés
+export type CustomChord = CustomStringChord | CustomPianoChord;
 
 // Préférences de notation
 export type NotationPreference = 'american' | 'french';

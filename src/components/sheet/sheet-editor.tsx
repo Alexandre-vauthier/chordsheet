@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import type { Sheet, Section, NewSheet, Difficulty } from '@/types';
+import type { Sheet, Section, NewSheet, Difficulty, StringChord, PianoChord, CustomChord } from '@/types';
 import { createEmptySection, GENRES } from '@/types';
 import { SectionBlock } from './section-block';
 import { Button } from '@/components/ui/button';
-import { InstrumentSelector, ChordSummary } from '@/components/chord';
+import { InstrumentSelector, ChordSummary, ChordEditorModal } from '@/components/chord';
+import type { CustomChordMap } from '@/components/chord';
 
 interface SheetEditorProps {
   initialSheet: NewSheet | Sheet;
@@ -19,6 +20,11 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   const [sheet, setSheet] = useState<NewSheet | Sheet>(initialSheet);
   const [hasChanges, setHasChanges] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  // État pour la modal d'édition d'accord
+  const [chordModalOpen, setChordModalOpen] = useState(false);
+  const [editingChordName, setEditingChordName] = useState('');
+  const [editingChord, setEditingChord] = useState<StringChord | PianoChord | null>(null);
 
   // Vérifier si la grille a au moins un accord
   const hasAtLeastOneChord = () => {
@@ -89,6 +95,34 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     },
     []
   );
+
+  // Ouvrir la modal pour éditer un accord
+  const handleEditChord = useCallback((chordName: string, currentChord: StringChord | PianoChord | null) => {
+    setEditingChordName(chordName);
+    setEditingChord(currentChord);
+    setChordModalOpen(true);
+  }, []);
+
+  // Sauvegarder un accord personnalisé
+  const handleSaveCustomChord = useCallback((chord: StringChord | PianoChord) => {
+    const instrumentId = sheet.instrumentId || 'guitar';
+    const key = `${editingChordName.toLowerCase()}-${instrumentId}`;
+
+    // Créer l'accord personnalisé avec l'instrumentId
+    const customChord: CustomChord = {
+      ...chord,
+      instrumentId,
+    } as CustomChord;
+
+    setSheet(prev => ({
+      ...prev,
+      customChords: {
+        ...(prev.customChords || {}),
+        [key]: customChord,
+      },
+    }));
+    setHasChanges(true);
+  }, [editingChordName, sheet.instrumentId]);
 
   // Sauvegarder
   const handleSave = async () => {
@@ -270,8 +304,21 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
         <ChordSummary
           sections={sheet.sections}
           instrumentId={sheet.instrumentId || 'guitar'}
+          customChords={sheet.customChords as CustomChordMap}
+          editable
+          onEditChord={handleEditChord}
         />
       </div>
+
+      {/* Modal d'édition d'accord */}
+      <ChordEditorModal
+        isOpen={chordModalOpen}
+        onClose={() => setChordModalOpen(false)}
+        onSave={handleSaveCustomChord}
+        chordName={editingChordName}
+        instrumentId={sheet.instrumentId || 'guitar'}
+        initialChord={editingChord}
+      />
 
       {/* Barre de sauvegarde fixe */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--line)] py-4 px-6 z-50">
