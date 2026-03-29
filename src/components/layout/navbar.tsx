@@ -60,6 +60,12 @@ export function Navbar() {
                 >
                   Explorer
                 </Link>
+                <Link
+                  href="/chords"
+                  className="text-sm text-[var(--cream)]/80 hover:text-[var(--cream)] transition-colors"
+                >
+                  Accords
+                </Link>
                 <div className="flex items-center gap-3 ml-2 pl-4 border-l border-white/20">
                   {isAdmin && (
                     <Link
@@ -163,6 +169,13 @@ export function Navbar() {
               className="block px-3 py-2 text-[var(--cream)]/80 hover:text-[var(--cream)] hover:bg-white/10 rounded-lg transition-colors"
             >
               Explorer
+            </Link>
+            <Link
+              href="/chords"
+              onClick={closeMobileMenu}
+              className="block px-3 py-2 text-[var(--cream)]/80 hover:text-[var(--cream)] hover:bg-white/10 rounded-lg transition-colors"
+            >
+              Accords
             </Link>
             <div className="border-t border-white/10 my-2" />
             <Link
