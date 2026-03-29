@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { Sheet, CellSpan, InstrumentId } from '@/types';
 import { ChordSummary, InstrumentSelector } from '@/components/chord';
+import type { CustomChordMap } from '@/components/chord';
 
 interface SheetViewerProps {
   sheet: Sheet;
@@ -132,6 +133,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
         <ChordSummary
           sections={sheet.sections}
           instrumentId={instrumentId}
+          customChords={sheet.customChords as CustomChordMap}
         />
       </div>
 
