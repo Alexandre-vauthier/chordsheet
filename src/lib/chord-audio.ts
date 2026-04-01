@@ -3,7 +3,7 @@ import type { StringChord, PianoChord, InstrumentId } from '@/types';
 import { isPianoChord } from '@/types';
 
 // Fréquences des cordes à vide (string 1 = aigu, string N = grave)
-const OPEN_FREQS: Record<string, Record<number, number>> = {
+export const OPEN_FREQS: Record<string, Record<number, number>> = {
   guitar: { 1: 329.63, 2: 246.94, 3: 196.00, 4: 146.83, 5: 110.00, 6: 82.41 },
   ukulele: { 1: 440.00, 2: 329.63, 3: 261.63, 4: 392.00 },
   mandolin: { 1: 659.25, 2: 440.00, 3: 293.66, 4: 196.00 },
@@ -11,7 +11,7 @@ const OPEN_FREQS: Record<string, Record<number, number>> = {
 };
 
 // Conversion nom de note vers fréquence (ex: "C4" -> 261.63)
-function noteNameToFreq(name: string): number | null {
+export function noteNameToFreq(name: string): number | null {
   const noteMap: Record<string, number> = {
     'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3,
     'E': 4, 'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8,

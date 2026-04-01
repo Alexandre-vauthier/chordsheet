@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import type { InstrumentId, StringChord, PianoChord, FingerPosition, ChordBarre } from '@/types';
 import { INSTRUMENTS } from '@/types';
-import { playChord } from '@/lib/chord-audio';
+import { playChord, playNote, OPEN_FREQS, noteNameToFreq } from '@/lib/chord-audio';
 
 // Configuration par instrument
 const INSTRUMENT_CONFIG: Record<Exclude<InstrumentId, 'piano'>, { strings: number; frets: number; label: string }> = {
@@ -34,7 +34,11 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
   // État pour instruments à cordes
   const [fingers, setFingers] = useState<FingerPosition[]>([]);
   const [barre, setBarre] = useState<ChordBarre | null>(null);
-  const [openStrings, setOpenStrings] = useState<number[]>([]);
+  const [openStrings, setOpenStrings] = useState<number[]>(() => {
+    if (initialInstrument === 'piano') return [];
+    const c = INSTRUMENT_CONFIG[initialInstrument as Exclude<InstrumentId, 'piano'>];
+    return Array.from({ length: c.strings }, (_, i) => i + 1);
+  });
   const [mutedStrings, setMutedStrings] = useState<number[]>([]);
   const [startFret, setStartFret] = useState(1);
 
@@ -49,13 +53,22 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
     setInstrumentId(newInstrument);
     setFingers([]);
     setBarre(null);
-    setOpenStrings([]);
+    if (newInstrument === 'piano') {
+      setOpenStrings([]);
+    } else {
+      const c = INSTRUMENT_CONFIG[newInstrument];
+      setOpenStrings(Array.from({ length: c.strings }, (_, i) => i + 1));
+    }
     setMutedStrings([]);
     setPianoNotes([]);
   };
 
   // Clic sur une case du manche
   const handleFretClick = useCallback((stringNum: number, fret: number) => {
+    // Jouer le son de la note
+    const openFreq = OPEN_FREQS[instrumentId]?.[stringNum];
+    if (openFreq) playNote(openFreq * Math.pow(2, fret / 12));
+
     // Retirer de open/muted si présent
     setOpenStrings(prev => prev.filter(s => s !== stringNum));
     setMutedStrings(prev => prev.filter(s => s !== stringNum));
@@ -64,8 +77,9 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
     const existingIndex = fingers.findIndex(([s, f]) => s === stringNum && f === fret);
 
     if (existingIndex >= 0) {
-      // Retirer le doigt
+      // Retirer le doigt → remettre la corde en ouvert
       setFingers(prev => prev.filter((_, i) => i !== existingIndex));
+      setOpenStrings(prev => [...prev, stringNum]);
     } else {
       // Retirer tout doigt sur cette corde et ajouter le nouveau
       setFingers(prev => {
@@ -74,10 +88,14 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
         return [...filtered, [stringNum, fret, nextFingerNum] as FingerPosition];
       });
     }
-  }, [fingers]);
+  }, [fingers, instrumentId]);
 
   // Toggle corde ouverte
   const toggleOpenString = useCallback((stringNum: number) => {
+    // Jouer le son de la corde à vide
+    const openFreq = OPEN_FREQS[instrumentId]?.[stringNum];
+    if (openFreq) playNote(openFreq);
+
     // Retirer des autres états
     setFingers(prev => prev.filter(([s]) => s !== stringNum));
     setMutedStrings(prev => prev.filter(s => s !== stringNum));
@@ -87,7 +105,7 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
         ? prev.filter(s => s !== stringNum)
         : [...prev, stringNum]
     );
-  }, []);
+  }, [instrumentId]);
 
   // Toggle corde mutée
   const toggleMutedString = useCallback((stringNum: number) => {
@@ -104,6 +122,9 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
 
   // Toggle note piano
   const togglePianoNote = useCallback((note: string) => {
+    const freq = noteNameToFreq(note);
+    if (freq) playNote(freq, true);
+
     setPianoNotes(prev =>
       prev.includes(note)
         ? prev.filter(n => n !== note)
@@ -181,10 +202,14 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
   const handleClear = useCallback(() => {
     setFingers([]);
     setBarre(null);
-    setOpenStrings([]);
+    if (!isPiano && config) {
+      setOpenStrings(Array.from({ length: config.strings }, (_, i) => i + 1));
+    } else {
+      setOpenStrings([]);
+    }
     setMutedStrings([]);
     setPianoNotes([]);
-  }, []);
+  }, [isPiano, config]);
 
   return (
     <div className="bg-white rounded-xl border border-[var(--line)] p-6 max-w-lg">
@@ -420,7 +445,7 @@ function StringEditor({
       {/* Indicateurs open/muted en haut */}
       {Array.from({ length: strings }, (_, i) => {
         const stringNum = strings - i;
-        const x = leftPadding + i * cellWidth + cellWidth / 2;
+        const x = leftPadding + i * cellWidth;
         const isOpen = openStrings.includes(stringNum);
         const isMuted = mutedStrings.includes(stringNum);
 
