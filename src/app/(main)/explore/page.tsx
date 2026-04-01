@@ -8,7 +8,7 @@ import { fromFirestore } from '@/lib/firestore-helpers';
 import { useBookmarks } from '@/lib/use-bookmarks';
 import { Input } from '@/components/ui/input';
 import { SheetCard } from '@/components/explore/sheet-card';
-import { GENRES, type Difficulty } from '@/types';
+import { GENRES, DIFFICULTY_LABELS, type Difficulty } from '@/types';
 import type { Sheet } from '@/types';
 
 type SortOption = 'recent' | 'rated' | 'viewed';
@@ -195,31 +195,18 @@ export default function ExplorePage() {
           </select>
 
           {/* Difficulté */}
-          <div className="flex items-center gap-1">
-            <span className="text-sm text-[var(--ink-light)] mr-1">Difficulté :</span>
-            {[1, 2, 3, 4, 5].map((level) => (
-              <button
-                key={level}
-                onClick={() => setSelectedDifficulty(
-                  selectedDifficulty === level ? null : level as Difficulty
-                )}
-                className={`text-lg transition-colors ${
-                  selectedDifficulty === level
-                    ? 'text-amber-500'
-                    : selectedDifficulty && selectedDifficulty > level
-                    ? 'text-amber-300'
-                    : 'text-gray-300 hover:text-amber-200'
-                }`}
-                title={`Difficulté ${level}/5`}
-              >
-                ★
-              </button>
-            ))}
-            {selectedDifficulty && (
-              <span className="text-xs text-[var(--ink-faint)] ml-1">
-                ({selectedDifficulty}/5)
-              </span>
-            )}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-[var(--ink-light)]">Difficulté :</span>
+            <select
+              value={selectedDifficulty ?? ''}
+              onChange={(e) => setSelectedDifficulty(e.target.value ? Number(e.target.value) as Difficulty : null)}
+              className="text-sm border border-[var(--line)] rounded-lg px-2 py-1 bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            >
+              <option value="">Toutes</option>
+              {(Object.entries(DIFFICULTY_LABELS) as [string, string][]).map(([val, label]) => (
+                <option key={val} value={val}>{val} · {label}</option>
+              ))}
+            </select>
           </div>
 
           {/* Réinitialiser */}

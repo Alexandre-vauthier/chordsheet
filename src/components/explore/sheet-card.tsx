@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import type { Sheet } from '@/types';
+import type { Sheet, Difficulty } from '@/types';
+import { DIFFICULTY_LABELS } from '@/types';
 import { useChordNotation } from '@/lib/use-chord-notation';
 
 interface SheetCardProps {
@@ -107,9 +108,8 @@ export function SheetCard({
               </span>
             </div>
           ) : sheet.difficulty ? (
-            <span className="text-amber-400 text-xs ml-2">
-              {'★'.repeat(sheet.difficulty)}
-              <span className="text-gray-300">{'★'.repeat(5 - sheet.difficulty)}</span>
+            <span className="text-xs text-[var(--ink-faint)] ml-2">
+              {sheet.difficulty} · {DIFFICULTY_LABELS[sheet.difficulty as Difficulty]}
             </span>
           ) : null}
         </div>

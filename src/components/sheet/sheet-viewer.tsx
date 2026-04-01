@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import type { Sheet, CellSpan, InstrumentId, Section } from '@/types';
-import { INSTRUMENTS } from '@/types';
+import type { Sheet, CellSpan, InstrumentId, Section, Difficulty } from '@/types';
+import { INSTRUMENTS, DIFFICULTY_LABELS } from '@/types';
 import { ChordSummary, InstrumentSelector } from '@/components/chord';
 import type { CustomChordMap } from '@/components/chord';
 import { useChordNotation } from '@/lib/use-chord-notation';
@@ -200,9 +200,8 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
             </span>
           )}
           {sheet.difficulty && (
-            <span className="text-amber-400 print:text-[var(--ink)]">
-              {'★'.repeat(sheet.difficulty)}
-              <span className="text-gray-300 print:text-[var(--ink-faint)]">{'★'.repeat(5 - sheet.difficulty)}</span>
+            <span className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 text-[var(--ink-light)] rounded text-sm print:bg-transparent print:text-[var(--ink)]">
+              {sheet.difficulty} · {DIFFICULTY_LABELS[sheet.difficulty as Difficulty]}
             </span>
           )}
         </div>
