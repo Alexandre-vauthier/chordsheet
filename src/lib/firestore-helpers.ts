@@ -11,17 +11,43 @@ interface FirestoreFinger {
   d: number; // digit
 }
 
+// Supprimer les valeurs undefined d'un objet (Firestore les refuse)
+function removeUndefined(obj: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value !== undefined) {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 // Convertir les accords personnalisés pour Firestore (éviter les tableaux imbriqués)
 function chordToFirestore(chord: StringChord | PianoChord): Record<string, unknown> {
   if (isPianoChord(chord)) {
     // Piano chords n'ont pas de tableaux imbriqués
-    return { ...chord };
+    return removeUndefined({ ...chord });
   }
-  // Pour les accords à cordes, convertir fingers en objets
-  return {
-    ...chord,
+  // Pour les accords à cordes, convertir fingers en objets et supprimer undefined
+  const result: Record<string, unknown> = {
+    id: chord.id,
+    name: chord.name,
+    full: chord.full,
+    category: chord.category,
     fingers: chord.fingers.map(([s, f, d]) => ({ s, f, d })),
+    open: chord.open,
+    muted: chord.muted,
+    startFret: chord.startFret,
   };
+  // Ajouter barre seulement s'il existe
+  if (chord.barre) {
+    result.barre = chord.barre;
+  }
+  // Ajouter instrumentId si présent (pour CustomChord)
+  if ('instrumentId' in chord && (chord as CustomChord).instrumentId) {
+    result.instrumentId = (chord as CustomChord).instrumentId;
+  }
+  return result;
 }
 
 // Convertir les accords Firestore vers le format app
