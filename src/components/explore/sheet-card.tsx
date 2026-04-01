@@ -30,11 +30,12 @@ export function SheetCard({
     0
   );
 
-  // Premier aperçu des accords
-  const previewChords = sheet.sections
-    .flatMap((s) => s.rows.flatMap((r) => r.map((c) => c.chord)))
-    .filter(Boolean)
-    .slice(0, 8);
+  // Premier aperçu des accords (accords uniques)
+  const uniqueChords = [...new Set(
+    sheet.sections
+      .flatMap((s) => s.rows.flatMap((r) => r.map((c) => c.chord)))
+      .filter(Boolean)
+  )].slice(0, 8);
 
   // Formater la note moyenne
   const formatRating = (rating: number | null) => {
@@ -64,125 +65,89 @@ export function SheetCard({
       )}
 
       {/* Aperçu des accords */}
-      <div className="p-4 bg-gradient-to-br from-[var(--cell-bg)] to-white border-b border-[var(--line)]">
-        <div className="flex flex-wrap gap-2">
-          {previewChords.length > 0 ? (
-            previewChords.map((chord, i) => (
+      <div className="p-3 bg-gradient-to-br from-[var(--cell-bg)] to-white border-b border-[var(--line)]">
+        <div className="flex flex-wrap gap-1.5">
+          {uniqueChords.length > 0 ? (
+            uniqueChords.map((chord, i) => (
               <span
                 key={i}
-                className="px-2 py-1 bg-white rounded border border-[var(--line)] font-mono text-sm text-[var(--ink)]"
+                className="px-1.5 py-0.5 bg-white rounded border border-[var(--line)] font-mono text-xs text-[var(--ink)]"
               >
                 {chord}
               </span>
             ))
           ) : (
-            <span className="text-[var(--ink-faint)] text-sm italic">Aucun accord</span>
-          )}
-          {chordCount > 8 && (
-            <span className="px-2 py-1 text-[var(--ink-faint)] text-sm">
-              +{chordCount - 8}
-            </span>
+            <span className="text-[var(--ink-faint)] text-xs italic">Aucun accord</span>
           )}
         </div>
       </div>
 
       {/* Infos */}
-      <div className="p-4">
+      <div className="p-3">
         <Link href={`/sheet/${sheet.id}`} className="block group-hover:text-[var(--accent)] transition-colors">
-          <h3 className="font-semibold text-[var(--ink)] truncate">
+          <h3 className="font-semibold text-[var(--ink)] truncate text-sm">
             {sheet.title || 'Sans titre'}
           </h3>
         </Link>
 
-        {sheet.artist && (
-          <p className="text-sm text-[var(--ink-light)] truncate mt-0.5">{sheet.artist}</p>
-        )}
+        <div className="flex items-center justify-between mt-1">
+          <p className="text-xs text-[var(--ink-light)] truncate flex-1">
+            {sheet.artist || 'Artiste inconnu'}
+          </p>
 
-        <div className="flex flex-wrap items-center gap-2 mt-3 text-xs text-[var(--ink-faint)]">
-          {sheet.key && <span>{sheet.key}</span>}
-          {sheet.tempo && <span>{sheet.tempo}</span>}
-          {sheet.capo && (
-            <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded">
-              Capo {sheet.capo}
-            </span>
-          )}
-          {sheet.difficulty && (
-            <span className="text-amber-400">
+          {/* Difficulté ou note communautaire */}
+          {showRating && sheet.ratingCount > 0 ? (
+            <div className="flex items-center gap-1 ml-2">
+              <span className="text-amber-500 text-sm">★</span>
+              <span className="text-xs font-medium text-[var(--ink)]">
+                {formatRating(sheet.averageRating)}
+              </span>
+            </div>
+          ) : sheet.difficulty ? (
+            <span className="text-amber-400 text-xs ml-2">
               {'★'.repeat(sheet.difficulty)}
               <span className="text-gray-300">{'★'.repeat(5 - sheet.difficulty)}</span>
             </span>
-          )}
-          {sheet.isPublic && (
-            <span className="px-1.5 py-0.5 bg-green-50 text-green-700 rounded text-[10px] uppercase tracking-wider">
-              Public
-            </span>
-          )}
+          ) : null}
         </div>
 
-        {/* Note communautaire */}
-        {showRating && sheet.ratingCount > 0 && (
-          <div className="flex items-center gap-1.5 mt-2">
-            <span className="text-amber-500">★</span>
-            <span className="text-sm font-medium text-[var(--ink)]">
-              {formatRating(sheet.averageRating)}
-            </span>
-            <span className="text-xs text-[var(--ink-faint)]">
-              ({sheet.ratingCount} avis)
-            </span>
-          </div>
-        )}
-
-        {/* Genres */}
-        {sheet.genres && sheet.genres.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {sheet.genres.slice(0, 3).map((genre) => (
-              <span
-                key={genre}
-                className="px-1.5 py-0.5 bg-gray-100 text-[var(--ink-light)] rounded text-[10px]"
-              >
-                {genre}
-              </span>
-            ))}
-            {sheet.genres.length > 3 && (
-              <span className="text-[10px] text-[var(--ink-faint)]">+{sheet.genres.length - 3}</span>
-            )}
-          </div>
-        )}
-
         {showOwner && (
-          <p className="text-xs text-[var(--ink-faint)] mt-2">
+          <p className="text-[10px] text-[var(--ink-faint)] mt-1">
             par {sheet.ownerName}
           </p>
         )}
 
-        {/* Vues */}
-        {showRating && sheet.viewCount > 0 && (
-          <p className="text-xs text-[var(--ink-faint)] mt-1">
-            {sheet.viewCount} vue{sheet.viewCount > 1 ? 's' : ''}
-          </p>
-        )}
-
-        {/* Actions */}
-        <div className="flex items-center gap-2 mt-4 pt-3 border-t border-[var(--line)]">
+        {/* Actions avec icônes */}
+        <div className="flex items-center gap-1 mt-3 pt-2 border-t border-[var(--line)]">
           <Link
             href={`/sheet/${sheet.id}`}
-            className="text-xs text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors"
+            className="p-1.5 rounded hover:bg-[var(--accent-soft)] text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors"
+            title="Consulter"
           >
-            Consulter
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
           </Link>
           {onDelete && (
             <>
               <Link
                 href={`/sheet/${sheet.id}/edit`}
-                className="text-xs text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors"
+                className="p-1.5 rounded hover:bg-[var(--accent-soft)] text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors"
+                title="Modifier"
               >
-                Modifier
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
               </Link>
               <button
                 onClick={onDelete}
-                className="text-xs text-[var(--ink-light)] hover:text-red-600 transition-colors ml-auto"
+                className="p-1.5 rounded hover:bg-red-50 text-[var(--ink-light)] hover:text-red-600 transition-colors ml-auto"
+                title="Supprimer"
               >
-                Supprimer
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
               </button>
             </>
           )}

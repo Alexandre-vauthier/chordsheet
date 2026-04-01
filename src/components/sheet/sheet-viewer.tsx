@@ -27,12 +27,31 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
         <h1 className="font-playfair text-3xl font-bold text-[var(--ink)] print:text-2xl">
           {sheet.title || 'Sans titre'}
         </h1>
-        <div className="flex flex-wrap items-center gap-4 mt-2 text-sm text-[var(--ink-light)]">
-          {sheet.artist && <span>{sheet.artist}</span>}
-          {sheet.key && <span>• {sheet.key}</span>}
-          {sheet.tempo && <span>• {sheet.tempo}</span>}
+
+        {sheet.artist && (
+          <p className="text-lg text-[var(--ink-light)] mt-1">{sheet.artist}</p>
+        )}
+
+        {/* Métadonnées */}
+        <div className="flex flex-wrap items-center gap-3 mt-3">
+          {sheet.key && (
+            <span className="flex items-center gap-1.5 px-2 py-1 bg-purple-50 text-purple-700 rounded text-sm print:bg-transparent print:text-[var(--ink)]">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+              {sheet.key}
+            </span>
+          )}
+          {sheet.tempo && (
+            <span className="flex items-center gap-1.5 px-2 py-1 bg-orange-50 text-orange-700 rounded text-sm print:bg-transparent print:text-[var(--ink)]">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {sheet.tempo}
+            </span>
+          )}
           {sheet.capo && (
-            <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded text-xs print:bg-transparent print:text-[var(--ink)]">
+            <span className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm print:bg-transparent print:text-[var(--ink)]">
               Capo {sheet.capo}
             </span>
           )}
@@ -43,12 +62,14 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
             </span>
           )}
         </div>
+
+        {/* Genres */}
         {sheet.genres && sheet.genres.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-2 print:hidden">
+          <div className="flex flex-wrap gap-2 mt-3 print:hidden">
             {sheet.genres.map((genre) => (
               <span
                 key={genre}
-                className="px-2 py-0.5 bg-gray-100 text-[var(--ink-light)] rounded text-xs"
+                className="px-2.5 py-1 bg-gray-100 text-[var(--ink-light)] rounded-full text-xs font-medium"
               >
                 {genre}
               </span>
