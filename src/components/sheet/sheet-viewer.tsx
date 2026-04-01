@@ -5,6 +5,8 @@ import type { Sheet, CellSpan, InstrumentId, Section } from '@/types';
 import { ChordSummary, InstrumentSelector } from '@/components/chord';
 import type { CustomChordMap } from '@/components/chord';
 import { useChordNotation } from '@/lib/use-chord-notation';
+import { findChordVariants } from '@/lib/chord-data';
+import { playChord } from '@/lib/chord-audio';
 
 interface SheetViewerProps {
   sheet: Sheet;
@@ -89,6 +91,18 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
       }
       const step = sequence[i];
       setActiveStep(step);
+
+      // Jouer l'accord si la cellule n'est pas vide
+      const cell = sheet.sections
+        .find(s => s.id === step.sectionId)
+        ?.rows[step.rowIndex]?.[step.cellIndex];
+      if (cell?.chord) {
+        // Vérifier d'abord les accords personnalisés
+        const customChord = sheet.customChords?.[cell.chord];
+        const chordData = customChord ?? findChordVariants(cell.chord, instrumentId)[0];
+        if (chordData) playChord(chordData, instrumentId);
+      }
+
       i++;
       timeoutRef.current = setTimeout(advance, step.durationMs);
     };
