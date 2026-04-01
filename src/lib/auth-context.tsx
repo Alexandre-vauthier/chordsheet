@@ -53,6 +53,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email,
             photoURL: userData.photoURL || fbUser.photoURL,
             role,
+            notationPreference: userData.notationPreference || 'american',
+            preferredInstrument: userData.preferredInstrument,
             createdAt: userData.createdAt?.toDate() || new Date(),
             updatedAt: userData.updatedAt?.toDate() || new Date(),
           });
