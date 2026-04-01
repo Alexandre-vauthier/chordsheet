@@ -224,25 +224,18 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
           {/* Difficulté */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-[var(--ink-light)]">Difficulté :</span>
-            <div className="flex gap-0.5">
-              {[1, 2, 3, 4, 5].map((level) => (
-                <button
-                  key={level}
-                  type="button"
-                  onClick={() => updateSheet({ difficulty: (sheet.difficulty === level ? null : level) as Difficulty | null })}
-                  className={`text-lg transition-colors ${
-                    sheet.difficulty && sheet.difficulty >= level
-                      ? 'text-amber-400'
-                      : 'text-gray-300 hover:text-amber-200'
-                  }`}
-                >
-                  ★
-                </button>
-              ))}
-            </div>
-            {sheet.difficulty && (
-              <span className="text-xs text-[var(--ink-faint)]">({sheet.difficulty}/5)</span>
-            )}
+            <select
+              value={sheet.difficulty ?? ''}
+              onChange={(e) => updateSheet({ difficulty: (e.target.value ? Number(e.target.value) : null) as Difficulty | null })}
+              className="text-sm border border-[var(--line)] rounded-lg px-2 py-1 bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            >
+              <option value="">—</option>
+              <option value="1">1 · Débutant</option>
+              <option value="2">2 · Facile</option>
+              <option value="3">3 · Intermédiaire</option>
+              <option value="4">4 · Avancé</option>
+              <option value="5">5 · Expert</option>
+            </select>
           </div>
         </div>
 

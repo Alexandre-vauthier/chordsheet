@@ -2,11 +2,20 @@
 
 import { useState, useRef, useCallback } from 'react';
 import type { Sheet, CellSpan, InstrumentId, Section } from '@/types';
+import { INSTRUMENTS } from '@/types';
 import { ChordSummary, InstrumentSelector } from '@/components/chord';
 import type { CustomChordMap } from '@/components/chord';
 import { useChordNotation } from '@/lib/use-chord-notation';
 import { findChordVariants } from '@/lib/chord-data';
 import { playChord } from '@/lib/chord-audio';
+
+const LS_KEY = 'chordsheet_instrument';
+
+function getSavedInstrument(fallback: InstrumentId): InstrumentId {
+  if (typeof window === 'undefined') return fallback;
+  const v = localStorage.getItem(LS_KEY) as InstrumentId;
+  return v && (INSTRUMENTS as readonly string[]).includes(v) ? v : fallback;
+}
 
 interface SheetViewerProps {
   sheet: Sheet;
@@ -59,7 +68,14 @@ function buildSequence(sections: Section[], beatMs: number): PlayStep[] {
 
 export function SheetViewer({ sheet }: SheetViewerProps) {
   const translate = useChordNotation();
-  const [instrumentId, setInstrumentId] = useState<InstrumentId>(sheet.instrumentId || 'guitar');
+  const [instrumentId, setInstrumentId] = useState<InstrumentId>(
+    () => getSavedInstrument(sheet.instrumentId || 'guitar')
+  );
+
+  const handleInstrumentChange = (id: InstrumentId) => {
+    setInstrumentId(id);
+    localStorage.setItem(LS_KEY, id);
+  };
 
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -229,64 +245,76 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
 
             {/* Grille */}
             <div className="space-y-2">
-              {section.rows.map((row, rowIndex) => (
-                <div
-                  key={rowIndex}
-                  className={`grid gap-1 ${section.beatsPerMeasure === 3 ? 'grid-cols-6' : 'grid-cols-8'}`}
-                >
-                  {row.map((cell, cellIndex) => {
-                    const isActive =
-                      isPlaying &&
-                      activeStep?.sectionId === section.id &&
-                      activeStep?.rowIndex === rowIndex &&
-                      activeStep?.cellIndex === cellIndex;
+              {section.rows.map((row, rowIndex) => {
+                // Ligne entièrement vide → non affichée
+                if (row.every(c => !c.chord)) return null;
 
-                    return (
-                      <div
-                        key={cellIndex}
-                        style={{ gridColumn: `span ${spanToGridCols[cell.span]}` }}
-                        className={`
-                          relative rounded-lg border-[1.5px] min-h-12 flex items-center justify-center overflow-hidden
-                          ${cell.chord
-                            ? 'bg-[var(--cell-bg)] border-[#8a7a6a]'
-                            : 'bg-[var(--cell-bg)] border-[var(--line)]'
-                          }
-                          ${cell.span === 0.5 ? 'bg-[#f7f3ec] border-[var(--ink-faint)]' : ''}
-                          ${isActive ? 'border-[var(--accent)]' : ''}
-                          print:min-h-10 print:border
-                        `}
-                      >
-                        {/* Sweep animation */}
-                        {isActive && activeStep && (
+                return (
+                  <div
+                    key={rowIndex}
+                    className={`grid gap-1 ${section.beatsPerMeasure === 3 ? 'grid-cols-6' : 'grid-cols-8'}`}
+                  >
+                    {row.map((cell, cellIndex) => {
+                      const isActive =
+                        isPlaying &&
+                        activeStep?.sectionId === section.id &&
+                        activeStep?.rowIndex === rowIndex &&
+                        activeStep?.cellIndex === cellIndex;
+
+                      // Cellule vide → espace transparent sans bordure
+                      if (!cell.chord) {
+                        return (
                           <div
-                            className="absolute inset-0 origin-left pointer-events-none"
-                            style={{
-                              background: 'rgba(200,75,47,0.13)',
-                              animation: `beatSweep ${activeStep.durationMs}ms linear forwards`,
-                            }}
+                            key={cellIndex}
+                            style={{ gridColumn: `span ${spanToGridCols[cell.span]}` }}
                           />
-                        )}
+                        );
+                      }
 
-                        <span
+                      return (
+                        <div
+                          key={cellIndex}
+                          style={{ gridColumn: `span ${spanToGridCols[cell.span]}` }}
                           className={`
-                            relative z-10 font-mono font-medium text-[var(--ink)]
-                            ${cell.span === 0.5 ? 'text-sm' : 'text-base'}
-                            print:text-sm
+                            relative rounded-lg border-[1.5px] min-h-12 flex items-center justify-center overflow-hidden
+                            bg-[var(--cell-bg)] border-[#8a7a6a]
+                            ${cell.span === 0.5 ? 'bg-[#f7f3ec] border-[var(--ink-faint)]' : ''}
+                            ${isActive ? 'border-[var(--accent)]' : ''}
+                            print:min-h-10 print:border
                           `}
                         >
-                          {translate(cell.chord) || ''}
-                        </span>
+                          {/* Sweep animation */}
+                          {isActive && activeStep && (
+                            <div
+                              className="absolute inset-0 origin-left pointer-events-none"
+                              style={{
+                                background: 'rgba(200,75,47,0.13)',
+                                animation: `beatSweep ${activeStep.durationMs}ms linear forwards`,
+                              }}
+                            />
+                          )}
 
-                        {cell.span === 0.5 && (
-                          <span className="absolute bottom-0.5 left-1 text-[8px] text-[var(--ink-faint)] font-mono print:hidden">
-                            ½
+                          <span
+                            className={`
+                              relative z-10 font-mono font-medium text-[var(--ink)]
+                              ${cell.span === 0.5 ? 'text-sm' : 'text-base'}
+                              print:text-sm
+                            `}
+                          >
+                            {translate(cell.chord)}
                           </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              ))}
+
+                          {cell.span === 0.5 && (
+                            <span className="absolute bottom-0.5 left-1 text-[8px] text-[var(--ink-faint)] font-mono print:hidden">
+                              ½
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}
@@ -298,7 +326,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
           <h2 className="text-sm font-medium text-[var(--ink-light)]">Diagrammes des accords</h2>
           <InstrumentSelector
             value={instrumentId}
-            onChange={setInstrumentId}
+            onChange={handleInstrumentChange}
           />
         </div>
         <ChordSummary

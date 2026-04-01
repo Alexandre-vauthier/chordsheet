@@ -70,6 +70,7 @@ export default function SetsPage() {
             onClick={handleCreateSet}
             disabled={!newSetName.trim() || isCreating}
             isLoading={isCreating}
+            className="whitespace-nowrap"
           >
             + Créer un set
           </Button>
