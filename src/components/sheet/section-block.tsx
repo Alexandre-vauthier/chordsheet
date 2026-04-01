@@ -55,15 +55,32 @@ export function SectionBlock({
     onUpdate({ rows: newRows });
   };
 
-  // Diviser une cellule 2-beat en deux 1-beat
+  // Étendre une cellule sur toute la ligne
+  const extendToFullLine = (rowIndex: number, cellIndex: number) => {
+    const newRows = [...section.rows];
+    const row = newRows[rowIndex];
+    const chord = row[cellIndex].chord;
+    const fullSpan = section.beatsPerMeasure || 4;
+
+    // Remplacer toute la ligne par une seule cellule
+    newRows[rowIndex] = [{ chord, span: fullSpan as 3 | 4 }];
+    onUpdate({ rows: newRows });
+  };
+
+  // Diviser une cellule étendue en cellules 1-beat
   const unmergeCell = (rowIndex: number, cellIndex: number) => {
     const newRows = [...section.rows];
     const row = [...newRows[rowIndex]];
     const cell = row[cellIndex];
 
-    if (cell.span !== 2) return;
+    if (cell.span < 2) return;
 
-    row.splice(cellIndex, 1, { chord: cell.chord, span: 1 }, { chord: '', span: 1 });
+    // Créer autant de cellules 1-beat que la valeur du span
+    const newCells = [];
+    for (let i = 0; i < cell.span; i++) {
+      newCells.push({ chord: i === 0 ? cell.chord : '', span: 1 as const });
+    }
+    row.splice(cellIndex, 1, ...newCells);
     newRows[rowIndex] = row;
     onUpdate({ rows: newRows });
   };
@@ -196,6 +213,7 @@ export function SectionBlock({
               onCellChange={(cellIndex, updates) => updateCell(rowIndex, cellIndex, updates)}
               onSplitCell={(cellIndex) => splitCell(rowIndex, cellIndex)}
               onExtendCell={(cellIndex) => extendCell(rowIndex, cellIndex)}
+              onExtendToFullLine={(cellIndex) => extendToFullLine(rowIndex, cellIndex)}
               onUnmergeCell={(cellIndex) => unmergeCell(rowIndex, cellIndex)}
               onJoinCells={(cellIndex) => joinCells(rowIndex, cellIndex)}
               onNavigateToCell={(nextRowIndex, cellIndex) =>

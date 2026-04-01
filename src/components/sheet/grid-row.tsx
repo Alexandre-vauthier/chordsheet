@@ -11,6 +11,7 @@ interface GridRowProps {
   onCellChange: (cellIndex: number, updates: Partial<Cell>) => void;
   onSplitCell: (cellIndex: number) => void;
   onExtendCell: (cellIndex: number) => void;
+  onExtendToFullLine: (cellIndex: number) => void;
   onUnmergeCell: (cellIndex: number) => void;
   onJoinCells: (cellIndex: number) => void;
   onNavigateToCell: (rowIndex: number, cellIndex: number) => void;
@@ -25,6 +26,7 @@ export function GridRow({
   onCellChange,
   onSplitCell,
   onExtendCell,
+  onExtendToFullLine,
   onUnmergeCell,
   onJoinCells,
   onNavigateToCell,
@@ -45,12 +47,14 @@ export function GridRow({
             onChordChange={(chord) => onCellChange(cellIndex, { chord })}
             onSplit={() => onSplitCell(cellIndex)}
             onExtend={() => onExtendCell(cellIndex)}
+            onExtendToFullLine={() => onExtendToFullLine(cellIndex)}
             onUnmerge={() => onUnmergeCell(cellIndex)}
             onJoin={() => onJoinCells(cellIndex)}
             onClear={() => onCellChange(cellIndex, { chord: '' })}
             canSplit={cell.span === 1}
             canExtend={cell.span === 1 && cellIndex + 1 < row.length}
-            canUnmerge={cell.span === 2}
+            canExtendToFullLine={row.length > 1}
+            canUnmerge={cell.span >= 2}
             canJoin={cell.span === 0.5 && cellIndex + 1 < row.length && row[cellIndex + 1].span === 0.5}
             onNavigateNext={() => {
               // Naviguer vers la cellule suivante

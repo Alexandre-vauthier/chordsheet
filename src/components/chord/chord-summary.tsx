@@ -13,6 +13,7 @@ interface ChordSummaryProps {
   instrumentId: InstrumentId;
   customChords?: CustomChordMap;
   onEditChord?: (chordName: string, currentChord: StringChord | PianoChord | null) => void;
+  onDeleteCustomChord?: (chordName: string) => void;
   editable?: boolean;
 }
 
@@ -29,6 +30,7 @@ export function ChordSummary({
   instrumentId,
   customChords = {},
   onEditChord,
+  onDeleteCustomChord,
   editable = false,
 }: ChordSummaryProps) {
   // État pour les indices de variante sélectionnée par accord
@@ -161,14 +163,27 @@ export function ChordSummary({
                 <span className="text-[9px] text-[var(--accent)] mt-1">personnalisé</span>
               )}
 
-              {/* Bouton modifier */}
-              {editable && onEditChord && (
-                <button
-                  onClick={() => onEditChord(chordName, currentChord)}
-                  className="mt-2 text-xs text-[var(--ink-light)] hover:text-[var(--accent)] hover:underline"
-                >
-                  Modifier
-                </button>
+              {/* Boutons modifier / supprimer */}
+              {editable && (
+                <div className="flex gap-2 mt-2">
+                  {onEditChord && (
+                    <button
+                      onClick={() => onEditChord(chordName, currentChord)}
+                      className="text-xs text-[var(--ink-light)] hover:text-[var(--accent)] hover:underline"
+                    >
+                      Modifier
+                    </button>
+                  )}
+                  {onDeleteCustomChord && customChord && (
+                    <button
+                      onClick={() => onDeleteCustomChord(chordName)}
+                      className="text-xs text-[var(--ink-faint)] hover:text-red-500 hover:underline"
+                      title="Supprimer la version personnalisée"
+                    >
+                      Supprimer
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           );

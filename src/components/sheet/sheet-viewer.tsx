@@ -13,6 +13,8 @@ const spanToGridCols: Record<CellSpan, number> = {
   0.5: 1,
   1: 2,
   2: 4,
+  3: 6,  // Ligne complète en 3/4
+  4: 8,  // Ligne complète en 4/4
 };
 
 export function SheetViewer({ sheet }: SheetViewerProps) {

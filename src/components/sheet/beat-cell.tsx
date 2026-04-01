@@ -10,11 +10,13 @@ interface BeatCellProps {
   onChordChange: (chord: string) => void;
   onSplit: () => void;
   onExtend: () => void;
+  onExtendToFullLine: () => void;
   onUnmerge: () => void;
   onJoin: () => void;
   onClear: () => void;
   canSplit: boolean;
   canExtend: boolean;
+  canExtendToFullLine: boolean;
   canUnmerge: boolean;
   canJoin: boolean;
   onNavigateNext: () => void;
@@ -24,6 +26,8 @@ const spanToGridCols: Record<CellSpan, number> = {
   0.5: 1,
   1: 2,
   2: 4,
+  3: 6,  // Ligne complète en 3/4
+  4: 8,  // Ligne complète en 4/4
 };
 
 export function BeatCell({
@@ -32,11 +36,13 @@ export function BeatCell({
   onChordChange,
   onSplit,
   onExtend,
+  onExtendToFullLine,
   onUnmerge,
   onJoin,
   onClear,
   canSplit,
   canExtend,
+  canExtendToFullLine,
   canUnmerge,
   canJoin,
   onNavigateNext,
@@ -185,8 +191,13 @@ export function BeatCell({
             →2
           </ActionButton>
         )}
+        {canExtendToFullLine && (
+          <ActionButton onClick={onExtendToFullLine} title="Étendre sur toute la ligne">
+            →∞
+          </ActionButton>
+        )}
         {canUnmerge && (
-          <ActionButton onClick={onUnmerge} title="Réduire à 1 temps">
+          <ActionButton onClick={onUnmerge} title="Diviser en temps simples">
             ÷1
           </ActionButton>
         )}
