@@ -948,10 +948,18 @@ function normalizeEnharmonic(name: string): string {
 }
 
 // Rechercher tous les accords correspondant à un nom (peut retourner plusieurs variantes)
-export function findChordVariants(name: string, instrumentId: InstrumentId): (StringChord | PianoChord)[] {
+export function findChordVariants(
+  name: string,
+  instrumentId: InstrumentId,
+  _visited: Set<string> = new Set(),
+): (StringChord | PianoChord)[] {
+  const visitKey = `${name.trim()}|${instrumentId}`;
+  if (_visited.has(visitKey)) return [];
+  _visited.add(visitKey);
+
   // 0. Normalisation enharmonique (C# → Db, Gb → F#, Cb → B, etc.)
   const enharmonicName = normalizeEnharmonic(name);
-  if (enharmonicName !== name.trim()) return findChordVariants(enharmonicName, instrumentId);
+  if (enharmonicName !== name.trim()) return findChordVariants(enharmonicName, instrumentId, _visited);
 
   const chords = getChordsByInstrument(instrumentId);
   const normalizedName = name.trim().toLowerCase();
@@ -963,7 +971,7 @@ export function findChordVariants(name: string, instrumentId: InstrumentId): (St
   // 2. Accord slash (A/G, C/E…)
   const slash = parseSlashChord(name);
   if (slash) {
-    const baseVariants = findChordVariants(slash.base, instrumentId);
+    const baseVariants = findChordVariants(slash.base, instrumentId, _visited);
     if (baseVariants.length > 0) {
       const derived: (StringChord | PianoChord)[] = [];
       for (const base of baseVariants) {

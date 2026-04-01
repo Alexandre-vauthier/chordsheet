@@ -108,7 +108,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
     };
 
     advance();
-  }, [sheet]);
+  }, [sheet, instrumentId]);
 
   const togglePlay = () => (isPlaying ? stop() : play());
 
