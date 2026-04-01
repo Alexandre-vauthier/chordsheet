@@ -451,7 +451,13 @@ function StringEditor({
 
         return (
           <g key={`top-${stringNum}`}>
-            {/* Zone cliquable */}
+            {isOpen && (
+              <circle cx={x} cy={14} r={6} fill="none" stroke="var(--ink)" strokeWidth={1.5} />
+            )}
+            {isMuted && (
+              <text x={x} y={18} textAnchor="middle" className="text-sm fill-[var(--ink)]">✕</text>
+            )}
+            {/* Zone cliquable au-dessus */}
             <rect
               x={x - 12}
               y={2}
@@ -463,20 +469,12 @@ function StringEditor({
                 if (isOpen) {
                   onToggleMuted(stringNum);
                 } else if (isMuted) {
-                  // Retirer muted (clic supplémentaire)
                   onToggleMuted(stringNum);
                 } else {
                   onToggleOpen(stringNum);
                 }
               }}
             />
-            {/* Indicateur */}
-            {isOpen && (
-              <circle cx={x} cy={14} r={6} fill="none" stroke="var(--ink)" strokeWidth={1.5} />
-            )}
-            {isMuted && (
-              <text x={x} y={18} textAnchor="middle" className="text-sm fill-[var(--ink)]">✕</text>
-            )}
           </g>
         );
       })}
@@ -554,22 +552,12 @@ function StringEditor({
               />
               {/* Doigt */}
               {finger && (
-                <g>
-                  <circle
-                    cx={x}
-                    cy={y + cellHeight / 2}
-                    r={12}
-                    fill="var(--accent)"
-                  />
-                  <text
-                    x={x}
-                    y={y + cellHeight / 2 + 4}
-                    textAnchor="middle"
-                    className="text-xs fill-white font-medium"
-                  >
-                    {finger[2]}
-                  </text>
-                </g>
+                <circle
+                  cx={x}
+                  cy={y + cellHeight / 2}
+                  r={12}
+                  fill="var(--accent)"
+                />
               )}
             </g>
           );

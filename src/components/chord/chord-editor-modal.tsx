@@ -345,10 +345,10 @@ function StringEditor({
         const isMuted = mutedStrings.includes(sNum);
         return (
           <g key={`top-${sNum}`}>
-            <rect x={x - 12} y={2} width={24} height={22} fill="transparent" className="cursor-pointer"
-              onClick={() => isOpen ? onToggleMuted(sNum) : isMuted ? onToggleMuted(sNum) : onToggleOpen(sNum)} />
             {isOpen && <circle cx={x} cy={14} r={6} fill="none" stroke="var(--ink)" strokeWidth={1.5} />}
             {isMuted && <text x={x} y={18} textAnchor="middle" className="text-sm fill-[var(--ink)]">✕</text>}
+            <rect x={x - 12} y={2} width={24} height={22} fill="transparent" className="cursor-pointer"
+              onClick={() => isOpen ? onToggleMuted(sNum) : isMuted ? onToggleMuted(sNum) : onToggleOpen(sNum)} />
           </g>
         );
       })}
@@ -389,10 +389,7 @@ function StringEditor({
               <rect x={x - cellW / 2 + 2} y={y + 2} width={cellW - 4} height={cellH - 4} fill="transparent"
                 className="cursor-pointer hover:fill-[var(--accent-soft)]" onClick={() => onFretClick(sNum, fNum)} />
               {finger && (
-                <g>
-                  <circle cx={x} cy={y + cellH / 2} r={12} fill="var(--accent)" />
-                  <text x={x} y={y + cellH / 2 + 4} textAnchor="middle" className="text-xs fill-white font-medium">{finger[2]}</text>
-                </g>
+                <circle cx={x} cy={y + cellH / 2} r={12} fill="var(--accent)" />
               )}
             </g>
           );
