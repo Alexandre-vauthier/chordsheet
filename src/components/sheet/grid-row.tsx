@@ -9,11 +9,9 @@ interface GridRowProps {
   beatsPerMeasure: BeatsPerMeasure;
   instrumentId: InstrumentId;
   onCellChange: (cellIndex: number, updates: Partial<Cell>) => void;
-  onSplitCell: (cellIndex: number) => void;
-  onExtendCell: (cellIndex: number) => void;
-  onExtendToFullLine: (cellIndex: number) => void;
-  onUnmergeCell: (cellIndex: number) => void;
-  onJoinCells: (cellIndex: number) => void;
+  onExtendLeft: (cellIndex: number) => void;
+  onExtendRight: (cellIndex: number) => void;
+  onShrink: (cellIndex: number) => void;
   onNavigateToCell: (rowIndex: number, cellIndex: number) => void;
   totalRows: number;
 }
@@ -24,11 +22,9 @@ export function GridRow({
   beatsPerMeasure,
   instrumentId,
   onCellChange,
-  onSplitCell,
-  onExtendCell,
-  onExtendToFullLine,
-  onUnmergeCell,
-  onJoinCells,
+  onExtendLeft,
+  onExtendRight,
+  onShrink,
   onNavigateToCell,
   totalRows,
 }: GridRowProps) {
@@ -45,17 +41,13 @@ export function GridRow({
             cell={cell}
             instrumentId={instrumentId}
             onChordChange={(chord) => onCellChange(cellIndex, { chord })}
-            onSplit={() => onSplitCell(cellIndex)}
-            onExtend={() => onExtendCell(cellIndex)}
-            onExtendToFullLine={() => onExtendToFullLine(cellIndex)}
-            onUnmerge={() => onUnmergeCell(cellIndex)}
-            onJoin={() => onJoinCells(cellIndex)}
+            onExtendLeft={() => onExtendLeft(cellIndex)}
+            onExtendRight={() => onExtendRight(cellIndex)}
+            onShrink={() => onShrink(cellIndex)}
             onClear={() => onCellChange(cellIndex, { chord: '' })}
-            canSplit={cell.span === 1}
-            canExtend={cell.span === 1 && cellIndex + 1 < row.length}
-            canExtendToFullLine={row.length > 1}
-            canUnmerge={cell.span >= 2}
-            canJoin={cell.span === 0.5 && cellIndex + 1 < row.length && row[cellIndex + 1].span === 0.5}
+            canExtendLeft={cellIndex > 0}
+            canExtendRight={cellIndex < row.length - 1}
+            canShrink={cell.span > 0.5}
             onNavigateNext={() => {
               // Naviguer vers la cellule suivante
               let nextCellIndex = cellIndex + 1;

@@ -8,17 +8,13 @@ interface BeatCellProps {
   cell: Cell;
   instrumentId: InstrumentId;
   onChordChange: (chord: string) => void;
-  onSplit: () => void;
-  onExtend: () => void;
-  onExtendToFullLine: () => void;
-  onUnmerge: () => void;
-  onJoin: () => void;
+  onExtendLeft: () => void;
+  onExtendRight: () => void;
+  onShrink: () => void;
   onClear: () => void;
-  canSplit: boolean;
-  canExtend: boolean;
-  canExtendToFullLine: boolean;
-  canUnmerge: boolean;
-  canJoin: boolean;
+  canExtendLeft: boolean;
+  canExtendRight: boolean;
+  canShrink: boolean;
   onNavigateNext: () => void;
 }
 
@@ -34,17 +30,13 @@ export function BeatCell({
   cell,
   instrumentId,
   onChordChange,
-  onSplit,
-  onExtend,
-  onExtendToFullLine,
-  onUnmerge,
-  onJoin,
+  onExtendLeft,
+  onExtendRight,
+  onShrink,
   onClear,
-  canSplit,
-  canExtend,
-  canExtendToFullLine,
-  canUnmerge,
-  canJoin,
+  canExtendLeft,
+  canExtendRight,
+  canShrink,
   onNavigateNext,
 }: BeatCellProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -181,29 +173,19 @@ export function BeatCell({
 
       {/* Actions */}
       <div className="flex gap-1 justify-center flex-wrap mt-1">
-        {canSplit && (
-          <ActionButton onClick={onSplit} title="Couper en 2 demi-temps">
-            ÷½
+        {canExtendLeft && (
+          <ActionButton onClick={onExtendLeft} title="Étendre vers la gauche">
+            ←
           </ActionButton>
         )}
-        {canExtend && (
-          <ActionButton onClick={onExtend} title="Étendre à 2 temps">
-            →2
+        {canShrink && (
+          <ActionButton onClick={onShrink} title="Réduire">
+            ÷
           </ActionButton>
         )}
-        {canExtendToFullLine && (
-          <ActionButton onClick={onExtendToFullLine} title="Étendre sur toute la ligne">
-            →∞
-          </ActionButton>
-        )}
-        {canUnmerge && (
-          <ActionButton onClick={onUnmerge} title="Diviser en temps simples">
-            ÷1
-          </ActionButton>
-        )}
-        {canJoin && (
-          <ActionButton onClick={onJoin} title="Fusionner en 1 temps">
-            →1
+        {canExtendRight && (
+          <ActionButton onClick={onExtendRight} title="Étendre vers la droite">
+            →
           </ActionButton>
         )}
         {cell.chord && (
