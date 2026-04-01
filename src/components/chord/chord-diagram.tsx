@@ -17,14 +17,15 @@ export function ChordDiagram({
 }: ChordDiagramProps) {
   const sm = size === 'sm';
 
-  const LEFT = sm ? 26 : 34;
-  const W_PAD = sm ? 12 : 23;
+  const PAD = sm ? 20 : 30; // Marge symétrique gauche/droite
   const TOP = sm ? 22 : 37;
   const BOTTOM = sm ? 132 : 217;
   const CELL_W = sm ? 18 : 28;
   const CELL_H = (BOTTOM - TOP) / 5;
-  const RIGHT = LEFT + (numStrings - 1) * CELL_W;
-  const W = RIGHT + W_PAD;
+  const FRET_W = (numStrings - 1) * CELL_W;
+  const W = FRET_W + PAD * 2;
+  const LEFT = PAD;
+  const RIGHT = LEFT + FRET_W;
   const H = sm ? 158 : 240;
   const DOT_R = sm ? 7 : 13;
   const fs = sm ? 9 : 13;
