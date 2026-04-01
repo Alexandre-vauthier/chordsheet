@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { InstrumentId, StringChord, PianoChord, FingerPosition, ChordBarre } from '@/types';
-import { playChord } from '@/lib/chord-audio';
+import { playChord, playNote, OPEN_FREQS, noteNameToFreq } from '@/lib/chord-audio';
 
 interface ChordEditorModalProps {
   isOpen: boolean;
@@ -64,10 +64,14 @@ export function ChordEditorModal({
         setStartFret(initialChord.startFret || 1);
       }
     } else if (isOpen) {
-      // Réinitialiser
+      // Réinitialiser avec toutes les cordes ouvertes par défaut
       setFingers([]);
       setBarre(null);
-      setOpenStrings([]);
+      if (!isPiano && config) {
+        setOpenStrings(Array.from({ length: config.strings }, (_, i) => i + 1));
+      } else {
+        setOpenStrings([]);
+      }
       setMutedStrings([]);
       setStartFret(1);
       setPianoNotes([]);
@@ -78,12 +82,18 @@ export function ChordEditorModal({
 
   // Handlers pour cordes
   const handleFretClick = (stringNum: number, fret: number) => {
+    // Jouer le son de la note
+    const openFreq = OPEN_FREQS[instrumentId]?.[stringNum];
+    if (openFreq) playNote(openFreq * Math.pow(2, fret / 12));
+
     setOpenStrings(prev => prev.filter(s => s !== stringNum));
     setMutedStrings(prev => prev.filter(s => s !== stringNum));
 
     const existingIndex = fingers.findIndex(([s, f]) => s === stringNum && f === fret);
     if (existingIndex >= 0) {
+      // Retirer le doigt → remettre la corde en ouvert
       setFingers(prev => prev.filter((_, i) => i !== existingIndex));
+      setOpenStrings(prev => [...prev, stringNum]);
     } else {
       setFingers(prev => {
         const filtered = prev.filter(([s]) => s !== stringNum);
@@ -94,6 +104,9 @@ export function ChordEditorModal({
   };
 
   const toggleOpenString = (stringNum: number) => {
+    const openFreq = OPEN_FREQS[instrumentId]?.[stringNum];
+    if (openFreq) playNote(openFreq);
+
     setFingers(prev => prev.filter(([s]) => s !== stringNum));
     setMutedStrings(prev => prev.filter(s => s !== stringNum));
     setOpenStrings(prev =>
@@ -111,6 +124,9 @@ export function ChordEditorModal({
 
   // Handler pour piano
   const togglePianoNote = (note: string) => {
+    const freq = noteNameToFreq(note);
+    if (freq) playNote(freq, true);
+
     setPianoNotes(prev =>
       prev.includes(note)
         ? prev.filter(n => n !== note)
@@ -324,7 +340,7 @@ function StringEditor({
       {/* Indicateurs open/muted */}
       {Array.from({ length: strings }, (_, i) => {
         const sNum = strings - i;
-        const x = leftPad + i * cellW + cellW / 2;
+        const x = leftPad + i * cellW;
         const isOpen = openStrings.includes(sNum);
         const isMuted = mutedStrings.includes(sNum);
         return (
