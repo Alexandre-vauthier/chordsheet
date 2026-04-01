@@ -1,5 +1,5 @@
 // Bibliothèque de données d'accords pour tous les instruments
-import type { StringChord, PianoChord, Instrument, InstrumentId } from '@/types';
+import type { StringChord, PianoChord, Instrument, InstrumentId, FingerPosition } from '@/types';
 
 // ─── Configuration des instruments ────────────────────────────────────────────
 
@@ -706,6 +706,228 @@ function deriveSlashPianoChord(
   };
 }
 
+// ─── Génération algorithmique d'accords étendus ───────────────────────────────
+
+// Formules : intervalles en demi-tons depuis la fondamentale
+const EXTENDED_FORMULAS: Record<string, { intervals: number[]; category: string; label: string }> = {
+  // Minor major
+  'mMaj7':   { intervals: [0,3,7,11],          category:'mMaj7',  label:'minor maj.7' },
+  'mMaj9':   { intervals: [0,3,7,11,14],        category:'mMaj7',  label:'minor maj.9' },
+  // Demi-diminué / mineur altéré
+  'm7b5':    { intervals: [0,3,6,10],           category:'dim',    label:'demi-dim.7' },
+  'dim7':    { intervals: [0,3,6,9],            category:'dim',    label:'dim.7' },
+  'm7#5':    { intervals: [0,3,8,10],           category:'aug',    label:'min.7 #5' },
+  'm7b9':    { intervals: [0,3,7,10,13],        category:'min7',   label:'min.7 b9' },
+  'm7#9':    { intervals: [0,3,7,10,15],        category:'min7',   label:'min.7 #9' },
+  'm7b13':   { intervals: [0,3,7,10,20],        category:'min7',   label:'min.7 b13' },
+  'm7#13':   { intervals: [0,3,7,10,22],        category:'min7',   label:'min.7 #13' },
+  // Augmenté 7
+  'aug7':    { intervals: [0,4,8,10],           category:'aug',    label:'aug.7' },
+  'augMaj7': { intervals: [0,4,8,11],           category:'aug',    label:'aug.maj.7' },
+  // 6e
+  '6':       { intervals: [0,4,7,9],            category:'major',  label:'major 6' },
+  'm6':      { intervals: [0,3,7,9],            category:'minor',  label:'minor 6' },
+  // 9e
+  '9':       { intervals: [0,4,7,10,14],        category:'dom7',   label:'dom.9' },
+  'maj9':    { intervals: [0,4,7,11,14],        category:'maj7',   label:'maj.9' },
+  'min9':    { intervals: [0,3,7,10,14],        category:'min7',   label:'min.9' },
+  // add9 (sans 7e)
+  'add9':    { intervals: [0,4,7,14],           category:'add9',   label:'add9' },
+  'madd9':   { intervals: [0,3,7,14],           category:'minor',  label:'min.add9' },
+  // 11e
+  '11':      { intervals: [0,4,7,10,14,17],     category:'dom7',   label:'dom.11' },
+  'maj11':   { intervals: [0,4,7,11,14,17],     category:'maj7',   label:'maj.11' },
+  'min11':   { intervals: [0,3,7,10,14,17],     category:'min7',   label:'min.11' },
+  // 13e
+  '13':      { intervals: [0,4,7,10,14,21],     category:'dom7',   label:'dom.13' },
+  'maj13':   { intervals: [0,4,7,11,14,21],     category:'maj7',   label:'maj.13' },
+  'min13':   { intervals: [0,3,7,10,14,21],     category:'min7',   label:'min.13' },
+  // Dominantes altérées
+  '7b5':     { intervals: [0,4,6,10],           category:'dom7',   label:'7 b5' },
+  '7#5':     { intervals: [0,4,8,10],           category:'dom7',   label:'7 #5' },
+  '7b9':     { intervals: [0,4,7,10,13],        category:'dom7',   label:'7 b9' },
+  '7#9':     { intervals: [0,4,7,10,15],        category:'dom7',   label:'7 #9' },
+  '7#11':    { intervals: [0,4,7,10,18],        category:'dom7',   label:'7 #11' },
+  '7b13':    { intervals: [0,4,7,10,20],        category:'dom7',   label:'7 b13' },
+  '7#13':    { intervals: [0,4,7,10,22],        category:'dom7',   label:'7 #13' },
+  // Sus (instruments à cordes — le piano les a déjà en bibliothèque)
+  'sus2':    { intervals: [0,2,7],              category:'sus',    label:'sus.2' },
+  'sus4':    { intervals: [0,5,7],              category:'sus',    label:'sus.4' },
+};
+
+// Correspondance suffixe → clé de formule (ordre : plus spécifique en premier)
+const FORMULA_KEY_BY_SUFFIX: Array<[RegExp, string]> = [
+  [/^m(?:in)?[Mm]aj9$/,          'mMaj9'],
+  [/^m(?:in)?[Mm]aj7$/,          'mMaj7'],
+  [/^m(?:in)?7[bB]5$/,           'm7b5'],
+  [/^[øØ]7?$/,                   'm7b5'],
+  [/^m(?:in)?7[#♯]5$/,           'm7#5'],
+  [/^m(?:in)?7[bB]9$/,           'm7b9'],
+  [/^m(?:in)?7[#♯]9$/,           'm7#9'],
+  [/^m(?:in)?7[bB]13$/,          'm7b13'],
+  [/^m(?:in)?7[#♯]13$/,          'm7#13'],
+  [/^dim7$/i,                    'dim7'],
+  [/^aug[Mm]aj7$/i,              'augMaj7'],
+  [/^aug7$/i,                    'aug7'],
+  [/^m(?:in)?13$/,               'min13'],
+  [/^[Mm]aj13$/,                 'maj13'],
+  [/^13$/,                       '13'],
+  [/^m(?:in)?11$/,               'min11'],
+  [/^[Mm]aj11$/,                 'maj11'],
+  [/^11$/,                       '11'],
+  [/^m(?:in)?9$/,                'min9'],
+  [/^[Mm]aj9$/,                  'maj9'],
+  [/^9$/,                        '9'],
+  [/^m(?:in)?[Aa]dd(?:9|2)$/,    'madd9'],
+  [/^[Aa]dd(?:9|2)$/,            'add9'],
+  [/^7[bB]5$/,                   '7b5'],
+  [/^7[#♯]5$/,                   '7#5'],
+  [/^7[bB]9$/,                   '7b9'],
+  [/^7[#♯]9$/,                   '7#9'],
+  [/^7[#♯]11$/,                  '7#11'],
+  [/^7[bB]13$/,                  '7b13'],
+  [/^7[#♯]13$/,                  '7#13'],
+  [/^m(?:in)?6$/,                'm6'],
+  [/^6$/,                        '6'],
+  [/^sus2$/,                     'sus2'],
+  [/^sus4?$/,                    'sus4'],
+];
+
+// Parse "Dmmaj7", "G7#9", "Dm7(♯13)" → { root, rootSemi, formulaKey }
+function parseExtendedChordName(name: string): { root: string; rootSemi: number; formulaKey: string } | null {
+  // Normaliser les symboles unicode et parenthèses
+  const cleaned = name.replace(/♯/g, '#').replace(/♭/g, 'b').replace(/[()]/g, '');
+  const rootMatch = cleaned.match(/^([A-G][#b]?)/);
+  if (!rootMatch) return null;
+
+  const root = rootMatch[1];
+  const rootSemi = NOTE_SEMITONES[root];
+  if (rootSemi === undefined) return null;
+
+  const suffix = cleaned.slice(root.length);
+  for (const [pattern, key] of FORMULA_KEY_BY_SUFFIX) {
+    if (pattern.test(suffix)) return { root, rootSemi, formulaKey: key };
+  }
+  return null;
+}
+
+// Réduit la liste d'intervalles au nombre de cordes disponibles
+// Priorité d'omission : 5te, 11e, 9e, puis reste
+function prioritizeIntervals(intervals: number[], maxNotes: number): number[] {
+  if (intervals.length <= maxNotes) return intervals;
+
+  const omitOrder = [7, 17, 14, 21]; // 5te, 11e, 9e, 13e
+  let result = [...intervals];
+  for (const omit of omitOrder) {
+    if (result.length <= maxNotes) break;
+    result = result.filter(i => i % 12 !== omit % 12);
+  }
+  return result.slice(0, maxNotes);
+}
+
+// Génère un voicing pour instrument à cordes via fenêtre de cases glissante
+function generateStringVoicing(
+  rootSemi: number,
+  intervals: number[],
+  instrumentId: InstrumentId,
+  id: string, name: string, full: string, category: string,
+): StringChord | null {
+  const tuning = INSTRUMENT_TUNINGS[instrumentId];
+  if (!tuning) return null;
+
+  const numStrings = tuning.length;
+  const targets = prioritizeIntervals(intervals, numStrings).map(i => (rootSemi + i) % 12);
+  const uniqueTargets = [...new Set(targets)];
+
+  let best: { fingers: FingerPosition[]; open: number[]; muted: number[]; startFret: number; score: number } | null = null;
+
+  for (let w = 0; w <= 9; w++) {
+    const fingers: FingerPosition[] = [];
+    const open: number[] = [];
+    const muted: number[] = [];
+    const used = new Set<number>();
+
+    for (let s = 1; s <= numStrings; s++) {
+      const strSemi = tuning[s - 1] % 12;
+
+      // Cases à tester : corde à vide (0) + fenêtre [w, w+4]
+      const fretsToTry = [0];
+      for (let f = Math.max(1, w); f <= Math.max(1, w) + 4; f++) fretsToTry.push(f);
+
+      let placed = false;
+      for (const fret of fretsToTry) {
+        const noteSemi = (strSemi + fret) % 12;
+        if (uniqueTargets.includes(noteSemi)) {
+          if (fret === 0) open.push(s);
+          else fingers.push([s, fret, 1]);
+          used.add(noteSemi);
+          placed = true;
+          break;
+        }
+      }
+      if (!placed) muted.push(s);
+    }
+
+    // Vérifier la jouabilité : écart de cases ≤ 4
+    const pressedFrets = fingers.map(([, f]) => f);
+    if (pressedFrets.length > 1) {
+      const span = Math.max(...pressedFrets) - Math.min(...pressedFrets);
+      if (span > 4) continue;
+    }
+
+    const coverage = used.size / uniqueTargets.length;
+    if (coverage < 0.6) continue;
+
+    // La fondamentale doit être sur la corde la plus grave jouée
+    const playedStrings = [...open, ...fingers.map(([s]) => s)].sort((a, b) => b - a);
+    if (playedStrings.length === 0) continue;
+    const bassStr = playedStrings[0];
+    const bassFret = open.includes(bassStr) ? 0 : (fingers.find(([s]) => s === bassStr)?.[1] ?? 0);
+    const bassNote = (tuning[bassStr - 1] + bassFret) % 12;
+    const rootInBass = bassNote === rootSemi;
+
+    const startFret = pressedFrets.length > 0 ? Math.min(...pressedFrets) : 1;
+    const score = coverage * 100
+      + (rootInBass ? 20 : 0)
+      - muted.length * 8
+      - w * 0.5
+      + open.length * 3;
+
+    if (!best || score > best.score) {
+      best = { fingers, open, muted, startFret, score };
+    }
+  }
+
+  if (!best) return null;
+  return { id, name, full, category, fingers: best.fingers, open: best.open, muted: best.muted, startFret: best.startFret };
+}
+
+// Génère un voicing piano dans la plage C4–C6
+function generatePianoVoicing(
+  rootSemi: number,
+  intervals: number[],
+  id: string, name: string, full: string, category: string,
+): PianoChord {
+  // Fondamentale à l'octave 4 (MIDI 60 = C4)
+  const rootMidi = 60 + rootSemi;
+  const notes: string[] = [];
+
+  for (const interval of intervals) {
+    // Réduire les extensions > 24 demi-tons (13e = 21, etc.) dans la fenêtre
+    let midi = rootMidi + interval;
+    while (midi > 84) midi -= 12; // Max C6
+    while (midi < 60) midi += 12; // Min C4
+    if (midi > 84) continue;
+
+    const semi = midi % 12;
+    const octave = Math.floor(midi / 12) - 1;
+    const noteName = PIANO_NOTE_BY_SEMI[semi];
+    if (noteName) notes.push(`${noteName}${octave}`);
+  }
+
+  return { id, name, full, category, notes };
+}
+
 // Rechercher un accord par nom
 export function findChordByName(name: string, instrumentId: InstrumentId): (StringChord | PianoChord) | undefined {
   return findChordVariants(name, instrumentId)[0];
@@ -716,23 +938,42 @@ export function findChordVariants(name: string, instrumentId: InstrumentId): (St
   const chords = getChordsByInstrument(instrumentId);
   const normalizedName = name.trim().toLowerCase();
 
-  // Recherche directe dans la bibliothèque
+  // 1. Recherche directe dans la bibliothèque
   const direct = chords.filter(c => c.name.toLowerCase() === normalizedName);
   if (direct.length > 0) return direct;
 
-  // Dériver un accord slash si applicable
+  // 2. Accord slash (A/G, C/E…)
   const slash = parseSlashChord(name);
-  if (!slash) return [];
-
-  const baseVariants = findChordVariants(slash.base, instrumentId);
-  if (baseVariants.length === 0) return [];
-
-  const derived: (StringChord | PianoChord)[] = [];
-  for (const base of baseVariants) {
-    const result = instrumentId === 'piano'
-      ? deriveSlashPianoChord(base as PianoChord, slash.bass)
-      : deriveSlashStringChord(base as StringChord, slash.bass, instrumentId);
-    if (result) { derived.push(result); break; }
+  if (slash) {
+    const baseVariants = findChordVariants(slash.base, instrumentId);
+    if (baseVariants.length > 0) {
+      const derived: (StringChord | PianoChord)[] = [];
+      for (const base of baseVariants) {
+        const result = instrumentId === 'piano'
+          ? deriveSlashPianoChord(base as PianoChord, slash.bass)
+          : deriveSlashStringChord(base as StringChord, slash.bass, instrumentId);
+        if (result) { derived.push(result); break; }
+      }
+      if (derived.length > 0) return derived;
+    }
   }
-  return derived;
+
+  // 3. Génération algorithmique depuis formule (mMaj7, 7#9, dim7, 9, 11, 13…)
+  const parsed = parseExtendedChordName(name);
+  if (parsed) {
+    const formula = EXTENDED_FORMULAS[parsed.formulaKey];
+    if (formula) {
+      const safeId = name.replace(/[^a-zA-Z0-9]/g, '_');
+      const id = `gen_${instrumentId}_${safeId}`;
+      const full = `${parsed.root} ${formula.label}`;
+
+      if (instrumentId === 'piano') {
+        return [generatePianoVoicing(parsed.rootSemi, formula.intervals, id, name, full, formula.category)];
+      }
+      const chord = generateStringVoicing(parsed.rootSemi, formula.intervals, instrumentId, id, name, full, formula.category);
+      if (chord) return [chord];
+    }
+  }
+
+  return [];
 }
