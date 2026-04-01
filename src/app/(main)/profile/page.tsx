@@ -19,6 +19,7 @@ export default function ProfilePage() {
   const [displayName, setDisplayName] = useState('');
   const [notation, setNotation] = useState<NotationPreference>('american');
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingNotation, setIsSavingNotation] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
 
@@ -72,6 +73,19 @@ export default function ProfilePage() {
 
     loadStats();
   }, [user]);
+
+  // Sauvegarder la notation immédiatement au clic
+  const handleNotationChange = async (value: NotationPreference) => {
+    setNotation(value);
+    setIsSavingNotation(true);
+    try {
+      await updateUser({ notationPreference: value });
+    } catch (error) {
+      console.error('Error saving notation:', error);
+    } finally {
+      setIsSavingNotation(false);
+    }
+  };
 
   // Sauvegarder le nom
   const handleSaveName = async () => {
@@ -202,10 +216,16 @@ export default function ProfilePage() {
 
       {/* Préférence de notation */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
-        <h2 className="text-base font-semibold text-[var(--ink)] mb-4">Notation des accords</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold text-[var(--ink)]">Notation des accords</h2>
+          {isSavingNotation && (
+            <span className="text-xs text-[var(--ink-faint)]">Sauvegarde…</span>
+          )}
+        </div>
         <div className="flex gap-3">
           <button
-            onClick={() => setNotation('american')}
+            onClick={() => handleNotationChange('american')}
+            disabled={isSavingNotation}
             className={`flex-1 py-3 px-4 rounded-xl border-2 text-sm font-medium transition-colors ${
               notation === 'american'
                 ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
@@ -216,7 +236,8 @@ export default function ProfilePage() {
             <div>Anglais (standard)</div>
           </button>
           <button
-            onClick={() => setNotation('french')}
+            onClick={() => handleNotationChange('french')}
+            disabled={isSavingNotation}
             className={`flex-1 py-3 px-4 rounded-xl border-2 text-sm font-medium transition-colors ${
               notation === 'french'
                 ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
