@@ -933,8 +933,26 @@ export function findChordByName(name: string, instrumentId: InstrumentId): (Stri
   return findChordVariants(name, instrumentId)[0];
 }
 
+// Correspondances enharmoniques vers les noms de la bibliothèque
+const ENHARMONIC_MAP: Record<string, string> = {
+  'C#': 'Db', 'D#': 'Eb', 'E#': 'F', 'G#': 'Ab', 'A#': 'Bb', 'B#': 'C',
+  'Cb': 'B', 'Fb': 'E', 'Gb': 'F#',
+};
+
+function normalizeEnharmonic(name: string): string {
+  const match = name.trim().match(/^([A-G][b#]?)(.*)$/);
+  if (!match) return name;
+  const [, root, suffix] = match;
+  const mapped = ENHARMONIC_MAP[root];
+  return mapped ? mapped + suffix : name;
+}
+
 // Rechercher tous les accords correspondant à un nom (peut retourner plusieurs variantes)
 export function findChordVariants(name: string, instrumentId: InstrumentId): (StringChord | PianoChord)[] {
+  // 0. Normalisation enharmonique (C# → Db, Gb → F#, Cb → B, etc.)
+  const enharmonicName = normalizeEnharmonic(name);
+  if (enharmonicName !== name.trim()) return findChordVariants(enharmonicName, instrumentId);
+
   const chords = getChordsByInstrument(instrumentId);
   const normalizedName = name.trim().toLowerCase();
 
