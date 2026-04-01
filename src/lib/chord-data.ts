@@ -583,17 +583,156 @@ export function getChordsByInstrument(instrumentId: InstrumentId): (StringChord 
   }
 }
 
+// ─── Accords slash (ex: A/G = La en basse de Sol) ─────────────────────────────
+
+const NOTE_SEMITONES: Record<string, number> = {
+  'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3,
+  'E': 4, 'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8, 'Ab': 8,
+  'A': 9, 'A#': 10, 'Bb': 10, 'B': 11,
+};
+
+// Accordages par instrument (demi-tons, corde 1 = aigu, corde N = grave)
+const INSTRUMENT_TUNINGS: Partial<Record<InstrumentId, number[]>> = {
+  guitar:   [4, 11, 7, 2, 9, 4],  // E4 B3 G3 D3 A2 E2
+  ukulele:  [9, 4, 0, 7],          // A4 E4 C4 G4
+  mandolin: [4, 9, 2, 7],          // E5 A4 D4 G3
+  banjo:    [2, 11, 7, 2, 7],      // D4 B3 G3 D3 G4
+};
+
+// Note canonique pour le piano par demi-ton
+const PIANO_NOTE_BY_SEMI: Record<number, string> = {
+  0:'C', 1:'C#', 2:'D', 3:'Eb', 4:'E', 5:'F',
+  6:'F#', 7:'G', 8:'Ab', 9:'A', 10:'Bb', 11:'B',
+};
+
+// Détecte et parse une notation slash (ex: "Am/G" → { base:"Am", bass:"G" })
+export function parseSlashChord(name: string): { base: string; bass: string } | null {
+  const idx = name.lastIndexOf('/');
+  if (idx === -1) return null;
+  const base = name.slice(0, idx).trim();
+  const bass = name.slice(idx + 1).trim();
+  if (!base || !bass || NOTE_SEMITONES[bass] === undefined) return null;
+  return { base, bass };
+}
+
+function deriveSlashStringChord(
+  baseChord: StringChord,
+  bassNote: string,
+  instrumentId: InstrumentId,
+): StringChord | null {
+  const tuning = INSTRUMENT_TUNINGS[instrumentId];
+  if (!tuning) return null;
+
+  const bassSemi = NOTE_SEMITONES[bassNote];
+  if (bassSemi === undefined) return null;
+
+  const numStrings = tuning.length;
+
+  // Chercher la note basse sur la corde la plus grave (fret 0-5 max)
+  let bassString = -1;
+  let bassFret = -1;
+  for (let s = numStrings; s >= 1; s--) {
+    const fret = (bassSemi - tuning[s - 1] % 12 + 12) % 12;
+    if (fret <= 5) { bassString = s; bassFret = fret; break; }
+  }
+  if (bassString === -1) return null;
+
+  // Construire la nouvelle voix
+  const newFingers = baseChord.fingers.filter(([s]) => s !== bassString);
+  const newOpen    = baseChord.open.filter(s => s !== bassString);
+  const newMuted   = baseChord.muted.filter(s => s !== bassString);
+
+  if (bassFret === 0) {
+    newOpen.push(bassString);
+  } else {
+    newFingers.push([bassString, bassFret, 1]);
+  }
+
+  // Muter les cordes de hauteur inférieure à la corde de basse
+  for (let s = bassString + 1; s <= numStrings; s++) {
+    if (!newMuted.includes(s)) newMuted.push(s);
+  }
+
+  // Vérifier la jouabilité : écart max 4 cases entre tous les doigts pressés
+  const allFrets = newFingers.map(([, f]) => f).filter(f => f > 0);
+  if (allFrets.length > 1) {
+    const span = Math.max(...allFrets) - Math.min(...allFrets);
+    if (span > 4) return null;
+  }
+
+  const newStartFret = bassFret > 0
+    ? Math.min(baseChord.startFret, bassFret)
+    : baseChord.startFret;
+
+  return {
+    ...baseChord,
+    id: `${baseChord.id}/${bassNote}`,
+    name: `${baseChord.name}/${bassNote}`,
+    full: `${baseChord.full} (basse ${bassNote})`,
+    fingers: newFingers,
+    open: newOpen,
+    muted: newMuted,
+    startFret: newStartFret,
+  };
+}
+
+function deriveSlashPianoChord(
+  baseChord: PianoChord,
+  bassNote: string,
+): PianoChord | null {
+  const bassSemi = NOTE_SEMITONES[bassNote];
+  if (bassSemi === undefined) return null;
+
+  const bassName = PIANO_NOTE_BY_SEMI[bassSemi];
+
+  // Si la note basse est déjà dans l'accord (renversement), juste renommer
+  const noteNames = baseChord.notes.map(n => n.replace(/\d/, ''));
+  if (noteNames.includes(bassName)) {
+    return {
+      ...baseChord,
+      id: `${baseChord.id}/${bassNote}`,
+      name: `${baseChord.name}/${bassNote}`,
+      full: `${baseChord.full} (basse ${bassNote})`,
+    };
+  }
+
+  // Note basse absente : l'ajouter à l'octave 4 (plus grave que les notes habituelles)
+  return {
+    ...baseChord,
+    id: `${baseChord.id}/${bassNote}`,
+    name: `${baseChord.name}/${bassNote}`,
+    full: `${baseChord.full} (basse ${bassNote})`,
+    notes: [`${bassName}4`, ...baseChord.notes],
+  };
+}
+
 // Rechercher un accord par nom
 export function findChordByName(name: string, instrumentId: InstrumentId): (StringChord | PianoChord) | undefined {
-  const chords = getChordsByInstrument(instrumentId);
-  // Normaliser le nom (enlever espaces, mettre en minuscule pour comparaison)
-  const normalizedName = name.trim().toLowerCase();
-  return chords.find(c => c.name.toLowerCase() === normalizedName);
+  return findChordVariants(name, instrumentId)[0];
 }
 
 // Rechercher tous les accords correspondant à un nom (peut retourner plusieurs variantes)
 export function findChordVariants(name: string, instrumentId: InstrumentId): (StringChord | PianoChord)[] {
   const chords = getChordsByInstrument(instrumentId);
   const normalizedName = name.trim().toLowerCase();
-  return chords.filter(c => c.name.toLowerCase() === normalizedName);
+
+  // Recherche directe dans la bibliothèque
+  const direct = chords.filter(c => c.name.toLowerCase() === normalizedName);
+  if (direct.length > 0) return direct;
+
+  // Dériver un accord slash si applicable
+  const slash = parseSlashChord(name);
+  if (!slash) return [];
+
+  const baseVariants = findChordVariants(slash.base, instrumentId);
+  if (baseVariants.length === 0) return [];
+
+  const derived: (StringChord | PianoChord)[] = [];
+  for (const base of baseVariants) {
+    const result = instrumentId === 'piano'
+      ? deriveSlashPianoChord(base as PianoChord, slash.bass)
+      : deriveSlashStringChord(base as StringChord, slash.bass, instrumentId);
+    if (result) { derived.push(result); break; }
+  }
+  return derived;
 }
