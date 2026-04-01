@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import type { Section, InstrumentId, StringChord, PianoChord } from '@/types';
 import { ChordCard } from './chord-card';
 import { findChordVariants } from '@/lib/chord-data';
+import { useChordNotation } from '@/lib/use-chord-notation';
 
 // Type pour les accords personnalisés stockés dans la grille
 export type CustomChordMap = Record<string, StringChord | PianoChord>;
@@ -33,6 +34,8 @@ export function ChordSummary({
   onDeleteCustomChord,
   editable = false,
 }: ChordSummaryProps) {
+  const translate = useChordNotation();
+
   // État pour les indices de variante sélectionnée par accord
   const [variantIndices, setVariantIndices] = useState<Record<string, number>>({});
 
@@ -110,7 +113,7 @@ export function ChordSummary({
               >
                 <div className="flex flex-col items-center p-3 bg-gray-50 rounded-lg border border-dashed border-[var(--line)] min-w-[90px]">
                   <span className="font-mono text-sm font-medium text-[var(--ink)]">
-                    {chordName}
+                    {translate(chordName)}
                   </span>
                   <span className="text-[10px] text-[var(--ink-faint)] mt-1">
                     Non trouvé

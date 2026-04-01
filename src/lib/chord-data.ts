@@ -995,3 +995,30 @@ export function findChordVariants(name: string, instrumentId: InstrumentId): (St
 
   return [];
 }
+
+// ─── Traduction notation française ───────────────────────────────────────────
+
+const FR_NOTES: Record<string, string> = {
+  'C#': 'Do#', 'Cb': 'Dob', 'C': 'Do',
+  'D#': 'Ré#', 'Db': 'Réb', 'D': 'Ré',
+  'E#': 'Mi#', 'Eb': 'Mib', 'E': 'Mi',
+  'F#': 'Fa#', 'Fb': 'Fab', 'F': 'Fa',
+  'G#': 'Sol#', 'Gb': 'Solb', 'G': 'Sol',
+  'A#': 'La#', 'Ab': 'Lab', 'A': 'La',
+  'B#': 'Si#', 'Bb': 'Sib', 'B': 'Si',
+};
+
+export function translateChordName(name: string, notation: 'american' | 'french'): string {
+  if (!name || notation === 'american') return name;
+  // Accord slash : traduire chaque côté
+  const slashIdx = name.indexOf('/');
+  if (slashIdx > 0) {
+    return translateChordName(name.slice(0, slashIdx), notation)
+      + '/' + translateChordName(name.slice(slashIdx + 1), notation);
+  }
+  // Extraire la fondamentale (ex: "F#", "Bb", "C") puis le suffixe
+  const match = name.trim().match(/^([A-G][b#]?)(.*)$/);
+  if (!match) return name;
+  const [, root, suffix] = match;
+  return (FR_NOTES[root] ?? root) + suffix;
+}

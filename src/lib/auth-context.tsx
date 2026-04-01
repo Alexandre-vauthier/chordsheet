@@ -11,7 +11,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, getDocs, collection, query, where, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { getAuth, getDb } from './firebase';
-import type { User, UserRole } from '@/types';
+import type { User, UserRole, NotationPreference } from '@/types';
 import { isAdminEmail } from '@/types';
 
 interface AuthContextType {
@@ -22,7 +22,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signOut: () => Promise<void>;
-  updateUser: (updates: { displayName?: string; photoURL?: string }) => Promise<void>;
+  updateUser: (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -119,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // Mettre à jour le profil utilisateur
-  const updateUser = async (updates: { displayName?: string; photoURL?: string }) => {
+  const updateUser = async (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference }) => {
     const auth = getAuth();
     const db = getDb();
     const currentUser = auth.currentUser;
@@ -128,8 +128,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error('User not authenticated');
     }
 
-    // Mettre à jour Firebase Auth
-    await updateProfile(currentUser, updates);
+    // Mettre à jour Firebase Auth (ne supporte que displayName et photoURL)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { notationPreference: _np, ...authUpdates } = updates;
+    await updateProfile(currentUser, authUpdates);
 
     // Mettre à jour Firestore user doc
     await setDoc(doc(db, 'users', currentUser.uid), {

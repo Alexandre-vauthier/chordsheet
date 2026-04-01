@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
+import type { NotationPreference } from '@/types';
 
 interface UserStats {
   sheetsCount: number;
@@ -16,6 +17,7 @@ interface UserStats {
 export default function ProfilePage() {
   const { user, loading, updateUser } = useAuth();
   const [displayName, setDisplayName] = useState('');
+  const [notation, setNotation] = useState<NotationPreference>('american');
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -24,6 +26,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user) {
       setDisplayName(user.displayName);
+      if (user.notationPreference) setNotation(user.notationPreference);
     }
   }, [user]);
 
@@ -81,7 +84,7 @@ export default function ProfilePage() {
     setMessage(null);
 
     try {
-      await updateUser({ displayName: displayName.trim() });
+      await updateUser({ displayName: displayName.trim(), notationPreference: notation });
       setMessage({ type: 'success', text: 'Nom mis à jour avec succès' });
     } catch (error) {
       console.error('Error updating name:', error);
@@ -194,6 +197,35 @@ export default function ProfilePage() {
               day: 'numeric',
             })}
           </p>
+        </div>
+      </div>
+
+      {/* Préférence de notation */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
+        <h2 className="text-base font-semibold text-[var(--ink)] mb-4">Notation des accords</h2>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setNotation('american')}
+            className={`flex-1 py-3 px-4 rounded-xl border-2 text-sm font-medium transition-colors ${
+              notation === 'american'
+                ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
+                : 'border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)]'
+            }`}
+          >
+            <div className="font-mono text-lg mb-1">Am · F#m7</div>
+            <div>Anglais (standard)</div>
+          </button>
+          <button
+            onClick={() => setNotation('french')}
+            className={`flex-1 py-3 px-4 rounded-xl border-2 text-sm font-medium transition-colors ${
+              notation === 'french'
+                ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
+                : 'border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)]'
+            }`}
+          >
+            <div className="font-mono text-lg mb-1">Lam · Fa#m7</div>
+            <div>Français (solfège)</div>
+          </button>
         </div>
       </div>
 

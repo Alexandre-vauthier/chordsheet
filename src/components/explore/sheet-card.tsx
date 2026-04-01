@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { Sheet } from '@/types';
+import { useChordNotation } from '@/lib/use-chord-notation';
 
 interface SheetCardProps {
   sheet: Sheet;
@@ -20,6 +21,8 @@ export function SheetCard({
   isBookmarked,
   onToggleBookmark,
 }: SheetCardProps) {
+  const translate = useChordNotation();
+
   // Compter le nombre total d'accords
   const chordCount = sheet.sections.reduce(
     (total, section) =>
@@ -73,7 +76,7 @@ export function SheetCard({
                 key={i}
                 className="px-1.5 py-0.5 bg-white rounded border border-[var(--line)] font-mono text-xs text-[var(--ink)]"
               >
-                {chord}
+                {translate(chord)}
               </span>
             ))
           ) : (

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { Sheet, CellSpan, InstrumentId } from '@/types';
 import { ChordSummary, InstrumentSelector } from '@/components/chord';
 import type { CustomChordMap } from '@/components/chord';
+import { useChordNotation } from '@/lib/use-chord-notation';
 
 interface SheetViewerProps {
   sheet: Sheet;
@@ -18,6 +19,7 @@ const spanToGridCols: Record<CellSpan, number> = {
 };
 
 export function SheetViewer({ sheet }: SheetViewerProps) {
+  const translate = useChordNotation();
   const [instrumentId, setInstrumentId] = useState<InstrumentId>(sheet.instrumentId || 'guitar');
 
   return (
@@ -127,7 +129,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                           print:text-sm
                         `}
                       >
-                        {cell.chord || ''}
+                        {translate(cell.chord) || ''}
                       </span>
 
                       {cell.span === 0.5 && (

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import type { Cell, CellSpan, InstrumentId } from '@/types';
 import { ChordSuggestions } from '@/components/chord';
+import { useChordNotation } from '@/lib/use-chord-notation';
 
 interface BeatCellProps {
   cell: Cell;
@@ -39,6 +40,7 @@ export function BeatCell({
   canShrink,
   onNavigateNext,
 }: BeatCellProps) {
+  const translate = useChordNotation();
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(cell.chord);
   const [showDiagram, setShowDiagram] = useState(false);
@@ -140,7 +142,7 @@ export function BeatCell({
               ${isHalf ? 'text-[0.82rem]' : 'text-[1.05rem]'}
             `}
           >
-            {cell.chord || ''}
+            {translate(cell.chord) || ''}
           </span>
         )}
 
