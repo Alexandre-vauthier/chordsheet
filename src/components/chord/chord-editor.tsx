@@ -540,7 +540,15 @@ function StringEditor({
 
           return (
             <g key={`cell-${stringNum}-${fretNum}`}>
-              {/* Zone cliquable */}
+              {finger && (
+                <circle
+                  cx={x}
+                  cy={y + cellHeight / 2}
+                  r={12}
+                  fill="var(--accent)"
+                />
+              )}
+              {/* Zone cliquable au-dessus */}
               <rect
                 x={x - cellWidth / 2 + 2}
                 y={y + 2}
@@ -550,15 +558,6 @@ function StringEditor({
                 className="cursor-pointer hover:fill-[var(--accent-soft)]"
                 onClick={() => onFretClick(stringNum, fretNum)}
               />
-              {/* Doigt */}
-              {finger && (
-                <circle
-                  cx={x}
-                  cy={y + cellHeight / 2}
-                  r={12}
-                  fill="var(--accent)"
-                />
-              )}
             </g>
           );
         });

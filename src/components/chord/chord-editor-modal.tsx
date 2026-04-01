@@ -386,11 +386,11 @@ function StringEditor({
           const finger = getFinger(sNum, fNum);
           return (
             <g key={`${sNum}-${fNum}`}>
-              <rect x={x - cellW / 2 + 2} y={y + 2} width={cellW - 4} height={cellH - 4} fill="transparent"
-                className="cursor-pointer hover:fill-[var(--accent-soft)]" onClick={() => onFretClick(sNum, fNum)} />
               {finger && (
                 <circle cx={x} cy={y + cellH / 2} r={12} fill="var(--accent)" />
               )}
+              <rect x={x - cellW / 2 + 2} y={y + 2} width={cellW - 4} height={cellH - 4} fill="transparent"
+                className="cursor-pointer hover:fill-[var(--accent-soft)]" onClick={() => onFretClick(sNum, fNum)} />
             </g>
           );
         });
