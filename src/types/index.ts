@@ -1,6 +1,6 @@
 // Types pour les cellules d'accords
-// 0.5 = demi-temps, 1 = 1 temps, 2 = 2 temps, 3 = 3 temps (ligne 3/4), 4 = 4 temps (ligne 4/4)
-export type CellSpan = 0.5 | 1 | 2 | 3 | 4;
+// 0.25 = quart de temps, 0.5 = demi-temps, 1 = 1 temps, 2 = 2 temps, 3 = 3 temps (ligne 3/4), 4 = 4 temps (ligne 4/4)
+export type CellSpan = 0.25 | 0.5 | 1 | 2 | 3 | 4;
 
 export interface Cell {
   chord: string;

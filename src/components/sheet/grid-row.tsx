@@ -16,11 +16,12 @@ interface GridRowProps {
 }
 
 const spanToGridCols: Record<CellSpan, number> = {
-  0.5: 1,
-  1: 2,
-  2: 4,
-  3: 6,
-  4: 8,
+  0.25: 1,
+  0.5: 2,
+  1: 4,
+  2: 8,
+  3: 12,
+  4: 16,
 };
 
 export function GridRow({
@@ -34,85 +35,80 @@ export function GridRow({
   onNavigateToCell,
   totalRows,
 }: GridRowProps) {
-  const gridCols = beatsPerMeasure === 3 ? 'grid-cols-6' : 'grid-cols-8';
+  const totalGridCols = beatsPerMeasure === 3 ? 12 : 16;
 
-  // Construire les éléments : cellule, bouton fusion, cellule, bouton fusion, ...
-  const elements: React.ReactNode[] = [];
+  // Calculer les positions cumulées pour placer les boutons fusion
+  const cumCols: number[] = [];
+  let acc = 0;
+  for (const cell of row) {
+    acc += spanToGridCols[cell.span];
+    cumCols.push(acc);
+  }
 
-  row.forEach((cell, cellIndex) => {
-    // Bouton de fusion entre les cellules (pas avant la première)
-    if (cellIndex > 0) {
-      const prevCell = row[cellIndex - 1];
-      const mergedSpan = prevCell.span + cell.span;
-      const maxSpan = beatsPerMeasure;
-      const canMerge = mergedSpan <= maxSpan;
+  return (
+    <div className="mb-2 group/row relative">
+      {/* Grille des cellules */}
+      <div
+        className="grid gap-1"
+        style={{ gridTemplateColumns: `repeat(${totalGridCols}, minmax(0, 1fr))` }}
+      >
+        {row.map((cell, cellIndex) => {
+          const cols = spanToGridCols[cell.span];
+          const canSplit = cell.span > 0.25;
 
-      elements.push(
-        <div
-          key={`merge-${cellIndex}`}
-          className="flex items-center justify-center"
-          style={{ gridColumn: 'span 1' }}
-        >
-          {canMerge && (
+          return (
+            <BeatCell
+              key={cellIndex}
+              cell={cell}
+              cols={cols}
+              instrumentId={instrumentId}
+              onChordChange={(chord) => onCellChange(cellIndex, { chord })}
+              onClear={() => onCellChange(cellIndex, { chord: '' })}
+              canSplit={canSplit}
+              onSplit={() => onSplit(cellIndex)}
+              onNavigateNext={() => {
+                let nextCellIndex = cellIndex + 1;
+                let nextRowIndex = rowIndex;
+                if (nextCellIndex >= row.length) {
+                  nextCellIndex = 0;
+                  nextRowIndex = rowIndex + 1;
+                }
+                if (nextRowIndex < totalRows) {
+                  onNavigateToCell(nextRowIndex, nextCellIndex);
+                }
+              }}
+            />
+          );
+        })}
+      </div>
+
+      {/* Boutons de fusion — positionnés entre les cellules */}
+      <div className="absolute inset-x-0 bottom-0 opacity-0 group-hover/row:opacity-100 transition-opacity pointer-events-none" style={{ height: 0 }}>
+        {row.map((cell, cellIndex) => {
+          if (cellIndex === 0) return null;
+
+          const prevCell = row[cellIndex - 1];
+          const mergedSpan = prevCell.span + cell.span;
+          if (mergedSpan > beatsPerMeasure) return null;
+
+          // Position : à la frontière entre les 2 cellules (en % de largeur totale)
+          const leftPercent = (cumCols[cellIndex - 1] / totalGridCols) * 100;
+
+          return (
             <button
+              key={`merge-${cellIndex}`}
               onClick={() => onMerge(cellIndex)}
-              className="w-5 h-5 flex items-center justify-center rounded-full
+              className="absolute pointer-events-auto w-5 h-5 flex items-center justify-center rounded-full
                 bg-white border border-[var(--line)] text-[var(--ink-faint)]
                 hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] hover:border-[var(--accent)]
-                transition-all text-[10px] leading-none opacity-0 group-hover/row:opacity-100"
+                transition-all text-[10px] leading-none -translate-x-1/2 z-10 shadow-sm"
+              style={{ left: `${leftPercent}%`, bottom: '-10px' }}
               title="Fusionner"
             >
               ⟷
             </button>
-          )}
-        </div>
-      );
-    }
-
-    // Cellule
-    const cols = spanToGridCols[cell.span];
-    // L'espace pour les boutons de fusion : une colonne entre chaque paire
-    // On utilise un sous-grid pour le calcul, mais plus simple : on met tout à plat
-    const canSplit = cell.span > 0.5;
-
-    elements.push(
-      <BeatCell
-        key={`cell-${cellIndex}`}
-        cell={cell}
-        cols={cols}
-        instrumentId={instrumentId}
-        onChordChange={(chord) => onCellChange(cellIndex, { chord })}
-        onClear={() => onCellChange(cellIndex, { chord: '' })}
-        canSplit={canSplit}
-        onSplit={() => onSplit(cellIndex)}
-        onNavigateNext={() => {
-          let nextCellIndex = cellIndex + 1;
-          let nextRowIndex = rowIndex;
-          if (nextCellIndex >= row.length) {
-            nextCellIndex = 0;
-            nextRowIndex = rowIndex + 1;
-          }
-          if (nextRowIndex < totalRows) {
-            onNavigateToCell(nextRowIndex, nextCellIndex);
-          }
-        }}
-      />
-    );
-  });
-
-  // Calcul du total de colonnes : cellules + gaps fusion
-  // Chaque cellule prend spanToGridCols[span] cols, chaque gap fusion prend 1 col
-  const totalCellCols = row.reduce((sum, c) => sum + spanToGridCols[c.span], 0);
-  const mergeGaps = row.length - 1;
-  const totalGridCols = totalCellCols + mergeGaps;
-
-  return (
-    <div className="mb-2 group/row">
-      <div
-        className="grid gap-0.5 items-center"
-        style={{ gridTemplateColumns: `repeat(${totalGridCols}, minmax(0, 1fr))` }}
-      >
-        {elements}
+          );
+        })}
       </div>
     </div>
   );

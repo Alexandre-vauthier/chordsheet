@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Section, Cell, BeatsPerMeasure, InstrumentId } from '@/types';
+import type { Section, Cell, CellSpan, BeatsPerMeasure, InstrumentId } from '@/types';
 import { GridRow } from './grid-row';
 import { createEmptyRow } from '@/types';
 
@@ -30,18 +30,22 @@ export function SectionBlock({
     onUpdate({ rows: newRows });
   };
 
+  const VALID_SPANS: CellSpan[] = [0.25, 0.5, 1, 2, 3, 4];
+
   // Diviser une cellule en deux
   const splitCell = (rowIndex: number, cellIndex: number) => {
     const newRows = [...section.rows];
     const row = [...newRows[rowIndex]];
     const cell = row[cellIndex];
 
-    if (cell.span <= 0.5) return;
+    if (cell.span <= 0.25) return;
 
     const halfSpan = cell.span / 2;
+    if (!VALID_SPANS.includes(halfSpan as CellSpan)) return;
+
     row.splice(cellIndex, 1,
-      { chord: cell.chord, span: halfSpan as 0.5 | 1 | 2 | 3 | 4 },
-      { chord: '', span: halfSpan as 0.5 | 1 | 2 | 3 | 4 }
+      { chord: cell.chord, span: halfSpan as CellSpan },
+      { chord: '', span: halfSpan as CellSpan }
     );
     newRows[rowIndex] = row;
     onUpdate({ rows: newRows });
@@ -59,10 +63,11 @@ export function SectionBlock({
     const newSpan = prevCell.span + currentCell.span;
     const maxSpan = section.beatsPerMeasure || 4;
     if (newSpan > maxSpan) return;
+    if (!VALID_SPANS.includes(newSpan as CellSpan)) return;
 
     // Garder l'accord de la cellule de gauche si elle en a un, sinon celui de droite
     const chord = prevCell.chord || currentCell.chord;
-    row.splice(cellIndex - 1, 2, { chord, span: newSpan as 0.5 | 1 | 2 | 3 | 4 });
+    row.splice(cellIndex - 1, 2, { chord, span: newSpan as CellSpan });
     newRows[rowIndex] = row;
     onUpdate({ rows: newRows });
   };

@@ -86,7 +86,7 @@ export function BeatCell({
     setShowDiagram(!showDiagram);
   };
 
-  const isHalf = cell.span === 0.5;
+  const isSmall = cell.span <= 0.5;
 
   return (
     <div ref={cellRef} className="flex flex-col relative" style={{ gridColumn: `span ${cols}` }}>
@@ -102,7 +102,7 @@ export function BeatCell({
               ? 'bg-[var(--cell-bg)] border-[#8a7a6a] hover:bg-[var(--cell-hover)]'
               : 'bg-[var(--cell-bg)] border-[var(--line)] hover:bg-[var(--cell-hover)] hover:border-[var(--ink-faint)]'
           }
-          ${isHalf ? 'bg-[#f7f3ec] border-[var(--ink-faint)]' : ''}
+          ${isSmall ? 'bg-[#f7f3ec] border-[var(--ink-faint)]' : ''}
         `}
       >
         {isEditing ? (
@@ -117,23 +117,23 @@ export function BeatCell({
             className={`
               font-mono font-medium text-[var(--ink)] bg-transparent border-none outline-none
               text-center w-full px-1 caret-[var(--accent)]
-              ${isHalf ? 'text-[0.82rem]' : 'text-[1.05rem]'}
+              ${isSmall ? 'text-[0.82rem]' : 'text-[1.05rem]'}
             `}
           />
         ) : (
           <span
             className={`
               font-mono font-medium text-[var(--ink)] pointer-events-none
-              ${isHalf ? 'text-[0.82rem]' : 'text-[1.05rem]'}
+              ${isSmall ? 'text-[0.82rem]' : 'text-[1.05rem]'}
             `}
           >
             {translate(cell.chord) || ''}
           </span>
         )}
 
-        {isHalf && (
+        {isSmall && (
           <span className="absolute bottom-[3px] left-1 text-[8px] text-[var(--ink-faint)] font-mono pointer-events-none">
-            ½
+            {cell.span === 0.25 ? '¼' : '½'}
           </span>
         )}
 

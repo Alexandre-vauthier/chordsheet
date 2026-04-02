@@ -22,11 +22,12 @@ interface SheetViewerProps {
 }
 
 const spanToGridCols: Record<CellSpan, number> = {
-  0.5: 1,
-  1: 2,
-  2: 4,
-  3: 6,
-  4: 8,
+  0.25: 1,
+  0.5: 2,
+  1: 4,
+  2: 8,
+  3: 12,
+  4: 16,
 };
 
 // ─── Playback helpers ─────────────────────────────────────────────────────────
@@ -251,7 +252,8 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                 return (
                   <div
                     key={rowIndex}
-                    className={`grid gap-1 ${section.beatsPerMeasure === 3 ? 'grid-cols-6' : 'grid-cols-8'}`}
+                    className="grid gap-1"
+                    style={{ gridTemplateColumns: `repeat(${section.beatsPerMeasure === 3 ? 12 : 16}, minmax(0, 1fr))` }}
                   >
                     {row.map((cell, cellIndex) => {
                       const isActive =
@@ -277,7 +279,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                           className={`
                             relative rounded-lg border-[1.5px] min-h-12 flex items-center justify-center overflow-hidden
                             bg-[var(--cell-bg)] border-[#8a7a6a]
-                            ${cell.span === 0.5 ? 'bg-[#f7f3ec] border-[var(--ink-faint)]' : ''}
+                            ${cell.span <= 0.5 ? 'bg-[#f7f3ec] border-[var(--ink-faint)]' : ''}
                             ${isActive ? 'border-[var(--accent)]' : ''}
                             print:min-h-10 print:border
                           `}
@@ -296,16 +298,16 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                           <span
                             className={`
                               relative z-10 font-mono font-medium text-[var(--ink)]
-                              ${cell.span === 0.5 ? 'text-sm' : 'text-base'}
+                              ${cell.span <= 0.5 ? 'text-sm' : 'text-base'}
                               print:text-sm
                             `}
                           >
                             {translate(cell.chord)}
                           </span>
 
-                          {cell.span === 0.5 && (
+                          {cell.span <= 0.5 && (
                             <span className="absolute bottom-0.5 left-1 text-[8px] text-[var(--ink-faint)] font-mono print:hidden">
-                              ½
+                              {cell.span === 0.25 ? '¼' : '½'}
                             </span>
                           )}
                         </div>
