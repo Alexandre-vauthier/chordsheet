@@ -159,14 +159,14 @@ export function BeatCell({
       )}
 
       {/* Actions sous la cellule */}
-      <div className="flex gap-1 justify-center mt-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+      <div className="flex gap-1 justify-center h-6 items-center opacity-0 group-hover/row:opacity-100 transition-opacity">
         {canSplit && (
           <button
             onClick={(e) => { e.stopPropagation(); onSplit(); }}
             title="Diviser"
-            className="bg-white border-[1.5px] border-[var(--line)] rounded-[5px] px-[7px] py-[3px]
-              font-mono text-[0.7rem] font-medium text-[var(--ink-light)]
-              cursor-pointer whitespace-nowrap transition-all leading-[1.4]
+            className="w-5 h-5 flex items-center justify-center rounded-full
+              bg-white border border-[var(--line)] text-[var(--ink-faint)]
+              cursor-pointer transition-all text-[10px] leading-none
               hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] hover:border-[var(--accent)]"
           >
             ÷
@@ -176,9 +176,9 @@ export function BeatCell({
           <button
             onClick={(e) => { e.stopPropagation(); onClear(); }}
             title="Effacer"
-            className="bg-white border-[1.5px] border-[var(--line)] rounded-[5px] px-[7px] py-[3px]
-              font-mono text-[0.7rem] font-medium text-[var(--ink-light)]
-              cursor-pointer whitespace-nowrap transition-all leading-[1.4]
+            className="w-5 h-5 flex items-center justify-center rounded-full
+              bg-white border border-[var(--line)] text-[var(--ink-faint)]
+              cursor-pointer transition-all text-[10px] leading-none
               hover:bg-red-50 hover:text-red-600 hover:border-red-300"
           >
             ✕

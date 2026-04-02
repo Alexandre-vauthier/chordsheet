@@ -24,6 +24,8 @@ const spanToGridCols: Record<CellSpan, number> = {
   4: 16,
 };
 
+const VALID_SPANS = new Set<number>([0.25, 0.5, 1, 2, 3, 4]);
+
 export function GridRow({
   row,
   rowIndex,
@@ -82,7 +84,7 @@ export function GridRow({
         })}
       </div>
 
-      {/* Boutons de fusion — positionnés entre les cellules */}
+      {/* Boutons de fusion — positionnés entre les cellules, alignés avec ÷ */}
       <div className="absolute inset-x-0 bottom-0 opacity-0 group-hover/row:opacity-100 transition-opacity pointer-events-none" style={{ height: 0 }}>
         {row.map((cell, cellIndex) => {
           if (cellIndex === 0) return null;
@@ -90,8 +92,8 @@ export function GridRow({
           const prevCell = row[cellIndex - 1];
           const mergedSpan = prevCell.span + cell.span;
           if (mergedSpan > beatsPerMeasure) return null;
+          if (!VALID_SPANS.has(mergedSpan)) return null;
 
-          // Position : à la frontière entre les 2 cellules (en % de largeur totale)
           const leftPercent = (cumCols[cellIndex - 1] / totalGridCols) * 100;
 
           return (
@@ -102,7 +104,7 @@ export function GridRow({
                 bg-white border border-[var(--line)] text-[var(--ink-faint)]
                 hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] hover:border-[var(--accent)]
                 transition-all text-[10px] leading-none -translate-x-1/2 z-10 shadow-sm"
-              style={{ left: `${leftPercent}%`, bottom: '-10px' }}
+              style={{ left: `${leftPercent}%`, bottom: '3px' }}
               title="Fusionner"
             >
               ⟷
