@@ -39,7 +39,7 @@ export function GridRow({
 }: GridRowProps) {
   const totalGridCols = beatsPerMeasure === 3 ? 12 : 16;
 
-  // Calculer les positions cumulées pour placer les boutons fusion
+  // Positions cumulées pour placer les boutons fusion
   const cumCols: number[] = [];
   let acc = 0;
   for (const cell of row) {
@@ -48,7 +48,7 @@ export function GridRow({
   }
 
   return (
-    <div className="mb-2 group/row relative">
+    <div className="mb-1 group/row relative">
       {/* Grille des cellules */}
       <div
         className="grid gap-1"
@@ -65,7 +65,6 @@ export function GridRow({
               cols={cols}
               instrumentId={instrumentId}
               onChordChange={(chord) => onCellChange(cellIndex, { chord })}
-              onClear={() => onCellChange(cellIndex, { chord: '' })}
               canSplit={canSplit}
               onSplit={() => onSplit(cellIndex)}
               onNavigateNext={() => {
@@ -84,34 +83,34 @@ export function GridRow({
         })}
       </div>
 
-      {/* Boutons de fusion — positionnés entre les cellules, alignés avec ÷ */}
-      <div className="absolute inset-x-0 bottom-0 opacity-0 group-hover/row:opacity-100 transition-opacity pointer-events-none" style={{ height: 0 }}>
-        {row.map((cell, cellIndex) => {
-          if (cellIndex === 0) return null;
+      {/* Boutons de fusion — centrés verticalement entre les cellules */}
+      {row.map((cell, cellIndex) => {
+        if (cellIndex === 0) return null;
 
-          const prevCell = row[cellIndex - 1];
-          const mergedSpan = prevCell.span + cell.span;
-          if (mergedSpan > beatsPerMeasure) return null;
-          if (!VALID_SPANS.has(mergedSpan)) return null;
+        const prevCell = row[cellIndex - 1];
+        const mergedSpan = prevCell.span + cell.span;
+        if (mergedSpan > beatsPerMeasure) return null;
+        if (!VALID_SPANS.has(mergedSpan)) return null;
 
-          const leftPercent = (cumCols[cellIndex - 1] / totalGridCols) * 100;
+        const leftPercent = (cumCols[cellIndex - 1] / totalGridCols) * 100;
 
-          return (
-            <button
-              key={`merge-${cellIndex}`}
-              onClick={() => onMerge(cellIndex)}
-              className="absolute pointer-events-auto w-5 h-5 flex items-center justify-center rounded-full
-                bg-white border border-[var(--line)] text-[var(--ink-faint)]
-                hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] hover:border-[var(--accent)]
-                transition-all text-[10px] leading-none -translate-x-1/2 z-10 shadow-sm"
-              style={{ left: `${leftPercent}%`, bottom: '3px' }}
-              title="Fusionner"
-            >
-              ⟷
-            </button>
-          );
-        })}
-      </div>
+        return (
+          <button
+            key={`merge-${cellIndex}`}
+            onClick={() => onMerge(cellIndex)}
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10
+              w-5 h-5 flex items-center justify-center rounded-full
+              bg-white border border-[var(--line)] text-[var(--ink-faint)]
+              hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] hover:border-[var(--accent)]
+              transition-all text-[10px] leading-none shadow-sm
+              opacity-0 group-hover/row:opacity-100 pointer-events-auto"
+            style={{ left: `${leftPercent}%` }}
+            title="Fusionner"
+          >
+            ⟷
+          </button>
+        );
+      })}
     </div>
   );
 }

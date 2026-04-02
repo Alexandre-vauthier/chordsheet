@@ -10,7 +10,6 @@ interface BeatCellProps {
   cols: number;
   instrumentId: InstrumentId;
   onChordChange: (chord: string) => void;
-  onClear: () => void;
   canSplit: boolean;
   onSplit: () => void;
   onNavigateNext: () => void;
@@ -21,7 +20,6 @@ export function BeatCell({
   cols,
   instrumentId,
   onChordChange,
-  onClear,
   canSplit,
   onSplit,
   onNavigateNext,
@@ -158,33 +156,21 @@ export function BeatCell({
         />
       )}
 
-      {/* Actions sous la cellule */}
-      <div className="flex gap-1 justify-center h-6 items-center opacity-0 group-hover/row:opacity-100 transition-opacity">
-        {canSplit && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onSplit(); }}
-            title="Diviser"
-            className="w-5 h-5 flex items-center justify-center rounded-full
-              bg-white border border-[var(--line)] text-[var(--ink-faint)]
-              cursor-pointer transition-all text-[10px] leading-none
-              hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] hover:border-[var(--accent)]"
-          >
-            ÷
-          </button>
-        )}
-        {cell.chord && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onClear(); }}
-            title="Effacer"
-            className="w-5 h-5 flex items-center justify-center rounded-full
-              bg-white border border-[var(--line)] text-[var(--ink-faint)]
-              cursor-pointer transition-all text-[10px] leading-none
-              hover:bg-red-50 hover:text-red-600 hover:border-red-300"
-          >
-            ✕
-          </button>
-        )}
-      </div>
+      {/* Bouton diviser — centré en bas de la cellule, en absolute */}
+      {canSplit && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onSplit(); }}
+          title="Diviser"
+          className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10
+            w-5 h-5 flex items-center justify-center rounded-full
+            bg-white border border-[var(--line)] text-[var(--ink-faint)]
+            cursor-pointer transition-all text-[10px] leading-none
+            opacity-0 group-hover/row:opacity-100
+            hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] hover:border-[var(--accent)]"
+        >
+          /
+        </button>
+      )}
     </div>
   );
 }
