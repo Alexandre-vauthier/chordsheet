@@ -1,43 +1,29 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import type { Cell, CellSpan, InstrumentId } from '@/types';
+import type { Cell, InstrumentId } from '@/types';
 import { ChordSuggestions } from '@/components/chord';
 import { useChordNotation } from '@/lib/use-chord-notation';
 
 interface BeatCellProps {
   cell: Cell;
+  cols: number;
   instrumentId: InstrumentId;
   onChordChange: (chord: string) => void;
-  onExtendLeft: () => void;
-  onExtendRight: () => void;
-  onShrink: () => void;
   onClear: () => void;
-  canExtendLeft: boolean;
-  canExtendRight: boolean;
-  canShrink: boolean;
+  canSplit: boolean;
+  onSplit: () => void;
   onNavigateNext: () => void;
 }
 
-const spanToGridCols: Record<CellSpan, number> = {
-  0.5: 1,
-  1: 2,
-  2: 4,
-  3: 6,  // Ligne complète en 3/4
-  4: 8,  // Ligne complète en 4/4
-};
-
 export function BeatCell({
   cell,
+  cols,
   instrumentId,
   onChordChange,
-  onExtendLeft,
-  onExtendRight,
-  onShrink,
   onClear,
-  canExtendLeft,
-  canExtendRight,
-  canShrink,
+  canSplit,
+  onSplit,
   onNavigateNext,
 }: BeatCellProps) {
   const translate = useChordNotation();
@@ -100,7 +86,6 @@ export function BeatCell({
     setShowDiagram(!showDiagram);
   };
 
-  const cols = spanToGridCols[cell.span];
   const isHalf = cell.span === 0.5;
 
   return (
@@ -173,62 +158,33 @@ export function BeatCell({
         />
       )}
 
-      {/* Actions */}
-      <div className="flex gap-1 justify-center flex-wrap mt-1">
-        {canExtendLeft && (
-          <ActionButton onClick={onExtendLeft} title="Étendre vers la gauche">
-            ←
-          </ActionButton>
-        )}
-        {canShrink && (
-          <ActionButton onClick={onShrink} title="Réduire">
+      {/* Actions sous la cellule */}
+      <div className="flex gap-1 justify-center mt-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+        {canSplit && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onSplit(); }}
+            title="Diviser"
+            className="bg-white border-[1.5px] border-[var(--line)] rounded-[5px] px-[7px] py-[3px]
+              font-mono text-[0.7rem] font-medium text-[var(--ink-light)]
+              cursor-pointer whitespace-nowrap transition-all leading-[1.4]
+              hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] hover:border-[var(--accent)]"
+          >
             ÷
-          </ActionButton>
-        )}
-        {canExtendRight && (
-          <ActionButton onClick={onExtendRight} title="Étendre vers la droite">
-            →
-          </ActionButton>
+          </button>
         )}
         {cell.chord && (
-          <ActionButton onClick={onClear} title="Effacer" isDanger>
+          <button
+            onClick={(e) => { e.stopPropagation(); onClear(); }}
+            title="Effacer"
+            className="bg-white border-[1.5px] border-[var(--line)] rounded-[5px] px-[7px] py-[3px]
+              font-mono text-[0.7rem] font-medium text-[var(--ink-light)]
+              cursor-pointer whitespace-nowrap transition-all leading-[1.4]
+              hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+          >
             ✕
-          </ActionButton>
+          </button>
         )}
       </div>
     </div>
-  );
-}
-
-function ActionButton({
-  children,
-  onClick,
-  title,
-  isDanger = false,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-  title: string;
-  isDanger?: boolean;
-}) {
-  return (
-    <button
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick();
-      }}
-      title={title}
-      className={`
-        bg-white border-[1.5px] border-[var(--line)] rounded-[5px] px-[7px] py-[3px]
-        font-mono text-[0.7rem] font-medium text-[var(--ink-light)]
-        cursor-pointer whitespace-nowrap transition-all duration-150 leading-[1.4]
-        ${isDanger
-          ? 'hover:bg-red-50 hover:text-red-600 hover:border-red-300'
-          : 'hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] hover:border-[var(--accent)]'
-        }
-      `}
-    >
-      {children}
-    </button>
   );
 }
