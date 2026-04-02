@@ -87,6 +87,57 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     setHasChanges(true);
   }, [sheet.sections]);
 
+  // Dupliquer une section
+  const duplicateSection = useCallback((sectionId: string) => {
+    setSheet((prev) => {
+      const idx = prev.sections.findIndex((s) => s.id === sectionId);
+      if (idx === -1) return prev;
+      const source = prev.sections[idx];
+      const clone: Section = {
+        ...source,
+        id: crypto.randomUUID(),
+        label: `${source.label} (copie)`,
+        rows: source.rows.map((row) => row.map((cell) => ({ ...cell }))),
+      };
+      const newSections = [...prev.sections];
+      newSections.splice(idx + 1, 0, clone);
+      return { ...prev, sections: newSections };
+    });
+    setHasChanges(true);
+  }, []);
+
+  // Drag & drop sections
+  const [dragSectionId, setDragSectionId] = useState<string | null>(null);
+  const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
+
+  const handleDragStart = useCallback((sectionId: string) => {
+    setDragSectionId(sectionId);
+  }, []);
+
+  const handleDragOver = useCallback((sectionId: string) => {
+    setDragOverSectionId(sectionId);
+  }, []);
+
+  const handleDrop = useCallback((targetSectionId: string) => {
+    if (!dragSectionId || dragSectionId === targetSectionId) {
+      setDragSectionId(null);
+      setDragOverSectionId(null);
+      return;
+    }
+    setSheet((prev) => {
+      const sections = [...prev.sections];
+      const fromIdx = sections.findIndex((s) => s.id === dragSectionId);
+      const toIdx = sections.findIndex((s) => s.id === targetSectionId);
+      if (fromIdx === -1 || toIdx === -1) return prev;
+      const [moved] = sections.splice(fromIdx, 1);
+      sections.splice(toIdx, 0, moved);
+      return { ...prev, sections };
+    });
+    setHasChanges(true);
+    setDragSectionId(null);
+    setDragOverSectionId(null);
+  }, [dragSectionId]);
+
   // Navigation entre cellules (placeholder pour future implémentation)
   const navigateToCell = useCallback(
     (sectionId: string, rowIndex: number, cellIndex: number) => {
@@ -292,7 +343,12 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             instrumentId={sheet.instrumentId || 'guitar'}
             onUpdate={(updates) => updateSection(section.id, updates)}
             onDelete={() => deleteSection(section.id)}
+            onDuplicate={() => duplicateSection(section.id)}
             onNavigateToCell={navigateToCell}
+            onDragStart={() => handleDragStart(section.id)}
+            onDragOver={(e) => { e.preventDefault(); handleDragOver(section.id); }}
+            onDrop={() => handleDrop(section.id)}
+            isDragOver={dragOverSectionId === section.id && dragSectionId !== section.id}
           />
         ))}
       </div>

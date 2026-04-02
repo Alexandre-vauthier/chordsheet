@@ -10,7 +10,13 @@ interface SectionBlockProps {
   instrumentId: InstrumentId;
   onUpdate: (updates: Partial<Section>) => void;
   onDelete: () => void;
+  onDuplicate: () => void;
   onNavigateToCell: (sectionId: string, rowIndex: number, cellIndex: number) => void;
+  // Drag & drop
+  onDragStart: () => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: () => void;
+  isDragOver: boolean;
 }
 
 export function SectionBlock({
@@ -18,7 +24,12 @@ export function SectionBlock({
   instrumentId,
   onUpdate,
   onDelete,
+  onDuplicate,
   onNavigateToCell,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  isDragOver,
 }: SectionBlockProps) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -96,12 +107,34 @@ export function SectionBlock({
 
   return (
     <div
-      className="mb-10 animate-fadeIn"
+      className={`mb-10 animate-fadeIn transition-all ${isDragOver ? 'border-t-2 border-[var(--accent)] pt-2' : ''}`}
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.effectAllowed = 'move';
+        onDragStart();
+      }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        onDragOver(e);
+      }}
+      onDrop={(e) => {
+        e.preventDefault();
+        onDrop();
+      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Header de section */}
       <div className="flex items-center gap-3 mb-3">
+        {/* Drag handle */}
+        <span
+          className={`cursor-grab active:cursor-grabbing text-[var(--ink-faint)] transition-opacity ${isHovered ? 'opacity-100' : 'opacity-0'}`}
+          title="Glisser pour réordonner"
+        >
+          ⠿
+        </span>
+
         <input
           type="text"
           value={section.label}
@@ -161,6 +194,14 @@ export function SectionBlock({
               rounded text-xs transition-all hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]"
           >
             + mesure
+          </button>
+          <button
+            onClick={onDuplicate}
+            className="bg-transparent border-none cursor-pointer text-[var(--ink-light)] px-2 py-1
+              rounded text-xs transition-all hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]"
+            title="Dupliquer cette section"
+          >
+            ⧉
           </button>
           <button
             onClick={onDelete}
