@@ -11,6 +11,8 @@ interface SectionBlockProps {
   onUpdate: (updates: Partial<Section>) => void;
   onDelete: () => void;
   onDuplicate: () => void;
+  onPlaySection?: () => void;
+  isSectionPlaying?: boolean;
   onNavigateToCell: (sectionId: string, rowIndex: number, cellIndex: number) => void;
   // Drag & drop
   onDragStart: () => void;
@@ -25,6 +27,8 @@ export function SectionBlock({
   onUpdate,
   onDelete,
   onDuplicate,
+  onPlaySection,
+  isSectionPlaying,
   onNavigateToCell,
   onDragStart,
   onDragOver,
@@ -195,6 +199,20 @@ export function SectionBlock({
           >
             + mesure
           </button>
+          {onPlaySection && (
+            <button
+              onClick={onPlaySection}
+              className={`bg-transparent border-none cursor-pointer px-2 py-1
+                rounded text-xs transition-all ${
+                  isSectionPlaying
+                    ? 'text-[var(--accent)] bg-[var(--accent-soft)]'
+                    : 'text-[var(--ink-light)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]'
+                }`}
+              title={isSectionPlaying ? 'Stop' : 'Jouer cette section'}
+            >
+              {isSectionPlaying ? '■ Stop' : '▶ Play'}
+            </button>
+          )}
           <button
             onClick={onDuplicate}
             className="bg-transparent border-none cursor-pointer text-[var(--ink-light)] px-2 py-1

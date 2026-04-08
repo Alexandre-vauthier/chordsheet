@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
-import type { Sheet, CellSpan, InstrumentId, Section, Difficulty } from '@/types';
+import { useState } from 'react';
+import type { Sheet, CellSpan, InstrumentId, Difficulty } from '@/types';
 import { INSTRUMENTS, DIFFICULTY_LABELS } from '@/types';
 import { ChordSummary, InstrumentSelector, ChordSuggestions } from '@/components/chord';
 import type { CustomChordMap } from '@/components/chord';
@@ -9,8 +9,8 @@ import type { StringChord, PianoChord, CustomChord } from '@/types';
 import { isPianoChord } from '@/types';
 import { useChordNotation } from '@/lib/use-chord-notation';
 import { useChordColor } from '@/lib/use-chord-color';
-import { findChordVariants } from '@/lib/chord-data';
-import { playChord } from '@/lib/chord-audio';
+import { usePlayback, parseTempo } from '@/lib/use-playback';
+import type { PlayStep } from '@/lib/use-playback';
 
 const LS_KEY = 'chordsheet_instrument';
 
@@ -33,41 +33,6 @@ const spanToGridCols: Record<CellSpan, number> = {
   4: 16,
 };
 
-// ─── Playback helpers ─────────────────────────────────────────────────────────
-
-interface PlayStep {
-  sectionId: string;
-  rowIndex: number;
-  cellIndex: number;
-  durationMs: number;
-}
-
-function parseTempo(tempoStr: string | undefined): number {
-  if (!tempoStr) return 90;
-  const match = tempoStr.match(/(\d+)/);
-  if (!match) return 90;
-  return Math.max(40, Math.min(300, parseInt(match[1])));
-}
-
-function buildSequence(sections: Section[], beatMs: number): PlayStep[] {
-  const steps: PlayStep[] = [];
-  for (const section of sections) {
-    for (let rep = 0; rep < (section.repeat || 1); rep++) {
-      for (let r = 0; r < section.rows.length; r++) {
-        for (let c = 0; c < section.rows[r].length; c++) {
-          steps.push({
-            sectionId: section.id,
-            rowIndex: r,
-            cellIndex: c,
-            durationMs: section.rows[r][c].span * beatMs,
-          });
-        }
-      }
-    }
-  }
-  return steps;
-}
-
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function SheetViewer({ sheet }: SheetViewerProps) {
@@ -82,57 +47,13 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
     localStorage.setItem(LS_KEY, id);
   };
 
-  // Playback state
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [activeStep, setActiveStep] = useState<PlayStep | null>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const stop = useCallback(() => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setIsPlaying(false);
-    setActiveStep(null);
-  }, []);
-
-  const play = useCallback(() => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
-    const bpm = parseTempo(sheet.tempo);
-    const beatMs = (60 / bpm) * 1000;
-    const sequence = buildSequence(sheet.sections, beatMs);
-    if (!sequence.length) return;
-
-    setIsPlaying(true);
-    let i = 0;
-
-    const advance = () => {
-      if (i >= sequence.length) {
-        setIsPlaying(false);
-        setActiveStep(null);
-        return;
-      }
-      const step = sequence[i];
-      setActiveStep(step);
-
-      // Jouer l'accord si la cellule n'est pas vide
-      const cell = sheet.sections
-        .find(s => s.id === step.sectionId)
-        ?.rows[step.rowIndex]?.[step.cellIndex];
-      if (cell?.chord) {
-        // Vérifier d'abord les accords personnalisés (clé = nom-instrument)
-        const customKey = `${cell.chord.toLowerCase()}-${instrumentId}`;
-        const custom = sheet.customChords?.[customKey];
-        const chordData = custom ?? findChordVariants(cell.chord, instrumentId)[0];
-        if (chordData) playChord(chordData as StringChord | PianoChord, instrumentId);
-      }
-
-      i++;
-      timeoutRef.current = setTimeout(advance, step.durationMs);
-    };
-
-    advance();
-  }, [sheet, instrumentId]);
-
-  const togglePlay = () => (isPlaying ? stop() : play());
+  // Playback
+  const { isPlaying, activeStep, playSection, togglePlay, stop } = usePlayback({
+    sections: sheet.sections,
+    tempo: sheet.tempo,
+    instrumentId,
+    customChords: sheet.customChords as Record<string, unknown>,
+  });
 
   const bpm = parseTempo(sheet.tempo);
 
@@ -244,6 +165,18 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                   ×{section.repeat}
                 </span>
               )}
+              <button
+                onClick={() => {
+                  if (isPlaying && activeStep?.sectionId === section.id) stop();
+                  else playSection(section.id);
+                }}
+                className="print:hidden ml-auto w-6 h-6 flex items-center justify-center rounded-full
+                  border border-[var(--line)] text-[var(--ink-faint)]
+                  hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors text-[10px]"
+                title={isPlaying && activeStep?.sectionId === section.id ? 'Stop' : 'Jouer cette section'}
+              >
+                {isPlaying && activeStep?.sectionId === section.id ? '■' : '▶'}
+              </button>
             </div>
 
             {/* Grille */}

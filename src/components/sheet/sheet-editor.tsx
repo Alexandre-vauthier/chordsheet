@@ -7,6 +7,7 @@ import { SectionBlock } from './section-block';
 import { Button } from '@/components/ui/button';
 import { InstrumentSelector, ChordSummary, ChordEditorModal } from '@/components/chord';
 import type { CustomChordMap } from '@/components/chord';
+import { usePlayback, parseTempo } from '@/lib/use-playback';
 
 interface SheetEditorProps {
   initialSheet: NewSheet | Sheet;
@@ -20,6 +21,16 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   const [sheet, setSheet] = useState<NewSheet | Sheet>(initialSheet);
   const [hasChanges, setHasChanges] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Playback
+  const { isPlaying, activeStep, playSection, togglePlay, stop } = usePlayback({
+    sections: sheet.sections,
+    tempo: sheet.tempo,
+    instrumentId: sheet.instrumentId || 'guitar',
+    customChords: sheet.customChords as Record<string, unknown>,
+  });
+
+  const bpm = parseTempo(sheet.tempo);
 
   // État pour la modal d'édition d'accord
   const [chordModalOpen, setChordModalOpen] = useState(false);
@@ -207,14 +218,45 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 pb-24">
       {/* Header de la chanson */}
       <div className="mb-8 border-b-2 border-[var(--ink)] pb-4">
-        <input
-          type="text"
-          value={sheet.title}
-          onChange={(e) => updateSheet({ title: e.target.value })}
-          placeholder="Titre de la chanson…"
-          className="font-playfair text-3xl font-bold bg-transparent border-none outline-none w-full
-            caret-[var(--accent)] placeholder:text-[var(--ink-faint)]"
-        />
+        <div className="flex items-start justify-between gap-4">
+          <input
+            type="text"
+            value={sheet.title}
+            onChange={(e) => updateSheet({ title: e.target.value })}
+            placeholder="Titre de la chanson…"
+            className="font-playfair text-3xl font-bold bg-transparent border-none outline-none flex-1
+              caret-[var(--accent)] placeholder:text-[var(--ink-faint)]"
+          />
+          <button
+            onClick={togglePlay}
+            title={isPlaying ? 'Stop' : `Play — ${bpm} BPM`}
+            className={`
+              flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
+              transition-all duration-150 border-[1.5px]
+              ${isPlaying
+                ? 'bg-[var(--accent)] border-[var(--accent)] text-white hover:bg-[#a83d25]'
+                : 'bg-white border-[var(--line)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+              }
+            `}
+          >
+            {isPlaying ? (
+              <>
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <rect x="4" y="3" width="4" height="14" rx="1" />
+                  <rect x="12" y="3" width="4" height="14" rx="1" />
+                </svg>
+                Stop
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                </svg>
+                Play
+              </>
+            )}
+          </button>
+        </div>
         <div className="flex flex-wrap gap-4 mt-3">
           <input
             type="text"
@@ -344,6 +386,11 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             onUpdate={(updates) => updateSection(section.id, updates)}
             onDelete={() => deleteSection(section.id)}
             onDuplicate={() => duplicateSection(section.id)}
+            onPlaySection={() => {
+              if (isPlaying && activeStep?.sectionId === section.id) stop();
+              else playSection(section.id);
+            }}
+            isSectionPlaying={isPlaying && activeStep?.sectionId === section.id}
             onNavigateToCell={navigateToCell}
             onDragStart={() => handleDragStart(section.id)}
             onDragOver={(e) => { e.preventDefault(); handleDragOver(section.id); }}
