@@ -46,7 +46,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (userDoc.exists()) {
           const userData = userDoc.data();
           const email = userData.email || fbUser.email || '';
-          const role: UserRole = userData.role || (isAdminEmail(email) ? 'admin' : 'user');
+          const role: UserRole = isAdminEmail(email) ? 'admin' : (userData.role || 'user');
+
+          // Synchroniser le rôle admin dans Firestore si nécessaire
+          if (role === 'admin' && userData.role !== 'admin') {
+            setDoc(doc(db, 'users', fbUser.uid), { role: 'admin' }, { merge: true }).catch(() => {});
+          }
+
           setUser({
             id: fbUser.uid,
             displayName: userData.displayName || fbUser.displayName || '',
