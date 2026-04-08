@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import type { Sheet, CellSpan, InstrumentId, Difficulty } from '@/types';
 import { INSTRUMENTS, DIFFICULTY_LABELS } from '@/types';
 import { ChordSummary, InstrumentSelector, ChordSuggestions } from '@/components/chord';
@@ -81,7 +82,12 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
               {sheet.title || 'Sans titre'}
             </h1>
             {sheet.artist && (
-              <p className="text-lg text-[var(--ink-light)] mt-1">{sheet.artist}</p>
+              <Link
+                href={`/artist/${encodeURIComponent(sheet.artist)}`}
+                className="text-lg text-[var(--ink-light)] mt-1 block hover:text-[var(--accent)] transition-colors print:text-[var(--ink-light)]"
+              >
+                {sheet.artist}
+              </Link>
             )}
             {sheet.ownerName && (
               <p className="text-xs text-[var(--ink-faint)] mt-1 print:hidden">par {sheet.ownerName}</p>

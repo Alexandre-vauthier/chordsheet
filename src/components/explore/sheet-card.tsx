@@ -104,9 +104,17 @@ export function SheetCard({
           </Link>
 
           <div className="flex items-center justify-between mt-1">
-            <p className="text-xs text-[var(--ink-light)] truncate flex-1">
-              {sheet.artist || 'Artiste inconnu'}
-            </p>
+            {sheet.artist ? (
+              <Link
+                href={`/artist/${encodeURIComponent(sheet.artist)}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-xs text-[var(--ink-light)] truncate flex-1 hover:text-[var(--accent)] transition-colors"
+              >
+                {sheet.artist}
+              </Link>
+            ) : (
+              <span className="text-xs text-[var(--ink-light)] truncate flex-1">Artiste inconnu</span>
+            )}
 
             {/* Difficulté ou note communautaire */}
             {showRating && sheet.ratingCount > 0 ? (
