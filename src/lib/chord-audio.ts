@@ -79,8 +79,7 @@ function getStringChordFrequencies(chord: StringChord, instrumentId: InstrumentI
       continue;
     }
 
-    // Par défaut : corde à vide
-    freqs.push({ s, freq: openFreq });
+    // Corde non définie → ne pas la jouer (évite les notes parasites)
   }
 
   // Ordre grave→aigu pour le strum
@@ -112,6 +111,25 @@ export function playNote(freq: number, isPiano = false): void {
   osc.stop(ctx.currentTime + 1.4);
 }
 
+// Références aux oscillateurs en cours pour pouvoir les couper
+let activeNodes: { osc: OscillatorNode; gain: GainNode }[] = [];
+
+// Couper le son en cours (fade out rapide)
+function stopActiveChord() {
+  const ctx = audioContext;
+  if (!ctx) return;
+  const now = ctx.currentTime;
+  for (const { osc, gain } of activeNodes) {
+    try {
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setValueAtTime(gain.gain.value, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
+      osc.stop(now + 0.06);
+    } catch { /* already stopped */ }
+  }
+  activeNodes = [];
+}
+
 // Jouer un accord complet
 export function playChord(
   chord: StringChord | PianoChord,
@@ -120,6 +138,9 @@ export function playChord(
   const ctx = getAudioContext();
   const isPiano = instrumentId === 'piano';
 
+  // Couper l'accord précédent
+  stopActiveChord();
+
   const freqs = isPianoChord(chord)
     ? getPianoChordFrequencies(chord)
     : getStringChordFrequencies(chord, instrumentId);
@@ -127,6 +148,8 @@ export function playChord(
   const strumDelay = isPiano ? 0.06 : 0.04;
   const decay = isPiano ? 1.8 : 2.2;
   const vol = isPiano ? 0.22 : 0.28;
+
+  const nodes: { osc: OscillatorNode; gain: GainNode }[] = [];
 
   freqs.forEach((freq, i) => {
     const t = ctx.currentTime + i * strumDelay;
@@ -143,5 +166,8 @@ export function playChord(
 
     osc.start(t);
     osc.stop(t + decay);
+    nodes.push({ osc, gain });
   });
+
+  activeNodes = nodes;
 }
