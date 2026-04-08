@@ -4,6 +4,7 @@ import Link from 'next/link';
 import type { Sheet, Difficulty } from '@/types';
 import { DIFFICULTY_LABELS } from '@/types';
 import { useChordNotation } from '@/lib/use-chord-notation';
+import { useArtwork } from '@/lib/use-artwork';
 
 interface SheetCardProps {
   sheet: Sheet;
@@ -23,16 +24,7 @@ export function SheetCard({
   onToggleBookmark,
 }: SheetCardProps) {
   const translate = useChordNotation();
-
-  // Compter le nombre total d'accords
-  const chordCount = sheet.sections.reduce(
-    (total, section) =>
-      total + section.rows.reduce(
-        (rowTotal, row) => rowTotal + row.filter((cell) => cell.chord).length,
-        0
-      ),
-    0
-  );
+  const { artworkUrl } = useArtwork(sheet.artist, sheet.title);
 
   // Premier aperçu des accords (accords uniques)
   const uniqueChords = [...new Set(
@@ -48,80 +40,94 @@ export function SheetCard({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[var(--line)] overflow-hidden hover:shadow-md transition-shadow group relative">
-      {/* Bouton bookmark */}
-      {onToggleBookmark && (
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onToggleBookmark();
-          }}
-          className={`absolute top-2 right-2 z-10 p-1.5 rounded-full transition-all
-            ${isBookmarked
-              ? 'bg-amber-100 text-amber-500'
-              : 'bg-white/80 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-amber-500 hover:bg-amber-50'
-            }`}
-          title={isBookmarked ? 'Retirer du book' : 'Ajouter au book'}
-        >
-          {isBookmarked ? '★' : '☆'}
-        </button>
+    <div className="bg-white rounded-xl border border-[var(--line)] overflow-hidden hover:shadow-md transition-shadow group relative flex">
+      {/* Artwork à gauche */}
+      {artworkUrl && (
+        <Link href={`/sheet/${sheet.id}`} className="flex-shrink-0 w-24">
+          <img
+            src={artworkUrl}
+            alt={`${sheet.artist} — ${sheet.title}`}
+            className="w-full h-full object-cover"
+          />
+        </Link>
       )}
 
-      {/* Aperçu des accords */}
-      <div className="p-3 bg-gradient-to-br from-[var(--cell-bg)] to-white border-b border-[var(--line)]">
-        <div className="flex flex-wrap gap-1.5">
-          {uniqueChords.length > 0 ? (
-            uniqueChords.map((chord, i) => (
-              <span
-                key={i}
-                className="px-1.5 py-0.5 bg-white rounded border border-[var(--line)] font-mono text-xs text-[var(--ink)]"
-              >
-                {translate(chord)}
-              </span>
-            ))
-          ) : (
-            <span className="text-[var(--ink-faint)] text-xs italic">Aucun accord</span>
-          )}
-        </div>
-      </div>
-
-      {/* Infos */}
-      <div className="p-3">
-        <Link href={`/sheet/${sheet.id}`} className="block group-hover:text-[var(--accent)] transition-colors">
-          <h3 className="font-semibold text-[var(--ink)] truncate text-sm">
-            {sheet.title || 'Sans titre'}
-          </h3>
-        </Link>
-
-        <div className="flex items-center justify-between mt-1">
-          <p className="text-xs text-[var(--ink-light)] truncate flex-1">
-            {sheet.artist || 'Artiste inconnu'}
-          </p>
-
-          {/* Difficulté ou note communautaire */}
-          {showRating && sheet.ratingCount > 0 ? (
-            <div className="flex items-center gap-1 ml-2">
-              <span className="text-amber-500 text-sm">★</span>
-              <span className="text-xs font-medium text-[var(--ink)]">
-                {formatRating(sheet.averageRating)}
-              </span>
-            </div>
-          ) : sheet.difficulty ? (
-            <span className="text-xs text-[var(--ink-faint)] ml-2">
-              {sheet.difficulty} · {DIFFICULTY_LABELS[sheet.difficulty as Difficulty]}
-            </span>
-          ) : null}
-        </div>
-
-        {showOwner && (
-          <p className="text-[10px] text-[var(--ink-faint)] mt-1">
-            par {sheet.ownerName}
-          </p>
+      {/* Contenu à droite */}
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* Bouton bookmark */}
+        {onToggleBookmark && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleBookmark();
+            }}
+            className={`absolute top-2 right-2 z-10 p-1.5 rounded-full transition-all
+              ${isBookmarked
+                ? 'bg-amber-100 text-amber-500'
+                : 'bg-white/80 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-amber-500 hover:bg-amber-50'
+              }`}
+            title={isBookmarked ? 'Retirer du book' : 'Ajouter au book'}
+          >
+            {isBookmarked ? '★' : '☆'}
+          </button>
         )}
 
+        {/* Aperçu des accords */}
+        <div className="p-3 bg-gradient-to-br from-[var(--cell-bg)] to-white border-b border-[var(--line)]">
+          <div className="flex flex-wrap gap-1.5">
+            {uniqueChords.length > 0 ? (
+              uniqueChords.map((chord, i) => (
+                <span
+                  key={i}
+                  className="px-1.5 py-0.5 bg-white rounded border border-[var(--line)] font-mono text-xs text-[var(--ink)]"
+                >
+                  {translate(chord)}
+                </span>
+              ))
+            ) : (
+              <span className="text-[var(--ink-faint)] text-xs italic">Aucun accord</span>
+            )}
+          </div>
+        </div>
+
+        {/* Infos */}
+        <div className="p-3 flex-1">
+          <Link href={`/sheet/${sheet.id}`} className="block group-hover:text-[var(--accent)] transition-colors">
+            <h3 className="font-semibold text-[var(--ink)] truncate text-sm">
+              {sheet.title || 'Sans titre'}
+            </h3>
+          </Link>
+
+          <div className="flex items-center justify-between mt-1">
+            <p className="text-xs text-[var(--ink-light)] truncate flex-1">
+              {sheet.artist || 'Artiste inconnu'}
+            </p>
+
+            {/* Difficulté ou note communautaire */}
+            {showRating && sheet.ratingCount > 0 ? (
+              <div className="flex items-center gap-1 ml-2">
+                <span className="text-amber-500 text-sm">★</span>
+                <span className="text-xs font-medium text-[var(--ink)]">
+                  {formatRating(sheet.averageRating)}
+                </span>
+              </div>
+            ) : sheet.difficulty ? (
+              <span className="text-xs text-[var(--ink-faint)] ml-2">
+                {sheet.difficulty} · {DIFFICULTY_LABELS[sheet.difficulty as Difficulty]}
+              </span>
+            ) : null}
+          </div>
+
+          {showOwner && (
+            <p className="text-[10px] text-[var(--ink-faint)] mt-1">
+              par {sheet.ownerName}
+            </p>
+          )}
+        </div>
+
         {/* Actions avec icônes */}
-        <div className="flex items-center gap-1 mt-3 pt-2 border-t border-[var(--line)]">
+        <div className="flex items-center gap-1 px-3 pb-3 pt-2 border-t border-[var(--line)] mx-3">
           <Link
             href={`/sheet/${sheet.id}`}
             className="p-1.5 rounded hover:bg-[var(--accent-soft)] text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors"
