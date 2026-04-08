@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import type { Cell, InstrumentId } from '@/types';
 import { ChordSuggestions } from '@/components/chord';
 import { useChordNotation } from '@/lib/use-chord-notation';
+import { useChordColor } from '@/lib/use-chord-color';
 
 interface BeatCellProps {
   cell: Cell;
@@ -25,6 +26,7 @@ export function BeatCell({
   onNavigateNext,
 }: BeatCellProps) {
   const translate = useChordNotation();
+  const getColor = useChordColor();
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(cell.chord);
   const [showDiagram, setShowDiagram] = useState(false);
@@ -85,12 +87,14 @@ export function BeatCell({
   };
 
   const isSmall = cell.span <= 0.5;
+  const color = getColor(cell.chord);
 
   return (
     <div ref={cellRef} className="flex flex-col relative" style={{ gridColumn: `span ${cols}` }}>
       {/* Cellule */}
       <div
         onClick={handleClick}
+        style={color && !isEditing ? { borderLeftColor: color.border, borderLeftWidth: '3px' } : undefined}
         className={`
           relative rounded-lg border-[1.5px] min-h-14 flex items-center justify-center cursor-pointer
           transition-all duration-150 select-none

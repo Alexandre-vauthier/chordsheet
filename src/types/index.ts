@@ -181,6 +181,7 @@ export interface User {
   // V3 - Préférences d'accords
   preferredInstrument?: InstrumentId;
   notationPreference?: NotationPreference;
+  chordColorCoding?: boolean;
 }
 
 // Vérifier si un email est admin

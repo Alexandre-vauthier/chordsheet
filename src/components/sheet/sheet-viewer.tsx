@@ -8,6 +8,7 @@ import type { CustomChordMap } from '@/components/chord';
 import type { StringChord, PianoChord, CustomChord } from '@/types';
 import { isPianoChord } from '@/types';
 import { useChordNotation } from '@/lib/use-chord-notation';
+import { useChordColor } from '@/lib/use-chord-color';
 import { findChordVariants } from '@/lib/chord-data';
 import { playChord } from '@/lib/chord-audio';
 
@@ -71,6 +72,7 @@ function buildSequence(sections: Section[], beatMs: number): PlayStep[] {
 
 export function SheetViewer({ sheet }: SheetViewerProps) {
   const translate = useChordNotation();
+  const getColor = useChordColor();
   const [instrumentId, setInstrumentId] = useState<InstrumentId>(
     () => getSavedInstrument(sheet.instrumentId || 'guitar')
   );
@@ -284,6 +286,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                           instrumentId={instrumentId}
                           customChords={sheet.customChords as Record<string, CustomChord> | undefined}
                           translate={translate}
+                          getColor={getColor}
                         />
                       );
                     })}
@@ -343,6 +346,7 @@ function ViewerChordCell({
   instrumentId,
   customChords,
   translate,
+  getColor,
 }: {
   chord: string;
   span: CellSpan;
@@ -351,13 +355,18 @@ function ViewerChordCell({
   instrumentId: InstrumentId;
   customChords?: Record<string, CustomChord>;
   translate: (name: string) => string;
+  getColor: (chord: string) => { border: string; bg: string } | null;
 }) {
   const [hovered, setHovered] = useState(false);
   const custom = resolveCustomChord(chord, instrumentId, customChords);
+  const color = getColor(chord);
 
   return (
     <div
-      style={{ gridColumn: `span ${spanToGridCols[span]}` }}
+      style={{
+        gridColumn: `span ${spanToGridCols[span]}`,
+        ...(color ? { borderLeftColor: color.border, borderLeftWidth: '3px' } : {}),
+      }}
       className={`
         relative rounded-lg border-[1.5px] min-h-12 flex items-center justify-center
         bg-[var(--cell-bg)] border-[#8a7a6a] cursor-pointer

@@ -18,6 +18,7 @@ export default function ProfilePage() {
   const { user, loading, updateUser } = useAuth();
   const [displayName, setDisplayName] = useState('');
   const [notation, setNotation] = useState<NotationPreference>('american');
+  const [colorCoding, setColorCoding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingNotation, setIsSavingNotation] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -28,6 +29,7 @@ export default function ProfilePage() {
     if (user) {
       setDisplayName(user.displayName);
       if (user.notationPreference) setNotation(user.notationPreference);
+      setColorCoding(user.chordColorCoding ?? false);
     }
   }, [user]);
 
@@ -246,6 +248,53 @@ export default function ProfilePage() {
           >
             <div className="font-mono text-lg mb-1">Lam · Fa#m7</div>
             <div>Français (solfège)</div>
+          </button>
+        </div>
+      </div>
+
+      {/* Code couleur des accords */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Code couleur des accords</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              Bordure colorée sur chaque case selon la note fondamentale
+            </p>
+            <div className="flex gap-1.5 mt-2">
+              {[
+                { note: 'C', color: '#dc2626' },
+                { note: 'D', color: '#ea580c' },
+                { note: 'E', color: '#ca8a04' },
+                { note: 'F', color: '#16a34a' },
+                { note: 'G', color: '#0891b2' },
+                { note: 'A', color: '#2563eb' },
+                { note: 'B', color: '#7c3aed' },
+              ].map(({ note, color }) => (
+                <span
+                  key={note}
+                  className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded"
+                  style={{ borderLeft: `3px solid ${color}`, background: `${color}15` }}
+                >
+                  {note}
+                </span>
+              ))}
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !colorCoding;
+              setColorCoding(newVal);
+              try { await updateUser({ chordColorCoding: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              colorCoding ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                colorCoding ? 'translate-x-5' : ''
+              }`}
+            />
           </button>
         </div>
       </div>

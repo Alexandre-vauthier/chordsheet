@@ -22,7 +22,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signOut: () => Promise<void>;
-  updateUser: (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference }) => Promise<void>;
+  updateUser: (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -54,6 +54,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             photoURL: userData.photoURL || fbUser.photoURL,
             role,
             notationPreference: userData.notationPreference || 'american',
+            chordColorCoding: userData.chordColorCoding ?? false,
             preferredInstrument: userData.preferredInstrument,
             createdAt: userData.createdAt?.toDate() || new Date(),
             updatedAt: userData.updatedAt?.toDate() || new Date(),
@@ -121,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // Mettre à jour le profil utilisateur
-  const updateUser = async (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference }) => {
+  const updateUser = async (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean }) => {
     const auth = getAuth();
     const db = getDb();
     const currentUser = auth.currentUser;
@@ -132,7 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Mettre à jour Firebase Auth (ne supporte que displayName et photoURL)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { notationPreference: _np, ...authUpdates } = updates;
+    const { notationPreference: _np, chordColorCoding: _cc, ...authUpdates } = updates;
     await updateProfile(currentUser, authUpdates);
 
     // Mettre à jour Firestore user doc
