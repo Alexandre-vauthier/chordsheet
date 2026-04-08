@@ -42,15 +42,19 @@ export function SheetCard({
   return (
     <div className="bg-white rounded-xl border border-[var(--line)] overflow-hidden hover:shadow-md transition-shadow group relative flex">
       {/* Artwork à gauche */}
-      {artworkUrl && (
-        <Link href={`/sheet/${sheet.id}`} className="flex-shrink-0 w-24">
+      <Link href={`/sheet/${sheet.id}`} className="flex-shrink-0 w-24 bg-gradient-to-br from-[var(--cell-bg)] to-[var(--line)]">
+        {artworkUrl ? (
           <img
             src={artworkUrl}
             alt={`${sheet.artist} — ${sheet.title}`}
             className="w-full h-full object-cover"
           />
-        </Link>
-      )}
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-[var(--ink-faint)] text-2xl">
+            ♫
+          </div>
+        )}
+      </Link>
 
       {/* Contenu à droite */}
       <div className="flex-1 min-w-0 flex flex-col">
