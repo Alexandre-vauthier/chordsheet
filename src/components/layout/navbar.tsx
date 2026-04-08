@@ -41,7 +41,7 @@ export function Navbar() {
                   { href: '/dashboard', label: 'Mon book' },
                   { href: '/sets', label: 'Mes sets' },
                   { href: '/explore', label: 'Explorer' },
-                  { href: '/chords', label: 'Accords' },
+                  // { href: '/chords', label: 'Accords' },
                 ].map(({ href, label }) => (
                   <Link
                     key={href}
@@ -135,7 +135,7 @@ export function Navbar() {
               { href: '/dashboard', label: 'Mon book' },
               { href: '/sets', label: 'Mes sets' },
               { href: '/explore', label: 'Explorer' },
-              { href: '/chords', label: 'Accords' },
+              // { href: '/chords', label: 'Accords' },
             ].map(({ href, label }) => (
               <Link
                 key={href}
