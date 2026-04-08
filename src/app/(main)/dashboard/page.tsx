@@ -88,16 +88,12 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {tab === 'mine' && (
-            <Link href="/sheet/new" className="hidden sm:block">
-              <Button>+ Nouvelle grille</Button>
-            </Link>
-          )}
-          {tab === 'book' && (
-            <Link href="/explore" className="hidden sm:block">
-              <Button variant="ghost">Explorer</Button>
-            </Link>
-          )}
+          <Link href="/explore" className="hidden sm:block">
+            <Button variant="ghost">Explorer</Button>
+          </Link>
+          <Link href="/sheet/new" className="hidden sm:block">
+            <Button>+ Nouvelle grille</Button>
+          </Link>
         </div>
       </div>
 
