@@ -266,22 +266,28 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             className="font-sans text-sm text-[var(--ink-light)] bg-transparent border-none outline-none
               placeholder:text-[var(--ink-faint)]"
           />
-          <input
-            type="text"
-            value={sheet.key}
-            onChange={(e) => updateSheet({ key: e.target.value })}
-            placeholder="Tonalité…"
-            className="font-sans text-sm text-[var(--ink-light)] bg-transparent border-none outline-none
-              placeholder:text-[var(--ink-faint)] w-24"
-          />
-          <input
-            type="text"
-            value={sheet.tempo}
-            onChange={(e) => updateSheet({ tempo: e.target.value })}
-            placeholder="Tempo…"
-            className="font-sans text-sm text-[var(--ink-light)] bg-transparent border-none outline-none
-              placeholder:text-[var(--ink-faint)] w-24"
-          />
+          <span className="flex items-center gap-1 text-[var(--ink-faint)]">
+            <span className="text-sm">♯♭</span>
+            <input
+              type="text"
+              value={sheet.key}
+              onChange={(e) => updateSheet({ key: e.target.value })}
+              placeholder="Tonalité…"
+              className="font-sans text-sm text-[var(--ink-light)] bg-transparent border-none outline-none
+                placeholder:text-[var(--ink-faint)] w-24"
+            />
+          </span>
+          <span className="flex items-center gap-1 text-[var(--ink-faint)]">
+            <span className="text-base leading-none">♩</span>
+            <input
+              type="text"
+              value={sheet.tempo}
+              onChange={(e) => updateSheet({ tempo: e.target.value })}
+              placeholder="Tempo…"
+              className="font-sans text-sm text-[var(--ink-light)] bg-transparent border-none outline-none
+                placeholder:text-[var(--ink-faint)] w-24"
+            />
+          </span>
         </div>
       </div>
 
