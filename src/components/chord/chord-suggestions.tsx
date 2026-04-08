@@ -12,6 +12,7 @@ import { playChord } from '@/lib/chord-audio';
 interface ChordSuggestionsProps {
   chordName: string;
   instrumentId: InstrumentId;
+  customChord?: StringChord | PianoChord | null;
   onSelectVariant?: (chord: StringChord | PianoChord) => void;
   position?: 'top' | 'bottom';
 }
@@ -19,17 +20,20 @@ interface ChordSuggestionsProps {
 export function ChordSuggestions({
   chordName,
   instrumentId,
+  customChord,
   onSelectVariant,
   position = 'bottom',
 }: ChordSuggestionsProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Trouver les variantes de l'accord
+  // Trouver les variantes de l'accord (accord personnalisé en premier)
   const variants = useMemo(() => {
     if (!chordName.trim()) return [];
-    return findChordVariants(chordName, instrumentId);
-  }, [chordName, instrumentId]);
+    const library = findChordVariants(chordName, instrumentId);
+    if (customChord) return [customChord, ...library];
+    return library;
+  }, [chordName, instrumentId, customChord]);
 
   // Reset l'index quand le nom change
   useEffect(() => {

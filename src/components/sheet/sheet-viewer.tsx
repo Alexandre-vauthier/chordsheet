@@ -3,8 +3,10 @@
 import { useState, useRef, useCallback } from 'react';
 import type { Sheet, CellSpan, InstrumentId, Section, Difficulty } from '@/types';
 import { INSTRUMENTS, DIFFICULTY_LABELS } from '@/types';
-import { ChordSummary, InstrumentSelector } from '@/components/chord';
+import { ChordSummary, InstrumentSelector, ChordSuggestions } from '@/components/chord';
 import type { CustomChordMap } from '@/components/chord';
+import type { StringChord, PianoChord, CustomChord } from '@/types';
+import { isPianoChord } from '@/types';
 import { useChordNotation } from '@/lib/use-chord-notation';
 import { findChordVariants } from '@/lib/chord-data';
 import { playChord } from '@/lib/chord-audio';
@@ -273,44 +275,16 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                       }
 
                       return (
-                        <div
+                        <ViewerChordCell
                           key={cellIndex}
-                          style={{ gridColumn: `span ${spanToGridCols[cell.span]}` }}
-                          className={`
-                            relative rounded-lg border-[1.5px] min-h-12 flex items-center justify-center overflow-hidden
-                            bg-[var(--cell-bg)] border-[#8a7a6a]
-                            ${cell.span <= 0.5 ? 'bg-[#f7f3ec] border-[var(--ink-faint)]' : ''}
-                            ${isActive ? 'border-[var(--accent)]' : ''}
-                            print:min-h-10 print:border
-                          `}
-                        >
-                          {/* Sweep animation */}
-                          {isActive && activeStep && (
-                            <div
-                              className="absolute inset-0 origin-left pointer-events-none"
-                              style={{
-                                background: 'rgba(200,75,47,0.13)',
-                                animation: `beatSweep ${activeStep.durationMs}ms linear forwards`,
-                              }}
-                            />
-                          )}
-
-                          <span
-                            className={`
-                              relative z-10 font-mono font-medium text-[var(--ink)]
-                              ${cell.span <= 0.5 ? 'text-sm' : 'text-base'}
-                              print:text-sm
-                            `}
-                          >
-                            {translate(cell.chord)}
-                          </span>
-
-                          {cell.span <= 0.5 && (
-                            <span className="absolute bottom-0.5 left-1 text-[8px] text-[var(--ink-faint)] font-mono print:hidden">
-                              {cell.span === 0.25 ? '¼' : '½'}
-                            </span>
-                          )}
-                        </div>
+                          chord={cell.chord}
+                          span={cell.span}
+                          isActive={isActive}
+                          activeStep={activeStep}
+                          instrumentId={instrumentId}
+                          customChords={sheet.customChords as Record<string, CustomChord> | undefined}
+                          translate={translate}
+                        />
                       );
                     })}
                   </div>
@@ -341,6 +315,97 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
       <div className="hidden print:block mt-8 pt-4 border-t border-[var(--line)] text-xs text-[var(--ink-faint)]">
         <p>Créé avec ChordSheet • chordsheet.app</p>
       </div>
+    </div>
+  );
+}
+
+// ─── Cellule d'accord interactive (hover → diagramme + play) ─────────────────
+
+function resolveCustomChord(
+  chordName: string,
+  instrumentId: InstrumentId,
+  customChords?: Record<string, CustomChord>,
+): (StringChord | PianoChord) | null {
+  if (!customChords) return null;
+  const key = `${chordName.toLowerCase()}-${instrumentId}`;
+  const custom = customChords[key];
+  if (!custom) return null;
+  return isPianoChord(custom as StringChord | PianoChord)
+    ? (custom as unknown as PianoChord)
+    : (custom as unknown as StringChord);
+}
+
+function ViewerChordCell({
+  chord,
+  span,
+  isActive,
+  activeStep,
+  instrumentId,
+  customChords,
+  translate,
+}: {
+  chord: string;
+  span: CellSpan;
+  isActive: boolean;
+  activeStep: PlayStep | null;
+  instrumentId: InstrumentId;
+  customChords?: Record<string, CustomChord>;
+  translate: (name: string) => string;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const custom = resolveCustomChord(chord, instrumentId, customChords);
+
+  return (
+    <div
+      style={{ gridColumn: `span ${spanToGridCols[span]}` }}
+      className={`
+        relative rounded-lg border-[1.5px] min-h-12 flex items-center justify-center
+        bg-[var(--cell-bg)] border-[#8a7a6a] cursor-pointer
+        ${span <= 0.5 ? 'bg-[#f7f3ec] border-[var(--ink-faint)]' : ''}
+        ${isActive ? 'border-[var(--accent)]' : ''}
+        print:min-h-10 print:border
+      `}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {/* Sweep animation */}
+      {isActive && activeStep && (
+        <div
+          className="absolute inset-0 origin-left pointer-events-none"
+          style={{
+            background: 'rgba(200,75,47,0.13)',
+            animation: `beatSweep ${activeStep.durationMs}ms linear forwards`,
+          }}
+        />
+      )}
+
+      <span
+        className={`
+          relative z-10 font-mono font-medium text-[var(--ink)]
+          ${span <= 0.5 ? 'text-sm' : 'text-base'}
+          print:text-sm
+        `}
+      >
+        {translate(chord)}
+      </span>
+
+      {span <= 0.5 && (
+        <span className="absolute bottom-0.5 left-1 text-[8px] text-[var(--ink-faint)] font-mono print:hidden">
+          {span === 0.25 ? '¼' : '½'}
+        </span>
+      )}
+
+      {/* Popup diagramme au survol */}
+      {hovered && (
+        <div className="print:hidden">
+          <ChordSuggestions
+            chordName={chord}
+            instrumentId={instrumentId}
+            customChord={custom}
+            position="bottom"
+          />
+        </div>
+      )}
     </div>
   );
 }
