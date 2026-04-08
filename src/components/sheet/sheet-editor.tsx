@@ -78,6 +78,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
 
   // Supprimer une section
   const deleteSection = useCallback((sectionId: string) => {
+    if (!confirm('Supprimer cette section ?')) return;
     setSheet((prev) => ({
       ...prev,
       sections: prev.sections.filter((s) => s.id !== sectionId),
