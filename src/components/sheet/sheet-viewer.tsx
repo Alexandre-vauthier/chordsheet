@@ -233,7 +233,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
           <div key={section.id} className="print:break-inside-avoid">
             {/* Header de section */}
             <div className="flex items-center gap-3 mb-3">
-              <span className="text-xs font-medium uppercase tracking-wider text-[var(--ink-light)]">
+              <span className="text-sm font-semibold uppercase tracking-wider text-[var(--ink)]">
                 {section.label}
               </span>
               {section.beatsPerMeasure === 3 && (
@@ -242,7 +242,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                 </span>
               )}
               {section.repeat > 1 && (
-                <span className="font-playfair text-sm italic text-[var(--ink-light)]">
+                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[var(--accent)] text-white">
                   ×{section.repeat}
                 </span>
               )}

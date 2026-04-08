@@ -140,19 +140,19 @@ export function SectionBlock({
           value={section.label}
           onChange={(e) => onUpdate({ label: e.target.value })}
           placeholder="Section…"
-          className="font-sans text-xs font-medium uppercase tracking-wider text-[var(--ink-light)]
+          className="font-sans text-sm font-semibold uppercase tracking-wider text-[var(--ink)]
             bg-transparent border-none outline-none w-36"
         />
 
-        <span className="flex items-center gap-1 font-playfair text-sm italic text-[var(--ink-light)]">
-          ×
+        <span className="flex items-center gap-1">
+          <span className="text-xs text-[var(--ink-faint)]">×</span>
           <input
             type="number"
             min={1}
             max={9}
             value={section.repeat}
             onChange={(e) => onUpdate({ repeat: parseInt(e.target.value) || 1 })}
-            className="font-mono text-sm text-[var(--accent)] bg-[var(--accent-soft)]
+            className="font-mono text-xs font-semibold text-white bg-[var(--accent)]
               border-none rounded px-1.5 py-0.5 w-9 text-center outline-none"
           />
         </span>
