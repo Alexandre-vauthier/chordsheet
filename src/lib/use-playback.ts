@@ -17,9 +17,13 @@ export function parseTempo(tempoStr: string | undefined): number {
   return Math.max(40, Math.min(300, parseInt(match[1])));
 }
 
+// Span = nombre de mesures (1 = 1 mesure, 0.5 = demi-mesure, etc.)
+// En 4/4 : 1 mesure = 4 noires. La durée d'une cellule = span × beatsPerMeasure × beatMs.
+// Exemple : span 1 à 120 BPM en 4/4 → 1 × 4 × 500ms = 2000ms (4 temps).
 function buildSequence(sections: Section[], beatMs: number): PlayStep[] {
   const steps: PlayStep[] = [];
   for (const section of sections) {
+    const bpm = section.beatsPerMeasure || 4;
     for (let rep = 0; rep < (section.repeat || 1); rep++) {
       for (let r = 0; r < section.rows.length; r++) {
         for (let c = 0; c < section.rows[r].length; c++) {
@@ -27,7 +31,7 @@ function buildSequence(sections: Section[], beatMs: number): PlayStep[] {
             sectionId: section.id,
             rowIndex: r,
             cellIndex: c,
-            durationMs: section.rows[r][c].span * beatMs,
+            durationMs: section.rows[r][c].span * bpm * beatMs,
           });
         }
       }
