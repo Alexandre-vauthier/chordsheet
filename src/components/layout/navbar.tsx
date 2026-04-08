@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 
 export function Navbar() {
   const { user, loading, isAdmin, signOut } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleSignOut = async () => {
@@ -36,30 +37,24 @@ export function Navbar() {
               <div className="h-8 w-24 bg-white/10 rounded animate-pulse" />
             ) : user ? (
               <>
-                <Link
-                  href="/dashboard"
-                  className="text-sm text-[var(--cream)]/80 hover:text-[var(--cream)] transition-colors"
-                >
-                  Mon book
-                </Link>
-                <Link
-                  href="/sets"
-                  className="text-sm text-[var(--cream)]/80 hover:text-[var(--cream)] transition-colors"
-                >
-                  Mes sets
-                </Link>
-                <Link
-                  href="/explore"
-                  className="text-sm text-[var(--cream)]/80 hover:text-[var(--cream)] transition-colors"
-                >
-                  Explorer
-                </Link>
-                <Link
-                  href="/chords"
-                  className="text-sm text-[var(--cream)]/80 hover:text-[var(--cream)] transition-colors"
-                >
-                  Accords
-                </Link>
+                {[
+                  { href: '/dashboard', label: 'Mon book' },
+                  { href: '/sets', label: 'Mes sets' },
+                  { href: '/explore', label: 'Explorer' },
+                  { href: '/chords', label: 'Accords' },
+                ].map(({ href, label }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={`text-sm transition-colors ${
+                      pathname.startsWith(href)
+                        ? 'text-[var(--cream)] font-semibold border-b-2 border-[var(--accent)] pb-0.5'
+                        : 'text-[var(--cream)]/80 hover:text-[var(--cream)]'
+                    }`}
+                  >
+                    {label}
+                  </Link>
+                ))}
                 <div className="flex items-center gap-3 ml-2 pl-4 border-l border-white/20">
                   {isAdmin && (
                     <Link
@@ -136,34 +131,25 @@ export function Navbar() {
       {mobileMenuOpen && user && (
         <div className="sm:hidden bg-[var(--ink)] border-t border-white/10">
           <div className="px-4 py-3 space-y-1">
-            <Link
-              href="/dashboard"
-              onClick={closeMobileMenu}
-              className="block px-3 py-2 text-[var(--cream)]/80 hover:text-[var(--cream)] hover:bg-white/10 rounded-lg transition-colors"
-            >
-              Mon book
-            </Link>
-            <Link
-              href="/sets"
-              onClick={closeMobileMenu}
-              className="block px-3 py-2 text-[var(--cream)]/80 hover:text-[var(--cream)] hover:bg-white/10 rounded-lg transition-colors"
-            >
-              Mes sets
-            </Link>
-            <Link
-              href="/explore"
-              onClick={closeMobileMenu}
-              className="block px-3 py-2 text-[var(--cream)]/80 hover:text-[var(--cream)] hover:bg-white/10 rounded-lg transition-colors"
-            >
-              Explorer
-            </Link>
-            <Link
-              href="/chords"
-              onClick={closeMobileMenu}
-              className="block px-3 py-2 text-[var(--cream)]/80 hover:text-[var(--cream)] hover:bg-white/10 rounded-lg transition-colors"
-            >
-              Accords
-            </Link>
+            {[
+              { href: '/dashboard', label: 'Mon book' },
+              { href: '/sets', label: 'Mes sets' },
+              { href: '/explore', label: 'Explorer' },
+              { href: '/chords', label: 'Accords' },
+            ].map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                onClick={closeMobileMenu}
+                className={`block px-3 py-2 rounded-lg transition-colors ${
+                  pathname.startsWith(href)
+                    ? 'text-[var(--cream)] bg-white/10 font-semibold'
+                    : 'text-[var(--cream)]/80 hover:text-[var(--cream)] hover:bg-white/10'
+                }`}
+              >
+                {label}
+              </Link>
+            ))}
             <div className="border-t border-white/10 my-2" />
             <Link
               href="/profile"
