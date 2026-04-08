@@ -14,6 +14,8 @@ interface BeatCellProps {
   canSplit: boolean;
   onSplit: () => void;
   onNavigateNext: () => void;
+  isActive?: boolean;
+  activeDurationMs?: number;
 }
 
 export function BeatCell({
@@ -24,6 +26,8 @@ export function BeatCell({
   canSplit,
   onSplit,
   onNavigateNext,
+  isActive = false,
+  activeDurationMs = 0,
 }: BeatCellProps) {
   const translate = useChordNotation();
   const getColor = useChordColor();
@@ -105,8 +109,20 @@ export function BeatCell({
               : 'bg-[var(--cell-bg)] border-[var(--line)] hover:bg-[var(--cell-hover)] hover:border-[var(--ink-faint)]'
           }
           ${isSmall ? 'bg-[#f7f3ec] border-[var(--ink-faint)]' : ''}
+          ${isActive ? 'border-[var(--accent)]' : ''}
         `}
       >
+        {/* Sweep animation pendant la lecture */}
+        {isActive && activeDurationMs > 0 && (
+          <div
+            className="absolute inset-0 origin-left pointer-events-none rounded-[inherit]"
+            style={{
+              background: 'rgba(200,75,47,0.13)',
+              animation: `beatSweep ${activeDurationMs}ms linear forwards`,
+            }}
+          />
+        )}
+
         {isEditing ? (
           <input
             ref={inputRef}

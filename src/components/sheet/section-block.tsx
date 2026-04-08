@@ -13,6 +13,9 @@ interface SectionBlockProps {
   onDuplicate: () => void;
   onPlaySection?: () => void;
   isSectionPlaying?: boolean;
+  activeRowIndex?: number;
+  activeCellIndex?: number;
+  activeDurationMs?: number;
   onNavigateToCell: (sectionId: string, rowIndex: number, cellIndex: number) => void;
   // Drag & drop
   onDragStart: () => void;
@@ -29,6 +32,9 @@ export function SectionBlock({
   onDuplicate,
   onPlaySection,
   isSectionPlaying,
+  activeRowIndex,
+  activeCellIndex,
+  activeDurationMs,
   onNavigateToCell,
   onDragStart,
   onDragOver,
@@ -247,6 +253,8 @@ export function SectionBlock({
                 onNavigateToCell(section.id, nextRowIndex, cellIndex)
               }
               totalRows={section.rows.length}
+              activeCellIndex={activeRowIndex === rowIndex ? activeCellIndex : undefined}
+              activeDurationMs={activeRowIndex === rowIndex ? activeDurationMs : undefined}
             />
             {/* Bouton supprimer mesure */}
             {section.rows.length > 1 && (

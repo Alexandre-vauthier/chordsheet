@@ -13,6 +13,8 @@ interface GridRowProps {
   onMerge: (cellIndex: number) => void;
   onNavigateToCell: (rowIndex: number, cellIndex: number) => void;
   totalRows: number;
+  activeCellIndex?: number;
+  activeDurationMs?: number;
 }
 
 const spanToGridCols: Record<CellSpan, number> = {
@@ -36,6 +38,8 @@ export function GridRow({
   onMerge,
   onNavigateToCell,
   totalRows,
+  activeCellIndex,
+  activeDurationMs,
 }: GridRowProps) {
   const totalGridCols = beatsPerMeasure === 3 ? 12 : 16;
 
@@ -67,6 +71,8 @@ export function GridRow({
               onChordChange={(chord) => onCellChange(cellIndex, { chord })}
               canSplit={canSplit}
               onSplit={() => onSplit(cellIndex)}
+              isActive={activeCellIndex === cellIndex}
+              activeDurationMs={activeCellIndex === cellIndex ? activeDurationMs : undefined}
               onNavigateNext={() => {
                 let nextCellIndex = cellIndex + 1;
                 let nextRowIndex = rowIndex;

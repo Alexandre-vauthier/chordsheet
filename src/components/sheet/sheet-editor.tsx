@@ -391,6 +391,9 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
               else playSection(section.id);
             }}
             isSectionPlaying={isPlaying && activeStep?.sectionId === section.id}
+            activeRowIndex={isPlaying && activeStep?.sectionId === section.id ? activeStep.rowIndex : undefined}
+            activeCellIndex={isPlaying && activeStep?.sectionId === section.id ? activeStep.cellIndex : undefined}
+            activeDurationMs={isPlaying && activeStep?.sectionId === section.id ? activeStep.durationMs : undefined}
             onNavigateToCell={navigateToCell}
             onDragStart={() => handleDragStart(section.id)}
             onDragOver={(e) => { e.preventDefault(); handleDragOver(section.id); }}
