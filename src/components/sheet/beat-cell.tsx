@@ -94,7 +94,7 @@ export function BeatCell({
       {/* Cellule */}
       <div
         onClick={handleClick}
-        style={color && !isEditing ? { borderLeftColor: color.border, borderLeftWidth: '3px' } : undefined}
+        style={color && !isEditing ? { borderLeftColor: color.border, borderLeftWidth: '5px' } : undefined}
         className={`
           relative rounded-lg border-[1.5px] min-h-14 flex items-center justify-center cursor-pointer
           transition-all duration-150 select-none

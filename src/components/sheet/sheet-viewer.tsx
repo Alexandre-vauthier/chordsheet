@@ -365,7 +365,7 @@ function ViewerChordCell({
     <div
       style={{
         gridColumn: `span ${spanToGridCols[span]}`,
-        ...(color ? { borderLeftColor: color.border, borderLeftWidth: '3px' } : {}),
+        ...(color ? { borderLeftColor: color.border, borderLeftWidth: '5px' } : {}),
       }}
       className={`
         relative rounded-lg border-[1.5px] min-h-12 flex items-center justify-center

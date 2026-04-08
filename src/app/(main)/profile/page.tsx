@@ -273,7 +273,7 @@ export default function ProfilePage() {
                 <span
                   key={note}
                   className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded"
-                  style={{ borderLeft: `3px solid ${color}`, background: `${color}15` }}
+                  style={{ borderLeft: `5px solid ${color}`, background: `${color}15` }}
                 >
                   {note}
                 </span>
