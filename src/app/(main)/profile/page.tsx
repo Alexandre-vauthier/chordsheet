@@ -235,7 +235,7 @@ export default function ProfilePage() {
             }`}
           >
             <div className="font-mono text-lg mb-1">Am · F#m7</div>
-            <div>Anglais (standard)</div>
+            <div>Anglais</div>
           </button>
           <button
             onClick={() => handleNotationChange('french')}
@@ -247,7 +247,7 @@ export default function ProfilePage() {
             }`}
           >
             <div className="font-mono text-lg mb-1">Lam · Fa#m7</div>
-            <div>Français (solfège)</div>
+            <div>Français</div>
           </button>
         </div>
       </div>
