@@ -158,6 +158,8 @@ export interface Sheet {
   // V3 - Diagrammes d'accords
   instrumentId?: InstrumentId;
   customChords?: Record<string, CustomChord>; // accords personnalisés par nom
+  // V4 - Lien de référence (YouTube, Spotify, etc.)
+  referenceUrl?: string;
 }
 
 // Type pour la création d'une nouvelle grille

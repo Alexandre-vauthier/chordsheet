@@ -26,6 +26,15 @@ interface SheetViewerProps {
   sheet: Sheet;
 }
 
+function getRefLabel(url: string): string {
+  if (url.includes('youtube.com') || url.includes('youtu.be')) return '▶ YouTube';
+  if (url.includes('spotify.com')) return '♫ Spotify';
+  if (url.includes('deezer.com')) return '♫ Deezer';
+  if (url.includes('soundcloud.com')) return '♫ SoundCloud';
+  if (url.includes('apple.com/music') || url.includes('music.apple')) return '♫ Apple Music';
+  return '🔗 Référence';
+}
+
 const spanToGridCols: Record<CellSpan, number> = {
   0.25: 1,
   0.5: 2,
@@ -149,6 +158,17 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
             <span className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 text-[var(--ink-light)] rounded text-sm print:bg-transparent print:text-[var(--ink)]">
               {sheet.difficulty} · {DIFFICULTY_LABELS[sheet.difficulty as Difficulty]}
             </span>
+          )}
+          {sheet.referenceUrl && (
+            <a
+              href={sheet.referenceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-2 py-1 bg-red-50 text-red-700 rounded text-sm
+                hover:bg-red-100 transition-colors print:hidden"
+            >
+              {getRefLabel(sheet.referenceUrl)}
+            </a>
           )}
         </div>
 

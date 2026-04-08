@@ -289,6 +289,17 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 placeholder:text-[var(--ink-faint)] w-24"
             />
           </span>
+          <span className="flex items-center gap-1 text-[var(--ink-faint)]">
+            <span className="text-sm">🔗</span>
+            <input
+              type="url"
+              value={sheet.referenceUrl || ''}
+              onChange={(e) => updateSheet({ referenceUrl: e.target.value })}
+              placeholder="Lien de référence (YouTube, Spotify…)"
+              className="font-sans text-sm text-[var(--ink-light)] bg-transparent border-none outline-none
+                placeholder:text-[var(--ink-faint)] w-64"
+            />
+          </span>
         </div>
       </div>
 
