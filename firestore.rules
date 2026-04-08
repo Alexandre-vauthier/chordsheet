@@ -1,54 +1,69 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Utilisateurs - lecture/écriture pour soi-même
+
+    // Helper : vérifier si l'utilisateur est admin
+    function isAdmin() {
+      return request.auth != null &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Utilisateurs - lecture/écriture pour soi-même, lecture complète pour admin
     match /users/{userId} {
       allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
     }
 
     // Grilles d'accords
     match /sheets/{sheetId} {
-      // Lecture : publique ou propriétaire
+      // Lecture : publique, propriétaire, ou admin
       allow read: if resource.data.isPublic == true ||
-                     (request.auth != null && request.auth.uid == resource.data.ownerId);
+                     (request.auth != null && request.auth.uid == resource.data.ownerId) ||
+                     isAdmin();
+
+      // Listing (pour les requêtes sans filtre côté admin)
+      allow list: if isAdmin();
 
       // Création : utilisateur authentifié
       allow create: if request.auth != null &&
                        request.resource.data.ownerId == request.auth.uid;
 
-      // Mise à jour : propriétaire OU mise à jour viewCount/rating uniquement
+      // Mise à jour : propriétaire, admin, OU mise à jour viewCount/rating uniquement
       allow update: if request.auth != null && (
-        // Propriétaire peut tout modifier
         request.auth.uid == resource.data.ownerId ||
-        // Tout utilisateur peut incrémenter viewCount sur une grille publique
+        isAdmin() ||
         (resource.data.isPublic == true &&
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewCount'])) ||
-        // Tout utilisateur peut modifier averageRating et ratingCount
         (resource.data.isPublic == true &&
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['averageRating', 'ratingCount']))
       );
 
-      // Suppression : propriétaire uniquement
-      allow delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
+      // Suppression : propriétaire ou admin
+      allow delete: if request.auth != null &&
+                       (request.auth.uid == resource.data.ownerId || isAdmin());
     }
 
     // Sets (setlists)
     match /sets/{setId} {
       allow read: if resource.data.isPublic == true ||
-                     (request.auth != null && request.auth.uid == resource.data.ownerId);
+                     (request.auth != null && request.auth.uid == resource.data.ownerId) ||
+                     isAdmin();
+      allow list: if isAdmin();
       allow create: if request.auth != null &&
                        request.resource.data.ownerId == request.auth.uid;
       allow update, delete: if request.auth != null &&
-                               request.auth.uid == resource.data.ownerId;
+                               (request.auth.uid == resource.data.ownerId || isAdmin());
     }
 
     // Favoris (bookmarks)
     match /bookmarks/{bookmarkId} {
-      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow read: if request.auth != null &&
+                     (request.auth.uid == resource.data.userId || isAdmin());
+      allow list: if isAdmin();
       allow create: if request.auth != null &&
                        request.resource.data.userId == request.auth.uid;
-      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow delete: if request.auth != null &&
+                       (request.auth.uid == resource.data.userId || isAdmin());
     }
 
     // Notes (ratings)
@@ -57,7 +72,7 @@ service cloud.firestore {
       allow create: if request.auth != null &&
                        request.resource.data.userId == request.auth.uid;
       allow update: if request.auth != null &&
-                       request.auth.uid == resource.data.userId;
+                       (request.auth.uid == resource.data.userId || isAdmin());
     }
   }
 }
