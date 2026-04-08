@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { collection, query, where, orderBy, getDocs, limit } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, limit, deleteDoc, doc } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
@@ -14,7 +14,7 @@ import type { Sheet } from '@/types';
 type SortOption = 'recent' | 'rated' | 'viewed';
 
 export default function ExplorePage() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
   const [sheets, setSheets] = useState<Sheet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,6 +51,18 @@ export default function ExplorePage() {
 
     loadPublicSheets();
   }, []);
+
+  const handleAdminDelete = async (sheetId: string) => {
+    if (!confirm('Supprimer cette grille ? Cette action est irréversible.')) return;
+    try {
+      const db = getDb();
+      await deleteDoc(doc(db, 'sheets', sheetId));
+      setSheets(prev => prev.filter(s => s.id !== sheetId));
+    } catch (error) {
+      console.error('Error deleting sheet:', error);
+      alert('Erreur lors de la suppression');
+    }
+  };
 
   // Filtrer et trier les grilles
   const filteredSheets = useMemo(() => {
@@ -246,6 +258,7 @@ export default function ExplorePage() {
                 showRating
                 isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
                 onToggleBookmark={user && sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
+                onDelete={isAdmin && sheet.id ? () => handleAdminDelete(sheet.id!) : undefined}
               />
             ))}
           </div>
