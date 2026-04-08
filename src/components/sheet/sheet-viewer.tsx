@@ -69,6 +69,9 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
             {sheet.artist && (
               <p className="text-lg text-[var(--ink-light)] mt-1">{sheet.artist}</p>
             )}
+            {sheet.ownerName && (
+              <p className="text-xs text-[var(--ink-faint)] mt-1 print:hidden">par {sheet.ownerName}</p>
+            )}
           </div>
 
           {/* Bouton Play */}

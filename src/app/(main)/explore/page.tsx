@@ -243,7 +243,6 @@ export default function ExplorePage() {
               <SheetCard
                 key={sheet.id}
                 sheet={sheet}
-                showOwner
                 showRating
                 isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
                 onToggleBookmark={user && sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
