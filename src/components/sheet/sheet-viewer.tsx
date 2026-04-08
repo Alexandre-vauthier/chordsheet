@@ -11,6 +11,7 @@ import { useChordNotation } from '@/lib/use-chord-notation';
 import { useChordColor } from '@/lib/use-chord-color';
 import { usePlayback, parseTempo } from '@/lib/use-playback';
 import type { PlayStep } from '@/lib/use-playback';
+import { useArtwork } from '@/lib/use-artwork';
 
 const LS_KEY = 'chordsheet_instrument';
 
@@ -56,12 +57,25 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
   });
 
   const bpm = parseTempo(sheet.tempo);
+  const { artworkUrl } = useArtwork(sheet.artist, sheet.title);
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 print:p-0 print:max-w-none">
       {/* Header */}
       <div className="mb-8 border-b-2 border-[var(--ink)] pb-4 print:mb-6 print:pb-3">
         <div className="flex items-start justify-between gap-4">
+          {/* Artwork */}
+          {artworkUrl && (
+            <div className="flex-shrink-0 print:hidden">
+              <img
+                src={artworkUrl}
+                alt={`${sheet.artist} — ${sheet.title}`}
+                className="w-20 h-20 rounded-lg shadow-md object-cover"
+              />
+              <p className="text-[8px] text-[var(--ink-faint)] mt-0.5 text-center">via iTunes</p>
+            </div>
+          )}
+
           <div className="flex-1 min-w-0">
             <h1 className="font-playfair text-3xl font-bold text-[var(--ink)] print:text-2xl">
               {sheet.title || 'Sans titre'}
