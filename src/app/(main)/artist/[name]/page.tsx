@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
@@ -33,14 +33,17 @@ export default function ArtistPage({ params }: ArtistPageProps) {
     async function loadSheets() {
       try {
         const db = getDb();
+        // Requête simple sans orderBy (évite le besoin d'index composite)
         const q = query(
           collection(db, 'sheets'),
           where('isPublic', '==', true),
-          where('artist', '==', artistName),
-          orderBy('updatedAt', 'desc')
+          where('artist', '==', artistName)
         );
         const snapshot = await getDocs(q);
-        setSheets(snapshot.docs.map(d => fromFirestore(d.id, d.data())));
+        const results = snapshot.docs.map(d => fromFirestore(d.id, d.data()));
+        // Tri côté client
+        results.sort((a, b) => (b.updatedAt?.getTime() ?? 0) - (a.updatedAt?.getTime() ?? 0));
+        setSheets(results);
       } catch (error) {
         console.error('Error loading artist sheets:', error);
       } finally {

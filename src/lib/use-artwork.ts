@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react';
 const CACHE = new Map<string, string | null>();
 
 // iTunes Search API (JSONP pour éviter CORS)
-function fetchItunes(query: string): Promise<string | null> {
+// entity: 'song' quand on cherche artiste+titre, 'musicArtist' quand artiste seul
+function fetchItunes(query: string, entity: 'song' | 'musicArtist' = 'song'): Promise<string | null> {
   return new Promise((resolve) => {
     const cb = `_itunes_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const script = document.createElement('script');
@@ -13,13 +14,13 @@ function fetchItunes(query: string): Promise<string | null> {
       script.remove();
     };
 
-    ((window as unknown) as Record<string, unknown>)[cb] = (data: { results?: { artworkUrl100?: string }[] }) => {
+    ((window as unknown) as Record<string, unknown>)[cb] = (data: { results?: { artworkUrl100?: string; artistLinkUrl?: string }[] }) => {
       cleanup();
       const art = data.results?.[0]?.artworkUrl100;
       resolve(art ? art.replace('100x100', '600x600') : null);
     };
 
-    script.src = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=1&callback=${cb}`;
+    script.src = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=${entity}&limit=1&callback=${cb}`;
     script.onerror = () => { cleanup(); resolve(null); };
 
     // Timeout 5s
@@ -79,9 +80,11 @@ export function useArtwork(artist: string | undefined, title: string | undefined
     let cancelled = false;
     setLoading(true);
 
+    const artistOnly = !title && !!artist;
+
     (async () => {
-      // 1. iTunes (JSONP)
-      let result = await fetchItunes(query);
+      // 1. iTunes (JSONP) — musicArtist si artiste seul, song sinon
+      let result = await fetchItunes(query, artistOnly ? 'musicArtist' : 'song');
 
       // 2. Fallback MusicBrainz si iTunes échoue et qu'on a artiste + titre
       if (!result && artist && title) {
