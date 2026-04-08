@@ -11,11 +11,14 @@ import { Button } from '@/components/ui/button';
 import { SheetCard } from '@/components/explore/sheet-card';
 import type { Sheet } from '@/types';
 
+type Tab = 'mine' | 'book';
+
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
+  const { bookmarkedSheets, isLoading: bookLoading, isBookmarked, toggleBookmark, removeBookmark } = useBookmarks(user?.id);
   const [sheets, setSheets] = useState<Sheet[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState<Tab>('mine');
 
   useEffect(() => {
     async function loadSheets() {
@@ -58,25 +61,77 @@ export default function DashboardPage() {
     }
   };
 
+  const handleRemoveBookmark = async (sheetId: string) => {
+    if (!confirm('Retirer cette grille de votre book ?')) return;
+    await removeBookmark(sheetId);
+  };
+
+  const isCurrentlyLoading = tab === 'mine' ? loading : bookLoading;
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-      <div className="flex items-center justify-between mb-8">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-[var(--ink)]">
-            Bonjour, {user?.displayName || 'Musicien'} !
+            Mon book
           </h1>
           <p className="text-[var(--ink-light)] mt-1">
-            {sheets.length > 0
-              ? `Vous avez ${sheets.length} grille${sheets.length > 1 ? 's' : ''} d'accords`
-              : 'Gérez vos grilles d\'accords'}
+            {tab === 'mine'
+              ? sheets.length > 0
+                ? `${sheets.length} grille${sheets.length > 1 ? 's' : ''} créée${sheets.length > 1 ? 's' : ''}`
+                : 'Gérez vos grilles d\'accords'
+              : bookmarkedSheets.length > 0
+                ? `${bookmarkedSheets.length} grille${bookmarkedSheets.length > 1 ? 's' : ''} sauvegardée${bookmarkedSheets.length > 1 ? 's' : ''}`
+                : 'Vos grilles favorites'
+            }
           </p>
         </div>
-        <Link href="/sheet/new" className="hidden sm:block">
-          <Button>+ Nouvelle grille</Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          {tab === 'mine' && (
+            <Link href="/sheet/new" className="hidden sm:block">
+              <Button>+ Nouvelle grille</Button>
+            </Link>
+          )}
+          {tab === 'book' && (
+            <Link href="/explore" className="hidden sm:block">
+              <Button variant="ghost">Explorer</Button>
+            </Link>
+          )}
+        </div>
       </div>
 
-      {loading ? (
+      {/* Onglets */}
+      <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
+        <button
+          onClick={() => setTab('mine')}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            tab === 'mine'
+              ? 'bg-white text-[var(--ink)] shadow-sm'
+              : 'text-[var(--ink-light)] hover:text-[var(--ink)]'
+          }`}
+        >
+          Mes grilles
+        </button>
+        <button
+          onClick={() => setTab('book')}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            tab === 'book'
+              ? 'bg-white text-[var(--ink)] shadow-sm'
+              : 'text-[var(--ink-light)] hover:text-[var(--ink)]'
+          }`}
+        >
+          Favoris
+          {bookmarkedSheets.length > 0 && (
+            <span className="ml-1.5 text-xs bg-[var(--accent)] text-white rounded-full px-1.5 py-0.5">
+              {bookmarkedSheets.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* Contenu */}
+      {isCurrentlyLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
             <div
@@ -85,31 +140,67 @@ export default function DashboardPage() {
             />
           ))}
         </div>
-      ) : sheets.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sheets.map((sheet) => (
-            <SheetCard
-              key={sheet.id}
-              sheet={sheet}
-              onDelete={() => handleDelete(sheet.id!)}
-              isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
-              onToggleBookmark={sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="bg-white rounded-xl border border-[var(--line)] p-8 text-center">
-          <div className="text-[var(--ink-faint)] mb-4">
-            <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-            </svg>
-            <p className="text-lg">Aucune grille pour le moment</p>
-            <p className="text-sm mt-1">Créez votre première grille d&apos;accords !</p>
+      ) : tab === 'mine' ? (
+        /* Mes grilles */
+        sheets.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {sheets.map((sheet) => (
+              <SheetCard
+                key={sheet.id}
+                sheet={sheet}
+                onDelete={() => handleDelete(sheet.id!)}
+                isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
+                onToggleBookmark={sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
+              />
+            ))}
           </div>
-          <Link href="/sheet/new">
-            <Button variant="primary">Créer ma première grille</Button>
-          </Link>
-        </div>
+        ) : (
+          <div className="bg-white rounded-xl border border-[var(--line)] p-8 text-center">
+            <div className="text-[var(--ink-faint)] mb-4">
+              <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+              <p className="text-lg">Aucune grille pour le moment</p>
+              <p className="text-sm mt-1">Créez votre première grille d&apos;accords !</p>
+            </div>
+            <Link href="/sheet/new">
+              <Button variant="primary">Créer ma première grille</Button>
+            </Link>
+          </div>
+        )
+      ) : (
+        /* Favoris */
+        bookmarkedSheets.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {bookmarkedSheets.map((sheet) => (
+              <div key={sheet.id} className="relative group">
+                <SheetCard sheet={sheet} showOwner />
+                <button
+                  onClick={() => handleRemoveBookmark(sheet.id!)}
+                  className="absolute top-2 right-2 p-2 bg-white/90 rounded-full shadow-sm
+                    opacity-0 group-hover:opacity-100 transition-opacity
+                    text-amber-500 hover:text-red-500"
+                  title="Retirer du book"
+                >
+                  ★
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-xl border border-[var(--line)] p-8 text-center">
+            <div className="text-[var(--ink-faint)] mb-4">
+              <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+              <p className="text-lg">Aucun favori pour le moment</p>
+              <p className="text-sm mt-1">Explorez les grilles et ajoutez vos favorites !</p>
+            </div>
+            <Link href="/explore">
+              <Button variant="primary">Explorer les grilles</Button>
+            </Link>
+          </div>
+        )
       )}
     </div>
   );

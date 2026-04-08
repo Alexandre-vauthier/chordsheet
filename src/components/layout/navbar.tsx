@@ -24,7 +24,7 @@ export function Navbar() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
-          <Link href={user ? '/book' : '/'} className="flex items-center" onClick={closeMobileMenu}>
+          <Link href={user ? '/dashboard' : '/'} className="flex items-center" onClick={closeMobileMenu}>
             <span className="font-playfair text-xl font-bold">
               Chord<span className="text-[var(--accent)]">Sheet</span>
             </span>
@@ -37,16 +37,10 @@ export function Navbar() {
             ) : user ? (
               <>
                 <Link
-                  href="/book"
-                  className="text-sm text-[var(--cream)]/80 hover:text-[var(--cream)] transition-colors"
-                >
-                  Mon book
-                </Link>
-                <Link
                   href="/dashboard"
                   className="text-sm text-[var(--cream)]/80 hover:text-[var(--cream)] transition-colors"
                 >
-                  Mes grilles
+                  Mon book
                 </Link>
                 <Link
                   href="/sets"
@@ -143,18 +137,11 @@ export function Navbar() {
         <div className="sm:hidden bg-[var(--ink)] border-t border-white/10">
           <div className="px-4 py-3 space-y-1">
             <Link
-              href="/book"
-              onClick={closeMobileMenu}
-              className="block px-3 py-2 text-[var(--cream)]/80 hover:text-[var(--cream)] hover:bg-white/10 rounded-lg transition-colors"
-            >
-              Mon book
-            </Link>
-            <Link
               href="/dashboard"
               onClick={closeMobileMenu}
               className="block px-3 py-2 text-[var(--cream)]/80 hover:text-[var(--cream)] hover:bg-white/10 rounded-lg transition-colors"
             >
-              Mes grilles
+              Mon book
             </Link>
             <Link
               href="/sets"
