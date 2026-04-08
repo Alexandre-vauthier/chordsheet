@@ -2,6 +2,59 @@ import { useState, useEffect } from 'react';
 
 const CACHE = new Map<string, string | null>();
 
+// iTunes Search API (JSONP pour éviter CORS)
+function fetchItunes(query: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const cb = `_itunes_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const script = document.createElement('script');
+
+    const cleanup = () => {
+      delete ((window as unknown) as Record<string, unknown>)[cb];
+      script.remove();
+    };
+
+    ((window as unknown) as Record<string, unknown>)[cb] = (data: { results?: { artworkUrl100?: string }[] }) => {
+      cleanup();
+      const art = data.results?.[0]?.artworkUrl100;
+      resolve(art ? art.replace('100x100', '600x600') : null);
+    };
+
+    script.src = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=1&callback=${cb}`;
+    script.onerror = () => { cleanup(); resolve(null); };
+
+    // Timeout 5s
+    setTimeout(() => { cleanup(); resolve(null); }, 5000);
+
+    document.head.appendChild(script);
+  });
+}
+
+// MusicBrainz + Cover Art Archive (fallback, supporte CORS)
+async function fetchMusicBrainz(artist: string, title: string): Promise<string | null> {
+  try {
+    const q = encodeURIComponent(`recording:"${title}" AND artist:"${artist}"`);
+    const res = await fetch(
+      `https://musicbrainz.org/ws/2/recording?query=${q}&limit=1&fmt=json`,
+      { headers: { 'User-Agent': 'ChordSheet/1.0 (chordsheet.app)' } }
+    );
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    const release = data.recordings?.[0]?.releases?.[0];
+    if (!release?.id) return null;
+
+    // Cover Art Archive
+    const coverRes = await fetch(`https://coverartarchive.org/release/${release.id}`);
+    if (!coverRes.ok) return null;
+
+    const coverData = await coverRes.json();
+    const front = coverData.images?.find((img: { front?: boolean }) => img.front);
+    return front?.thumbnails?.large || front?.thumbnails?.small || front?.image || null;
+  } catch {
+    return null;
+  }
+}
+
 export function useArtwork(artist: string | undefined, title: string | undefined) {
   const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -18,7 +71,6 @@ export function useArtwork(artist: string | undefined, title: string | undefined
       return;
     }
 
-    // Cache hit
     if (CACHE.has(query)) {
       setUrl(CACHE.get(query) ?? null);
       return;
@@ -27,31 +79,21 @@ export function useArtwork(artist: string | undefined, title: string | undefined
     let cancelled = false;
     setLoading(true);
 
-    const encoded = encodeURIComponent(query);
-    fetch(`https://itunes.apple.com/search?term=${encoded}&entity=song&limit=1`)
-      .then(res => res.json())
-      .then(data => {
-        if (cancelled) return;
-        const result = data.results?.[0];
-        if (result?.artworkUrl100) {
-          // Upscale à 600×600
-          const hd = result.artworkUrl100.replace('100x100', '600x600');
-          CACHE.set(query, hd);
-          setUrl(hd);
-        } else {
-          CACHE.set(query, null);
-          setUrl(null);
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          CACHE.set(query, null);
-          setUrl(null);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
+    (async () => {
+      // 1. iTunes (JSONP)
+      let result = await fetchItunes(query);
+
+      // 2. Fallback MusicBrainz si iTunes échoue et qu'on a artiste + titre
+      if (!result && artist && title) {
+        result = await fetchMusicBrainz(artist, title);
+      }
+
+      if (!cancelled) {
+        CACHE.set(query, result);
+        setUrl(result);
+        setLoading(false);
+      }
+    })();
 
     return () => { cancelled = true; };
   }, [artist, title]);
