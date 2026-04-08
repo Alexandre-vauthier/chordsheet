@@ -17,14 +17,17 @@ export function ChordDiagram({
 }: ChordDiagramProps) {
   const sm = size === 'sm';
 
-  const PAD = sm ? 20 : 30; // Marge symétrique gauche/droite
+  const { startFret = 1 } = chord;
+  const needsWideLabel = startFret >= 10;
+  const PAD_L = sm ? (needsWideLabel ? 30 : 20) : (needsWideLabel ? 42 : 30);
+  const PAD_R = sm ? 20 : 30;
   const TOP = sm ? 22 : 37;
   const BOTTOM = sm ? 132 : 217;
   const CELL_W = sm ? 18 : 28;
   const CELL_H = (BOTTOM - TOP) / 5;
   const FRET_W = (numStrings - 1) * CELL_W;
-  const W = FRET_W + PAD * 2;
-  const LEFT = PAD;
+  const W = FRET_W + PAD_L + PAD_R;
+  const LEFT = PAD_L;
   const RIGHT = LEFT + FRET_W;
   const H = sm ? 158 : 240;
   const DOT_R = sm ? 7 : 13;
@@ -32,7 +35,7 @@ export function ChordDiagram({
   const fingerFs = sm ? 11 : 15;
   const NUT_H = sm ? 4 : 5;
 
-  const { fingers = [], barre, open = [], muted = [], startFret = 1 } = chord;
+  const { fingers = [], barre, open = [], muted = [] } = chord;
 
   const getSX = (s: number) => RIGHT - (s - 1) * CELL_W;
   const getFY = (f: number) => TOP + (f - startFret) * CELL_H + CELL_H / 2;
