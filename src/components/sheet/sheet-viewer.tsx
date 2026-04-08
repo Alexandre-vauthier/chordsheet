@@ -118,10 +118,11 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
         .find(s => s.id === step.sectionId)
         ?.rows[step.rowIndex]?.[step.cellIndex];
       if (cell?.chord) {
-        // Vérifier d'abord les accords personnalisés
-        const customChord = sheet.customChords?.[cell.chord];
-        const chordData = customChord ?? findChordVariants(cell.chord, instrumentId)[0];
-        if (chordData) playChord(chordData, instrumentId);
+        // Vérifier d'abord les accords personnalisés (clé = nom-instrument)
+        const customKey = `${cell.chord.toLowerCase()}-${instrumentId}`;
+        const custom = sheet.customChords?.[customKey];
+        const chordData = custom ?? findChordVariants(cell.chord, instrumentId)[0];
+        if (chordData) playChord(chordData as StringChord | PianoChord, instrumentId);
       }
 
       i++;
