@@ -119,7 +119,10 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
     capo: sheet.capo ?? null,
   };
 
-  // V3 - Ajouter uniquement si défini (Firestore n'accepte pas undefined)
+  // V3+ - Ajouter uniquement si défini (Firestore n'accepte pas undefined)
+  if (sheet.referenceUrl) {
+    (base as unknown as Record<string, unknown>).referenceUrl = sheet.referenceUrl;
+  }
   if (sheet.instrumentId) {
     base.instrumentId = sheet.instrumentId;
   }
@@ -168,7 +171,8 @@ export function fromFirestore(
     viewCount: (data.viewCount as number) || 0,
     averageRating: (data.averageRating as number) ?? null,
     ratingCount: (data.ratingCount as number) || 0,
-    // V3 - Diagrammes d'accords
+    // V3+ - Diagrammes d'accords & référence
+    referenceUrl: (data.referenceUrl as string) || undefined,
     instrumentId: (data.instrumentId as InstrumentId) || undefined,
     customChords: data.customChords
       ? Object.fromEntries(
