@@ -30,6 +30,10 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
   const [isTogglingBookmark, setIsTogglingBookmark] = useState(false);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
+
+  useEffect(() => {
     async function loadSheet() {
       try {
         const db = getDb();
