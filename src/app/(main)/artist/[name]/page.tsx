@@ -115,7 +115,6 @@ export default function ArtistPage({ params }: ArtistPageProps) {
               showRating
               href={href}
               variantCount={count}
-              hideArtwork
               isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
               onToggleBookmark={user && sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
             />
