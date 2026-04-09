@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, useMemo, use } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
@@ -33,7 +33,6 @@ export default function ArtistPage({ params }: ArtistPageProps) {
     async function loadSheets() {
       try {
         const db = getDb();
-        // Requête simple sans orderBy (évite le besoin d'index composite)
         const q = query(
           collection(db, 'sheets'),
           where('isPublic', '==', true),
@@ -41,7 +40,6 @@ export default function ArtistPage({ params }: ArtistPageProps) {
         );
         const snapshot = await getDocs(q);
         const results = snapshot.docs.map(d => fromFirestore(d.id, d.data()));
-        // Tri côté client
         results.sort((a, b) => (b.updatedAt?.getTime() ?? 0) - (a.updatedAt?.getTime() ?? 0));
         setSheets(results);
       } catch (error) {
@@ -53,6 +51,23 @@ export default function ArtistPage({ params }: ArtistPageProps) {
 
     loadSheets();
   }, [artistName]);
+
+  // Grouper par titre → une seule entrée par musique
+  const grouped = useMemo(() => {
+    const groups = new Map<string, Sheet[]>();
+    for (const sheet of sheets) {
+      const key = sheet.title.toLowerCase();
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(sheet);
+    }
+    return Array.from(groups.values()).map((group) => ({
+      sheet: group[0],
+      count: group.length,
+      href: group.length === 1
+        ? `/sheet/${group[0].id}`
+        : `/song/${encodeURIComponent(group[0].title)}/${encodeURIComponent(artistName)}`,
+    }));
+  }, [sheets, artistName]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
@@ -78,7 +93,7 @@ export default function ArtistPage({ params }: ArtistPageProps) {
           <p className="text-[var(--ink-light)] mt-1">
             {loading
               ? 'Chargement…'
-              : `${sheets.length} grille${sheets.length > 1 ? 's' : ''} publique${sheets.length > 1 ? 's' : ''}`
+              : `${grouped.length} titre${grouped.length > 1 ? 's' : ''}${sheets.length > grouped.length ? ` · ${sheets.length} versions` : ''}`
             }
           </p>
         </div>
@@ -91,13 +106,16 @@ export default function ArtistPage({ params }: ArtistPageProps) {
             <div key={i} className="bg-white rounded-xl border border-[var(--line)] h-48 animate-pulse" />
           ))}
         </div>
-      ) : sheets.length > 0 ? (
+      ) : grouped.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sheets.map(sheet => (
+          {grouped.map(({ sheet, count, href }) => (
             <SheetCard
-              key={sheet.id}
+              key={`${sheet.title}`}
               sheet={sheet}
               showRating
+              href={href}
+              variantCount={count}
+              hideArtwork
               isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
               onToggleBookmark={user && sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
             />

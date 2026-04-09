@@ -277,6 +277,7 @@ export default function ExplorePage() {
                 showRating
                 href={href}
                 variantCount={count}
+                hideArtwork
                 isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
                 onToggleBookmark={user && sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
                 onDelete={isAdmin && sheet.id ? () => handleAdminDelete(sheet.id!) : undefined}

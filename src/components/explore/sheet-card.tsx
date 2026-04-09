@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import type { Sheet, Difficulty } from '@/types';
 import { DIFFICULTY_LABELS } from '@/types';
-import { useChordNotation } from '@/lib/use-chord-notation';
 import { useArtwork } from '@/lib/use-artwork';
 
 interface SheetCardProps {
@@ -17,6 +16,8 @@ interface SheetCardProps {
   href?: string;
   /** Nombre de variantes disponibles (affiche un badge si > 1) */
   variantCount?: number;
+  /** Masque la colonne artwork */
+  hideArtwork?: boolean;
 }
 
 export function SheetCard({
@@ -28,16 +29,9 @@ export function SheetCard({
   onToggleBookmark,
   href,
   variantCount,
+  hideArtwork = false,
 }: SheetCardProps) {
-  const translate = useChordNotation();
-  const { artworkUrl } = useArtwork(sheet.artist, sheet.title);
-
-  // Premier aperçu des accords (accords uniques)
-  const uniqueChords = [...new Set(
-    sheet.sections
-      .flatMap((s) => s.rows.flatMap((r) => r.map((c) => c.chord)))
-      .filter(Boolean)
-  )].slice(0, 8);
+  const { artworkUrl } = useArtwork(hideArtwork ? undefined : sheet.artist, hideArtwork ? undefined : sheet.title);
 
   // Formater la note moyenne
   const formatRating = (rating: number | null) => {
@@ -50,19 +44,21 @@ export function SheetCard({
   return (
     <div className="bg-white rounded-xl border border-[var(--line)] overflow-hidden hover:shadow-md transition-shadow group relative flex">
       {/* Artwork à gauche */}
-      <Link href={destination} className="flex-shrink-0 w-24 bg-gradient-to-br from-[var(--cell-bg)] to-[var(--line)]">
-        {artworkUrl ? (
-          <img
-            src={artworkUrl}
-            alt={`${sheet.artist} — ${sheet.title}`}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-[var(--ink-faint)] text-2xl">
-            ♫
-          </div>
-        )}
-      </Link>
+      {!hideArtwork && (
+        <Link href={destination} className="flex-shrink-0 w-24 bg-gradient-to-br from-[var(--cell-bg)] to-[var(--line)]">
+          {artworkUrl ? (
+            <img
+              src={artworkUrl}
+              alt={`${sheet.artist} — ${sheet.title}`}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-[var(--ink-faint)] text-2xl">
+              ♫
+            </div>
+          )}
+        </Link>
+      )}
 
       {/* Contenu à droite */}
       <div className="flex-1 min-w-0 flex flex-col">
@@ -84,24 +80,6 @@ export function SheetCard({
             {isBookmarked ? '★' : '☆'}
           </button>
         )}
-
-        {/* Aperçu des accords */}
-        <div className="p-3 bg-gradient-to-br from-[var(--cell-bg)] to-white border-b border-[var(--line)]">
-          <div className="flex flex-wrap gap-1.5">
-            {uniqueChords.length > 0 ? (
-              uniqueChords.map((chord, i) => (
-                <span
-                  key={i}
-                  className="px-1.5 py-0.5 bg-white rounded border border-[var(--line)] font-mono text-xs text-[var(--ink)]"
-                >
-                  {translate(chord)}
-                </span>
-              ))
-            ) : (
-              <span className="text-[var(--ink-faint)] text-xs italic">Aucun accord</span>
-            )}
-          </div>
-        </div>
 
         {/* Infos */}
         <div className="p-3 flex-1">
