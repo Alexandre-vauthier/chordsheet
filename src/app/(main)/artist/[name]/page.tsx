@@ -56,7 +56,7 @@ export default function ArtistPage({ params }: ArtistPageProps) {
   const grouped = useMemo(() => {
     const groups = new Map<string, Sheet[]>();
     for (const sheet of sheets) {
-      const key = sheet.title.toLowerCase();
+      const key = sheet.title.trim().toLowerCase();
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push(sheet);
     }

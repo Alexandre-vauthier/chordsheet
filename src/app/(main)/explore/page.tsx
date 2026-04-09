@@ -117,7 +117,7 @@ export default function ExplorePage() {
   const groupedResults = useMemo(() => {
     const groups = new Map<string, Sheet[]>();
     for (const sheet of filteredSheets) {
-      const key = `${sheet.title.toLowerCase()}|||${(sheet.artist || '').toLowerCase()}`;
+      const key = `${sheet.title.trim().toLowerCase()}|||${(sheet.artist || '').trim().toLowerCase()}`;
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push(sheet);
     }
