@@ -129,11 +129,13 @@ export default function SongPage({ params }: { params: Promise<PageParams> }) {
         const q = query(
           collection(db, 'sheets'),
           where('isPublic', '==', true),
-          where('title', '==', title),
           where('artist', '==', artist)
         );
         const snapshot = await getDocs(q);
-        const loaded: Sheet[] = snapshot.docs.map((d) => fromFirestore(d.id, d.data()));
+        const titleNorm = title.trim().toLowerCase();
+        const loaded: Sheet[] = snapshot.docs
+          .map((d) => fromFirestore(d.id, d.data()))
+          .filter((s) => s.title.trim().toLowerCase() === titleNorm);
         loaded.sort((a, b) => {
           const ra = a.averageRating ?? 0;
           const rb = b.averageRating ?? 0;
