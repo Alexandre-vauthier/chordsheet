@@ -1,6 +1,27 @@
 import { useState, useEffect } from 'react';
 
-const CACHE = new Map<string, string | null>();
+// Cache mémoire (déduplique les requêtes dans la même session)
+const MEM_CACHE = new Map<string, string | null>();
+
+// Cache localStorage (persiste entre sessions, TTL 30 jours)
+const LS_PREFIX = 'artwork_';
+const TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+function lsGet(key: string): string | null | undefined {
+  try {
+    const raw = localStorage.getItem(LS_PREFIX + key);
+    if (!raw) return undefined;
+    const { url, expires } = JSON.parse(raw) as { url: string | null; expires: number };
+    if (Date.now() > expires) { localStorage.removeItem(LS_PREFIX + key); return undefined; }
+    return url;
+  } catch { return undefined; }
+}
+
+function lsSet(key: string, url: string | null) {
+  try {
+    localStorage.setItem(LS_PREFIX + key, JSON.stringify({ url, expires: Date.now() + TTL_MS }));
+  } catch { /* quota dépassé — ignoré silencieusement */ }
+}
 
 // iTunes Search API (JSONP pour éviter CORS)
 // entity: 'song' quand on cherche artiste+titre, 'musicArtist' quand artiste seul
@@ -72,8 +93,17 @@ export function useArtwork(artist: string | undefined, title: string | undefined
       return;
     }
 
-    if (CACHE.has(query)) {
-      setUrl(CACHE.get(query) ?? null);
+    // 1. Cache mémoire
+    if (MEM_CACHE.has(query)) {
+      setUrl(MEM_CACHE.get(query) ?? null);
+      return;
+    }
+
+    // 2. Cache localStorage
+    const cached = lsGet(query);
+    if (cached !== undefined) {
+      MEM_CACHE.set(query, cached);
+      setUrl(cached);
       return;
     }
 
@@ -83,16 +113,17 @@ export function useArtwork(artist: string | undefined, title: string | undefined
     const artistOnly = !title && !!artist;
 
     (async () => {
-      // 1. iTunes (JSONP) — musicArtist si artiste seul, song sinon
+      // 3. iTunes (JSONP) — musicArtist si artiste seul, song sinon
       let result = await fetchItunes(query, artistOnly ? 'musicArtist' : 'song');
 
-      // 2. Fallback MusicBrainz si iTunes échoue et qu'on a artiste + titre
+      // 4. Fallback MusicBrainz si iTunes échoue et qu'on a artiste + titre
       if (!result && artist && title) {
         result = await fetchMusicBrainz(artist, title);
       }
 
       if (!cancelled) {
-        CACHE.set(query, result);
+        MEM_CACHE.set(query, result);
+        lsSet(query, result);
         setUrl(result);
         setLoading(false);
       }
