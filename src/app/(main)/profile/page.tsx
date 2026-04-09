@@ -21,6 +21,7 @@ export default function ProfilePage() {
   const [displayName, setDisplayName] = useState('');
   const [notation, setNotation] = useState<NotationPreference>('american');
   const [colorCoding, setColorCoding] = useState(false);
+  const [inlineDiagram, setInlineDiagram] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingNotation, setIsSavingNotation] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -32,6 +33,7 @@ export default function ProfilePage() {
       setDisplayName(user.displayName);
       if (user.notationPreference) setNotation(user.notationPreference);
       setColorCoding(user.chordColorCoding ?? false);
+      setInlineDiagram(user.showInlineDiagram ?? false);
     }
   }, [user]);
 
@@ -297,6 +299,30 @@ export default function ProfilePage() {
                 colorCoding ? 'translate-x-5' : ''
               }`}
             />
+          </button>
+        </div>
+      </div>
+
+      {/* Diagramme inline */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Diagramme dans la case</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              Affiche le diagramme de l&apos;accord directement dans chaque case en consultation
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !inlineDiagram;
+              setInlineDiagram(newVal);
+              try { await updateUser({ showInlineDiagram: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              inlineDiagram ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${inlineDiagram ? 'translate-x-5' : ''}`} />
           </button>
         </div>
       </div>

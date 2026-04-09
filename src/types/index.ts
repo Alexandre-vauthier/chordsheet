@@ -184,6 +184,7 @@ export interface User {
   preferredInstrument?: InstrumentId;
   notationPreference?: NotationPreference;
   chordColorCoding?: boolean;
+  showInlineDiagram?: boolean;
 }
 
 // Vérifier si un email est admin

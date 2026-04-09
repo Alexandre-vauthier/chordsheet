@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import type { Sheet, CellSpan, InstrumentId, Difficulty } from '@/types';
 import { INSTRUMENTS, DIFFICULTY_LABELS } from '@/types';
-import { ChordSummary, InstrumentSelector, ChordSuggestions } from '@/components/chord';
+import { ChordSummary, InstrumentSelector, ChordSuggestions, ChordDiagram, PianoKeyboard } from '@/components/chord';
 import type { CustomChordMap } from '@/components/chord';
 import type { StringChord, PianoChord, CustomChord } from '@/types';
 import { isPianoChord } from '@/types';
@@ -13,6 +13,8 @@ import { useChordColor } from '@/lib/use-chord-color';
 import { usePlayback, parseTempo } from '@/lib/use-playback';
 import type { PlayStep } from '@/lib/use-playback';
 import { useArtwork } from '@/lib/use-artwork';
+import { useAuth } from '@/lib/auth-context';
+import { findChordVariants, INSTRUMENT_CONFIG } from '@/lib/chord-data';
 
 const LS_KEY = 'chordsheet_instrument';
 
@@ -49,6 +51,8 @@ const spanToGridCols: Record<CellSpan, number> = {
 export function SheetViewer({ sheet }: SheetViewerProps) {
   const translate = useChordNotation();
   const getColor = useChordColor();
+  const { user } = useAuth();
+  const showInlineDiagram = user?.showInlineDiagram ?? false;
   const [instrumentId, setInstrumentId] = useState<InstrumentId>(
     () => getSavedInstrument(sheet.instrumentId || 'guitar')
   );
@@ -260,6 +264,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                           customChords={sheet.customChords as Record<string, CustomChord> | undefined}
                           translate={translate}
                           getColor={getColor}
+                          showInlineDiagram={showInlineDiagram}
                         />
                       );
                     })}
@@ -320,6 +325,7 @@ function ViewerChordCell({
   customChords,
   translate,
   getColor,
+  showInlineDiagram,
 }: {
   chord: string;
   span: CellSpan;
@@ -329,10 +335,17 @@ function ViewerChordCell({
   customChords?: Record<string, CustomChord>;
   translate: (name: string) => string;
   getColor: (chord: string) => { border: string; bg: string } | null;
+  showInlineDiagram: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
   const custom = resolveCustomChord(chord, instrumentId, customChords);
   const color = getColor(chord);
+
+  // Résoudre le diagramme inline (accord custom en priorité, sinon première variante)
+  const inlineDiagramChord = showInlineDiagram && span >= 1
+    ? (custom ?? findChordVariants(chord, instrumentId)[0] ?? null)
+    : null;
+  const numStrings = INSTRUMENT_CONFIG[instrumentId]?.strings ?? 6;
 
   return (
     <div
@@ -361,15 +374,21 @@ function ViewerChordCell({
         />
       )}
 
-      <span
-        className={`
-          relative z-10 font-mono font-medium text-[var(--ink)]
-          ${span <= 0.5 ? 'text-sm' : 'text-base'}
-          print:text-sm
-        `}
-      >
-        {translate(chord)}
-      </span>
+      <div className="relative z-10 flex flex-col items-center gap-1 py-1">
+        <span className={`font-mono font-medium text-[var(--ink)] ${span <= 0.5 ? 'text-sm' : 'text-base'} print:text-sm`}>
+          {translate(chord)}
+        </span>
+        {inlineDiagramChord && !isPianoChord(inlineDiagramChord) && (
+          <div className="print:hidden">
+            <ChordDiagram chord={inlineDiagramChord} size="sm" numStrings={numStrings} />
+          </div>
+        )}
+        {inlineDiagramChord && isPianoChord(inlineDiagramChord) && (
+          <div className="print:hidden">
+            <PianoKeyboard chord={inlineDiagramChord} />
+          </div>
+        )}
+      </div>
 
       {span <= 0.5 && (
         <span className="absolute bottom-0.5 left-1 text-[8px] text-[var(--ink-faint)] font-mono print:hidden">
