@@ -5,7 +5,6 @@ import { collection, query, where, orderBy, getDocs, limit, deleteDoc, doc } fro
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
-import { useBookmarks } from '@/lib/use-bookmarks';
 import { Input } from '@/components/ui/input';
 import { SheetCard } from '@/components/explore/sheet-card';
 import { GENRES, DIFFICULTY_LABELS, type Difficulty } from '@/types';
@@ -14,8 +13,8 @@ import type { Sheet } from '@/types';
 type SortOption = 'recent' | 'rated' | 'viewed';
 
 export default function ExplorePage() {
-  const { user, isAdmin } = useAuth();
-  const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
+  const { isAdmin } = useAuth();
+
   const [sheets, setSheets] = useState<Sheet[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -277,8 +276,6 @@ export default function ExplorePage() {
                 showRating
                 href={href}
                 variantCount={count}
-                isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
-                onToggleBookmark={user && sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
                 onDelete={isAdmin && sheet.id ? () => handleAdminDelete(sheet.id!) : undefined}
               />
             ))}
