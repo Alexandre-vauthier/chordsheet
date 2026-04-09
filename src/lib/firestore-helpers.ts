@@ -99,8 +99,8 @@ interface FirestoreSheet {
 // Convertir Sheet vers format Firestore (pour sauvegarde)
 export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
   const base: FirestoreSheet = {
-    title: sheet.title,
-    artist: sheet.artist,
+    title: sheet.title.trim(),
+    artist: sheet.artist.trim(),
     key: sheet.key,
     tempo: sheet.tempo,
     ownerId: sheet.ownerId,
