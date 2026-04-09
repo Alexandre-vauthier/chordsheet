@@ -64,7 +64,7 @@ export default function ExplorePage() {
     }
   };
 
-  // Filtrer et trier les grilles
+  // Filtrer, trier, puis grouper par titre+artiste (une entrée par musique)
   const filteredSheets = useMemo(() => {
     let result = [...sheets];
 
@@ -114,6 +114,23 @@ export default function ExplorePage() {
     return result;
   }, [sheets, searchQuery, selectedGenre, selectedDifficulty, sortBy]);
 
+  // Grouper par titre+artiste → une seule entrée par musique
+  const groupedResults = useMemo(() => {
+    const groups = new Map<string, Sheet[]>();
+    for (const sheet of filteredSheets) {
+      const key = `${sheet.title.toLowerCase()}|||${(sheet.artist || '').toLowerCase()}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(sheet);
+    }
+    return Array.from(groups.values()).map((group) => ({
+      sheet: group[0], // représentant du groupe (déjà trié)
+      count: group.length,
+      href: group.length === 1
+        ? `/sheet/${group[0].id}`
+        : `/song/${encodeURIComponent(group[0].title)}/${encodeURIComponent(group[0].artist || '')}`,
+    }));
+  }, [filteredSheets]);
+
   // Réinitialiser les filtres
   const clearFilters = () => {
     setSearchQuery('');
@@ -131,6 +148,7 @@ export default function ExplorePage() {
         <p className="text-[var(--ink-light)] mt-1">
           Découvrez les grilles partagées par la communauté
           {sheets.length > 0 && ` (${sheets.length} grille${sheets.length > 1 ? 's' : ''})`}
+          {groupedResults.length > 0 && groupedResults.length < sheets.length && ` · ${groupedResults.length} titre${groupedResults.length > 1 ? 's' : ''} uniques`}
         </p>
       </div>
 
@@ -243,19 +261,22 @@ export default function ExplorePage() {
             />
           ))}
         </div>
-      ) : filteredSheets.length > 0 ? (
+      ) : groupedResults.length > 0 ? (
         <>
           {hasActiveFilters && (
             <p className="text-sm text-[var(--ink-light)] mb-4">
-              {filteredSheets.length} résultat{filteredSheets.length > 1 ? 's' : ''}
+              {groupedResults.length} titre{groupedResults.length > 1 ? 's' : ''}
+              {filteredSheets.length > groupedResults.length && ` (${filteredSheets.length} versions)`}
             </p>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredSheets.map((sheet) => (
+            {groupedResults.map(({ sheet, count, href }) => (
               <SheetCard
-                key={sheet.id}
+                key={`${sheet.title}-${sheet.artist}`}
                 sheet={sheet}
                 showRating
+                href={href}
+                variantCount={count}
                 isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
                 onToggleBookmark={user && sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
                 onDelete={isAdmin && sheet.id ? () => handleAdminDelete(sheet.id!) : undefined}

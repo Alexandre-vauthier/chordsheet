@@ -13,6 +13,10 @@ interface SheetCardProps {
   onDelete?: () => void;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
+  /** Surcharge le lien de destination (par défaut /sheet/[id]) */
+  href?: string;
+  /** Nombre de variantes disponibles (affiche un badge si > 1) */
+  variantCount?: number;
 }
 
 export function SheetCard({
@@ -22,6 +26,8 @@ export function SheetCard({
   onDelete,
   isBookmarked,
   onToggleBookmark,
+  href,
+  variantCount,
 }: SheetCardProps) {
   const translate = useChordNotation();
   const { artworkUrl } = useArtwork(sheet.artist, sheet.title);
@@ -39,10 +45,12 @@ export function SheetCard({
     return rating.toFixed(1);
   };
 
+  const destination = href ?? `/sheet/${sheet.id}`;
+
   return (
     <div className="bg-white rounded-xl border border-[var(--line)] overflow-hidden hover:shadow-md transition-shadow group relative flex">
       {/* Artwork à gauche */}
-      <Link href={`/sheet/${sheet.id}`} className="flex-shrink-0 w-24 bg-gradient-to-br from-[var(--cell-bg)] to-[var(--line)]">
+      <Link href={destination} className="flex-shrink-0 w-24 bg-gradient-to-br from-[var(--cell-bg)] to-[var(--line)]">
         {artworkUrl ? (
           <img
             src={artworkUrl}
@@ -97,9 +105,14 @@ export function SheetCard({
 
         {/* Infos */}
         <div className="p-3 flex-1">
-          <Link href={`/sheet/${sheet.id}`} className="block group-hover:text-[var(--accent)] transition-colors">
-            <h3 className="font-semibold text-[var(--ink)] truncate text-sm">
+          <Link href={destination} className="block group-hover:text-[var(--accent)] transition-colors">
+            <h3 className="font-semibold text-[var(--ink)] truncate text-sm flex items-center gap-1.5">
               {sheet.title || 'Sans titre'}
+              {variantCount && variantCount > 1 && (
+                <span className="flex-shrink-0 text-[10px] px-1.5 py-0.5 bg-[var(--accent-soft)] text-[var(--accent)] rounded-full font-medium">
+                  {variantCount} versions
+                </span>
+              )}
             </h3>
           </Link>
 
@@ -141,7 +154,7 @@ export function SheetCard({
         {/* Actions avec icônes */}
         <div className="flex items-center gap-1 px-3 pb-3 pt-2 border-t border-[var(--line)] mx-3">
           <Link
-            href={`/sheet/${sheet.id}`}
+            href={destination}
             className="p-1.5 rounded hover:bg-[var(--accent-soft)] text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors"
             title="Consulter"
           >
