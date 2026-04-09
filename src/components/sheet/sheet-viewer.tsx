@@ -379,12 +379,12 @@ function ViewerChordCell({
           {translate(chord)}
         </span>
         {inlineDiagramChord && !isPianoChord(inlineDiagramChord) && (
-          <div className="print:hidden">
-            <ChordDiagram chord={inlineDiagramChord} size="sm" numStrings={numStrings} />
+          <div className={showInlineDiagram ? '' : 'print:hidden'}>
+            <ChordDiagram chord={inlineDiagramChord} size="xs" numStrings={numStrings} />
           </div>
         )}
         {inlineDiagramChord && isPianoChord(inlineDiagramChord) && (
-          <div className="print:hidden">
+          <div className={showInlineDiagram ? '' : 'print:hidden'}>
             <PianoKeyboard chord={inlineDiagramChord} />
           </div>
         )}
@@ -396,8 +396,8 @@ function ViewerChordCell({
         </span>
       )}
 
-      {/* Popup diagramme au survol */}
-      {hovered && (
+      {/* Popup diagramme au survol — seulement si l'option inline est désactivée */}
+      {hovered && !showInlineDiagram && (
         <div className="print:hidden">
           <ChordSuggestions
             chordName={chord}

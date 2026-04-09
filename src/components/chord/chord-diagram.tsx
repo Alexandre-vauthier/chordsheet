@@ -4,7 +4,7 @@ import type { StringChord } from '@/types';
 
 interface ChordDiagramProps {
   chord: StringChord;
-  size?: 'sm' | 'md';
+  size?: 'xs' | 'sm' | 'md';
   numStrings?: number;
   onClick?: () => void;
 }
@@ -15,25 +15,26 @@ export function ChordDiagram({
   numStrings = 6,
   onClick
 }: ChordDiagramProps) {
-  const sm = size === 'sm';
+  const xs = size === 'xs';
+  const sm = size === 'sm' || xs;
 
   const { startFret = 1 } = chord;
   const needsWideLabel = startFret >= 10;
-  const PAD_L = sm ? (needsWideLabel ? 30 : 20) : (needsWideLabel ? 42 : 30);
-  const PAD_R = sm ? 20 : 30;
-  const TOP = sm ? 22 : 37;
-  const BOTTOM = sm ? 132 : 217;
-  const CELL_W = sm ? 18 : 28;
+  const PAD_L = xs ? (needsWideLabel ? 18 : 12) : sm ? (needsWideLabel ? 30 : 20) : (needsWideLabel ? 42 : 30);
+  const PAD_R = xs ? 10 : sm ? 20 : 30;
+  const TOP = xs ? 13 : sm ? 22 : 37;
+  const BOTTOM = xs ? 68 : sm ? 132 : 217;
+  const CELL_W = xs ? 10 : sm ? 18 : 28;
   const CELL_H = (BOTTOM - TOP) / 5;
   const FRET_W = (numStrings - 1) * CELL_W;
   const W = FRET_W + PAD_L + PAD_R;
   const LEFT = PAD_L;
   const RIGHT = LEFT + FRET_W;
-  const H = sm ? 158 : 240;
-  const DOT_R = sm ? 7 : 13;
-  const fs = sm ? 9 : 13;
-  const fingerFs = sm ? 11 : 15;
-  const NUT_H = sm ? 4 : 5;
+  const H = xs ? 82 : sm ? 158 : 240;
+  const DOT_R = xs ? 4 : sm ? 7 : 13;
+  const fs = xs ? 6 : sm ? 9 : 13;
+  const fingerFs = xs ? 6 : sm ? 11 : 15;
+  const NUT_H = xs ? 3 : sm ? 4 : 5;
 
   const { fingers = [], barre, open = [], muted = [] } = chord;
 
