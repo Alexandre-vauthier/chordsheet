@@ -2,21 +2,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 
 export function Navbar() {
-  const { user, loading, isAdmin, signOut } = useAuth();
-  const router = useRouter();
+  const { user, loading, isAdmin } = useAuth();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const handleSignOut = async () => {
-    await signOut();
-    setMobileMenuOpen(false);
-    router.push('/');
-  };
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
@@ -73,12 +66,6 @@ export function Navbar() {
                     </div>
                     <span>{user.displayName || user.email}</span>
                   </Link>
-                  <button
-                    onClick={handleSignOut}
-                    className="text-sm text-[var(--cream)]/60 hover:text-[var(--cream)] transition-colors"
-                  >
-                    Déconnexion
-                  </button>
                 </div>
               </>
             ) : (
@@ -170,12 +157,6 @@ export function Navbar() {
                 Administration
               </Link>
             )}
-            <button
-              onClick={handleSignOut}
-              className="w-full text-left px-3 py-2 text-[var(--cream)]/60 hover:text-[var(--cream)] hover:bg-white/10 rounded-lg transition-colors"
-            >
-              Déconnexion
-            </button>
           </div>
         </div>
       )}

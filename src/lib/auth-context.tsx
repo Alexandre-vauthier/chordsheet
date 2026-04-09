@@ -7,9 +7,10 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
+  deleteUser as firebaseDeleteUser,
   updateProfile,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, getDocs, collection, query, where, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, getDocs, deleteDoc, collection, query, where, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { getAuth, getDb } from './firebase';
 import type { User, UserRole, NotationPreference } from '@/types';
 import { isAdminEmail } from '@/types';
@@ -22,6 +23,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   updateUser: (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean }) => Promise<void>;
 }
 
@@ -127,6 +129,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await firebaseSignOut(auth);
   };
 
+  // Suppression du compte (données Firestore + compte Auth)
+  const deleteAccount = async () => {
+    const auth = getAuth();
+    const db = getDb();
+    const currentUser = auth.currentUser;
+    if (!currentUser) throw new Error('User not authenticated');
+
+    const uid = currentUser.uid;
+    const batch = writeBatch(db);
+
+    // Supprimer les grilles
+    const sheetsSnap = await getDocs(query(collection(db, 'sheets'), where('ownerId', '==', uid)));
+    sheetsSnap.docs.forEach(d => batch.delete(d.ref));
+
+    // Supprimer les sets
+    const setsSnap = await getDocs(query(collection(db, 'sets'), where('ownerId', '==', uid)));
+    setsSnap.docs.forEach(d => batch.delete(d.ref));
+
+    // Supprimer les favoris
+    const bookmarksSnap = await getDocs(query(collection(db, 'bookmarks'), where('userId', '==', uid)));
+    bookmarksSnap.docs.forEach(d => batch.delete(d.ref));
+
+    // Supprimer le doc utilisateur
+    batch.delete(doc(db, 'users', uid));
+
+    await batch.commit();
+
+    // Supprimer le compte Firebase Auth
+    await firebaseDeleteUser(currentUser);
+  };
+
   // Mettre à jour le profil utilisateur
   const updateUser = async (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean }) => {
     const auth = getAuth();
@@ -190,7 +223,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = user?.role === 'admin';
 
   return (
-    <AuthContext.Provider value={{ user, firebaseUser, loading, isAdmin, signIn, signUp, signOut, updateUser }}>
+    <AuthContext.Provider value={{ user, firebaseUser, loading, isAdmin, signIn, signUp, signOut, deleteAccount, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
