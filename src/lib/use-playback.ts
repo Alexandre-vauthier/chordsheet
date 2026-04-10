@@ -26,13 +26,16 @@ function buildSequence(sections: Section[], beatMs: number): PlayStep[] {
     const bpm = section.beatsPerMeasure || 4;
     for (let rep = 0; rep < (section.repeat || 1); rep++) {
       for (let r = 0; r < section.rows.length; r++) {
-        for (let c = 0; c < section.rows[r].length; c++) {
-          steps.push({
-            sectionId: section.id,
-            rowIndex: r,
-            cellIndex: c,
-            durationMs: section.rows[r][c].span * bpm * beatMs,
-          });
+        const rowRepeat = section.rowRepeats?.[r] ?? 1;
+        for (let rr = 0; rr < rowRepeat; rr++) {
+          for (let c = 0; c < section.rows[r].length; c++) {
+            steps.push({
+              sectionId: section.id,
+              rowIndex: r,
+              cellIndex: c,
+              durationMs: section.rows[r][c].span * bpm * beatMs,
+            });
+          }
         }
       }
     }

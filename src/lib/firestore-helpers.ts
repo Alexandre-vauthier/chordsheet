@@ -75,6 +75,7 @@ interface FirestoreSection {
   repeat: number;
   beatsPerMeasure: BeatsPerMeasure;
   rows: FirestoreRow[];
+  rowRepeats?: number[];
 }
 
 interface FirestoreSheet {
@@ -106,13 +107,17 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
     ownerId: sheet.ownerId,
     ownerName: sheet.ownerName,
     isPublic: sheet.isPublic,
-    sections: sheet.sections.map((section) => ({
-      id: section.id,
-      label: section.label,
-      repeat: section.repeat,
-      beatsPerMeasure: section.beatsPerMeasure || 4,
-      rows: section.rows.map((row) => ({ cells: row })),
-    })),
+    sections: sheet.sections.map((section) => {
+      const s: FirestoreSection = {
+        id: section.id,
+        label: section.label,
+        repeat: section.repeat,
+        beatsPerMeasure: section.beatsPerMeasure || 4,
+        rows: section.rows.map((row) => ({ cells: row })),
+      };
+      if (section.rowRepeats) s.rowRepeats = section.rowRepeats;
+      return s;
+    }),
     tags: sheet.tags,
     genres: sheet.genres || [],
     difficulty: sheet.difficulty ?? null,
@@ -159,8 +164,8 @@ export function fromFirestore(
       label: section.label,
       repeat: section.repeat,
       beatsPerMeasure: (section.beatsPerMeasure as BeatsPerMeasure) || 4,
-      // Convertir {cells:[]} en tableau simple
       rows: section.rows.map((row) => row.cells || row),
+      ...(section.rowRepeats ? { rowRepeats: section.rowRepeats } : {}),
     })) as Section[],
     tags: (data.tags as string[]) || [],
     genres: (data.genres as string[]) || [],

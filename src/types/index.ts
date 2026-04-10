@@ -18,6 +18,7 @@ export interface Section {
   repeat: number;
   beatsPerMeasure: BeatsPerMeasure;
   rows: Row[];
+  rowRepeats?: number[]; // nombre de répétitions par mesure (index = rowIndex)
 }
 
 // Niveaux de difficulté

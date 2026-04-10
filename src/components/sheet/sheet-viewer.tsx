@@ -46,35 +46,6 @@ const spanToGridCols: Record<CellSpan, number> = {
   4: 16,
 };
 
-// ─── Groupement de lignes identiques consécutives ────────────────────────────
-
-function rowKey(row: { chord: string; span: number }[]): string {
-  return row.map(c => `${c.chord}:${c.span}`).join('|');
-}
-
-interface RowGroup {
-  row: { chord: string; span: number }[];
-  rowIndices: number[]; // indices originaux dans section.rows
-  count: number;
-}
-
-function groupConsecutiveRows(rows: { chord: string; span: number }[][]): RowGroup[] {
-  const groups: RowGroup[] = [];
-  for (let i = 0; i < rows.length; i++) {
-    const row = rows[i];
-    if (row.every(c => !c.chord)) continue; // ignorer lignes vides
-    const key = rowKey(row);
-    const last = groups[groups.length - 1];
-    if (last && rowKey(last.row) === key) {
-      last.rowIndices.push(i);
-      last.count++;
-    } else {
-      groups.push({ row, rowIndices: [i], count: 1 });
-    }
-  }
-  return groups;
-}
-
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function SheetViewer({ sheet }: SheetViewerProps) {
@@ -255,29 +226,29 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
 
             {/* Grille */}
             <div className="space-y-2">
-              {groupConsecutiveRows(section.rows).map((group) => {
-                const firstRowIndex = group.rowIndices[0];
-                const isGroupActive =
+              {section.rows.map((row, rowIndex) => {
+                if (row.every(c => !c.chord)) return null;
+
+                const rowRepeat = section.rowRepeats?.[rowIndex] ?? 1;
+                const isRowActive =
                   isPlaying &&
                   activeStep?.sectionId === section.id &&
-                  group.rowIndices.includes(activeStep.rowIndex);
+                  activeStep?.rowIndex === rowIndex;
 
                 return (
-                  <div key={firstRowIndex} className="flex items-center gap-2">
+                  <div key={rowIndex} className="flex items-center gap-2">
                     <div
                       className="flex-1 grid gap-1"
                       style={{ gridTemplateColumns: `repeat(${section.beatsPerMeasure === 3 ? 12 : 16}, minmax(0, 1fr))` }}
                     >
-                      {group.row.map((cell, cellIndex) => {
-                        const isActive =
-                          isGroupActive &&
-                          activeStep?.cellIndex === cellIndex;
+                      {row.map((cell, cellIndex) => {
+                        const isActive = isRowActive && activeStep?.cellIndex === cellIndex;
 
                         if (!cell.chord) {
                           return (
                             <div
                               key={cellIndex}
-                              style={{ gridColumn: `span ${spanToGridCols[cell.span as CellSpan]}` }}
+                              style={{ gridColumn: `span ${spanToGridCols[cell.span]}` }}
                             />
                           );
                         }
@@ -286,7 +257,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                           <ViewerChordCell
                             key={cellIndex}
                             chord={cell.chord}
-                            span={cell.span as CellSpan}
+                            span={cell.span}
                             isActive={isActive}
                             activeStep={activeStep}
                             instrumentId={instrumentId}
@@ -298,9 +269,9 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                         );
                       })}
                     </div>
-                    {group.count > 1 && (
+                    {rowRepeat > 1 && (
                       <span className="print:inline flex-shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded bg-[var(--cell-bg)] border border-[var(--line)] text-[var(--ink-faint)]">
-                        ×{group.count}
+                        ×{rowRepeat}
                       </span>
                     )}
                   </div>

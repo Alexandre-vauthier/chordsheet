@@ -112,7 +112,15 @@ export function SectionBlock({
   const deleteRow = (rowIndex: number) => {
     if (section.rows.length <= 1) return;
     const newRows = section.rows.filter((_, i) => i !== rowIndex);
-    onUpdate({ rows: newRows });
+    const newRepeats = (section.rowRepeats || []).filter((_, i) => i !== rowIndex);
+    onUpdate({ rows: newRows, rowRepeats: newRepeats });
+  };
+
+  // Modifier la répétition d'une mesure
+  const setRowRepeat = (rowIndex: number, value: number) => {
+    const repeats = [...(section.rowRepeats || section.rows.map(() => 1))];
+    repeats[rowIndex] = Math.max(1, Math.min(9, value));
+    onUpdate({ rowRepeats: repeats });
   };
 
   return (
@@ -240,7 +248,7 @@ export function SectionBlock({
       {/* Grille */}
       <div className="flex flex-col gap-1">
         {section.rows.map((row, rowIndex) => (
-          <div key={rowIndex} className="group relative">
+          <div key={rowIndex} className="group relative flex items-center gap-2">
             <GridRow
               row={row}
               rowIndex={rowIndex}
@@ -256,11 +264,26 @@ export function SectionBlock({
               activeCellIndex={activeRowIndex === rowIndex ? activeCellIndex : undefined}
               activeDurationMs={activeRowIndex === rowIndex ? activeDurationMs : undefined}
             />
+            {/* Répétitions de la mesure */}
+            <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="text-[10px] text-[var(--ink-faint)]">×</span>
+              <input
+                type="number"
+                min={1}
+                max={9}
+                value={section.rowRepeats?.[rowIndex] ?? 1}
+                onChange={(e) => setRowRepeat(rowIndex, parseInt(e.target.value) || 1)}
+                className="w-7 text-center text-[10px] font-semibold text-[var(--ink)] bg-[var(--cell-bg)]
+                  border border-[var(--line)] rounded px-0.5 py-0.5 outline-none
+                  focus:border-[var(--accent)]"
+                title="Répétitions de cette mesure"
+              />
+            </div>
             {/* Bouton supprimer mesure */}
             {section.rows.length > 1 && (
               <button
                 onClick={() => deleteRow(rowIndex)}
-                className="absolute -right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100
+                className="flex-shrink-0 opacity-0 group-hover:opacity-100
                   text-[var(--ink-faint)] hover:text-red-500 transition-all text-sm"
                 title="Supprimer cette mesure"
               >
