@@ -170,7 +170,7 @@ export type NewSheet = Omit<Sheet, 'id' | 'createdAt' | 'updatedAt' | 'viewCount
 export type UserRole = 'user' | 'admin';
 
 // Emails des administrateurs
-export const ADMIN_EMAILS = ['alex.vauthier@gmail.com'] as const;
+export const ADMIN_EMAILS = ['alex.vauthier@gmail.com', 'vauthier.julien@gmail.com'] as const;
 
 // Type utilisateur
 export interface User {
