@@ -137,6 +137,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const currentUser = auth.currentUser;
     if (!currentUser) throw new Error('User not authenticated');
 
+    // Protection : les comptes admin ne peuvent pas être supprimés
+    if (isAdminEmail(currentUser.email || '')) {
+      throw new Error('Les comptes administrateurs ne peuvent pas être supprimés');
+    }
+
     const uid = currentUser.uid;
     const batch = writeBatch(db);
 
