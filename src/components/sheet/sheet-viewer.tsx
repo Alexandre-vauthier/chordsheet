@@ -52,7 +52,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
   const translate = useChordNotation();
   const getColor = useChordColor();
   const { user } = useAuth();
-  const showInlineDiagram = user?.showInlineDiagram ?? false;
+  const [showInlineDiagram, setShowInlineDiagram] = useState(() => user?.showInlineDiagram ?? false);
   const [instrumentId, setInstrumentId] = useState<InstrumentId>(
     () => getSavedInstrument(sheet.instrumentId || 'guitar')
   );
@@ -280,10 +280,29 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
       <div className="mt-8 print:hidden">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-medium text-[var(--ink-light)]">Diagrammes des accords</h2>
-          <InstrumentSelector
-            value={instrumentId}
-            onChange={handleInstrumentChange}
-          />
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setShowInlineDiagram(v => !v)}
+              title={showInlineDiagram ? 'Masquer les diagrammes dans les cases' : 'Afficher les diagrammes dans les cases'}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs border transition-colors ${
+                showInlineDiagram
+                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                  : 'bg-white border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)]'
+              }`}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="3" width="7" height="7" rx="1" strokeWidth="2"/>
+                <rect x="14" y="3" width="7" height="7" rx="1" strokeWidth="2"/>
+                <rect x="3" y="14" width="7" height="7" rx="1" strokeWidth="2"/>
+                <rect x="14" y="14" width="7" height="7" rx="1" strokeWidth="2"/>
+              </svg>
+              Inline
+            </button>
+            <InstrumentSelector
+              value={instrumentId}
+              onChange={handleInstrumentChange}
+            />
+          </div>
         </div>
         <ChordSummary
           sections={sheet.sections}
