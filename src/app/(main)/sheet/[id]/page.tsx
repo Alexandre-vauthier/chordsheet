@@ -21,7 +21,7 @@ interface ViewSheetPageProps {
 export default function ViewSheetPage({ params }: ViewSheetPageProps) {
   const { id } = use(params);
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
   const { userRating, rateSheet, isLoading: ratingLoading } = useRatings(id, user?.id);
   const [sheet, setSheet] = useState<Sheet | null>(null);
@@ -135,7 +135,7 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
 
   if (!sheet) return null;
 
-  const isOwner = user?.id === sheet.ownerId;
+  const isOwner = user?.id === sheet.ownerId || isAdmin;
   const canRate = user && !isOwner && sheet.isPublic;
 
   return (

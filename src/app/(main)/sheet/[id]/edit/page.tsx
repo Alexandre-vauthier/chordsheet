@@ -16,7 +16,7 @@ interface EditSheetPageProps {
 export default function EditSheetPage({ params }: EditSheetPageProps) {
   const { id } = use(params);
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -37,7 +37,7 @@ export default function EditSheetPage({ params }: EditSheetPageProps) {
         const data = docSnap.data();
 
         // Vérifier que l'utilisateur est le propriétaire
-        if (data.ownerId !== user?.id) {
+        if (data.ownerId !== user?.id && !isAdmin) {
           setError('Vous n\'êtes pas autorisé à modifier cette grille');
           return;
         }
