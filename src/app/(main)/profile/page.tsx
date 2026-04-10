@@ -23,6 +23,9 @@ export default function ProfilePage() {
   const [colorCoding, setColorCoding] = useState(false);
   const [inlineDiagram, setInlineDiagram] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [showDeleteZone, setShowDeleteZone] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isSavingNotation, setIsSavingNotation] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -384,27 +387,50 @@ export default function ProfilePage() {
       </div>
       {/* Zone danger — suppression de compte (masquée pour les admins) */}
       {!isAdmin && (
-        <div className="mt-8 bg-white rounded-xl border border-red-200 p-6">
-          <h2 className="text-sm font-semibold text-red-700 mb-1">Zone danger</h2>
-          <p className="text-xs text-[var(--ink-faint)] mb-4">
-            La suppression du compte est irréversible. Toutes vos grilles, sets et favoris seront définitivement supprimés.
-          </p>
+        <div className="mt-8 bg-white rounded-xl border border-[var(--line)] p-6">
           <button
-            onClick={async () => {
-              if (!confirm('Supprimer définitivement votre compte et toutes vos données ? Cette action est irréversible.')) return;
-              try {
-                await deleteAccount();
-                router.push('/');
-              } catch (err) {
-                console.error('Error deleting account:', err);
-                alert('Erreur lors de la suppression. Reconnectez-vous et réessayez.');
-              }
-            }}
-            className="px-4 py-2 text-sm text-red-600 border border-red-300 rounded-lg
-              hover:bg-red-50 transition-colors"
+            onClick={() => { setShowDeleteZone(v => !v); setDeleteConfirm(''); }}
+            className="text-xs text-[var(--ink-faint)] hover:text-red-600 transition-colors"
           >
-            Supprimer mon compte
+            {showDeleteZone ? '▲ Masquer' : 'Supprimer mon compte…'}
           </button>
+
+          {showDeleteZone && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm font-semibold text-red-700 mb-1">Suppression du compte</p>
+              <p className="text-xs text-red-600 mb-4">
+                Action irréversible. Toutes vos grilles, sets et favoris seront supprimés définitivement.
+                Tapez <strong>SUPPRIMER</strong> pour confirmer.
+              </p>
+              <input
+                type="text"
+                value={deleteConfirm}
+                onChange={(e) => setDeleteConfirm(e.target.value)}
+                placeholder="SUPPRIMER"
+                className="w-full px-3 py-2 text-sm border border-red-300 rounded-lg outline-none
+                  focus:ring-2 focus:ring-red-300 mb-3 bg-white"
+              />
+              <button
+                disabled={deleteConfirm !== 'SUPPRIMER' || isDeleting}
+                onClick={async () => {
+                  setIsDeleting(true);
+                  try {
+                    await deleteAccount();
+                    router.push('/');
+                  } catch (err) {
+                    console.error('Error deleting account:', err);
+                    alert('Erreur lors de la suppression. Reconnectez-vous et réessayez.');
+                    setIsDeleting(false);
+                  }
+                }}
+                className="px-4 py-2 text-sm rounded-lg transition-colors
+                  disabled:opacity-40 disabled:cursor-not-allowed
+                  bg-red-600 text-white hover:bg-red-700 disabled:hover:bg-red-600"
+              >
+                {isDeleting ? 'Suppression…' : 'Confirmer la suppression'}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
