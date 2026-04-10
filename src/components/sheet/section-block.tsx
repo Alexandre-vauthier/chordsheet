@@ -248,8 +248,7 @@ export function SectionBlock({
       {/* Grille */}
       <div className="flex flex-col gap-1">
         {section.rows.map((row, rowIndex) => (
-          <div key={rowIndex} className="group relative flex items-center gap-2">
-            <div className="flex-1 min-w-0">
+          <div key={rowIndex} className="group relative">
             <GridRow
               row={row}
               rowIndex={rowIndex}
@@ -265,9 +264,8 @@ export function SectionBlock({
               activeCellIndex={activeRowIndex === rowIndex ? activeCellIndex : undefined}
               activeDurationMs={activeRowIndex === rowIndex ? activeDurationMs : undefined}
             />
-            </div>
-            {/* Répétitions de la mesure */}
-            <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            {/* Contrôles flottants à droite (ne prennent pas de place dans le layout) */}
+            <div className="absolute -right-16 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <span className="text-[10px] text-[var(--ink-faint)]">×</span>
               <input
                 type="number"
@@ -280,18 +278,16 @@ export function SectionBlock({
                   focus:border-[var(--accent)]"
                 title="Répétitions de cette mesure"
               />
+              {section.rows.length > 1 && (
+                <button
+                  onClick={() => deleteRow(rowIndex)}
+                  className="text-[var(--ink-faint)] hover:text-red-500 transition-colors text-sm ml-1"
+                  title="Supprimer cette mesure"
+                >
+                  ✕
+                </button>
+              )}
             </div>
-            {/* Bouton supprimer mesure */}
-            {section.rows.length > 1 && (
-              <button
-                onClick={() => deleteRow(rowIndex)}
-                className="flex-shrink-0 opacity-0 group-hover:opacity-100
-                  text-[var(--ink-faint)] hover:text-red-500 transition-all text-sm"
-                title="Supprimer cette mesure"
-              >
-                ✕
-              </button>
-            )}
           </div>
         ))}
       </div>
