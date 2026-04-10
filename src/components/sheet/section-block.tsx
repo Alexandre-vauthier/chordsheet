@@ -265,7 +265,7 @@ export function SectionBlock({
               activeDurationMs={activeRowIndex === rowIndex ? activeDurationMs : undefined}
             />
             {/* Contrôles flottants à droite (ne prennent pas de place dans le layout) */}
-            <div className="absolute -right-16 top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className={`absolute -right-16 top-1/2 -translate-y-1/2 flex items-center gap-1 transition-opacity ${(section.rowRepeats?.[rowIndex] ?? 1) > 1 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
               <span className="text-[10px] text-[var(--ink-faint)]">×</span>
               <input
                 type="number"
@@ -273,9 +273,8 @@ export function SectionBlock({
                 max={9}
                 value={section.rowRepeats?.[rowIndex] ?? 1}
                 onChange={(e) => setRowRepeat(rowIndex, parseInt(e.target.value) || 1)}
-                className="w-7 text-center text-[10px] font-semibold text-[var(--ink)] bg-[var(--cell-bg)]
-                  border border-[var(--line)] rounded px-0.5 py-0.5 outline-none
-                  focus:border-[var(--accent)]"
+                className="w-7 text-center text-[10px] font-semibold text-white bg-[var(--accent)]
+                  border-none rounded px-0.5 py-0.5 outline-none"
                 title="Répétitions de cette mesure"
               />
               {section.rows.length > 1 && (
