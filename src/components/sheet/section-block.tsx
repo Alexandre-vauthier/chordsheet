@@ -249,6 +249,7 @@ export function SectionBlock({
       <div className="flex flex-col gap-1">
         {section.rows.map((row, rowIndex) => (
           <div key={rowIndex} className="group relative flex items-center gap-2">
+            <div className="flex-1 min-w-0">
             <GridRow
               row={row}
               rowIndex={rowIndex}
@@ -264,6 +265,7 @@ export function SectionBlock({
               activeCellIndex={activeRowIndex === rowIndex ? activeCellIndex : undefined}
               activeDurationMs={activeRowIndex === rowIndex ? activeDurationMs : undefined}
             />
+            </div>
             {/* Répétitions de la mesure */}
             <div className="flex-shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
               <span className="text-[10px] text-[var(--ink-faint)]">×</span>
