@@ -264,29 +264,31 @@ export function SectionBlock({
               activeCellIndex={activeRowIndex === rowIndex ? activeCellIndex : undefined}
               activeDurationMs={activeRowIndex === rowIndex ? activeDurationMs : undefined}
             />
-            {/* Contrôles flottants à droite (ne prennent pas de place dans le layout) */}
-            <div className={`absolute -right-16 top-1/2 -translate-y-1/2 flex items-center gap-1 transition-opacity ${(section.rowRepeats?.[rowIndex] ?? 1) > 1 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+            {/* Badge répétition — visible si > 1, au survol sinon */}
+            <div className={`absolute -right-10 top-1/2 -translate-y-1/2 flex items-center gap-0.5 transition-opacity ${(section.rowRepeats?.[rowIndex] ?? 1) > 1 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
               <span className="text-[10px] text-[var(--ink-faint)]">×</span>
               <input
                 type="number"
                 min={1}
-                max={9}
                 value={section.rowRepeats?.[rowIndex] ?? 1}
                 onChange={(e) => setRowRepeat(rowIndex, parseInt(e.target.value) || 1)}
                 className="w-7 text-center text-[10px] font-semibold text-white bg-[var(--accent)]
-                  border-none rounded px-0.5 py-0.5 outline-none"
+                  border-none rounded px-0.5 py-0.5 outline-none cursor-pointer
+                  [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                 title="Répétitions de cette mesure"
               />
-              {section.rows.length > 1 && (
-                <button
-                  onClick={() => deleteRow(rowIndex)}
-                  className="text-[var(--ink-faint)] hover:text-red-500 transition-colors text-sm ml-1"
-                  title="Supprimer cette mesure"
-                >
-                  ✕
-                </button>
-              )}
             </div>
+            {/* Bouton supprimer — toujours au survol seulement */}
+            {section.rows.length > 1 && (
+              <button
+                onClick={() => deleteRow(rowIndex)}
+                className="absolute -right-16 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100
+                  cursor-pointer text-[var(--ink-faint)] hover:text-red-500 transition-all text-sm"
+                title="Supprimer cette mesure"
+              >
+                ✕
+              </button>
+            )}
           </div>
         ))}
       </div>
