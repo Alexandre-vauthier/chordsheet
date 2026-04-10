@@ -22,14 +22,15 @@ export interface Section {
 }
 
 // Niveaux de difficulté
-export type Difficulty = 1 | 2 | 3 | 4 | 5;
+export type Difficulty = 1 | 2 | 3;
 
-export const DIFFICULTY_LABELS: Record<Difficulty, string> = {
-  1: 'Débutant',
-  2: 'Facile',
-  3: 'Intermédiaire',
+// Record<number, string> pour la compatibilité avec les anciennes données (valeurs 4 et 5)
+export const DIFFICULTY_LABELS: Record<number, string> = {
+  1: 'Facile',
+  2: 'Intermédiaire',
+  3: 'Avancé',
   4: 'Avancé',
-  5: 'Expert',
+  5: 'Avancé',
 };
 
 // Genres musicaux disponibles

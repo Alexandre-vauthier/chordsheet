@@ -268,17 +268,6 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
               placeholder:text-[var(--ink-faint)]"
           />
           <span className="flex items-center gap-1 text-[var(--ink-faint)]">
-            <span className="text-sm">♯♭</span>
-            <input
-              type="text"
-              value={sheet.key}
-              onChange={(e) => updateSheet({ key: e.target.value })}
-              placeholder="Tonalité…"
-              className="font-sans text-sm text-[var(--ink-light)] bg-transparent border-none outline-none
-                placeholder:text-[var(--ink-faint)] w-24"
-            />
-          </span>
-          <span className="flex items-center gap-1 text-[var(--ink-faint)]">
             <span className="text-base leading-none">♩</span>
             <input
               type="text"
@@ -341,11 +330,9 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
               className="text-sm border border-[var(--line)] rounded-lg px-2 py-1 bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             >
               <option value="">—</option>
-              <option value="1">1 · Débutant</option>
-              <option value="2">2 · Facile</option>
-              <option value="3">3 · Intermédiaire</option>
-              <option value="4">4 · Avancé</option>
-              <option value="5">5 · Expert</option>
+              <option value="1">Facile</option>
+              <option value="2">Intermédiaire</option>
+              <option value="3">Avancé</option>
             </select>
           </div>
         </div>
@@ -392,6 +379,12 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             Grille publique (visible par tous)
           </span>
         </label>
+      </div>
+
+      {/* Titre de la grille */}
+      <div className="flex items-center gap-3 mb-4">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Grille harmonique</h2>
+        <div className="flex-1 h-px bg-[var(--line)]" />
       </div>
 
       {/* Sections */}

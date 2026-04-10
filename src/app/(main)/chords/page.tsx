@@ -1,134 +1,169 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { ChordEditor, ChordCard } from '@/components/chord';
 import type { StringChord, PianoChord, InstrumentId } from '@/types';
+import { getChordsByInstrument } from '@/lib/chord-data';
 
-interface SavedChord {
-  chord: StringChord | PianoChord;
-  instrumentId: InstrumentId;
+type CategoryGroup = 'major' | 'minor' | 'other';
+
+const CAT_LABELS: Record<CategoryGroup, string> = {
+  major: 'Majeurs',
+  minor: 'Mineurs',
+  other: 'Autres',
+};
+
+
+function getCategoryGroup(category: string): CategoryGroup {
+  if (category === 'major') return 'major';
+  if (category === 'minor') return 'minor';
+  return 'other';
 }
 
-const STORAGE_KEY = 'chordsheet-custom-chords';
+const INSTRUMENTS: { id: InstrumentId; label: string }[] = [
+  { id: 'guitar', label: 'Guitare' },
+  { id: 'ukulele', label: 'Ukulélé' },
+  { id: 'piano', label: 'Piano' },
+  { id: 'mandolin', label: 'Mandoline' },
+  { id: 'banjo', label: 'Banjo' },
+];
 
-export default function ChordsPage() {
-  const [savedChords, setSavedChords] = useState<SavedChord[]>([]);
-  const [showEditor, setShowEditor] = useState(true);
-  const [isLoaded, setIsLoaded] = useState(false);
+function ChordsPageContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
-  // Charger les accords depuis localStorage au montage
+  const instrumentParam = (searchParams.get('instrument') || 'guitar') as InstrumentId;
+  const categoryParam = (searchParams.get('category') || 'major') as CategoryGroup;
+
+  const [instrumentId, setInstrumentId] = useState<InstrumentId>(instrumentParam);
+  const [categoryGroup, setCategoryGroup] = useState<CategoryGroup>(categoryParam);
+  const [showEditor, setShowEditor] = useState(false);
+
+  // Sync URL params → state
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        setSavedChords(JSON.parse(stored));
-      }
-    } catch (e) {
-      console.error('Error loading chords from localStorage:', e);
-    }
-    setIsLoaded(true);
-  }, []);
+    setInstrumentId(instrumentParam);
+    setCategoryGroup(categoryParam);
+  }, [instrumentParam, categoryParam]);
 
-  // Sauvegarder dans localStorage quand les accords changent
-  useEffect(() => {
-    if (isLoaded) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(savedChords));
-      } catch (e) {
-        console.error('Error saving chords to localStorage:', e);
-      }
-    }
-  }, [savedChords, isLoaded]);
-
-  const handleSaveChord = (chord: StringChord | PianoChord, instrumentId: InstrumentId) => {
-    setSavedChords(prev => [...prev, { chord, instrumentId }]);
+  const updateUrl = (instrument: InstrumentId, category: CategoryGroup) => {
+    router.push(`/chords?instrument=${instrument}&category=${category}`, { scroll: false });
   };
 
-  const handleDeleteChord = (index: number) => {
-    setSavedChords(prev => prev.filter((_, i) => i !== index));
+  const handleInstrumentChange = (id: InstrumentId) => {
+    setInstrumentId(id);
+    updateUrl(id, categoryGroup);
+  };
+
+  const handleCategoryChange = (cat: CategoryGroup) => {
+    setCategoryGroup(cat);
+    updateUrl(instrumentId, cat);
+  };
+
+  // Charger et filtrer les accords
+  const chords = useMemo(() => {
+    const all = getChordsByInstrument(instrumentId);
+    return all.filter((c) => getCategoryGroup(c.category) === categoryGroup);
+  }, [instrumentId, categoryGroup]);
+
+  const handleSaveChord = (_chord: StringChord | PianoChord, _instId: InstrumentId) => {
+    setShowEditor(false);
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
-      <div className="mb-8">
-        <h1 className="font-playfair text-3xl font-bold text-[var(--ink)]">
-          Bibliothèque d&apos;accords
-        </h1>
-        <p className="text-[var(--ink-light)] mt-2">
-          Créez et visualisez vos accords personnalisés pour tous les instruments.
-        </p>
-      </div>
-
-      {/* Toggle éditeur */}
-      <div className="mb-6">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-playfair text-3xl font-bold text-[var(--ink)]">
+            Bibliothèque d&apos;accords
+          </h1>
+          <p className="text-[var(--ink-light)] mt-1 text-sm">
+            Tous les accords de la bibliothèque, par instrument et catégorie.
+          </p>
+        </div>
         <button
-          onClick={() => setShowEditor(!showEditor)}
-          className={`px-4 py-2 rounded-lg border transition-colors ${
+          onClick={() => setShowEditor((v) => !v)}
+          className={`flex-shrink-0 px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
             showEditor
               ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
-              : 'bg-white text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)]'
+              : 'bg-white text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
           }`}
         >
-          {showEditor ? 'Masquer l\'éditeur' : 'Créer un accord'}
+          {showEditor ? 'Fermer l\'éditeur' : '+ Créer un accord'}
         </button>
       </div>
 
-      {/* Éditeur d'accords */}
+      {/* Éditeur d'accord */}
       {showEditor && (
-        <div className="mb-8">
-          <h2 className="text-lg font-medium text-[var(--ink)] mb-4">Créer un accord</h2>
+        <div className="mb-8 p-4 bg-white rounded-xl border border-[var(--line)]">
+          <h2 className="text-base font-medium text-[var(--ink)] mb-4">Créer un accord personnalisé</h2>
           <ChordEditor onSave={handleSaveChord} />
         </div>
       )}
 
-      {/* Accords sauvegardés */}
-      {savedChords.length > 0 && (
-        <div>
-          <h2 className="text-lg font-medium text-[var(--ink)] mb-4">
-            Accords créés ({savedChords.length})
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {savedChords.map((saved, index) => (
-              <div key={index} className="relative group">
-                <ChordCard
-                  chord={saved.chord}
-                  instrumentId={saved.instrumentId}
-                />
-                <button
-                  onClick={() => handleDeleteChord(index)}
-                  className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full
-                    opacity-0 group-hover:opacity-100 transition-opacity text-xs flex items-center justify-center"
-                  title="Supprimer"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Message si aucun accord */}
-      {savedChords.length === 0 && !showEditor && (
-        <div className="text-center py-12 text-[var(--ink-faint)]">
-          <p>Aucun accord créé pour le moment.</p>
-          <p className="mt-2">Cliquez sur « Créer un accord » pour commencer.</p>
-        </div>
-      )}
-
-      {/* Info */}
-      <div className="mt-12 p-4 bg-gray-50 rounded-lg border border-[var(--line)]">
-        <h3 className="font-medium text-[var(--ink)] mb-2">Comment utiliser l&apos;éditeur</h3>
-        <ul className="text-sm text-[var(--ink-light)] space-y-1">
-          <li>1. Sélectionnez l&apos;instrument (guitare, ukulélé, piano, etc.)</li>
-          <li>2. Cliquez sur les cases du manche ou les touches du piano pour placer les notes</li>
-          <li>3. Cliquez au-dessus des cordes pour marquer « ouverte » (O) ou « mutée » (X)</li>
-          <li>4. Activez le barré si nécessaire et ajustez sa position</li>
-          <li>5. Donnez un nom à votre accord</li>
-          <li>6. Cliquez « Jouer » pour prévisualiser le son</li>
-          <li>7. Cliquez « Sauvegarder » pour ajouter l&apos;accord à votre bibliothèque</li>
-        </ul>
+      {/* Sélecteur d'instrument */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        {INSTRUMENTS.map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() => handleInstrumentChange(id)}
+            className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+              instrumentId === id
+                ? 'bg-[var(--ink)] text-white border-[var(--ink)]'
+                : 'bg-white text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--ink-faint)]'
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
+
+      {/* Sélecteur de catégorie */}
+      <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
+        {(['major', 'minor', 'other'] as CategoryGroup[]).map((cat) => (
+          <button
+            key={cat}
+            onClick={() => handleCategoryChange(cat)}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              categoryGroup === cat
+                ? 'bg-white text-[var(--ink)] shadow-sm'
+                : 'text-[var(--ink-light)] hover:text-[var(--ink)]'
+            }`}
+          >
+            {CAT_LABELS[cat]}
+          </button>
+        ))}
+      </div>
+
+      {/* Grille d'accords */}
+      {chords.length === 0 ? (
+        <div className="text-center py-16 text-[var(--ink-faint)]">
+          Aucun accord trouvé pour cette sélection.
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-4">
+          {chords.map((chord) => (
+            <ChordCard
+              key={chord.id}
+              chord={chord}
+              instrumentId={instrumentId}
+              size="sm"
+            />
+          ))}
+        </div>
+      )}
     </div>
+  );
+}
+
+export default function ChordsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-24">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[var(--accent)] border-t-transparent" />
+      </div>
+    }>
+      <ChordsPageContent />
+    </Suspense>
   );
 }

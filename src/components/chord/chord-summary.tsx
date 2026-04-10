@@ -81,9 +81,11 @@ export function ChordSummary({
 
   return (
     <div className="bg-white rounded-lg border border-[var(--line)] p-4">
-      <h3 className="text-sm font-medium text-[var(--ink-light)] mb-3">
-        Accords utilisés ({uniqueChords.length})
-      </h3>
+      {!editable && (
+        <h3 className="text-sm font-medium text-[var(--ink-light)] mb-3">
+          Accords utilisés ({uniqueChords.length})
+        </h3>
+      )}
       <div className="flex flex-wrap gap-4">
         {uniqueChords.map((chordName) => {
           // Chercher d'abord dans les accords personnalisés de la grille

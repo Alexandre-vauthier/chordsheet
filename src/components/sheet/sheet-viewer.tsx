@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
-import type { Sheet, CellSpan, InstrumentId, Difficulty } from '@/types';
+import type { Sheet, CellSpan, InstrumentId } from '@/types';
 import { INSTRUMENTS, DIFFICULTY_LABELS } from '@/types';
 import { ChordSummary, InstrumentSelector, ChordSuggestions, ChordDiagram, PianoKeyboard } from '@/components/chord';
 import type { CustomChordMap } from '@/components/chord';
@@ -141,12 +141,6 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
 
         {/* Métadonnées */}
         <div className="flex flex-wrap items-center gap-3 mt-3">
-          {sheet.key && (
-            <span className="flex items-center gap-1.5 px-2 py-1 bg-purple-50 text-purple-700 rounded text-sm print:bg-transparent print:text-[var(--ink)]">
-              <span className="text-sm">♯♭</span>
-              {sheet.key}
-            </span>
-          )}
           {sheet.tempo && (
             <span className="flex items-center gap-1.5 px-2 py-1 bg-orange-50 text-orange-700 rounded text-sm print:bg-transparent print:text-[var(--ink)]">
               <span className="text-base leading-none">♩</span>
@@ -158,9 +152,9 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
               Capo {sheet.capo}
             </span>
           )}
-          {sheet.difficulty && (
+          {sheet.difficulty && DIFFICULTY_LABELS[sheet.difficulty] && (
             <span className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 text-[var(--ink-light)] rounded text-sm print:bg-transparent print:text-[var(--ink)]">
-              {sheet.difficulty} · {DIFFICULTY_LABELS[sheet.difficulty as Difficulty]}
+              {DIFFICULTY_LABELS[sheet.difficulty]}
             </span>
           )}
           {sheet.referenceUrl && (
@@ -215,12 +209,18 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                   if (isPlaying && activeStep?.sectionId === section.id) stop();
                   else playSection(section.id);
                 }}
-                className="print:hidden ml-auto w-6 h-6 flex items-center justify-center rounded-full
-                  border border-[var(--line)] text-[var(--ink-faint)]
-                  hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors text-[10px]"
+                className={`print:hidden ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all border
+                  ${isPlaying && activeStep?.sectionId === section.id
+                    ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                    : 'bg-white border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                  }`}
                 title={isPlaying && activeStep?.sectionId === section.id ? 'Stop' : 'Jouer cette section'}
               >
-                {isPlaying && activeStep?.sectionId === section.id ? '■' : '▶'}
+                {isPlaying && activeStep?.sectionId === section.id ? (
+                  <><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><rect x="4" y="3" width="4" height="14" rx="1"/><rect x="12" y="3" width="4" height="14" rx="1"/></svg>Stop</>
+                ) : (
+                  <><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>Play</>
+                )}
               </button>
             </div>
 
@@ -363,7 +363,17 @@ function ViewerChordCell({
   showInlineDiagram: boolean;
 }) {
   const [hovered, setHovered] = useState(false);
+  const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const custom = resolveCustomChord(chord, instrumentId, customChords);
+
+  const handleMouseEnter = () => {
+    if (leaveTimer.current) clearTimeout(leaveTimer.current);
+    setHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    leaveTimer.current = setTimeout(() => setHovered(false), 200);
+  };
   const color = getColor(chord);
 
   // Résoudre le diagramme inline (accord custom en priorité, sinon première variante)
@@ -385,8 +395,8 @@ function ViewerChordCell({
         ${isActive ? 'border-[var(--accent)]' : ''}
         print:min-h-10 print:border
       `}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Sweep animation */}
       {isActive && activeStep && (
@@ -423,7 +433,7 @@ function ViewerChordCell({
 
       {/* Popup diagramme au survol — seulement si l'option inline est désactivée */}
       {hovered && !showInlineDiagram && (
-        <div className="print:hidden">
+        <div className="print:hidden" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
           <ChordSuggestions
             chordName={chord}
             instrumentId={instrumentId}

@@ -18,7 +18,7 @@ export function Navbar() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
-          <Link href={user ? '/dashboard' : '/'} className="flex items-center" onClick={closeMobileMenu}>
+          <Link href={user ? '/explore' : '/'} className="flex items-center" onClick={closeMobileMenu}>
             <span className="font-playfair text-xl font-bold">
               Chord<span className="text-[var(--accent)]">Sheet</span>
             </span>
@@ -34,7 +34,7 @@ export function Navbar() {
                   { href: '/dashboard', label: 'Mon book' },
                   { href: '/sets', label: 'Mes sets' },
                   { href: '/explore', label: 'Explorer' },
-                  // { href: '/chords', label: 'Accords' },
+                  { href: '/chords', label: 'Accords' },
                 ].map(({ href, label }) => (
                   <Link
                     key={href}
@@ -48,6 +48,12 @@ export function Navbar() {
                     {label}
                   </Link>
                 ))}
+                <Link
+                  href="/sheet/new"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm rounded-lg font-medium transition-colors"
+                >
+                  + Grille
+                </Link>
                 <div className="flex items-center gap-3 ml-2 pl-4 border-l border-white/20">
                   {isAdmin && (
                     <Link
@@ -137,6 +143,13 @@ export function Navbar() {
                 {label}
               </Link>
             ))}
+            <Link
+              href="/sheet/new"
+              onClick={closeMobileMenu}
+              className="flex items-center gap-1 px-3 py-2 bg-[var(--accent)] text-white rounded-lg font-medium text-sm transition-colors hover:bg-[#a83d25]"
+            >
+              + Nouvelle grille
+            </Link>
             <div className="border-t border-white/10 my-2" />
             <Link
               href="/profile"
