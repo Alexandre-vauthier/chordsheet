@@ -42,6 +42,10 @@ interface SheetCardProps {
   variantCount?: number;
   /** Masque la colonne artwork */
   hideArtwork?: boolean;
+  /** Masque le niveau de difficulté */
+  hideDifficulty?: boolean;
+  /** Affiche un badge 'Public' si la grille est publique */
+  showPublicBadge?: boolean;
 }
 
 export function SheetCard({
@@ -54,6 +58,8 @@ export function SheetCard({
   href,
   variantCount,
   hideArtwork = false,
+  hideDifficulty = false,
+  showPublicBadge = false,
 }: SheetCardProps) {
   const { artworkUrl, previewUrl } = useArtwork(hideArtwork ? undefined : sheet.artist, hideArtwork ? undefined : sheet.title);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -153,19 +159,25 @@ export function SheetCard({
                   {formatRating(sheet.averageRating)}
                 </span>
               </div>
-            ) : sheet.difficulty ? (
+            ) : !hideDifficulty && sheet.difficulty ? (
               <span className="text-xs text-[var(--ink-faint)] ml-2">
                 {sheet.difficulty} · {DIFFICULTY_LABELS[sheet.difficulty as Difficulty]}
               </span>
             ) : null}
           </div>
 
-          {showOwner && (
-            <p className="text-[10px] text-[var(--ink-faint)] mt-1">
-              par {sheet.ownerName}
-            </p>
-          )}
-        </div>
+          <div className="flex items-center gap-2 mt-1">
+            {showOwner && (
+              <p className="text-[10px] text-[var(--ink-faint)]">
+                par {sheet.ownerName}
+              </p>
+            )}
+            {showPublicBadge && sheet.isPublic && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-50 text-green-700 font-medium">
+                Public
+              </span>
+            )}
+          </div>
 
         {/* Actions */}
         <div className="flex items-center gap-1 pb-3 pt-2 border-t border-[var(--line)] mx-3">

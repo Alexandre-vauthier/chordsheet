@@ -147,6 +147,7 @@ export default function DashboardPage() {
                 onDelete={() => handleDelete(sheet.id!)}
                 isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
                 onToggleBookmark={sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
+                showPublicBadge
               />
             ))}
           </div>

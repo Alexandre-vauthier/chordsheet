@@ -289,6 +289,7 @@ export default function ExplorePage() {
                 key={`${sheet.title}-${sheet.artist}`}
                 sheet={sheet}
                 showRating
+                hideDifficulty
                 href={href}
                 variantCount={count}
                 onDelete={isAdmin && sheet.id ? () => handleAdminDelete(sheet.id!) : undefined}
