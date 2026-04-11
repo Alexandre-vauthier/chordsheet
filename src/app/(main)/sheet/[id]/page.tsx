@@ -136,7 +136,8 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
   if (!sheet) return null;
 
   const isOwner = user?.id === sheet.ownerId || isAdmin;
-  const canRate = user && !isOwner && sheet.isPublic;
+  const isActualOwner = user?.id === sheet.ownerId;
+  const canRate = user && !isActualOwner && sheet.isPublic;
 
   return (
     <>
