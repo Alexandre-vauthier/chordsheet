@@ -105,42 +105,64 @@ function ChordsPageContent() {
     return cats;
   }, [instrumentId, additions]);
 
-  // Fusions : chaque accord statique → override éventuel (avec fallback enharmonique)
-  const displayChords = useMemo(() => {
-    return staticChords.map((chord) => {
+  // Liste unifiée : statiques + ajouts admin, groupés par nom, triés alphabétiquement
+  const unifiedGroups = useMemo(() => {
+    // Map nom normalisé → { variants: chord[], overrideDocId?, isOverride }
+    type Group = {
+      name: string; // nom d'affichage (premier trouvé)
+      variants: (StringChord | PianoChord)[];
+      overrideDocId?: string;
+      hasOverride: boolean;
+      additionDocIds: string[]; // pour suppression variantes admin
+    };
+    const groups = new Map<string, Group>();
+
+    const ENH: Record<string,string> = {'Db':'C#','Eb':'D#','F':'E#','Ab':'G#','Bb':'A#','C':'B#','B':'Cb','E':'Fb','F#':'Gb'};
+
+    // 1. Partir des accords statiques
+    staticChords.forEach((chord) => {
       const key = libraryKey(chord.name, instrumentId);
-      // Essayer aussi la clé enharmonique inverse pour trouver l'override
       const allKeys = [key];
       const enh = chord.name.match(/^([A-G][b#]?)(.*)$/);
-      if (enh) {
-        const ENH: Record<string,string> = {'Db':'C#','Eb':'D#','F':'E#','Ab':'G#','Bb':'A#','C':'B#','B':'Cb','E':'Fb','F#':'Gb'};
-        const mapped = ENH[enh[1]];
-        if (mapped) allKeys.push(libraryKey(mapped + enh[2], instrumentId));
-      }
+      if (enh && ENH[enh[1]]) allKeys.push(libraryKey(ENH[enh[1]] + enh[2], instrumentId));
       const override = allKeys.map(k => overrides.get(k)).find(Boolean);
-      return {
-        original: chord,
-        display: override ? override.chord : chord,
-        hasOverride: !!override,
-        overrideDocId: override?.docId,
-      };
-    });
-  }, [staticChords, instrumentId, overrides]);
 
-  // Ajouts admin groupés par nom (pour variantes navigables)
-  const adminAdditionGroups = useMemo(() => {
-    const filtered = additions.filter(
-      (a) => a.instrumentId === instrumentId && getCategoryGroup(a.chord.category) === categoryGroup,
-    );
-    // Grouper par nom normalisé
-    const groups = new Map<string, typeof filtered>();
-    filtered.forEach(a => {
-      const k = a.chord.name.trim().toLowerCase();
-      if (!groups.has(k)) groups.set(k, []);
-      groups.get(k)!.push(a);
+      const nameLower = chord.name.trim().toLowerCase();
+      if (!groups.has(nameLower)) {
+        groups.set(nameLower, { name: chord.name, variants: [], hasOverride: false, additionDocIds: [] });
+      }
+      const g = groups.get(nameLower)!;
+      if (override) {
+        g.variants.unshift(override.chord); // override en premier
+        g.hasOverride = true;
+        g.overrideDocId = override.docId;
+      } else {
+        g.variants.push(chord);
+      }
     });
-    return Array.from(groups.values());
-  }, [additions, instrumentId, categoryGroup]);
+
+    // 2. Ajouter les additions admin de la catégorie courante
+    additions
+      .filter(a => a.instrumentId === instrumentId && getCategoryGroup(a.chord.category) === categoryGroup)
+      .forEach(a => {
+        const nameLower = a.chord.name.trim().toLowerCase();
+        if (!groups.has(nameLower)) {
+          groups.set(nameLower, { name: a.chord.name, variants: [], hasOverride: false, additionDocIds: [] });
+        }
+        const g = groups.get(nameLower)!;
+        // Les additions viennent après l'override mais avant les statiques si override
+        // Si pas d'override, après les statiques existants (ou en début si groupe nouveau)
+        if (g.hasOverride) {
+          g.variants.splice(1, 0, a.chord); // après l'override
+        } else {
+          g.variants.push(a.chord);
+        }
+        g.additionDocIds.push(a.docId);
+      });
+
+    // 3. Trier alphabétiquement et retourner
+    return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [staticChords, instrumentId, overrides, additions, categoryGroup]);
 
   const openEditModal = (chord: StringChord | PianoChord, isOverride: boolean) => {
     setEditingChordName(chord.name);
@@ -239,62 +261,27 @@ function ChordsPageContent() {
         ))}
       </div>
 
-      {/* Accords ajoutés par admin */}
-      {isAdmin && adminAdditionGroups.length > 0 && (
-        <div className="mb-6">
-          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--accent)] mb-3">
-            Ajoutés ({adminAdditionGroups.reduce((s, g) => s + g.length, 0)})
-          </p>
-          <div className="flex flex-wrap gap-4">
-            {adminAdditionGroups.map((group) => (
-              <AdditionGroup
-                key={group[0].docId}
-                group={group}
-                instrumentId={instrumentId}
-                onEdit={(chord) => openEditModal(chord, false)}
-                onDelete={handleDeleteAddition}
-              />
-            ))}
-          </div>
-          {displayChords.length > 0 && <div className="h-px bg-[var(--line)] mt-6 mb-4" />}
-        </div>
-      )}
-
-      {/* Grille d'accords de la bibliothèque */}
-      {displayChords.length === 0 && adminAdditionGroups.length === 0 ? (
+      {/* Liste unifiée : statiques + ajouts, triée alphabétiquement */}
+      {unifiedGroups.length === 0 ? (
         <div className="text-center py-16 text-[var(--ink-faint)]">
           Aucun accord trouvé pour cette sélection.
         </div>
-      ) : displayChords.length > 0 ? (
+      ) : (
         <div className="flex flex-wrap gap-4">
-          {displayChords.map(({ original, display, hasOverride, overrideDocId }) => (
-            <div key={original.id} className="relative group">
-              <ChordCard chord={display} instrumentId={instrumentId} size="sm" />
-              {hasOverride && (
-                <span className="absolute top-1 left-1 text-[9px] bg-[var(--accent)] text-white px-1 rounded">
-                  modifié
-                </span>
-              )}
-              {isAdmin && (
-                <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => openEditModal(display, true)}
-                    className="w-6 h-6 bg-blue-500 text-white rounded text-xs flex items-center justify-center"
-                    title="Modifier cet accord"
-                  >✎</button>
-                  {hasOverride && overrideDocId && (
-                    <button
-                      onClick={() => handleDeleteOverride(overrideDocId)}
-                      className="w-6 h-6 bg-gray-500 text-white rounded text-xs flex items-center justify-center"
-                      title="Restaurer l'accord de base"
-                    >↩</button>
-                  )}
-                </div>
-              )}
-            </div>
+          {unifiedGroups.map((group) => (
+            <UnifiedChordGroup
+              key={group.name}
+              group={group}
+              instrumentId={instrumentId}
+              isAdmin={isAdmin}
+              onEditOverride={(chord) => openEditModal(chord, true)}
+              onEditAddition={(chord) => openEditModal(chord, false)}
+              onDeleteOverride={handleDeleteOverride}
+              onDeleteAddition={handleDeleteAddition}
+            />
           ))}
         </div>
-      ) : null}
+      )}
 
       {/* Modal d'édition admin */}
       {isAdmin && (
@@ -320,43 +307,85 @@ function ChordsPageContent() {
   );
 }
 
-// ─── Groupe de variantes admin navigables ────────────────────────────────────
+// ─── Groupe unifié : statiques + ajouts, navigables ─────────────────────────
 
-import type { LibraryChord } from '@/lib/library-chords-context';
+type UnifiedGroup = {
+  name: string;
+  variants: (StringChord | PianoChord)[];
+  hasOverride: boolean;
+  overrideDocId?: string;
+  additionDocIds: string[];
+};
 
-function AdditionGroup({
+function UnifiedChordGroup({
   group,
   instrumentId,
-  onEdit,
-  onDelete,
+  isAdmin,
+  onEditOverride,
+  onEditAddition,
+  onDeleteOverride,
+  onDeleteAddition,
 }: {
-  group: LibraryChord[];
+  group: UnifiedGroup;
   instrumentId: InstrumentId;
-  onEdit: (chord: StringChord | PianoChord) => void;
-  onDelete: (docId: string) => void;
+  isAdmin: boolean;
+  onEditOverride: (chord: StringChord | PianoChord) => void;
+  onEditAddition: (chord: StringChord | PianoChord) => void;
+  onDeleteOverride: (docId: string) => void;
+  onDeleteAddition: (docId: string) => void;
 }) {
   const [idx, setIdx] = useState(0);
-  const current = group[Math.min(idx, group.length - 1)];
-  const hasMany = group.length > 1;
+  const safeIdx = Math.min(idx, group.variants.length - 1);
+  const current = group.variants[safeIdx];
+  const hasMany = group.variants.length > 1;
+
+  // Déterminer si la variante courante est un ajout admin
+  const additionOffset = group.hasOverride ? 1 : 0;
+  const isCurrentAddition = safeIdx >= additionOffset && (safeIdx - additionOffset) < group.additionDocIds.length;
+  const currentAdditionDocId = isCurrentAddition ? group.additionDocIds[safeIdx - additionOffset] : undefined;
 
   return (
     <div className="relative group flex flex-col items-center">
       {hasMany && (
         <div className="flex items-center gap-2 mb-1">
-          <button onClick={() => setIdx(i => (i === 0 ? group.length - 1 : i - 1))}
+          <button onClick={() => setIdx(i => (i === 0 ? group.variants.length - 1 : i - 1))}
             className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-gray-100 rounded">‹</button>
-          <span className="text-[10px] text-[var(--ink-faint)]">{idx + 1}/{group.length}</span>
-          <button onClick={() => setIdx(i => (i + 1) % group.length)}
+          <span className="text-[10px] text-[var(--ink-faint)]">{safeIdx + 1}/{group.variants.length}</span>
+          <button onClick={() => setIdx(i => (i + 1) % group.variants.length)}
             className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-gray-100 rounded">›</button>
         </div>
       )}
-      <ChordCard chord={current.chord} instrumentId={instrumentId} size="sm" />
-      <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" style={{ top: hasMany ? '28px' : '4px' }}>
-        <button onClick={() => onEdit(current.chord)}
-          className="w-6 h-6 bg-blue-500 text-white rounded text-xs flex items-center justify-center" title="Modifier">✎</button>
-        <button onClick={() => onDelete(current.docId)}
-          className="w-6 h-6 bg-red-500 text-white rounded text-xs flex items-center justify-center" title="Supprimer cette variante">✕</button>
-      </div>
+      <ChordCard chord={current} instrumentId={instrumentId} size="sm" />
+      {group.hasOverride && safeIdx === 0 && (
+        <span className="text-[9px] bg-[var(--accent)] text-white px-1 rounded mt-1">modifié</span>
+      )}
+      {isCurrentAddition && (
+        <span className="text-[9px] bg-blue-500 text-white px-1 rounded mt-1">ajouté</span>
+      )}
+      {isAdmin && (
+        <div
+          className="absolute right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+          style={{ top: hasMany ? '28px' : '4px' }}
+        >
+          {isCurrentAddition && currentAdditionDocId ? (
+            <>
+              <button onClick={() => onEditAddition(current)}
+                className="w-6 h-6 bg-blue-500 text-white rounded text-xs flex items-center justify-center" title="Modifier cet ajout">✎</button>
+              <button onClick={() => onDeleteAddition(currentAdditionDocId)}
+                className="w-6 h-6 bg-red-500 text-white rounded text-xs flex items-center justify-center" title="Supprimer">✕</button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => onEditOverride(current)}
+                className="w-6 h-6 bg-blue-500 text-white rounded text-xs flex items-center justify-center" title="Modifier">✎</button>
+              {group.hasOverride && group.overrideDocId && safeIdx === 0 && (
+                <button onClick={() => onDeleteOverride(group.overrideDocId!)}
+                  className="w-6 h-6 bg-gray-500 text-white rounded text-xs flex items-center justify-center" title="Restaurer l'original">↩</button>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
