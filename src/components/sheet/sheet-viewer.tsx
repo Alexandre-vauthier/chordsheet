@@ -141,6 +141,12 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
 
         {/* Métadonnées */}
         <div className="flex flex-wrap items-center gap-3 mt-3">
+          {sheet.key && (
+            <span className="flex items-center gap-1.5 px-2 py-1 bg-purple-50 text-purple-700 rounded text-sm print:bg-transparent print:text-[var(--ink)]">
+              <span className="text-sm">♯♭</span>
+              {sheet.key}
+            </span>
+          )}
           {sheet.tempo && (
             <span className="flex items-center gap-1.5 px-2 py-1 bg-orange-50 text-orange-700 rounded text-sm print:bg-transparent print:text-[var(--ink)]">
               <span className="text-base leading-none">♩</span>
