@@ -39,6 +39,9 @@ export function ChordEditorModal({
   const isPiano = instrumentId === 'piano';
   const config = !isPiano ? INSTRUMENT_CONFIG[instrumentId] : null;
 
+  // Nom éditable (pour les nouveaux accords admin sans nom prédéfini)
+  const [editableName, setEditableName] = useState(chordName);
+
   // État pour instruments à cordes
   const [fingers, setFingers] = useState<FingerPosition[]>([]);
   const [barre, setBarre] = useState<ChordBarre | null>(null);
@@ -48,6 +51,11 @@ export function ChordEditorModal({
 
   // État pour piano
   const [pianoNotes, setPianoNotes] = useState<string[]>([]);
+
+  // Sync nom éditable à l'ouverture
+  useEffect(() => {
+    if (isOpen) setEditableName(chordName);
+  }, [isOpen, chordName]);
 
   // Charger l'accord initial quand la modal s'ouvre
   useEffect(() => {
@@ -144,20 +152,22 @@ export function ChordEditorModal({
 
   // Construire l'objet accord
   const buildChord = (): StringChord | PianoChord | null => {
+    const name = editableName.trim();
+    if (!name) return null;
     if (isPiano) {
       if (pianoNotes.length === 0) return null;
       return {
-        id: `custom-${chordName}-${Date.now()}`,
-        name: chordName,
-        full: `${chordName} (personnalisé)`,
+        id: `custom-${name}-${Date.now()}`,
+        name,
+        full: `${name} (personnalisé)`,
         category: 'custom',
         notes: pianoNotes,
       };
     } else {
       return {
-        id: `custom-${chordName}-${Date.now()}`,
-        name: chordName,
-        full: `${chordName} (personnalisé)`,
+        id: `custom-${name}-${Date.now()}`,
+        name,
+        full: `${name} (personnalisé)`,
         category: 'custom',
         fingers,
         barre: barre || undefined,
@@ -181,9 +191,19 @@ export function ChordEditorModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="p-4 border-b border-[var(--line)]">
-          <h2 className="text-lg font-medium text-[var(--ink)]">
-            Modifier l&apos;accord : {chordName}
+          <h2 className="text-lg font-medium text-[var(--ink)] mb-2">
+            {chordName ? `Modifier l'accord : ${chordName}` : 'Ajouter un accord'}
           </h2>
+          {!chordName && (
+            <input
+              type="text"
+              value={editableName}
+              onChange={(e) => setEditableName(e.target.value)}
+              placeholder="Nom de l'accord (ex: C#m7)"
+              className="w-full px-3 py-2 border border-[var(--line)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] mb-1"
+              autoFocus
+            />
+          )}
           <p className="text-sm text-[var(--ink-light)] mt-1">
             Cliquez sur les cases pour placer vos doigts
           </p>

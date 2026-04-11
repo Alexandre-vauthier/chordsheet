@@ -1,9 +1,9 @@
 'use client';
 
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { StringChord, PianoChord, InstrumentId } from '@/types';
 import { isPianoChord } from '@/types';
-import { findChordVariants } from '@/lib/chord-data';
+import { useChordVariants } from '@/lib/use-chord-variants';
 import { ChordDiagram } from './chord-diagram';
 import { PianoKeyboard } from './piano-keyboard';
 import { INSTRUMENT_CONFIG } from '@/lib/chord-data';
@@ -27,13 +27,13 @@ export function ChordSuggestions({
   const [currentIndex, setCurrentIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Trouver les variantes de l'accord (accord personnalisé en premier)
-  const variants = useMemo(() => {
-    if (!chordName.trim()) return [];
-    const library = findChordVariants(chordName, instrumentId);
-    if (customChord) return [customChord, ...library];
-    return library;
-  }, [chordName, instrumentId, customChord]);
+  // Variantes depuis bibliothèque (statique + overrides Firestore)
+  const libraryVariants = useChordVariants(chordName, instrumentId);
+
+  // L'accord custom de la grille est prioritaire sur tout
+  const variants = customChord
+    ? [customChord, ...libraryVariants.filter(v => v.id !== customChord.id)]
+    : libraryVariants;
 
   // Reset l'index quand le nom change
   useEffect(() => {

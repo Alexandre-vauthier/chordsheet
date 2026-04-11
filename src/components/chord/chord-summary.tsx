@@ -3,8 +3,9 @@
 import { useMemo, useState } from 'react';
 import type { Section, InstrumentId, StringChord, PianoChord } from '@/types';
 import { ChordCard } from './chord-card';
-import { findChordVariants } from '@/lib/chord-data';
 import { useChordNotation } from '@/lib/use-chord-notation';
+import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
+import { findChordVariants } from '@/lib/chord-data';
 
 // Type pour les accords personnalisés stockés dans la grille
 export type CustomChordMap = Record<string, StringChord | PianoChord>;
@@ -35,6 +36,7 @@ export function ChordSummary({
   editable = false,
 }: ChordSummaryProps) {
   const translate = useChordNotation();
+  const { overrides, additions } = useLibraryChords();
 
   // État pour les indices de variante sélectionnée par accord
   const [variantIndices, setVariantIndices] = useState<Record<string, number>>({});
@@ -92,15 +94,20 @@ export function ChordSummary({
           const customChordKey = `${chordName.toLowerCase()}-${instrumentId}`;
           const customChord = customChords[customChordKey];
 
-          // Chercher toutes les variantes dans la bibliothèque
-          const libraryVariants = findChordVariants(chordName, instrumentId);
+          // Overrides admin (Firestore) puis statique
+          const key = libraryKey(chordName, instrumentId);
+          const adminOverride = overrides.get(key);
+          const staticVariants = findChordVariants(chordName, instrumentId);
+          const adminAdditions = additions
+            .filter(a => a.instrumentId === instrumentId && a.chord.name.trim().toLowerCase() === chordName.trim().toLowerCase())
+            .map(a => a.chord);
 
           // Construire la liste de toutes les variantes disponibles
           const allVariants: (StringChord | PianoChord)[] = [];
-          if (customChord) {
-            allVariants.push(customChord);
-          }
-          allVariants.push(...libraryVariants);
+          if (customChord) allVariants.push(customChord);
+          if (adminOverride) allVariants.push(adminOverride.chord);
+          allVariants.push(...adminAdditions);
+          allVariants.push(...staticVariants);
 
           const currentIndex = variantIndices[chordName] || 0;
           const currentChord = allVariants[currentIndex] || null;
