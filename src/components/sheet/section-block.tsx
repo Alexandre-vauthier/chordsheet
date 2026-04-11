@@ -19,6 +19,7 @@ interface SectionBlockProps {
   onNavigateToCell: (sectionId: string, rowIndex: number, cellIndex: number) => void;
   // Drag & drop
   onDragStart: () => void;
+  onDragEnd: () => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: () => void;
   isDragOver: boolean;
@@ -37,6 +38,7 @@ export function SectionBlock({
   activeDurationMs,
   onNavigateToCell,
   onDragStart,
+  onDragEnd,
   onDragOver,
   onDrop,
   isDragOver,
@@ -123,11 +125,7 @@ export function SectionBlock({
         e.dataTransfer.effectAllowed = 'move';
         onDragStart();
       }}
-      onDragOver={(e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        onDragOver(e);
-      }}
+      onDragEnd={onDragEnd}
       onDrop={(e) => {
         e.preventDefault();
         onDrop();
@@ -135,8 +133,15 @@ export function SectionBlock({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Header de section */}
-      <div className="flex items-center gap-3 mb-3">
+      {/* Header de section — zone de détection du drag-over */}
+      <div
+        className="flex items-center gap-3 mb-3"
+        onDragOver={(e) => {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          onDragOver(e);
+        }}
+      >
         {/* Drag handle */}
         <span
           className={`cursor-grab active:cursor-grabbing text-[var(--ink-faint)] transition-opacity ${isHovered ? 'opacity-100' : 'opacity-0'}`}

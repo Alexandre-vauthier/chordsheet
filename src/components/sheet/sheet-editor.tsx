@@ -133,6 +133,11 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     setDragOverSectionId(sectionId);
   }, []);
 
+  const handleDragEnd = useCallback(() => {
+    setDragSectionId(null);
+    setDragOverSectionId(null);
+  }, []);
+
   const handleDrop = useCallback((targetSectionId: string) => {
     if (!dragSectionId || dragSectionId === targetSectionId) {
       setDragSectionId(null);
@@ -464,7 +469,20 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
 
       {/* Sections */}
       <div>
-        {sheet.sections.map((section) => (
+        {sheet.sections.map((section) => {
+          if (dragSectionId === section.id) {
+            return (
+              <div
+                key={section.id}
+                className="mb-10 h-10 border-2 border-dashed border-[var(--line)] rounded-lg opacity-40 flex items-center px-4"
+                onDragOver={(e) => { e.preventDefault(); handleDragOver(section.id); }}
+                onDrop={() => handleDrop(section.id)}
+              >
+                <span className="text-xs text-[var(--ink-faint)] uppercase tracking-wider">{section.label || 'Section'}</span>
+              </div>
+            );
+          }
+          return (
           <SectionBlock
             key={section.id}
             section={section}
@@ -482,11 +500,13 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             activeDurationMs={isPlaying && activeStep?.sectionId === section.id ? activeStep.durationMs : undefined}
             onNavigateToCell={navigateToCell}
             onDragStart={() => handleDragStart(section.id)}
+            onDragEnd={handleDragEnd}
             onDragOver={(e) => { e.preventDefault(); handleDragOver(section.id); }}
             onDrop={() => handleDrop(section.id)}
             isDragOver={dragOverSectionId === section.id && dragSectionId !== section.id}
           />
-        ))}
+          );
+        })}
       </div>
 
       {/* Bouton ajouter section */}
