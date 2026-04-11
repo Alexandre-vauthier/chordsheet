@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 const MEM_CACHE = new Map<string, { artworkUrl: string | null; previewUrl: string | null }>();
 
 // Cache localStorage (persiste entre sessions, TTL 30 jours)
-const LS_PREFIX = 'itunes2_'; // préfixe v2 pour invalider l'ancien cache
+const LS_PREFIX = 'itunes3_'; // préfixe v3 : invalide le cache qui avait des previews non vérifiés
 const TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 function lsGet(key: string): { artworkUrl: string | null; previewUrl: string | null } | undefined {
@@ -28,10 +28,19 @@ function lsSet(key: string, data: { artworkUrl: string | null; previewUrl: strin
   } catch { /* quota dépassé — ignoré silencieusement */ }
 }
 
+// Vérifie qu'un titre retourné par iTunes correspond au titre attendu
+function titleMatches(expected: string, returned: string): boolean {
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const a = norm(expected);
+  const b = norm(returned);
+  return a === b || a.includes(b) || b.includes(a);
+}
+
 // iTunes Search API (JSONP pour éviter CORS)
 function fetchItunes(
   query: string,
   entity: 'song' | 'musicArtist' = 'song',
+  expectedTitle?: string, // si fourni, le previewUrl n'est utilisé que si le titre correspond
 ): Promise<{ artworkUrl: string | null; previewUrl: string | null }> {
   return new Promise((resolve) => {
     const cb = `_itunes_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -43,14 +52,16 @@ function fetchItunes(
     };
 
     ((window as unknown) as Record<string, unknown>)[cb] = (data: {
-      results?: { artworkUrl100?: string; previewUrl?: string }[];
+      results?: { artworkUrl100?: string; previewUrl?: string; trackName?: string }[];
     }) => {
       cleanup();
       const result = data.results?.[0];
       const art = result?.artworkUrl100;
+      // Le preview n'est retourné que si le titre iTunes correspond au titre attendu
+      const previewOk = !expectedTitle || !result?.trackName || titleMatches(expectedTitle, result.trackName);
       resolve({
         artworkUrl: art ? art.replace('100x100', '600x600') : null,
-        previewUrl: result?.previewUrl ?? null,
+        previewUrl: previewOk ? (result?.previewUrl ?? null) : null,
       });
     };
 
@@ -131,8 +142,8 @@ export function useArtwork(artist: string | undefined, title: string | undefined
     const artistOnly = !title && !!artist;
 
     (async () => {
-      // 3. iTunes (JSONP)
-      const result = await fetchItunes(query, artistOnly ? 'musicArtist' : 'song');
+      // 3. iTunes (JSONP) — passe le titre attendu pour valider le preview
+      const result = await fetchItunes(query, artistOnly ? 'musicArtist' : 'song', title || undefined);
 
       // 4. Fallback MusicBrainz pour l'artwork si iTunes échoue
       if (!result.artworkUrl && artist && title) {
