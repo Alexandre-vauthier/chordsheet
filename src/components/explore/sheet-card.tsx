@@ -168,7 +168,7 @@ export function SheetCard({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1 px-3 pb-3 pt-2 border-t border-[var(--line)] mx-3">
+        <div className="flex items-center gap-1 pb-3 pt-2 border-t border-[var(--line)] mx-3">
           {/* Bouton preview iTunes */}
           {previewUrl && (
             <button
