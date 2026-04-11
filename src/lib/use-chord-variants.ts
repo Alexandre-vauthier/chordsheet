@@ -38,7 +38,8 @@ export function useChordVariants(
       .map((a) => a.chord);
 
     if (override) {
-      return [override.chord, ...matchingAdditions, ...staticVariants];
+      // L'override remplace totalement les variantes statiques
+      return [override.chord, ...matchingAdditions];
     }
 
     return [...matchingAdditions, ...staticVariants];
