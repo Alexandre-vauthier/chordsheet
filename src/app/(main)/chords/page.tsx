@@ -358,7 +358,7 @@ function UnifiedChordGroup({
             className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-gray-100 rounded">›</button>
         </div>
       )}
-      <ChordCard chord={current} instrumentId={instrumentId} size="sm" />
+      <ChordCard chord={current} instrumentId={instrumentId} size="sm" displayName={group.name} />
       {/* Badge "modifié" uniquement visible pour l'admin */}
       {isAdmin && isCurrentOverride && (
         <span className="text-[9px] bg-[var(--accent)] text-white px-1 rounded mt-1">modifié</span>
