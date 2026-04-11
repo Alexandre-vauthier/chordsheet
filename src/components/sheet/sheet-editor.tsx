@@ -147,10 +147,15 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     setSheet((prev) => {
       const sections = [...prev.sections];
       const fromIdx = sections.findIndex((s) => s.id === dragSectionId);
-      const toIdx = sections.findIndex((s) => s.id === targetSectionId);
-      if (fromIdx === -1 || toIdx === -1) return prev;
+      if (fromIdx === -1) return prev;
       const [moved] = sections.splice(fromIdx, 1);
-      sections.splice(toIdx, 0, moved);
+      if (targetSectionId === '__end__') {
+        sections.push(moved);
+      } else {
+        const toIdx = sections.findIndex((s) => s.id === targetSectionId);
+        if (toIdx === -1) return prev;
+        sections.splice(toIdx, 0, moved);
+      }
       return { ...prev, sections };
     });
     setHasChanges(true);
@@ -500,6 +505,19 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             </div>
           );
         })}
+
+        {/* Zone de drop en fin de liste */}
+        {dragSectionId && (
+          <div
+            className={`h-10 rounded-lg border-2 border-dashed transition-colors ${
+              dragOverSectionId === '__end__'
+                ? 'border-[var(--accent)] bg-[var(--accent-soft)]'
+                : 'border-[var(--line)]'
+            }`}
+            onDragOver={(e) => { e.preventDefault(); handleDragOver('__end__'); }}
+            onDrop={() => handleDrop('__end__')}
+          />
+        )}
       </div>
 
       {/* Bouton ajouter section */}
