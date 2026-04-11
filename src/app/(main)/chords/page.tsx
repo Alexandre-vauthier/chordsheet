@@ -107,19 +107,19 @@ function ChordsPageContent() {
 
   // Liste unifiée : statiques + ajouts admin, groupés par nom, triés alphabétiquement
   const unifiedGroups = useMemo(() => {
-    // Map nom normalisé → { variants: chord[], overrideDocId?, isOverride }
     type Group = {
-      name: string; // nom d'affichage (premier trouvé)
+      name: string;
       variants: (StringChord | PianoChord)[];
-      overrideDocId?: string;
       hasOverride: boolean;
-      additionDocIds: string[]; // pour suppression variantes admin
+      overrideDocId?: string;
+      additionDocIds: string[];
+      additionStartIdx: number; // index dans variants où commencent les additions
     };
     const groups = new Map<string, Group>();
 
     const ENH: Record<string,string> = {'Db':'C#','Eb':'D#','F':'E#','Ab':'G#','Bb':'A#','C':'B#','B':'Cb','E':'Fb','F#':'Gb'};
 
-    // 1. Partir des accords statiques
+    // 1. Accords statiques (l'override remplace toutes les variantes statiques)
     staticChords.forEach((chord) => {
       const key = libraryKey(chord.name, instrumentId);
       const allKeys = [key];
@@ -129,38 +129,39 @@ function ChordsPageContent() {
 
       const nameLower = chord.name.trim().toLowerCase();
       if (!groups.has(nameLower)) {
-        groups.set(nameLower, { name: chord.name, variants: [], hasOverride: false, additionDocIds: [] });
+        groups.set(nameLower, { name: chord.name, variants: [], hasOverride: false, additionDocIds: [], additionStartIdx: 0 });
       }
       const g = groups.get(nameLower)!;
       if (override) {
-        g.variants.unshift(override.chord); // override en premier
-        g.hasOverride = true;
-        g.overrideDocId = override.docId;
+        if (!g.hasOverride) {
+          // N'ajouter l'override qu'une seule fois (une entrée statique par variante)
+          g.variants.push(override.chord);
+          g.hasOverride = true;
+          g.overrideDocId = override.docId;
+        }
+        // Ne pas ajouter les variantes statiques remplacées
       } else {
         g.variants.push(chord);
       }
     });
 
-    // 2. Ajouter les additions admin de la catégorie courante
+    // Marquer où commencent les additions (après les statiques/override)
+    groups.forEach(g => { g.additionStartIdx = g.variants.length; });
+
+    // 2. Additions admin — toujours après les statiques
     additions
       .filter(a => a.instrumentId === instrumentId && getCategoryGroup(a.chord.category) === categoryGroup)
       .forEach(a => {
         const nameLower = a.chord.name.trim().toLowerCase();
         if (!groups.has(nameLower)) {
-          groups.set(nameLower, { name: a.chord.name, variants: [], hasOverride: false, additionDocIds: [] });
+          groups.set(nameLower, { name: a.chord.name, variants: [], hasOverride: false, additionDocIds: [], additionStartIdx: 0 });
         }
         const g = groups.get(nameLower)!;
-        // Les additions viennent après l'override mais avant les statiques si override
-        // Si pas d'override, après les statiques existants (ou en début si groupe nouveau)
-        if (g.hasOverride) {
-          g.variants.splice(1, 0, a.chord); // après l'override
-        } else {
-          g.variants.push(a.chord);
-        }
+        g.variants.push(a.chord);
         g.additionDocIds.push(a.docId);
       });
 
-    // 3. Trier alphabétiquement et retourner
+    // 3. Trier alphabétiquement
     return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [staticChords, instrumentId, overrides, additions, categoryGroup]);
 
@@ -315,6 +316,7 @@ type UnifiedGroup = {
   hasOverride: boolean;
   overrideDocId?: string;
   additionDocIds: string[];
+  additionStartIdx: number;
 };
 
 function UnifiedChordGroup({
@@ -339,10 +341,11 @@ function UnifiedChordGroup({
   const current = group.variants[safeIdx];
   const hasMany = group.variants.length > 1;
 
-  // Déterminer si la variante courante est un ajout admin
-  const additionOffset = group.hasOverride ? 1 : 0;
-  const isCurrentAddition = safeIdx >= additionOffset && (safeIdx - additionOffset) < group.additionDocIds.length;
-  const currentAdditionDocId = isCurrentAddition ? group.additionDocIds[safeIdx - additionOffset] : undefined;
+  // La variante courante est une addition si son index >= additionStartIdx
+  const additionRelIdx = safeIdx - group.additionStartIdx;
+  const isCurrentAddition = additionRelIdx >= 0 && additionRelIdx < group.additionDocIds.length;
+  const currentAdditionDocId = isCurrentAddition ? group.additionDocIds[additionRelIdx] : undefined;
+  const isCurrentOverride = group.hasOverride && safeIdx === 0;
 
   return (
     <div className="relative group flex flex-col items-center">
@@ -356,11 +359,9 @@ function UnifiedChordGroup({
         </div>
       )}
       <ChordCard chord={current} instrumentId={instrumentId} size="sm" />
-      {group.hasOverride && safeIdx === 0 && (
+      {/* Badge "modifié" uniquement visible pour l'admin */}
+      {isAdmin && isCurrentOverride && (
         <span className="text-[9px] bg-[var(--accent)] text-white px-1 rounded mt-1">modifié</span>
-      )}
-      {isCurrentAddition && (
-        <span className="text-[9px] bg-blue-500 text-white px-1 rounded mt-1">ajouté</span>
       )}
       {isAdmin && (
         <div
@@ -378,7 +379,7 @@ function UnifiedChordGroup({
             <>
               <button onClick={() => onEditOverride(current)}
                 className="w-6 h-6 bg-blue-500 text-white rounded text-xs flex items-center justify-center" title="Modifier">✎</button>
-              {group.hasOverride && group.overrideDocId && safeIdx === 0 && (
+              {isCurrentOverride && group.overrideDocId && (
                 <button onClick={() => onDeleteOverride(group.overrideDocId!)}
                   className="w-6 h-6 bg-gray-500 text-white rounded text-xs flex items-center justify-center" title="Restaurer l'original">↩</button>
               )}
