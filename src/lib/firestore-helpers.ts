@@ -95,6 +95,8 @@ interface FirestoreSheet {
   // V3 - Diagrammes d'accords
   instrumentId?: InstrumentId;
   customChords?: Record<string, CustomChord>;
+  // V5 - Métrique globale
+  beatsPerMeasure?: BeatsPerMeasure;
 }
 
 // Convertir Sheet vers format Firestore (pour sauvegarde)
@@ -123,6 +125,11 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
     difficulty: sheet.difficulty ?? null,
     capo: sheet.capo ?? null,
   };
+
+  // V5 - Métrique globale
+  if (sheet.beatsPerMeasure) {
+    base.beatsPerMeasure = sheet.beatsPerMeasure;
+  }
 
   // V3+ - Ajouter uniquement si défini (Firestore n'accepte pas undefined)
   if (sheet.referenceUrl) {
@@ -176,6 +183,8 @@ export function fromFirestore(
     viewCount: (data.viewCount as number) || 0,
     averageRating: (data.averageRating as number) ?? null,
     ratingCount: (data.ratingCount as number) || 0,
+    // V5 - Métrique globale
+    beatsPerMeasure: (data.beatsPerMeasure as BeatsPerMeasure) || undefined,
     // V3+ - Diagrammes d'accords & référence
     referenceUrl: (data.referenceUrl as string) || undefined,
     instrumentId: (data.instrumentId as InstrumentId) || undefined,
