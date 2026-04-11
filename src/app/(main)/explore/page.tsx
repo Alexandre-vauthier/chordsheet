@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { collection, query, where, orderBy, getDocs, limit, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit, deleteDoc, doc } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
@@ -31,8 +31,7 @@ export default function ExplorePage() {
         const q = query(
           collection(db, 'sheets'),
           where('isPublic', '==', true),
-          orderBy('createdAt', 'desc'),
-          limit(100)
+          limit(200)
         );
 
         const snapshot = await getDocs(q);
