@@ -1,31 +1,38 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 
 // Cache mémoire (déduplique les requêtes dans la même session)
-const MEM_CACHE = new Map<string, string | null>();
+const MEM_CACHE = new Map<string, { artworkUrl: string | null; previewUrl: string | null }>();
 
 // Cache localStorage (persiste entre sessions, TTL 30 jours)
-const LS_PREFIX = 'artwork_';
+const LS_PREFIX = 'itunes2_'; // préfixe v2 pour invalider l'ancien cache
 const TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
-function lsGet(key: string): string | null | undefined {
+function lsGet(key: string): { artworkUrl: string | null; previewUrl: string | null } | undefined {
   try {
     const raw = localStorage.getItem(LS_PREFIX + key);
     if (!raw) return undefined;
-    const { url, expires } = JSON.parse(raw) as { url: string | null; expires: number };
+    const { data, expires } = JSON.parse(raw) as {
+      data: { artworkUrl: string | null; previewUrl: string | null };
+      expires: number;
+    };
     if (Date.now() > expires) { localStorage.removeItem(LS_PREFIX + key); return undefined; }
-    return url;
+    return data;
   } catch { return undefined; }
 }
 
-function lsSet(key: string, url: string | null) {
+function lsSet(key: string, data: { artworkUrl: string | null; previewUrl: string | null }) {
   try {
-    localStorage.setItem(LS_PREFIX + key, JSON.stringify({ url, expires: Date.now() + TTL_MS }));
+    localStorage.setItem(LS_PREFIX + key, JSON.stringify({ data, expires: Date.now() + TTL_MS }));
   } catch { /* quota dépassé — ignoré silencieusement */ }
 }
 
 // iTunes Search API (JSONP pour éviter CORS)
-// entity: 'song' quand on cherche artiste+titre, 'musicArtist' quand artiste seul
-function fetchItunes(query: string, entity: 'song' | 'musicArtist' = 'song'): Promise<string | null> {
+function fetchItunes(
+  query: string,
+  entity: 'song' | 'musicArtist' = 'song',
+): Promise<{ artworkUrl: string | null; previewUrl: string | null }> {
   return new Promise((resolve) => {
     const cb = `_itunes_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const script = document.createElement('script');
@@ -35,23 +42,29 @@ function fetchItunes(query: string, entity: 'song' | 'musicArtist' = 'song'): Pr
       script.remove();
     };
 
-    ((window as unknown) as Record<string, unknown>)[cb] = (data: { results?: { artworkUrl100?: string; artistLinkUrl?: string }[] }) => {
+    ((window as unknown) as Record<string, unknown>)[cb] = (data: {
+      results?: { artworkUrl100?: string; previewUrl?: string }[];
+    }) => {
       cleanup();
-      const art = data.results?.[0]?.artworkUrl100;
-      resolve(art ? art.replace('100x100', '600x600') : null);
+      const result = data.results?.[0];
+      const art = result?.artworkUrl100;
+      resolve({
+        artworkUrl: art ? art.replace('100x100', '600x600') : null,
+        previewUrl: result?.previewUrl ?? null,
+      });
     };
 
     script.src = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=${entity}&limit=1&callback=${cb}`;
-    script.onerror = () => { cleanup(); resolve(null); };
+    script.onerror = () => { cleanup(); resolve({ artworkUrl: null, previewUrl: null }); };
 
     // Timeout 5s
-    setTimeout(() => { cleanup(); resolve(null); }, 5000);
+    setTimeout(() => { cleanup(); resolve({ artworkUrl: null, previewUrl: null }); }, 5000);
 
     document.head.appendChild(script);
   });
 }
 
-// MusicBrainz + Cover Art Archive (fallback, supporte CORS)
+// MusicBrainz + Cover Art Archive (fallback artwork uniquement, pas de preview)
 async function fetchMusicBrainz(artist: string, title: string): Promise<string | null> {
   try {
     const q = encodeURIComponent(`recording:"${title}" AND artist:"${artist}"`);
@@ -65,7 +78,6 @@ async function fetchMusicBrainz(artist: string, title: string): Promise<string |
     const release = data.recordings?.[0]?.releases?.[0];
     if (!release?.id) return null;
 
-    // Cover Art Archive
     const coverRes = await fetch(`https://coverartarchive.org/release/${release.id}`);
     if (!coverRes.ok) return null;
 
@@ -78,24 +90,29 @@ async function fetchMusicBrainz(artist: string, title: string): Promise<string |
 }
 
 export function useArtwork(artist: string | undefined, title: string | undefined) {
-  const [url, setUrl] = useState<string | null>(null);
+  const [artworkUrl, setArtworkUrl] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!artist && !title) {
-      setUrl(null);
+      setArtworkUrl(null);
+      setPreviewUrl(null);
       return;
     }
 
     const query = [artist, title].filter(Boolean).join(' ').trim();
     if (!query) {
-      setUrl(null);
+      setArtworkUrl(null);
+      setPreviewUrl(null);
       return;
     }
 
     // 1. Cache mémoire
     if (MEM_CACHE.has(query)) {
-      setUrl(MEM_CACHE.get(query) ?? null);
+      const cached = MEM_CACHE.get(query)!;
+      setArtworkUrl(cached.artworkUrl);
+      setPreviewUrl(cached.previewUrl);
       return;
     }
 
@@ -103,7 +120,8 @@ export function useArtwork(artist: string | undefined, title: string | undefined
     const cached = lsGet(query);
     if (cached !== undefined) {
       MEM_CACHE.set(query, cached);
-      setUrl(cached);
+      setArtworkUrl(cached.artworkUrl);
+      setPreviewUrl(cached.previewUrl);
       return;
     }
 
@@ -113,18 +131,19 @@ export function useArtwork(artist: string | undefined, title: string | undefined
     const artistOnly = !title && !!artist;
 
     (async () => {
-      // 3. iTunes (JSONP) — musicArtist si artiste seul, song sinon
-      let result = await fetchItunes(query, artistOnly ? 'musicArtist' : 'song');
+      // 3. iTunes (JSONP)
+      const result = await fetchItunes(query, artistOnly ? 'musicArtist' : 'song');
 
-      // 4. Fallback MusicBrainz si iTunes échoue et qu'on a artiste + titre
-      if (!result && artist && title) {
-        result = await fetchMusicBrainz(artist, title);
+      // 4. Fallback MusicBrainz pour l'artwork si iTunes échoue
+      if (!result.artworkUrl && artist && title) {
+        result.artworkUrl = await fetchMusicBrainz(artist, title);
       }
 
       if (!cancelled) {
         MEM_CACHE.set(query, result);
         lsSet(query, result);
-        setUrl(result);
+        setArtworkUrl(result.artworkUrl);
+        setPreviewUrl(result.previewUrl);
         setLoading(false);
       }
     })();
@@ -132,5 +151,5 @@ export function useArtwork(artist: string | undefined, title: string | undefined
     return () => { cancelled = true; };
   }, [artist, title]);
 
-  return { artworkUrl: url, loading };
+  return { artworkUrl, previewUrl, loading };
 }

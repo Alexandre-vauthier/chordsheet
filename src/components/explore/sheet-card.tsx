@@ -1,9 +1,33 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import type { Sheet, Difficulty } from '@/types';
 import { DIFFICULTY_LABELS } from '@/types';
 import { useArtwork } from '@/lib/use-artwork';
+
+// Singleton audio global — stoppe le précédent quand on en lance un autre
+let _audio: HTMLAudioElement | null = null;
+let _stopCb: (() => void) | null = null;
+
+function playPreviewAudio(url: string, onStop: () => void) {
+  // Arrêter l'extrait en cours
+  if (_audio) {
+    _audio.pause();
+    _audio = null;
+    if (_stopCb) { _stopCb(); _stopCb = null; }
+  }
+  const audio = new Audio(url);
+  _audio = audio;
+  _stopCb = onStop;
+  audio.play().catch(() => { _audio = null; _stopCb = null; onStop(); });
+  audio.onended = () => { _audio = null; _stopCb = null; onStop(); };
+}
+
+function stopPreviewAudio() {
+  if (_audio) { _audio.pause(); _audio = null; }
+  if (_stopCb) { _stopCb(); _stopCb = null; }
+}
 
 interface SheetCardProps {
   sheet: Sheet;
@@ -31,15 +55,29 @@ export function SheetCard({
   variantCount,
   hideArtwork = false,
 }: SheetCardProps) {
-  const { artworkUrl } = useArtwork(hideArtwork ? undefined : sheet.artist, hideArtwork ? undefined : sheet.title);
+  const { artworkUrl, previewUrl } = useArtwork(hideArtwork ? undefined : sheet.artist, hideArtwork ? undefined : sheet.title);
+  const [isPlaying, setIsPlaying] = useState(false);
 
-  // Formater la note moyenne
   const formatRating = (rating: number | null) => {
     if (rating === null) return null;
     return rating.toFixed(1);
   };
 
   const destination = href ?? `/sheet/${sheet.id}`;
+
+  const handlePreview = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!previewUrl) return;
+
+    if (isPlaying) {
+      stopPreviewAudio();
+      setIsPlaying(false);
+    } else {
+      setIsPlaying(true);
+      playPreviewAudio(previewUrl, () => setIsPlaying(false));
+    }
+  };
 
   return (
     <div className="bg-white rounded-xl border border-[var(--line)] overflow-hidden hover:shadow-md transition-shadow group relative flex">
@@ -129,8 +167,32 @@ export function SheetCard({
           )}
         </div>
 
-        {/* Actions avec icônes */}
+        {/* Actions */}
         <div className="flex items-center gap-1 px-3 pb-3 pt-2 border-t border-[var(--line)] mx-3">
+          {/* Bouton preview iTunes */}
+          {previewUrl && (
+            <button
+              onClick={handlePreview}
+              className={`p-1.5 rounded transition-colors ${
+                isPlaying
+                  ? 'bg-[var(--accent)] text-white'
+                  : 'text-[var(--ink-light)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]'
+              }`}
+              title={isPlaying ? 'Stop preview' : 'Écouter un extrait'}
+            >
+              {isPlaying ? (
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <rect x="4" y="3" width="4" height="14" rx="1" />
+                  <rect x="12" y="3" width="4" height="14" rx="1" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                </svg>
+              )}
+            </button>
+          )}
+
           <Link
             href={destination}
             className="p-1.5 rounded hover:bg-[var(--accent-soft)] text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors"
@@ -141,6 +203,7 @@ export function SheetCard({
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
           </Link>
+
           {onDelete && (
             <>
               <Link
