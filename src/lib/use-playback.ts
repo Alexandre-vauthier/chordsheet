@@ -68,18 +68,24 @@ export function usePlayback({ sections, tempo, instrumentId, customChords, metro
     bpMeasureRef.current = sections[0]?.beatsPerMeasure || 4;
   }, [sections]);
 
-  // Démarrer / arrêter le métronome en réaction à isPlaying ou metronomeEnabled
+  // Ref pour que le tick accède à metronomeEnabled sans redémarrer l'interval
+  const metronomeEnabledRef = useRef(metronomeEnabled ?? false);
+  useEffect(() => {
+    metronomeEnabledRef.current = metronomeEnabled ?? false;
+  }, [metronomeEnabled]);
+
+  // Le métronome tourne dès que isPlaying — le toggle ne fait que mute/unmute
   useEffect(() => {
     if (metronomeRef.current) {
       clearInterval(metronomeRef.current);
       metronomeRef.current = null;
     }
-    if (isPlaying && metronomeEnabled) {
+    if (isPlaying) {
       let beat = 0;
-      playMetronomeTick(true); // accent sur le premier temps
+      if (metronomeEnabledRef.current) playMetronomeTick(true);
       metronomeRef.current = setInterval(() => {
         beat = (beat + 1) % bpMeasureRef.current;
-        playMetronomeTick(beat === 0);
+        if (metronomeEnabledRef.current) playMetronomeTick(beat === 0);
       }, beatMsRef.current);
     }
     return () => {
@@ -88,7 +94,7 @@ export function usePlayback({ sections, tempo, instrumentId, customChords, metro
         metronomeRef.current = null;
       }
     };
-  }, [isPlaying, metronomeEnabled]);
+  }, [isPlaying]);
 
   const stop = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
