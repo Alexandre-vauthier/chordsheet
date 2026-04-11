@@ -223,7 +223,10 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
           <input
             type="text"
             value={sheet.title}
-            onChange={(e) => updateSheet({ title: e.target.value })}
+            onChange={(e) => {
+              const val = e.target.value.replace(/\b\w/g, (c) => c.toUpperCase());
+              updateSheet({ title: val });
+            }}
             placeholder="Titre de la chanson…"
             className="font-playfair text-3xl font-bold bg-transparent border-none outline-none flex-1
               caret-[var(--accent)] placeholder:text-[var(--ink-faint)]"
