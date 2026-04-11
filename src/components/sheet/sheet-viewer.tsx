@@ -63,12 +63,15 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
     localStorage.setItem(LS_KEY, id);
   };
 
+  const [metronomeEnabled, setMetronomeEnabled] = useState(false);
+
   // Playback
   const { isPlaying, activeStep, playSection, togglePlay, stop } = usePlayback({
     sections: sheet.sections,
     tempo: sheet.tempo,
     instrumentId,
     customChords: sheet.customChords as Record<string, unknown>,
+    metronomeEnabled,
   });
 
   const bpm = parseTempo(sheet.tempo);
@@ -108,12 +111,35 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
             )}
           </div>
 
-          {/* Bouton Play */}
+          {/* Boutons Play + Métronome */}
+          <div className="print:hidden flex-shrink-0 flex items-center gap-2">
+            {/* Toggle métronome */}
+            <button
+              onClick={() => setMetronomeEnabled(v => !v)}
+              title={metronomeEnabled ? 'Désactiver le métronome' : 'Activer le métronome'}
+              className={`
+                flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
+                ${metronomeEnabled
+                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                  : 'bg-white border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                }
+              `}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+                <path d="M12 3 8 21" strokeLinecap="round"/>
+                <path d="M12 3l4 18" strokeLinecap="round"/>
+                <path d="M8.5 14.5l7-4" strokeLinecap="round"/>
+                <ellipse cx="12" cy="21" rx="3" ry="1.5"/>
+                <line x1="9.5" y1="3" x2="14.5" y2="3" strokeLinecap="round"/>
+              </svg>
+            </button>
+
+            {/* Play / Stop */}
           <button
             onClick={togglePlay}
             title={isPlaying ? 'Stop' : `Play — ${bpm} BPM`}
             className={`
-              print:hidden flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
+              flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
               transition-all duration-150 border-[1.5px]
               ${isPlaying
                 ? 'bg-[var(--accent)] border-[var(--accent)] text-white hover:bg-[#a83d25]'
@@ -138,6 +164,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
               </>
             )}
           </button>
+          </div>
         </div>
 
         {/* Métadonnées */}

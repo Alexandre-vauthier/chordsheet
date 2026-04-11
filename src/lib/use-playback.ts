@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { Section, InstrumentId, StringChord, PianoChord } from '@/types';
 import { findChordVariants } from '@/lib/chord-data';
-import { playChord } from '@/lib/chord-audio';
+import { playChord, playMetronomeTick } from '@/lib/chord-audio';
 
 export interface PlayStep {
   sectionId: string;
@@ -48,16 +48,20 @@ interface UsePlaybackOptions {
   tempo: string | undefined;
   instrumentId: InstrumentId;
   customChords?: Record<string, unknown>;
+  metronomeEnabled?: boolean;
 }
 
-export function usePlayback({ sections, tempo, instrumentId, customChords }: UsePlaybackOptions) {
+export function usePlayback({ sections, tempo, instrumentId, customChords, metronomeEnabled }: UsePlaybackOptions) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeStep, setActiveStep] = useState<PlayStep | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const metronomeRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const stop = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (metronomeRef.current) clearInterval(metronomeRef.current);
     timeoutRef.current = null;
+    metronomeRef.current = null;
     setIsPlaying(false);
     setActiveStep(null);
   }, []);
@@ -66,11 +70,13 @@ export function usePlayback({ sections, tempo, instrumentId, customChords }: Use
   useEffect(() => {
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (metronomeRef.current) clearInterval(metronomeRef.current);
     };
   }, []);
 
   const playSequence = useCallback((targetSections: Section[]) => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (metronomeRef.current) clearInterval(metronomeRef.current);
 
     const bpm = parseTempo(tempo);
     const beatMs = (60 / bpm) * 1000;
@@ -78,6 +84,18 @@ export function usePlayback({ sections, tempo, instrumentId, customChords }: Use
     if (!sequence.length) return;
 
     setIsPlaying(true);
+
+    // Métronome : tick à chaque beat (accent sur le premier temps de chaque mesure)
+    if (metronomeEnabled) {
+      const bpMeasure = targetSections[0]?.beatsPerMeasure || 4;
+      let beat = 0;
+      playMetronomeTick(true); // premier temps en accent
+      metronomeRef.current = setInterval(() => {
+        beat = (beat + 1) % bpMeasure;
+        playMetronomeTick(beat === 0);
+      }, beatMs);
+    }
+
     let i = 0;
 
     const advance = () => {

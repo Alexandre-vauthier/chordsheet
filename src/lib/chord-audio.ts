@@ -130,6 +130,24 @@ function stopActiveChord() {
   activeNodes = [];
 }
 
+// Jouer un tick de métronome (click court et sec)
+export function playMetronomeTick(accent = false): void {
+  const ctx = getAudioContext();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(accent ? 1200 : 800, ctx.currentTime);
+  gain.gain.setValueAtTime(accent ? 0.35 : 0.2, ctx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.04);
+
+  osc.start(ctx.currentTime);
+  osc.stop(ctx.currentTime + 0.05);
+}
+
 // Jouer un accord complet
 export function playChord(
   chord: StringChord | PianoChord,

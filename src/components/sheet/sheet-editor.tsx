@@ -22,12 +22,15 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   const [hasChanges, setHasChanges] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  const [metronomeEnabled, setMetronomeEnabled] = useState(false);
+
   // Playback
   const { isPlaying, activeStep, playSection, togglePlay, stop } = usePlayback({
     sections: sheet.sections,
     tempo: sheet.tempo,
     instrumentId: sheet.instrumentId || 'guitar',
     customChords: sheet.customChords as Record<string, unknown>,
+    metronomeEnabled,
   });
 
   const bpm = parseTempo(sheet.tempo);
@@ -231,35 +234,59 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             className="font-playfair text-3xl font-bold bg-transparent border-none outline-none flex-1
               caret-[var(--accent)] placeholder:text-[var(--ink-faint)]"
           />
-          <button
-            onClick={togglePlay}
-            title={isPlaying ? 'Stop' : `Play — ${bpm} BPM`}
-            className={`
-              flex-shrink-0 flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
-              transition-all duration-150 border-[1.5px]
-              ${isPlaying
-                ? 'bg-[var(--accent)] border-[var(--accent)] text-white hover:bg-[#a83d25]'
-                : 'bg-white border-[var(--line)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
-              }
-            `}
-          >
-            {isPlaying ? (
-              <>
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <rect x="4" y="3" width="4" height="14" rx="1" />
-                  <rect x="12" y="3" width="4" height="14" rx="1" />
-                </svg>
-                Stop
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                </svg>
-                Play
-              </>
-            )}
-          </button>
+          <div className="flex-shrink-0 flex items-center gap-2">
+            {/* Toggle métronome */}
+            <button
+              onClick={() => setMetronomeEnabled(v => !v)}
+              title={metronomeEnabled ? 'Désactiver le métronome' : 'Activer le métronome'}
+              className={`
+                flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
+                ${metronomeEnabled
+                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                  : 'bg-white border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                }
+              `}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+                <path d="M12 3 8 21" strokeLinecap="round"/>
+                <path d="M12 3l4 18" strokeLinecap="round"/>
+                <path d="M8.5 14.5l7-4" strokeLinecap="round"/>
+                <ellipse cx="12" cy="21" rx="3" ry="1.5"/>
+                <line x1="9.5" y1="3" x2="14.5" y2="3" strokeLinecap="round"/>
+              </svg>
+            </button>
+
+            {/* Play / Stop */}
+            <button
+              onClick={togglePlay}
+              title={isPlaying ? 'Stop' : `Play — ${bpm} BPM`}
+              className={`
+                flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
+                transition-all duration-150 border-[1.5px]
+                ${isPlaying
+                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white hover:bg-[#a83d25]'
+                  : 'bg-white border-[var(--line)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                }
+              `}
+            >
+              {isPlaying ? (
+                <>
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <rect x="4" y="3" width="4" height="14" rx="1" />
+                    <rect x="12" y="3" width="4" height="14" rx="1" />
+                  </svg>
+                  Stop
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                  </svg>
+                  Play
+                </>
+              )}
+            </button>
+          </div>
         </div>
         <div className="flex flex-wrap gap-4 mt-3">
           <input
