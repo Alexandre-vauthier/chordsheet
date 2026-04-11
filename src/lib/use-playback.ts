@@ -56,12 +56,43 @@ export function usePlayback({ sections, tempo, instrumentId, customChords, metro
   const [activeStep, setActiveStep] = useState<PlayStep | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const metronomeRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Refs pour que le useEffect métronome accède aux valeurs courantes
+  const beatMsRef = useRef<number>((60 / parseTempo(tempo)) * 1000);
+  const bpMeasureRef = useRef<number>(sections[0]?.beatsPerMeasure || 4);
+
+  // Mettre à jour les refs quand tempo/sections changent
+  useEffect(() => {
+    beatMsRef.current = (60 / parseTempo(tempo)) * 1000;
+  }, [tempo]);
+  useEffect(() => {
+    bpMeasureRef.current = sections[0]?.beatsPerMeasure || 4;
+  }, [sections]);
+
+  // Démarrer / arrêter le métronome en réaction à isPlaying ou metronomeEnabled
+  useEffect(() => {
+    if (metronomeRef.current) {
+      clearInterval(metronomeRef.current);
+      metronomeRef.current = null;
+    }
+    if (isPlaying && metronomeEnabled) {
+      let beat = 0;
+      playMetronomeTick(true); // accent sur le premier temps
+      metronomeRef.current = setInterval(() => {
+        beat = (beat + 1) % bpMeasureRef.current;
+        playMetronomeTick(beat === 0);
+      }, beatMsRef.current);
+    }
+    return () => {
+      if (metronomeRef.current) {
+        clearInterval(metronomeRef.current);
+        metronomeRef.current = null;
+      }
+    };
+  }, [isPlaying, metronomeEnabled]);
 
   const stop = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    if (metronomeRef.current) clearInterval(metronomeRef.current);
     timeoutRef.current = null;
-    metronomeRef.current = null;
     setIsPlaying(false);
     setActiveStep(null);
   }, []);
@@ -76,7 +107,6 @@ export function usePlayback({ sections, tempo, instrumentId, customChords, metro
 
   const playSequence = useCallback((targetSections: Section[]) => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    if (metronomeRef.current) clearInterval(metronomeRef.current);
 
     const bpm = parseTempo(tempo);
     const beatMs = (60 / bpm) * 1000;
@@ -84,17 +114,6 @@ export function usePlayback({ sections, tempo, instrumentId, customChords, metro
     if (!sequence.length) return;
 
     setIsPlaying(true);
-
-    // Métronome : tick à chaque beat (accent sur le premier temps de chaque mesure)
-    if (metronomeEnabled) {
-      const bpMeasure = targetSections[0]?.beatsPerMeasure || 4;
-      let beat = 0;
-      playMetronomeTick(true); // premier temps en accent
-      metronomeRef.current = setInterval(() => {
-        beat = (beat + 1) % bpMeasure;
-        playMetronomeTick(beat === 0);
-      }, beatMs);
-    }
 
     let i = 0;
 
@@ -123,7 +142,7 @@ export function usePlayback({ sections, tempo, instrumentId, customChords, metro
     };
 
     advance();
-  }, [tempo, instrumentId, customChords, metronomeEnabled]);
+  }, [tempo, instrumentId, customChords]);
 
   const play = useCallback(() => {
     playSequence(sections);
