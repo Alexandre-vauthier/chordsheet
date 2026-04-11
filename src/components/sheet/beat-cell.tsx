@@ -33,7 +33,22 @@ export function BeatCell({
   const getColor = useChordColor();
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(cell.chord);
+  const [chordError, setChordError] = useState(false);
   const [showDiagram, setShowDiagram] = useState(false);
+
+  const FORBIDDEN_CHARS = /[-*]/;
+
+  const handleChordInput = (raw: string) => {
+    // Majuscule sur la première lettre
+    const normalized = raw.length > 0 ? raw.charAt(0).toUpperCase() + raw.slice(1) : raw;
+    if (FORBIDDEN_CHARS.test(normalized)) {
+      setChordError(true);
+      setValue(normalized);
+    } else {
+      setChordError(false);
+      setValue(normalized);
+    }
+  };
   const inputRef = useRef<HTMLInputElement>(null);
   const cellRef = useRef<HTMLDivElement>(null);
 
@@ -68,8 +83,11 @@ export function BeatCell({
 
   const handleBlur = () => {
     setIsEditing(false);
-    if (value !== cell.chord) {
+    setChordError(false);
+    if (!FORBIDDEN_CHARS.test(value) && value !== cell.chord) {
       onChordChange(value);
+    } else if (FORBIDDEN_CHARS.test(value)) {
+      setValue(cell.chord); // revenir à la valeur précédente
     }
   };
 
@@ -128,7 +146,7 @@ export function BeatCell({
             ref={inputRef}
             type="text"
             value={value}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => handleChordInput(e.target.value)}
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
             placeholder="—"
@@ -166,6 +184,19 @@ export function BeatCell({
           </button>
         )}
       </div>
+
+      {/* Message erreur accord invalide */}
+      {chordError && (
+        <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-20
+          bg-[var(--ink)] text-white text-[11px] rounded-lg px-3 py-2 shadow-lg
+          whitespace-nowrap text-center leading-snug">
+          Utilise la notation Am, G7, Cmaj7…
+          <br />
+          <a href="/chords" className="underline opacity-80 hover:opacity-100" target="_blank">
+            Voir la bibliothèque d&apos;accords
+          </a>
+        </div>
+      )}
 
       {/* Diagramme d'accord */}
       {showDiagram && cell.chord && (
