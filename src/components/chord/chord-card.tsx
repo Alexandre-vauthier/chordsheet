@@ -15,6 +15,7 @@ interface ChordCardProps {
   size?: 'sm' | 'md';
   onClick?: () => void;
   selected?: boolean;
+  displayName?: string; // override chord.name (pour les alias enharmoniques)
 }
 
 export function ChordCard({
@@ -25,6 +26,7 @@ export function ChordCard({
   size = 'sm',
   onClick,
   selected = false,
+  displayName,
 }: ChordCardProps) {
   const instrument = INSTRUMENT_CONFIG[instrumentId];
 
@@ -58,7 +60,7 @@ export function ChordCard({
       {/* Nom de l'accord */}
       {showName && (
         <div className="text-center">
-          <div className="font-medium text-sm text-[var(--ink)]">{chord.name}</div>
+          <div className="font-medium text-sm text-[var(--ink)]">{displayName ?? chord.name}</div>
           <div className="text-xs text-[var(--ink-faint)]">{chord.full}</div>
         </div>
       )}

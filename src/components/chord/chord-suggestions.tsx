@@ -91,7 +91,7 @@ export function ChordSuggestions({
         {/* Nom de l'accord */}
         <div className="text-center mt-2">
           <span className="text-sm font-medium text-[var(--ink)]">
-            {currentChord.name}
+            {chordName}
           </span>
           {currentChord.full && (
             <span className="text-xs text-[var(--ink-faint)] block">

@@ -161,6 +161,7 @@ export function ChordSummary({
                 chord={currentChord}
                 instrumentId={instrumentId}
                 size="sm"
+                displayName={translate(chordName)}
               />
 
               {/* Badge si c'est un accord personnalisé */}
