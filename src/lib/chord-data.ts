@@ -939,6 +939,15 @@ const ENHARMONIC_MAP: Record<string, string> = {
   'Cb': 'B', 'Fb': 'E', 'Gb': 'F#',
 };
 
+/** Retourne le nom enharmonique équivalent (ex: "C#m7" → "Dbm7"), ou null si aucun */
+export function enharmonicEquivalent(name: string): string | null {
+  const match = name.trim().match(/^([A-G][b#]?)(.*)$/);
+  if (!match) return null;
+  const [, root, suffix] = match;
+  const mapped = ENHARMONIC_MAP[root];
+  return mapped ? mapped + suffix : null;
+}
+
 function normalizeEnharmonic(name: string): string {
   const match = name.trim().match(/^([A-G][b#]?)(.*)$/);
   if (!match) return name;

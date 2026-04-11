@@ -14,7 +14,8 @@ import { usePlayback, parseTempo } from '@/lib/use-playback';
 import type { PlayStep } from '@/lib/use-playback';
 import { useArtwork } from '@/lib/use-artwork';
 import { useAuth } from '@/lib/auth-context';
-import { findChordVariants, INSTRUMENT_CONFIG } from '@/lib/chord-data';
+import { INSTRUMENT_CONFIG } from '@/lib/chord-data';
+import { useChordVariants } from '@/lib/use-chord-variants';
 
 const LS_KEY = 'chordsheet_instrument';
 
@@ -371,6 +372,7 @@ function ViewerChordCell({
   const [hovered, setHovered] = useState(false);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const custom = resolveCustomChord(chord, instrumentId, customChords);
+  const libraryVariants = useChordVariants(chord, instrumentId);
 
   const handleMouseEnter = () => {
     if (leaveTimer.current) clearTimeout(leaveTimer.current);
@@ -382,9 +384,9 @@ function ViewerChordCell({
   };
   const color = getColor(chord);
 
-  // Résoudre le diagramme inline (accord custom en priorité, sinon première variante)
+  // Résoudre le diagramme inline (accord custom en priorité, sinon première variante library)
   const inlineDiagramChord = showInlineDiagram && span >= 1
-    ? (custom ?? findChordVariants(chord, instrumentId)[0] ?? null)
+    ? (custom ?? libraryVariants[0] ?? null)
     : null;
   const numStrings = INSTRUMENT_CONFIG[instrumentId]?.strings ?? 6;
 

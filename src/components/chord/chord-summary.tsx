@@ -5,7 +5,7 @@ import type { Section, InstrumentId, StringChord, PianoChord } from '@/types';
 import { ChordCard } from './chord-card';
 import { useChordNotation } from '@/lib/use-chord-notation';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
-import { findChordVariants } from '@/lib/chord-data';
+import { findChordVariants, enharmonicEquivalent } from '@/lib/chord-data';
 
 // Type pour les accords personnalisés stockés dans la grille
 export type CustomChordMap = Record<string, StringChord | PianoChord>;
@@ -94,12 +94,20 @@ export function ChordSummary({
           const customChordKey = `${chordName.toLowerCase()}-${instrumentId}`;
           const customChord = customChords[customChordKey];
 
-          // Overrides admin (Firestore) puis statique
+          // Overrides admin (Firestore) — fallback enharmonique (C# → Db)
           const key = libraryKey(chordName, instrumentId);
-          const adminOverride = overrides.get(key);
+          const enh = enharmonicEquivalent(chordName);
+          const enhKey = enh ? libraryKey(enh, instrumentId) : null;
+          const adminOverride = overrides.get(key) ?? (enhKey ? overrides.get(enhKey) : undefined);
           const staticVariants = findChordVariants(chordName, instrumentId);
+          const nameLower = chordName.trim().toLowerCase();
+          const enhLower = enh?.trim().toLowerCase();
           const adminAdditions = additions
-            .filter(a => a.instrumentId === instrumentId && a.chord.name.trim().toLowerCase() === chordName.trim().toLowerCase())
+            .filter(a =>
+              a.instrumentId === instrumentId &&
+              (a.chord.name.trim().toLowerCase() === nameLower ||
+               (enhLower && a.chord.name.trim().toLowerCase() === enhLower))
+            )
             .map(a => a.chord);
 
           // Construire la liste de toutes les variantes disponibles

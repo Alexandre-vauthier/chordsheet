@@ -105,11 +105,19 @@ function ChordsPageContent() {
     return cats;
   }, [instrumentId, additions]);
 
-  // Fusions : chaque accord statique → override éventuel
+  // Fusions : chaque accord statique → override éventuel (avec fallback enharmonique)
   const displayChords = useMemo(() => {
     return staticChords.map((chord) => {
       const key = libraryKey(chord.name, instrumentId);
-      const override = overrides.get(key);
+      // Essayer aussi la clé enharmonique inverse pour trouver l'override
+      const allKeys = [key];
+      const enh = chord.name.match(/^([A-G][b#]?)(.*)$/);
+      if (enh) {
+        const ENH: Record<string,string> = {'Db':'C#','Eb':'D#','F':'E#','Ab':'G#','Bb':'A#','C':'B#','B':'Cb','E':'Fb','F#':'Gb'};
+        const mapped = ENH[enh[1]];
+        if (mapped) allKeys.push(libraryKey(mapped + enh[2], instrumentId));
+      }
+      const override = allKeys.map(k => overrides.get(k)).find(Boolean);
       return {
         original: chord,
         display: override ? override.chord : chord,
@@ -119,11 +127,19 @@ function ChordsPageContent() {
     });
   }, [staticChords, instrumentId, overrides]);
 
-  // Ajouts admin correspondant à la catégorie courante
-  const adminAdditions = useMemo(() => {
-    return additions.filter(
+  // Ajouts admin groupés par nom (pour variantes navigables)
+  const adminAdditionGroups = useMemo(() => {
+    const filtered = additions.filter(
       (a) => a.instrumentId === instrumentId && getCategoryGroup(a.chord.category) === categoryGroup,
     );
+    // Grouper par nom normalisé
+    const groups = new Map<string, typeof filtered>();
+    filtered.forEach(a => {
+      const k = a.chord.name.trim().toLowerCase();
+      if (!groups.has(k)) groups.set(k, []);
+      groups.get(k)!.push(a);
+    });
+    return Array.from(groups.values());
   }, [additions, instrumentId, categoryGroup]);
 
   const openEditModal = (chord: StringChord | PianoChord, isOverride: boolean) => {
@@ -224,28 +240,20 @@ function ChordsPageContent() {
       </div>
 
       {/* Accords ajoutés par admin */}
-      {isAdmin && adminAdditions.length > 0 && (
+      {isAdmin && adminAdditionGroups.length > 0 && (
         <div className="mb-6">
           <p className="text-xs font-semibold uppercase tracking-wider text-[var(--accent)] mb-3">
-            Ajoutés ({adminAdditions.length})
+            Ajoutés ({adminAdditionGroups.reduce((s, g) => s + g.length, 0)})
           </p>
           <div className="flex flex-wrap gap-4">
-            {adminAdditions.map((a) => (
-              <div key={a.docId} className="relative group">
-                <ChordCard chord={a.chord} instrumentId={instrumentId} size="sm" />
-                <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => openEditModal(a.chord, false)}
-                    className="w-6 h-6 bg-blue-500 text-white rounded text-xs flex items-center justify-center"
-                    title="Modifier"
-                  >✎</button>
-                  <button
-                    onClick={() => handleDeleteAddition(a.docId)}
-                    className="w-6 h-6 bg-red-500 text-white rounded text-xs flex items-center justify-center"
-                    title="Supprimer"
-                  >✕</button>
-                </div>
-              </div>
+            {adminAdditionGroups.map((group) => (
+              <AdditionGroup
+                key={group[0].docId}
+                group={group}
+                instrumentId={instrumentId}
+                onEdit={(chord) => openEditModal(chord, false)}
+                onDelete={handleDeleteAddition}
+              />
             ))}
           </div>
           {displayChords.length > 0 && <div className="h-px bg-[var(--line)] mt-6 mb-4" />}
@@ -308,6 +316,47 @@ function ChordsPageContent() {
           <div className="bg-white rounded-xl p-6 text-sm text-[var(--ink)]">Sauvegarde en cours…</div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Groupe de variantes admin navigables ────────────────────────────────────
+
+import type { LibraryChord } from '@/lib/library-chords-context';
+
+function AdditionGroup({
+  group,
+  instrumentId,
+  onEdit,
+  onDelete,
+}: {
+  group: LibraryChord[];
+  instrumentId: InstrumentId;
+  onEdit: (chord: StringChord | PianoChord) => void;
+  onDelete: (docId: string) => void;
+}) {
+  const [idx, setIdx] = useState(0);
+  const current = group[Math.min(idx, group.length - 1)];
+  const hasMany = group.length > 1;
+
+  return (
+    <div className="relative group flex flex-col items-center">
+      {hasMany && (
+        <div className="flex items-center gap-2 mb-1">
+          <button onClick={() => setIdx(i => (i === 0 ? group.length - 1 : i - 1))}
+            className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-gray-100 rounded">‹</button>
+          <span className="text-[10px] text-[var(--ink-faint)]">{idx + 1}/{group.length}</span>
+          <button onClick={() => setIdx(i => (i + 1) % group.length)}
+            className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-gray-100 rounded">›</button>
+        </div>
+      )}
+      <ChordCard chord={current.chord} instrumentId={instrumentId} size="sm" />
+      <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" style={{ top: hasMany ? '28px' : '4px' }}>
+        <button onClick={() => onEdit(current.chord)}
+          className="w-6 h-6 bg-blue-500 text-white rounded text-xs flex items-center justify-center" title="Modifier">✎</button>
+        <button onClick={() => onDelete(current.docId)}
+          className="w-6 h-6 bg-red-500 text-white rounded text-xs flex items-center justify-center" title="Supprimer cette variante">✕</button>
+      </div>
     </div>
   );
 }
