@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { collection, query, where, getDocs, limit, deleteDoc, doc } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
@@ -14,6 +15,7 @@ type SortOption = 'recent' | 'rated' | 'viewed';
 
 export default function ExplorePage() {
   const { isAdmin } = useAuth();
+  const router = useRouter();
 
   const [sheets, setSheets] = useState<Sheet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -139,6 +141,12 @@ export default function ExplorePage() {
 
   const hasActiveFilters = searchQuery || selectedGenre || selectedDifficulty || sortBy !== 'recent';
 
+  const handleRandom = () => {
+    if (sheets.length === 0) return;
+    const random = sheets[Math.floor(Math.random() * sheets.length)];
+    router.push(`/sheet/${random.id}`);
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
       <div className="mb-8">
@@ -153,7 +161,7 @@ export default function ExplorePage() {
       {/* Barre de recherche et filtres */}
       <div className="space-y-4 mb-8">
         {/* Recherche */}
-        <div className="flex gap-4">
+        <div className="flex gap-3">
           <div className="flex-1">
             <Input
               type="search"
@@ -163,6 +171,14 @@ export default function ExplorePage() {
               className="w-full"
             />
           </div>
+          <button
+            onClick={handleRandom}
+            disabled={sheets.length === 0}
+            className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[var(--line)] bg-white text-sm text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors disabled:opacity-40"
+            title="Ouvrir une grille au hasard"
+          >
+            ⚄ Aléatoire
+          </button>
         </div>
 
         {/* Filtres et tri */}
