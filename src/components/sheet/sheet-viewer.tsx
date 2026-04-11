@@ -181,6 +181,11 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
               {sheet.tempo}
             </span>
           )}
+          {sheet.beatsPerMeasure === 3 && (
+            <span className="flex items-center gap-1.5 px-2 py-1 bg-purple-50 text-purple-700 rounded text-sm print:bg-transparent print:text-[var(--ink)]">
+              Ternaire
+            </span>
+          )}
           {sheet.capo && (
             <span className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm print:bg-transparent print:text-[var(--ink)]">
               Capo {sheet.capo}
@@ -228,11 +233,6 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
               <span className="text-sm font-semibold uppercase tracking-wider text-[var(--ink)]">
                 {section.label}
               </span>
-              {section.beatsPerMeasure === 3 && (
-                <span className="text-[10px] px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded">
-                  Ternaire
-                </span>
-              )}
               {section.repeat > 1 && (
                 <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[var(--accent)] text-white">
                   ×{section.repeat}

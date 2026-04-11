@@ -344,8 +344,40 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
           />
         </div>
 
-        {/* Capo & Difficulté */}
+        {/* Métrique, Capo & Difficulté */}
         <div className="flex flex-wrap items-center gap-6">
+          {/* Binaire / Ternaire */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-[var(--ink-light)]">Métrique :</span>
+            <div className="flex rounded overflow-hidden border border-[var(--line)]">
+              <button
+                onClick={() => updateSheet({
+                  beatsPerMeasure: 4,
+                  sections: sheet.sections.map(s => ({ ...s, beatsPerMeasure: 4 as const })),
+                })}
+                className={`px-3 py-1 text-xs transition-colors ${
+                  (sheet.beatsPerMeasure ?? 4) === 4
+                    ? 'bg-[var(--accent)] text-white'
+                    : 'bg-white text-[var(--ink-light)] hover:bg-gray-50'
+                }`}
+              >
+                Binaire
+              </button>
+              <button
+                onClick={() => updateSheet({
+                  beatsPerMeasure: 3,
+                  sections: sheet.sections.map(s => ({ ...s, beatsPerMeasure: 3 as const })),
+                })}
+                className={`px-3 py-1 text-xs border-l border-[var(--line)] transition-colors ${
+                  sheet.beatsPerMeasure === 3
+                    ? 'bg-[var(--accent)] text-white'
+                    : 'bg-white text-[var(--ink-light)] hover:bg-gray-50'
+                }`}
+              >
+                Ternaire
+              </button>
+            </div>
+          </div>
           {/* Capo */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-[var(--ink-light)]">Capo :</span>

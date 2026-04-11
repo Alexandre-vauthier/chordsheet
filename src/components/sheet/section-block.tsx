@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Section, Cell, CellSpan, BeatsPerMeasure, InstrumentId } from '@/types';
+import type { Section, Cell, CellSpan, InstrumentId } from '@/types';
 import { GridRow } from './grid-row';
 import { createEmptyRow } from '@/types';
 
@@ -99,11 +99,6 @@ export function SectionBlock({
     onUpdate({ rows: newRows });
   };
 
-  // Changer le mode binaire/ternaire — affecte uniquement le métronome, pas la grille
-  const changeBeatsPerMeasure = (newBeats: BeatsPerMeasure) => {
-    if (newBeats === section.beatsPerMeasure) return;
-    onUpdate({ beatsPerMeasure: newBeats });
-  };
 
   // Supprimer une mesure
   const deleteRow = (rowIndex: number) => {
@@ -171,32 +166,6 @@ export function SectionBlock({
               border-none rounded px-1.5 py-0.5 w-9 text-center outline-none"
           />
         </span>
-
-        {/* Toggle binaire/ternaire */}
-        <div className="flex rounded overflow-hidden border border-[var(--line)]">
-          <button
-            onClick={() => changeBeatsPerMeasure(4)}
-            className={`px-2 py-0.5 text-[10px] transition-colors ${
-              (section.beatsPerMeasure || 4) === 4
-                ? 'bg-[var(--accent)] text-white'
-                : 'bg-white text-[var(--ink-light)] hover:bg-gray-50'
-            }`}
-            title="4 temps (binaire)"
-          >
-            Binaire
-          </button>
-          <button
-            onClick={() => changeBeatsPerMeasure(3)}
-            className={`px-2 py-0.5 text-[10px] transition-colors ${
-              section.beatsPerMeasure === 3
-                ? 'bg-[var(--accent)] text-white'
-                : 'bg-white text-[var(--ink-light)] hover:bg-gray-50'
-            }`}
-            title="3 temps (ternaire - valse, 6/8)"
-          >
-            Ternaire
-          </button>
-        </div>
 
         <div
           className={`flex gap-1.5 ml-auto transition-opacity duration-150 ${

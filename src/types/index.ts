@@ -162,6 +162,8 @@ export interface Sheet {
   customChords?: Record<string, CustomChord>; // accords personnalisés par nom
   // V4 - Lien de référence (YouTube, Spotify, etc.)
   referenceUrl?: string;
+  // V5 - Métrique globale
+  beatsPerMeasure?: BeatsPerMeasure;
 }
 
 // Type pour la création d'une nouvelle grille
