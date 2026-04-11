@@ -23,7 +23,7 @@ export function parseTempo(tempoStr: string | undefined): number {
 function buildSequence(sections: Section[], beatMs: number): PlayStep[] {
   const steps: PlayStep[] = [];
   for (const section of sections) {
-    const bpm = 4; // toujours 4 temps par mesure — ternaire n'affecte que le métronome
+    const bpm = section.beatsPerMeasure || 4; // 3 en ternaire, 4 en binaire
     for (let rep = 0; rep < (section.repeat || 1); rep++) {
       for (let r = 0; r < section.rows.length; r++) {
         const rowRepeat = section.rowRepeats?.[r] ?? 1;
