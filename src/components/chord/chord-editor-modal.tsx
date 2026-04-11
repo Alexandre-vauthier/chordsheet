@@ -4,6 +4,18 @@ import { useState, useEffect } from 'react';
 import type { InstrumentId, StringChord, PianoChord, FingerPosition, ChordBarre } from '@/types';
 import { playChord, playNote, OPEN_FREQS, noteNameToFreq } from '@/lib/chord-audio';
 
+const CATEGORY_OPTIONS = [
+  { value: 'major', label: 'Majeur' },
+  { value: 'minor', label: 'Mineur' },
+  { value: 'dom7', label: '7 (Dominant)' },
+  { value: 'maj7', label: 'Maj 7' },
+  { value: 'min7', label: 'Min 7' },
+  { value: 'dim', label: 'Diminué' },
+  { value: 'aug', label: 'Augmenté' },
+  { value: 'sus', label: 'Sus / Add' },
+  { value: 'other', label: 'Autre' },
+];
+
 interface ChordEditorModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -11,6 +23,11 @@ interface ChordEditorModalProps {
   chordName: string;
   instrumentId: InstrumentId;
   initialChord?: StringChord | PianoChord | null;
+  /** Vrai quand c'est un ajout admin (pas un override) sans nom prédéfini */
+  isAddition?: boolean;
+  /** Catégorie imposée par la page parente */
+  forcedCategory?: string;
+  onCategoryChange?: (cat: string) => void;
 }
 
 // Configuration par instrument
@@ -35,6 +52,9 @@ export function ChordEditorModal({
   chordName,
   instrumentId,
   initialChord,
+  isAddition = false,
+  forcedCategory,
+  onCategoryChange,
 }: ChordEditorModalProps) {
   const isPiano = instrumentId === 'piano';
   const config = !isPiano ? INSTRUMENT_CONFIG[instrumentId] : null;
@@ -195,16 +215,29 @@ export function ChordEditorModal({
             {chordName ? `Modifier l'accord : ${chordName}` : 'Ajouter un accord'}
           </h2>
           {!chordName && (
-            <input
-              type="text"
-              value={editableName}
-              onChange={(e) => setEditableName(e.target.value)}
-              placeholder="Nom de l'accord (ex: C#m7)"
-              className="w-full px-3 py-2 border border-[var(--line)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)] mb-1"
-              autoFocus
-            />
+            <div className="flex gap-2 mt-2">
+              <input
+                type="text"
+                value={editableName}
+                onChange={(e) => setEditableName(e.target.value)}
+                placeholder="Nom de l'accord (ex: C#m7)"
+                className="flex-1 px-3 py-2 border border-[var(--line)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                autoFocus
+              />
+              {isAddition && onCategoryChange && (
+                <select
+                  value={forcedCategory}
+                  onChange={(e) => onCategoryChange(e.target.value)}
+                  className="px-2 py-2 border border-[var(--line)] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                >
+                  {CATEGORY_OPTIONS.map(({ value, label }) => (
+                    <option key={value} value={value}>{label}</option>
+                  ))}
+                </select>
+              )}
+            </div>
           )}
-          <p className="text-sm text-[var(--ink-light)] mt-1">
+          <p className="text-sm text-[var(--ink-light)] mt-2">
             Cliquez sur les cases pour placer vos doigts
           </p>
         </div>

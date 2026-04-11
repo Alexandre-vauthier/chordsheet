@@ -9,17 +9,33 @@ import { getChordsByInstrument } from '@/lib/chord-data';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
 import { useAuth } from '@/lib/auth-context';
 
-type CategoryGroup = 'major' | 'minor' | 'other';
+// Catégories étendues (correspondent aux catégories de chord-data.ts)
+type CategoryGroup = 'major' | 'minor' | 'dom7' | 'maj7' | 'min7' | 'dim' | 'aug' | 'sus' | 'other';
 
 const CAT_LABELS: Record<CategoryGroup, string> = {
-  major: 'Majeurs',
-  minor: 'Mineurs',
-  other: 'Autres',
+  major:  'Majeurs',
+  minor:  'Mineurs',
+  dom7:   '7',
+  maj7:   'Maj 7',
+  min7:   'Min 7',
+  dim:    'Dim',
+  aug:    'Aug',
+  sus:    'Sus / Add',
+  other:  'Autres',
 };
+
+// Ordre d'affichage des onglets
+const CAT_ORDER: CategoryGroup[] = ['major', 'minor', 'dom7', 'maj7', 'min7', 'dim', 'aug', 'sus', 'other'];
 
 function getCategoryGroup(category: string): CategoryGroup {
   if (category === 'major') return 'major';
   if (category === 'minor') return 'minor';
+  if (category === 'dom7') return 'dom7';
+  if (category === 'maj7') return 'maj7';
+  if (category === 'min7') return 'min7';
+  if (category === 'dim') return 'dim';
+  if (category === 'aug') return 'aug';
+  if (category === 'sus' || category === 'add9' || category === 'sus2' || category === 'sus4') return 'sus';
   return 'other';
 }
 
@@ -48,6 +64,8 @@ function ChordsPageContent() {
   const [editingChordName, setEditingChordName] = useState('');
   const [editingInitialChord, setEditingInitialChord] = useState<StringChord | PianoChord | null>(null);
   const [editingIsOverride, setEditingIsOverride] = useState(true);
+  // Catégorie forcée pour les nouveaux accords (additions)
+  const [forcedCategory, setForcedCategory] = useState<string>('major');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -75,19 +93,36 @@ function ChordsPageContent() {
     return all.filter((c) => getCategoryGroup(c.category) === categoryGroup);
   }, [instrumentId, categoryGroup]);
 
+  // Vérifier quelles catégories ont des accords (pour masquer les onglets vides)
+  const nonEmptyCategories = useMemo(() => {
+    const all = getChordsByInstrument(instrumentId);
+    const cats = new Set<CategoryGroup>();
+    all.forEach((c) => cats.add(getCategoryGroup(c.category)));
+    // Ajouter les catégories des additions admin
+    additions
+      .filter(a => a.instrumentId === instrumentId)
+      .forEach(a => cats.add(getCategoryGroup(a.chord.category)));
+    return cats;
+  }, [instrumentId, additions]);
+
   // Fusions : chaque accord statique → override éventuel
   const displayChords = useMemo(() => {
     return staticChords.map((chord) => {
       const key = libraryKey(chord.name, instrumentId);
       const override = overrides.get(key);
-      return { original: chord, display: override ? override.chord : chord, hasOverride: !!override, overrideDocId: override?.docId };
+      return {
+        original: chord,
+        display: override ? override.chord : chord,
+        hasOverride: !!override,
+        overrideDocId: override?.docId,
+      };
     });
   }, [staticChords, instrumentId, overrides]);
 
   // Ajouts admin correspondant à la catégorie courante
   const adminAdditions = useMemo(() => {
     return additions.filter(
-      (a) => a.instrumentId === instrumentId && getCategoryGroup(a.chord.category) === categoryGroup
+      (a) => a.instrumentId === instrumentId && getCategoryGroup(a.chord.category) === categoryGroup,
     );
   }, [additions, instrumentId, categoryGroup]);
 
@@ -95,6 +130,7 @@ function ChordsPageContent() {
     setEditingChordName(chord.name);
     setEditingInitialChord(chord);
     setEditingIsOverride(isOverride);
+    setForcedCategory(chord.category);
     setModalOpen(true);
   };
 
@@ -102,6 +138,8 @@ function ChordsPageContent() {
     setEditingChordName('');
     setEditingInitialChord(null);
     setEditingIsOverride(false);
+    // Catégorie par défaut = onglet actuel
+    setForcedCategory(categoryGroup);
     setModalOpen(true);
   };
 
@@ -109,7 +147,11 @@ function ChordsPageContent() {
     if (!user) return;
     setSaving(true);
     try {
-      await saveLibraryChord(chord, instrumentId, editingIsOverride, user.email);
+      // Pour les ajouts, injecter la catégorie choisie
+      const finalChord = editingIsOverride
+        ? chord
+        : { ...chord, category: forcedCategory };
+      await saveLibraryChord(finalChord, instrumentId, editingIsOverride, user.email);
       setModalOpen(false);
     } finally {
       setSaving(false);
@@ -164,13 +206,13 @@ function ChordsPageContent() {
         ))}
       </div>
 
-      {/* Sélecteur de catégorie */}
-      <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
-        {(['major', 'minor', 'other'] as CategoryGroup[]).map((cat) => (
+      {/* Onglets de catégorie — seulement les catégories non vides */}
+      <div className="flex flex-wrap gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
+        {CAT_ORDER.filter((cat) => nonEmptyCategories.has(cat)).map((cat) => (
           <button
             key={cat}
             onClick={() => handleCategoryChange(cat)}
-            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
               categoryGroup === cat
                 ? 'bg-white text-[var(--ink)] shadow-sm'
                 : 'text-[var(--ink-light)] hover:text-[var(--ink)]'
@@ -185,7 +227,7 @@ function ChordsPageContent() {
       {isAdmin && adminAdditions.length > 0 && (
         <div className="mb-6">
           <p className="text-xs font-semibold uppercase tracking-wider text-[var(--accent)] mb-3">
-            Accords ajoutés par admin ({adminAdditions.length})
+            Ajoutés ({adminAdditions.length})
           </p>
           <div className="flex flex-wrap gap-4">
             {adminAdditions.map((a) => (
@@ -206,16 +248,16 @@ function ChordsPageContent() {
               </div>
             ))}
           </div>
-          <div className="h-px bg-[var(--line)] mt-6 mb-2" />
+          {displayChords.length > 0 && <div className="h-px bg-[var(--line)] mt-6 mb-4" />}
         </div>
       )}
 
-      {/* Grille d'accords */}
-      {displayChords.length === 0 ? (
+      {/* Grille d'accords de la bibliothèque */}
+      {displayChords.length === 0 && adminAdditions.length === 0 ? (
         <div className="text-center py-16 text-[var(--ink-faint)]">
           Aucun accord trouvé pour cette sélection.
         </div>
-      ) : (
+      ) : displayChords.length > 0 ? (
         <div className="flex flex-wrap gap-4">
           {displayChords.map(({ original, display, hasOverride, overrideDocId }) => (
             <div key={original.id} className="relative group">
@@ -244,7 +286,7 @@ function ChordsPageContent() {
             </div>
           ))}
         </div>
-      )}
+      ) : null}
 
       {/* Modal d'édition admin */}
       {isAdmin && (
@@ -255,6 +297,9 @@ function ChordsPageContent() {
           chordName={editingChordName}
           instrumentId={instrumentId}
           initialChord={editingInitialChord}
+          isAddition={!editingIsOverride && !editingChordName}
+          forcedCategory={forcedCategory}
+          onCategoryChange={setForcedCategory}
         />
       )}
 
