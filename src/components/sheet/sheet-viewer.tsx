@@ -269,9 +269,9 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                   activeStep?.rowIndex === rowIndex;
 
                 return (
-                  <div key={rowIndex} className="flex items-center gap-2">
+                  <div key={rowIndex} className="relative">
                     <div
-                      className="flex-1 grid gap-1"
+                      className="grid gap-1 w-full"
                       style={{ gridTemplateColumns: `repeat(16, minmax(0, 1fr))` }}
                     >
                       {row.map((cell, cellIndex) => {
@@ -303,7 +303,9 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                       })}
                     </div>
                     {rowRepeat > 1 && (
-                      <span className="print:inline flex-shrink-0 text-xs font-semibold px-1.5 py-0.5 rounded bg-[var(--cell-bg)] border border-[var(--line)] text-[var(--ink-faint)]">
+                      <span className="absolute right-2 top-1/2 -translate-y-1/2 print:inline
+                        text-xs font-semibold px-1.5 py-0.5 rounded
+                        bg-[var(--accent)] text-white shadow-sm">
                         ×{rowRepeat}
                       </span>
                     )}
