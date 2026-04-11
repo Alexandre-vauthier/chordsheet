@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 const MEM_CACHE = new Map<string, { artworkUrl: string | null; previewUrl: string | null }>();
 
 // Cache localStorage (persiste entre sessions, TTL 30 jours)
-const LS_PREFIX = 'itunes3_'; // préfixe v3 : invalide le cache qui avait des previews non vérifiés
+const LS_PREFIX = 'itunes4_'; // préfixe v4 : titre avant artiste dans la requête
 const TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 function lsGet(key: string): { artworkUrl: string | null; previewUrl: string | null } | undefined {
@@ -112,7 +112,7 @@ export function useArtwork(artist: string | undefined, title: string | undefined
       return;
     }
 
-    const query = [artist, title].filter(Boolean).join(' ').trim();
+    const query = [title, artist].filter(Boolean).join(' ').trim();
     if (!query) {
       setArtworkUrl(null);
       setPreviewUrl(null);
