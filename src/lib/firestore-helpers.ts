@@ -23,7 +23,7 @@ function removeUndefined(obj: Record<string, unknown>): Record<string, unknown> 
 }
 
 // Convertir les accords personnalisés pour Firestore (éviter les tableaux imbriqués)
-function chordToFirestore(chord: StringChord | PianoChord): Record<string, unknown> {
+export function chordToFirestore(chord: StringChord | PianoChord): Record<string, unknown> {
   if (isPianoChord(chord)) {
     // Piano chords n'ont pas de tableaux imbriqués
     return removeUndefined({ ...chord });
@@ -51,7 +51,7 @@ function chordToFirestore(chord: StringChord | PianoChord): Record<string, unkno
 }
 
 // Convertir les accords Firestore vers le format app
-function chordFromFirestore(data: Record<string, unknown>): StringChord | PianoChord {
+export function chordFromFirestore(data: Record<string, unknown>): StringChord | PianoChord {
   if ('notes' in data) {
     return data as unknown as PianoChord;
   }

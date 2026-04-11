@@ -66,6 +66,12 @@ service cloud.firestore {
                        (request.auth.uid == resource.data.userId || isAdmin());
     }
 
+    // Bibliothèque d'accords (overrides et ajouts admin)
+    match /library_chords/{docId} {
+      allow read: if request.auth != null;
+      allow write, delete: if isAdmin();
+    }
+
     // Notes (ratings)
     match /ratings/{ratingId} {
       allow read: if request.auth != null;

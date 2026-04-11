@@ -6,6 +6,7 @@ import {
 } from 'firebase/firestore';
 import { getDb } from './firebase';
 import type { StringChord, PianoChord, InstrumentId } from '@/types';
+import { chordToFirestore, chordFromFirestore } from './firestore-helpers';
 
 export interface LibraryChord {
   docId: string;
@@ -52,8 +53,14 @@ export function LibraryChordsProvider({ children }: { children: ReactNode }) {
       const newAdditions: LibraryChord[] = [];
 
       snap.docs.forEach((d) => {
-        const data = d.data() as Omit<LibraryChord, 'docId'>;
-        const entry: LibraryChord = { ...data, docId: d.id };
+        const raw = d.data();
+        const entry: LibraryChord = {
+          docId: d.id,
+          instrumentId: raw.instrumentId,
+          isOverride: raw.isOverride,
+          createdBy: raw.createdBy,
+          chord: chordFromFirestore(raw.chord as Record<string, unknown>),
+        };
         if (entry.isOverride) {
           newOverrides.set(libraryKey(entry.chord.name, entry.instrumentId), entry);
         } else {
@@ -84,7 +91,7 @@ export function LibraryChordsProvider({ children }: { children: ReactNode }) {
     const docId = isOverride ? key : `${key}-${Date.now()}`;
     await setDoc(doc(db, 'library_chords', docId), {
       instrumentId,
-      chord,
+      chord: chordToFirestore(chord),
       isOverride,
       createdBy,
       updatedAt: serverTimestamp(),
