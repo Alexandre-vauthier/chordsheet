@@ -38,10 +38,11 @@ export function useChordVariants(
       .map((a) => a.chord);
 
     if (override) {
-      // L'override remplace totalement les variantes statiques
+      // L'override remplace la variante de base, les ajouts viennent après
       return [override.chord, ...matchingAdditions];
     }
 
-    return [...matchingAdditions, ...staticVariants];
+    // Les ajouts enrichissent la liste, la variante statique de base reste en [0]
+    return [...staticVariants, ...matchingAdditions];
   }, [name, instrumentId, overrides, additions]);
 }
