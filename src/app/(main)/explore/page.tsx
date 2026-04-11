@@ -31,7 +31,7 @@ export default function ExplorePage() {
         const q = query(
           collection(db, 'sheets'),
           where('isPublic', '==', true),
-          orderBy('updatedAt', 'desc'),
+          orderBy('createdAt', 'desc'),
           limit(100)
         );
 
@@ -106,7 +106,7 @@ export default function ExplorePage() {
         break;
       case 'recent':
       default:
-        result.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+        result.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         break;
     }
 
