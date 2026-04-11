@@ -113,19 +113,33 @@ function ChordsPageContent() {
       hasOverride: boolean;
       overrideDocId?: string;
       additionDocIds: string[];
-      additionStartIdx: number; // index dans variants où commencent les additions
+      additionStartIdx: number;
     };
     const groups = new Map<string, Group>();
 
-    const ENH: Record<string,string> = {'Db':'C#','Eb':'D#','F':'E#','Ab':'G#','Bb':'A#','C':'B#','B':'Cb','E':'Fb','F#':'Gb'};
+    // 0. Créer les groupes pour les overrides sans statique correspondant
+    //    (ex: admin a overridé "Gb" mais "Gb" n'existe pas en statique)
+    overrides.forEach((libChord) => {
+      if (libChord.instrumentId !== instrumentId) return;
+      if (getCategoryGroup(libChord.chord.category) !== categoryGroup) return;
+      const nameLower = libChord.chord.name.trim().toLowerCase();
+      if (!groups.has(nameLower)) {
+        groups.set(nameLower, {
+          name: libChord.chord.name,
+          variants: [libChord.chord],
+          hasOverride: true,
+          overrideDocId: libChord.docId,
+          additionDocIds: [],
+          additionStartIdx: 1,
+        });
+      }
+    });
 
-    // 1. Accords statiques (l'override remplace toutes les variantes statiques)
+    // 1. Accords statiques — override par nom exact uniquement (pas d'alias enharmonique)
+    //    La recherche enharmonique est réservée à useChordVariants (inline dans les grilles)
     staticChords.forEach((chord) => {
       const key = libraryKey(chord.name, instrumentId);
-      const allKeys = [key];
-      const enh = chord.name.match(/^([A-G][b#]?)(.*)$/);
-      if (enh && ENH[enh[1]]) allKeys.push(libraryKey(ENH[enh[1]] + enh[2], instrumentId));
-      const override = allKeys.map(k => overrides.get(k)).find(Boolean);
+      const override = overrides.get(key);
 
       const nameLower = chord.name.trim().toLowerCase();
       if (!groups.has(nameLower)) {
@@ -134,18 +148,17 @@ function ChordsPageContent() {
       const g = groups.get(nameLower)!;
       if (override) {
         if (!g.hasOverride) {
-          // N'ajouter l'override qu'une seule fois (une entrée statique par variante)
           g.variants.push(override.chord);
           g.hasOverride = true;
           g.overrideDocId = override.docId;
         }
-        // Ne pas ajouter les variantes statiques remplacées
+        // Variantes statiques remplacées par l'override
       } else {
         g.variants.push(chord);
       }
     });
 
-    // Marquer où commencent les additions (après les statiques/override)
+    // Marquer où commencent les additions (après statiques/override)
     groups.forEach(g => { g.additionStartIdx = g.variants.length; });
 
     // 2. Additions admin — toujours après les statiques
@@ -161,8 +174,10 @@ function ChordsPageContent() {
         g.additionDocIds.push(a.docId);
       });
 
-    // 3. Trier alphabétiquement
-    return Array.from(groups.values()).sort((a, b) => a.name.localeCompare(b.name));
+    // 3. Trier alphabétiquement, exclure les groupes vides (sécurité)
+    return Array.from(groups.values())
+      .filter(g => g.variants.length > 0)
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [staticChords, instrumentId, overrides, additions, categoryGroup]);
 
   const openEditModal = (chord: StringChord | PianoChord, isOverride: boolean) => {
