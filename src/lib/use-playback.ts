@@ -18,12 +18,11 @@ export function parseTempo(tempoStr: string | undefined): number {
 }
 
 // Span = nombre de mesures (1 = 1 mesure, 0.5 = demi-mesure, etc.)
-// Durée toujours en base 4 : span × 4 × beatMs.
-// Le ternaire n'affecte que l'accent du métronome (cycle de 3), pas le timing des accords.
+// Durée = span × beatsPerMeasure × beatMs (3 en ternaire, 4 en binaire).
 function buildSequence(sections: Section[], beatMs: number): PlayStep[] {
   const steps: PlayStep[] = [];
   for (const section of sections) {
-    const bpm = 4; // toujours base 4 — ternaire = métronome uniquement
+    const bpm = section.beatsPerMeasure || 4;
     for (let rep = 0; rep < (section.repeat || 1); rep++) {
       for (let r = 0; r < section.rows.length; r++) {
         const rowRepeat = section.rowRepeats?.[r] ?? 1;
