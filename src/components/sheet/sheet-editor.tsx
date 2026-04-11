@@ -470,41 +470,34 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
       {/* Sections */}
       <div>
         {sheet.sections.map((section) => {
-          if (dragSectionId === section.id) {
-            return (
-              <div
-                key={section.id}
-                className="mb-10 h-10 border-2 border-dashed border-[var(--line)] rounded-lg opacity-40 flex items-center px-4"
+          const isDragging = dragSectionId === section.id;
+          return (
+            <div
+              key={section.id}
+              className={isDragging ? 'h-10 overflow-hidden opacity-30 mb-10 border-2 border-dashed border-[var(--line)] rounded-lg' : ''}
+            >
+              <SectionBlock
+                section={section}
+                instrumentId={sheet.instrumentId || 'guitar'}
+                onUpdate={(updates) => updateSection(section.id, updates)}
+                onDelete={() => deleteSection(section.id)}
+                onDuplicate={() => duplicateSection(section.id)}
+                onPlaySection={() => {
+                  if (isPlaying && activeStep?.sectionId === section.id) stop();
+                  else playSection(section.id);
+                }}
+                isSectionPlaying={isPlaying && activeStep?.sectionId === section.id}
+                activeRowIndex={isPlaying && activeStep?.sectionId === section.id ? activeStep.rowIndex : undefined}
+                activeCellIndex={isPlaying && activeStep?.sectionId === section.id ? activeStep.cellIndex : undefined}
+                activeDurationMs={isPlaying && activeStep?.sectionId === section.id ? activeStep.durationMs : undefined}
+                onNavigateToCell={navigateToCell}
+                onDragStart={() => handleDragStart(section.id)}
+                onDragEnd={handleDragEnd}
                 onDragOver={(e) => { e.preventDefault(); handleDragOver(section.id); }}
                 onDrop={() => handleDrop(section.id)}
-              >
-                <span className="text-xs text-[var(--ink-faint)] uppercase tracking-wider">{section.label || 'Section'}</span>
-              </div>
-            );
-          }
-          return (
-          <SectionBlock
-            key={section.id}
-            section={section}
-            instrumentId={sheet.instrumentId || 'guitar'}
-            onUpdate={(updates) => updateSection(section.id, updates)}
-            onDelete={() => deleteSection(section.id)}
-            onDuplicate={() => duplicateSection(section.id)}
-            onPlaySection={() => {
-              if (isPlaying && activeStep?.sectionId === section.id) stop();
-              else playSection(section.id);
-            }}
-            isSectionPlaying={isPlaying && activeStep?.sectionId === section.id}
-            activeRowIndex={isPlaying && activeStep?.sectionId === section.id ? activeStep.rowIndex : undefined}
-            activeCellIndex={isPlaying && activeStep?.sectionId === section.id ? activeStep.cellIndex : undefined}
-            activeDurationMs={isPlaying && activeStep?.sectionId === section.id ? activeStep.durationMs : undefined}
-            onNavigateToCell={navigateToCell}
-            onDragStart={() => handleDragStart(section.id)}
-            onDragEnd={handleDragEnd}
-            onDragOver={(e) => { e.preventDefault(); handleDragOver(section.id); }}
-            onDrop={() => handleDrop(section.id)}
-            isDragOver={dragOverSectionId === section.id && dragSectionId !== section.id}
-          />
+                isDragOver={dragOverSectionId === section.id && dragSectionId !== section.id}
+              />
+            </div>
           );
         })}
       </div>
