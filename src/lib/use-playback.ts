@@ -123,7 +123,7 @@ export function usePlayback({ sections, tempo, instrumentId, customChords, metro
     };
 
     advance();
-  }, [tempo, instrumentId, customChords]);
+  }, [tempo, instrumentId, customChords, metronomeEnabled]);
 
   const play = useCallback(() => {
     playSequence(sections);
