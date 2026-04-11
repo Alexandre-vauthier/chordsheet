@@ -298,7 +298,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                             customChords={sheet.customChords as Record<string, CustomChord> | undefined}
                             translate={translate}
                             getColor={getColor}
-                            showInlineDiagram={showInlineDiagram}
+                            showInlineDiagram={showInlineDiagram && cellIndex === 0}
                           />
                         );
                       })}
