@@ -261,7 +261,7 @@ function ChordsPageContent() {
       )}
 
       {/* Grille d'accords de la bibliothèque */}
-      {displayChords.length === 0 && adminAdditions.length === 0 ? (
+      {displayChords.length === 0 && adminAdditionGroups.length === 0 ? (
         <div className="text-center py-16 text-[var(--ink-faint)]">
           Aucun accord trouvé pour cette sélection.
         </div>
