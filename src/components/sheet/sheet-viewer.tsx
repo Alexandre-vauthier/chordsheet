@@ -230,7 +230,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
               </span>
               {section.beatsPerMeasure === 3 && (
                 <span className="text-[10px] px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded">
-                  3/4
+                  Ternaire
                 </span>
               )}
               {section.repeat > 1 && (

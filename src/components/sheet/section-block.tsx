@@ -186,7 +186,7 @@ export function SectionBlock({
             }`}
             title="4 temps (binaire)"
           >
-            4/4
+            Binaire
           </button>
           <button
             onClick={() => changeBeatsPerMeasure(3)}
@@ -197,7 +197,7 @@ export function SectionBlock({
             }`}
             title="3 temps (ternaire - valse, 6/8)"
           >
-            3/4
+            Ternaire
           </button>
         </div>
 
