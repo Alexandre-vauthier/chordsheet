@@ -82,7 +82,7 @@ export function SectionBlock({
     const currentCell = row[cellIndex];
 
     const newSpan = prevCell.span + currentCell.span;
-    const maxSpan = section.beatsPerMeasure || 4;
+    const maxSpan = 4;
     if (newSpan > maxSpan) return;
     if (!VALID_SPANS.includes(newSpan as CellSpan)) return;
 
@@ -95,17 +95,14 @@ export function SectionBlock({
 
   // Ajouter une mesure
   const addRow = () => {
-    const newRows = [...section.rows, createEmptyRow(section.beatsPerMeasure || 4)];
+    const newRows = [...section.rows, createEmptyRow(4)];
     onUpdate({ rows: newRows });
   };
 
-  // Changer le nombre de temps par mesure
+  // Changer le mode binaire/ternaire — affecte uniquement le métronome, pas la grille
   const changeBeatsPerMeasure = (newBeats: BeatsPerMeasure) => {
     if (newBeats === section.beatsPerMeasure) return;
-
-    // Reconstruire toutes les mesures avec le nouveau nombre de temps
-    const newRows = section.rows.map(() => createEmptyRow(newBeats));
-    onUpdate({ beatsPerMeasure: newBeats, rows: newRows });
+    onUpdate({ beatsPerMeasure: newBeats });
   };
 
   // Supprimer une mesure

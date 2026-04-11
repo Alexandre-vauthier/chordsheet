@@ -273,7 +273,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                   <div key={rowIndex} className="flex items-center gap-2">
                     <div
                       className="flex-1 grid gap-1"
-                      style={{ gridTemplateColumns: `repeat(${section.beatsPerMeasure === 3 ? 12 : 16}, minmax(0, 1fr))` }}
+                      style={{ gridTemplateColumns: `repeat(16, minmax(0, 1fr))` }}
                     >
                       {row.map((cell, cellIndex) => {
                         const isActive = isRowActive && activeStep?.cellIndex === cellIndex;

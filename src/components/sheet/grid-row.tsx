@@ -41,7 +41,7 @@ export function GridRow({
   activeCellIndex,
   activeDurationMs,
 }: GridRowProps) {
-  const totalGridCols = beatsPerMeasure === 3 ? 12 : 16;
+  const totalGridCols = 16;
 
   // Positions cumulées pour placer les boutons fusion
   const cumCols: number[] = [];
