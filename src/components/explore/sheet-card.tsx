@@ -178,6 +178,7 @@ export function SheetCard({
               </span>
             )}
           </div>
+        </div>
 
         {/* Actions */}
         <div className="flex items-center gap-1 pb-3 pt-2 border-t border-[var(--line)] mx-3">
