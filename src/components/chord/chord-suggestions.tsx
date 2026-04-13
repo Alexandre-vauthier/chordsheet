@@ -126,7 +126,7 @@ export function ChordSuggestions({
           {/* Bouton play */}
           <button
             onClick={handlePlay}
-            className="w-7 h-7 flex items-center justify-center rounded-full bg-[var(--ink)] text-white hover:bg-[var(--ink-light)] transition-colors text-sm"
+            className="w-7 h-7 flex items-center justify-center rounded-full bg-[var(--nav-bg)] text-white hover:bg-[var(--ink-light)] transition-colors text-sm"
             title="Écouter l'accord"
           >
             ▶

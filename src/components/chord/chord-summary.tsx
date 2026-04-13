@@ -133,7 +133,7 @@ export function ChordSummary({
                 key={chordName}
                 className="flex flex-col items-center"
               >
-                <div className="flex flex-col items-center p-3 bg-gray-50 rounded-lg border border-dashed border-[var(--line)] min-w-[90px]">
+                <div className="flex flex-col items-center p-3 bg-[var(--cell-bg)] rounded-lg border border-dashed border-[var(--line)] min-w-[90px]">
                   <span className="font-mono text-sm font-medium text-[var(--ink)]">
                     {translate(chordName)}
                   </span>

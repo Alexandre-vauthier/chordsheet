@@ -12,7 +12,7 @@ export default function Home() {
         <div className="flex gap-4 justify-center">
           <a
             href="/login"
-            className="px-6 py-3 bg-[var(--ink)] text-[var(--cream)] rounded-lg font-medium hover:opacity-90 transition-opacity"
+            className="px-6 py-3 bg-[var(--nav-bg)] text-[var(--nav-text)] rounded-lg font-medium hover:opacity-90 transition-opacity"
           >
             Se connecter
           </a>

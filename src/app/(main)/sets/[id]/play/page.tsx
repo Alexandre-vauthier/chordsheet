@@ -66,12 +66,12 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Barre de navigation du set */}
-      <div className="bg-[var(--ink)] text-[var(--cream)] py-2 px-4 print:hidden sticky top-0 z-50">
+      <div className="bg-[var(--nav-bg)] text-[var(--nav-text)] py-2 px-4 print:hidden sticky top-0 z-50">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link
               href={`/sets/${id}`}
-              className="text-sm text-[var(--cream)]/70 hover:text-[var(--cream)] transition-colors"
+              className="text-sm text-[var(--nav-text)]/70 hover:text-[var(--nav-text)] transition-colors"
             >
               ← Quitter
             </Link>
@@ -80,7 +80,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm text-[var(--cream)]/70">
+            <span className="text-sm text-[var(--nav-text)]/70">
               {currentIndex + 1} / {sheets.length}
             </span>
           </div>

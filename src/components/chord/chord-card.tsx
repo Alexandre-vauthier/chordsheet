@@ -69,7 +69,7 @@ export function ChordCard({
       {showPlayButton && (
         <button
           onClick={handlePlay}
-          className="w-full py-1.5 text-xs font-semibold rounded-lg bg-[var(--ink)] text-white hover:bg-[var(--ink-light)] transition-colors"
+          className="w-full py-1.5 text-xs font-semibold rounded-lg bg-[var(--nav-bg)] text-white hover:bg-[var(--ink-light)] transition-colors"
         >
           ▶
         </button>

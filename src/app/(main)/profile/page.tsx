@@ -203,7 +203,7 @@ export default function ProfilePage() {
             type="email"
             value={user.email}
             disabled
-            className="w-full px-4 py-2 border border-[var(--line)] rounded-lg bg-gray-50 text-[var(--ink-light)]"
+            className="w-full px-4 py-2 border border-[var(--line)] rounded-lg bg-[var(--cell-bg)] text-[var(--ink-light)]"
           />
           <p className="mt-1 text-xs text-[var(--ink-faint)]">
             L&apos;email ne peut pas être modifié

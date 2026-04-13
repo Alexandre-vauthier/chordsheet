@@ -215,7 +215,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
             </span>
           )}
           {sheet.difficulty && DIFFICULTY_LABELS[sheet.difficulty] && (
-            <span className="flex items-center gap-1.5 px-2 py-1 bg-gray-50 text-[var(--ink-light)] rounded text-sm print:bg-transparent print:text-[var(--ink)]">
+            <span className="flex items-center gap-1.5 px-2 py-1 bg-[var(--cell-bg)] text-[var(--ink-light)] rounded text-sm print:bg-transparent print:text-[var(--ink)]">
               {DIFFICULTY_LABELS[sheet.difficulty]}
             </span>
           )}

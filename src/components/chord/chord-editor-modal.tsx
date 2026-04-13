@@ -262,7 +262,7 @@ export function ChordEditorModal({
 
           {/* Contrôles barré */}
           {!isPiano && config && (
-            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+            <div className="mt-4 p-3 bg-[var(--cell-bg)] rounded-lg">
               <div className="flex items-center gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input

@@ -175,7 +175,7 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
 
       {/* Section notation (masquée à l'impression) */}
       {sheet.isPublic && (
-        <div className="bg-gray-50 border-b border-[var(--line)] py-3 px-4 sm:px-6 print:hidden">
+        <div className="bg-[var(--cell-bg)] border-b border-[var(--line)] py-3 px-4 sm:px-6 print:hidden">
           <div className="max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div className="flex items-center gap-3 sm:gap-4">
               {/* Note moyenne */}

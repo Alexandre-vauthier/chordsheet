@@ -284,7 +284,7 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
 
       {/* Contrôles du barré (instruments à cordes uniquement) */}
       {!isPiano && config && (
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+        <div className="mb-6 p-4 bg-[var(--cell-bg)] rounded-lg">
           <div className="flex items-center gap-4 mb-3">
             <label className="flex items-center gap-2 cursor-pointer">
               <input

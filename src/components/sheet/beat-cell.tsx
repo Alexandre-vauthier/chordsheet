@@ -188,7 +188,7 @@ export function BeatCell({
       {/* Message erreur accord invalide */}
       {chordError && (
         <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-20
-          bg-[var(--ink)] text-white text-[11px] rounded-lg px-3 py-2 shadow-lg
+          bg-[var(--nav-bg)] text-white text-[11px] rounded-lg px-3 py-2 shadow-lg
           whitespace-nowrap text-center leading-snug">
           Utilise la notation Am, G7, Cmaj7…
           <br />

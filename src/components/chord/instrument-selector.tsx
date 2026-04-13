@@ -48,7 +48,7 @@ export function InstrumentSelector({ value, onChange, compact = false }: Instrum
             onClick={() => onChange(inst.id)}
             className={`px-3 py-1.5 text-sm rounded-full border transition-colors flex items-center gap-1.5 ${
               isSelected
-                ? 'bg-[var(--ink)] text-white border-[var(--ink)]'
+                ? 'bg-[var(--nav-bg)] text-white border-[var(--ink)]'
                 : 'bg-[var(--cell-bg)] text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
             }`}
           >

@@ -251,7 +251,7 @@ function ChordsPageContent() {
             onClick={() => handleInstrumentChange(id)}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
               instrumentId === id
-                ? 'bg-[var(--ink)] text-white border-[var(--ink)]'
+                ? 'bg-[var(--nav-bg)] text-white border-[var(--ink)]'
                 : 'bg-[var(--cell-bg)] text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--ink-faint)]'
             }`}
           >

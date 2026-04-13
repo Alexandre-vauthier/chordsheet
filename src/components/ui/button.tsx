@@ -12,7 +12,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       primary: 'bg-[var(--accent)] text-white hover:opacity-90 focus:ring-[var(--accent)]',
-      secondary: 'bg-[var(--ink)] text-[var(--cream)] hover:opacity-90 focus:ring-[var(--ink)]',
+      secondary: 'bg-[var(--nav-bg)] text-[var(--cream)] hover:opacity-90 focus:ring-[var(--ink)]',
       ghost: 'bg-transparent border border-[var(--line)] text-[var(--ink)] hover:bg-[var(--accent-soft)] focus:ring-[var(--accent)]',
       danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
     };
