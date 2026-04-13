@@ -16,6 +16,7 @@ import { useArtwork } from '@/lib/use-artwork';
 import { useAuth } from '@/lib/auth-context';
 import { INSTRUMENT_CONFIG } from '@/lib/chord-data';
 import { useChordVariants } from '@/lib/use-chord-variants';
+import { transposeSections, transposeKey } from '@/lib/transpose';
 
 const LS_KEY = 'chordsheet_instrument';
 
@@ -57,10 +58,14 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
   };
 
   const [metronomeEnabled, setMetronomeEnabled] = useState(false);
+  const [transpose, setTranspose] = useState(0);
+
+  const displaySections = transposeSections(sheet.sections, transpose);
+  const displayKey = transposeKey(sheet.key, transpose);
 
   // Playback
   const { isPlaying, activeStep, playSection, togglePlay, stop } = usePlayback({
-    sections: sheet.sections,
+    sections: displaySections,
     tempo: sheet.tempo,
     instrumentId,
     customChords: sheet.customChords as Record<string, unknown>,
@@ -162,10 +167,35 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
 
         {/* Métadonnées */}
         <div className="flex flex-wrap items-center gap-3 mt-3">
-          {sheet.key && (
-            <span className="flex items-center gap-1.5 px-2 py-1 bg-purple-50 text-purple-700 rounded text-sm print:bg-transparent print:text-[var(--ink)]">
+          {/* Tonalité + transpose */}
+          <div className="flex items-center gap-1 print:hidden">
+            <button
+              onClick={() => setTranspose(t => t - 1)}
+              className="w-6 h-6 flex items-center justify-center rounded border border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors text-sm font-medium"
+            >−</button>
+            <span className="flex items-center gap-1.5 px-2 py-1 bg-purple-50 text-purple-700 rounded text-sm min-w-[3.5rem] justify-center">
               <span className="text-sm">♯♭</span>
-              {sheet.key}
+              {displayKey || '—'}
+              {transpose !== 0 && (
+                <span className="text-[10px] opacity-70">{transpose > 0 ? `+${transpose}` : transpose}</span>
+              )}
+            </span>
+            <button
+              onClick={() => setTranspose(t => t + 1)}
+              className="w-6 h-6 flex items-center justify-center rounded border border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors text-sm font-medium"
+            >+</button>
+            {transpose !== 0 && (
+              <button
+                onClick={() => setTranspose(0)}
+                className="text-[10px] text-[var(--ink-faint)] hover:text-[var(--accent)] transition-colors"
+                title="Réinitialiser"
+              >↺</button>
+            )}
+          </div>
+          {sheet.key && (
+            <span className="hidden print:flex items-center gap-1.5 px-2 py-1 bg-purple-50 text-purple-700 rounded text-sm">
+              <span className="text-sm">♯♭</span>
+              {displayKey}
             </span>
           )}
           {sheet.tempo && (
@@ -219,7 +249,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
 
       {/* Sections */}
       <div className="space-y-8 print:space-y-6">
-        {sheet.sections.map((section) => (
+        {displaySections.map((section) => (
           <div key={section.id} className="print:break-inside-avoid">
             {/* Header de section */}
             <div className="flex items-center gap-3 mb-3">
@@ -338,7 +368,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
           </div>
         </div>
         <ChordSummary
-          sections={sheet.sections}
+          sections={displaySections}
           instrumentId={instrumentId}
           customChords={sheet.customChords as CustomChordMap}
         />
