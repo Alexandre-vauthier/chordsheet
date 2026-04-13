@@ -103,7 +103,7 @@ export default function ArtistPage({ params }: ArtistPageProps) {
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3].map(i => (
-            <div key={i} className="bg-white rounded-xl border border-[var(--line)] h-48 animate-pulse" />
+            <div key={i} className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] h-48 animate-pulse" />
           ))}
         </div>
       ) : grouped.length > 0 ? (
@@ -121,7 +121,7 @@ export default function ArtistPage({ params }: ArtistPageProps) {
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-[var(--line)] p-8 text-center">
+        <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-8 text-center">
           <p className="text-[var(--ink-faint)]">Aucune grille publique pour cet artiste</p>
           <Link href="/explore" className="mt-4 inline-block">
             <Button variant="ghost">Retour à l&apos;exploration</Button>

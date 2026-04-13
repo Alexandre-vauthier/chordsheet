@@ -169,7 +169,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Formulaire */}
-      <div className="space-y-6 bg-white rounded-xl border border-[var(--line)] p-6">
+      <div className="space-y-6 bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-6">
         {/* Nom d'affichage */}
         <div>
           <label className="block text-sm font-medium text-[var(--ink)] mb-2">
@@ -226,7 +226,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Préférence de notation */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-semibold text-[var(--ink)]">Notation des accords</h2>
           {isSavingNotation && (
@@ -262,7 +262,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Code couleur des accords */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-semibold text-[var(--ink)]">Code couleur des accords</h2>
@@ -309,7 +309,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Diagramme inline */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-semibold text-[var(--ink)]">Diagramme dans la case</h2>
@@ -333,7 +333,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Mode sombre */}
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-semibold text-[var(--ink)]">Mode sombre</h2>
@@ -361,7 +361,7 @@ export default function ProfilePage() {
         <button
           onClick={async () => { await signOut(); router.push('/'); }}
           className="w-full py-2.5 px-4 rounded-xl border border-[var(--line)] text-sm text-[var(--ink-light)]
-            hover:border-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors bg-white"
+            hover:border-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors bg-[var(--cell-bg)]"
         >
           Se déconnecter
         </button>
@@ -413,7 +413,7 @@ export default function ProfilePage() {
       </div>
       {/* Zone danger — suppression de compte (masquée pour les admins) */}
       {!isAdmin && (
-        <div className="mt-8 bg-white rounded-xl border border-[var(--line)] p-6">
+        <div className="mt-8 bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-6">
           <button
             onClick={() => { setShowDeleteZone(v => !v); setDeleteConfirm(''); }}
             className="text-xs text-[var(--ink-faint)] hover:text-red-600 transition-colors"
@@ -434,7 +434,7 @@ export default function ProfilePage() {
                 onChange={(e) => setDeleteConfirm(e.target.value)}
                 placeholder="SUPPRIMER"
                 className="w-full px-3 py-2 text-sm border border-red-300 rounded-lg outline-none
-                  focus:ring-2 focus:ring-red-300 mb-3 bg-white"
+                  focus:ring-2 focus:ring-red-300 mb-3 bg-[var(--cell-bg)]"
               />
               <button
                 disabled={deleteConfirm !== 'SUPPRIMER' || isDeleting}
@@ -465,7 +465,7 @@ export default function ProfilePage() {
 
 function StatCard({ label, value, icon }: { label: string; value: number | string; icon: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-xl border border-[var(--line)] p-4 text-center">
+    <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-4 text-center">
       <div className="flex justify-center mb-2 text-[var(--accent)]">
         {icon}
       </div>

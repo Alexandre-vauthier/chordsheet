@@ -218,7 +218,7 @@ export default function SetPage({ params }: SetPageProps) {
         )}
 
         {sheets.length === 0 && (
-          <div className="bg-white rounded-xl border border-[var(--line)] p-8 text-center">
+          <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-8 text-center">
             <p className="text-[var(--ink-light)]">Aucune grille accessible dans ce set.</p>
           </div>
         )}
@@ -228,7 +228,7 @@ export default function SetPage({ params }: SetPageProps) {
             <Link
               key={sheet.id}
               href={`/sheet/${sheet.id}`}
-              className="flex items-center gap-4 p-4 bg-white rounded-lg border border-[var(--line)] hover:border-[var(--accent)] transition-colors"
+              className="flex items-center gap-4 p-4 bg-[var(--cell-bg)] rounded-lg border border-[var(--line)] hover:border-[var(--accent)] transition-colors"
             >
               <span className="w-8 h-8 flex items-center justify-center bg-[var(--cell-bg)] rounded-full text-sm font-medium text-[var(--ink-light)]">
                 {index + 1}
@@ -267,7 +267,7 @@ export default function SetPage({ params }: SetPageProps) {
       </div>
 
       {/* Formulaire */}
-      <div className="bg-white rounded-xl border border-[var(--line)] p-6 mb-6">
+      <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-6 mb-6">
         <div className="space-y-4">
           <Input
             label="Nom du set"
@@ -292,7 +292,7 @@ export default function SetPage({ params }: SetPageProps) {
               }}
               placeholder="Notes sur le concert, le lieu, etc."
               rows={2}
-              className="w-full px-4 py-2.5 rounded-lg border border-[var(--line)] bg-white
+              className="w-full px-4 py-2.5 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)]
                 text-[var(--ink)] placeholder:text-[var(--ink-faint)]
                 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
             />
@@ -334,7 +334,7 @@ export default function SetPage({ params }: SetPageProps) {
       </div>
 
       {/* Liste des grilles */}
-      <div className="bg-white rounded-xl border border-[var(--line)] p-6">
+      <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-[var(--ink)]">
             Grilles ({sheets.length})
@@ -360,7 +360,7 @@ export default function SetPage({ params }: SetPageProps) {
                   <button
                     key={sheet.id}
                     onClick={() => handleAddSheet(sheet.id!)}
-                    className="w-full flex items-center gap-3 p-2 rounded hover:bg-white transition-colors text-left"
+                    className="w-full flex items-center gap-3 p-2 rounded hover:bg-[var(--cell-bg)] transition-colors text-left"
                   >
                     <span className="font-medium text-sm text-[var(--ink)]">
                       {sheet.title || 'Sans titre'}
@@ -398,7 +398,7 @@ export default function SetPage({ params }: SetPageProps) {
                   ${draggedIndex === index ? 'border-[var(--accent)] opacity-50' : 'border-transparent'}
                   hover:border-[var(--line)]`}
               >
-                <span className="w-6 h-6 flex items-center justify-center bg-white rounded text-xs font-medium text-[var(--ink-light)]">
+                <span className="w-6 h-6 flex items-center justify-center bg-[var(--cell-bg)] rounded text-xs font-medium text-[var(--ink-light)]">
                   {index + 1}
                 </span>
                 <div className="flex-1 min-w-0">

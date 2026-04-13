@@ -97,7 +97,7 @@ export function GridRow({
             onClick={() => onMerge(cellIndex)}
             className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10
               w-5 h-5 flex items-center justify-center rounded-full
-              bg-white border border-[var(--line)] text-[var(--ink-faint)]
+              bg-[var(--cell-bg)] border border-[var(--line)] text-[var(--ink-faint)]
               hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] hover:border-[var(--accent)]
               transition-all text-[10px] leading-none shadow-sm
               opacity-0 group-hover/row:opacity-100 pointer-events-auto"

@@ -119,7 +119,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                 flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
                 ${metronomeEnabled
                   ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
-                  : 'bg-white border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                  : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
                 }
               `}
             >
@@ -141,7 +141,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
               transition-all duration-150 border-[1.5px]
               ${isPlaying
                 ? 'bg-[var(--accent)] border-[var(--accent)] text-white hover:bg-[#a83d25]'
-                : 'bg-white border-[var(--line)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
               }
             `}
           >
@@ -238,7 +238,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
             {sheet.genres.map((genre) => (
               <span
                 key={genre}
-                className="px-2.5 py-1 bg-gray-100 text-[var(--ink-light)] rounded-full text-xs font-medium"
+                className="px-2.5 py-1 bg-[var(--line)] text-[var(--ink-light)] rounded-full text-xs font-medium"
               >
                 {genre}
               </span>
@@ -269,7 +269,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                 className={`print:hidden ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all border
                   ${isPlaying && activeStep?.sectionId === section.id
                     ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
-                    : 'bg-white border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                    : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
                   }`}
                 title={isPlaying && activeStep?.sectionId === section.id ? 'Stop' : 'Jouer cette section'}
               >
@@ -353,7 +353,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs border transition-colors ${
                 showInlineDiagram
                   ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
-                  : 'bg-white border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)]'
+                  : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)]'
               }`}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

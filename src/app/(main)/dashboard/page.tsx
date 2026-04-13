@@ -98,12 +98,12 @@ export default function DashboardPage() {
       </div>
 
       {/* Onglets */}
-      <div className="flex gap-1 mb-6 bg-gray-100 rounded-lg p-1 w-fit">
+      <div className="flex gap-1 mb-6 bg-[var(--line)] rounded-lg p-1 w-fit">
         <button
           onClick={() => setTab('mine')}
           className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
             tab === 'mine'
-              ? 'bg-white text-[var(--ink)] shadow-sm'
+              ? 'bg-[var(--cell-bg)] text-[var(--ink)] shadow-sm'
               : 'text-[var(--ink-light)] hover:text-[var(--ink)]'
           }`}
         >
@@ -113,7 +113,7 @@ export default function DashboardPage() {
           onClick={() => setTab('book')}
           className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
             tab === 'book'
-              ? 'bg-white text-[var(--ink)] shadow-sm'
+              ? 'bg-[var(--cell-bg)] text-[var(--ink)] shadow-sm'
               : 'text-[var(--ink-light)] hover:text-[var(--ink)]'
           }`}
         >
@@ -132,7 +132,7 @@ export default function DashboardPage() {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="bg-white rounded-xl border border-[var(--line)] h-48 animate-pulse"
+              className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] h-48 animate-pulse"
             />
           ))}
         </div>
@@ -152,7 +152,7 @@ export default function DashboardPage() {
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-[var(--line)] p-8 text-center">
+          <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-8 text-center">
             <div className="text-[var(--ink-faint)] mb-4">
               <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
@@ -185,7 +185,7 @@ export default function DashboardPage() {
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-xl border border-[var(--line)] p-8 text-center">
+          <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-8 text-center">
             <div className="text-[var(--ink-faint)] mb-4">
               <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />

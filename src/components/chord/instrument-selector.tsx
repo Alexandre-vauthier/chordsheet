@@ -25,7 +25,7 @@ export function InstrumentSelector({ value, onChange, compact = false }: Instrum
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as InstrumentId)}
-        className="px-2 py-1 rounded border border-[var(--line)] text-sm bg-white
+        className="px-2 py-1 rounded border border-[var(--line)] text-sm bg-[var(--cell-bg)]
           focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
       >
         {instruments.map((inst) => (
@@ -49,7 +49,7 @@ export function InstrumentSelector({ value, onChange, compact = false }: Instrum
             className={`px-3 py-1.5 text-sm rounded-full border transition-colors flex items-center gap-1.5 ${
               isSelected
                 ? 'bg-[var(--ink)] text-white border-[var(--ink)]'
-                : 'bg-white text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                : 'bg-[var(--cell-bg)] text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
             }`}
           >
             <span>{INSTRUMENT_ICONS[inst.id]}</span>

@@ -181,7 +181,7 @@ export default function AdminPage() {
       </div>
 
       {/* Utilisateurs */}
-      <div className="bg-white rounded-xl border border-[var(--line)] p-6 mb-8">
+      <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-6 mb-8">
         <h2 className="font-playfair text-xl font-bold text-[var(--ink)] mb-4">
           Utilisateurs ({users.length})
         </h2>
@@ -198,7 +198,7 @@ export default function AdminPage() {
             </thead>
             <tbody>
               {users.map(u => (
-                <tr key={u.id} className="border-b border-[var(--line)] last:border-0 hover:bg-gray-50">
+                <tr key={u.id} className="border-b border-[var(--line)] last:border-0 hover:bg-[var(--cell-hover)]">
                   <td className="py-3 px-3">
                     <div className="flex items-center gap-2">
                       {u.photoURL ? (
@@ -216,7 +216,7 @@ export default function AdminPage() {
                     {u.role === 'admin' ? (
                       <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs">Admin</span>
                     ) : (
-                      <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded text-xs">User</span>
+                      <span className="px-2 py-0.5 bg-[var(--line)] text-gray-600 rounded text-xs">User</span>
                     )}
                   </td>
                   <td className="py-3 px-3 text-center font-mono">{u.sheetsCount}</td>
@@ -231,7 +231,7 @@ export default function AdminPage() {
       </div>
 
       {/* Grilles récentes */}
-      <div className="bg-white rounded-xl border border-[var(--line)] p-6">
+      <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-6">
         <h2 className="font-playfair text-xl font-bold text-[var(--ink)] mb-4">
           Grilles récentes
         </h2>
@@ -239,7 +239,7 @@ export default function AdminPage() {
           {recentSheets.map(sheet => (
             <div
               key={sheet.id}
-              className="flex items-center justify-between p-3 rounded-lg border border-[var(--line)] hover:bg-gray-50"
+              className="flex items-center justify-between p-3 rounded-lg border border-[var(--line)] hover:bg-[var(--cell-hover)]"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">

@@ -88,7 +88,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
       </div>
 
       {/* Mini-liste des grilles */}
-      <div className="bg-white border-b border-[var(--line)] py-2 px-4 print:hidden">
+      <div className="bg-[var(--cell-bg)] border-b border-[var(--line)] py-2 px-4 print:hidden">
         <div className="max-w-4xl mx-auto">
           <div className="flex gap-2 overflow-x-auto pb-1">
             {sheets.map((sheet, index) => (
@@ -114,7 +114,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
       </div>
 
       {/* Barre de navigation bas */}
-      <div className="bg-white border-t border-[var(--line)] py-4 px-6 print:hidden sticky bottom-0">
+      <div className="bg-[var(--cell-bg)] border-t border-[var(--line)] py-4 px-6 print:hidden sticky bottom-0">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Button
             variant="ghost"
@@ -147,7 +147,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
 
       {/* Indicateur de navigation clavier */}
       <div className="fixed bottom-20 right-4 text-xs text-[var(--ink-faint)] print:hidden">
-        <kbd className="px-1.5 py-0.5 bg-gray-100 rounded">←</kbd> / <kbd className="px-1.5 py-0.5 bg-gray-100 rounded">→</kbd> pour naviguer
+        <kbd className="px-1.5 py-0.5 bg-[var(--line)] rounded">←</kbd> / <kbd className="px-1.5 py-0.5 bg-[var(--line)] rounded">→</kbd> pour naviguer
       </div>
     </div>
   );

@@ -14,7 +14,7 @@ export function Navbar() {
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
-    <nav className="bg-[var(--ink)] text-[var(--cream)] sticky top-0 z-50">
+    <nav className="bg-[var(--nav-bg)] text-[var(--nav-text)] sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
@@ -41,8 +41,8 @@ export function Navbar() {
                     href={href}
                     className={`text-sm transition-colors ${
                       pathname.startsWith(href)
-                        ? 'text-[var(--cream)] font-semibold border-b-2 border-[var(--accent)] pb-0.5'
-                        : 'text-[var(--cream)]/80 hover:text-[var(--cream)]'
+                        ? 'text-[var(--nav-text)] font-semibold border-b-2 border-[var(--accent)] pb-0.5'
+                        : 'text-[var(--nav-text)]/70 hover:text-[var(--nav-text)]'
                     }`}
                   >
                     {label}
@@ -65,7 +65,7 @@ export function Navbar() {
                   )}
                   <Link
                     href="/profile"
-                    className="flex items-center gap-2 text-sm text-[var(--cream)]/70 hover:text-[var(--cream)] transition-colors"
+                    className="flex items-center gap-2 text-sm text-[var(--nav-text)]/70 hover:text-[var(--nav-text)] transition-colors"
                   >
                     <div className="w-6 h-6 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-xs font-bold">
                       {user.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
@@ -77,7 +77,7 @@ export function Navbar() {
             ) : (
               <>
                 <Link href="/login">
-                  <Button variant="ghost" size="sm" className="border-white/25 text-[var(--cream)]">
+                  <Button variant="ghost" size="sm" className="border-white/25 text-[var(--nav-text)]">
                     Connexion
                   </Button>
                 </Link>
@@ -95,7 +95,7 @@ export function Navbar() {
             {!loading && user && (
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 text-[var(--cream)] hover:bg-white/10 rounded-lg transition-colors"
+                className="p-2 text-[var(--nav-text)] hover:bg-white/10 rounded-lg transition-colors"
                 aria-label="Menu"
               >
                 {mobileMenuOpen ? (
@@ -111,7 +111,7 @@ export function Navbar() {
             )}
             {!loading && !user && (
               <Link href="/login">
-                <Button variant="ghost" size="sm" className="border-white/25 text-[var(--cream)]">
+                <Button variant="ghost" size="sm" className="border-white/25 text-[var(--nav-text)]">
                   Connexion
                 </Button>
               </Link>
@@ -122,7 +122,7 @@ export function Navbar() {
 
       {/* Mobile Menu */}
       {mobileMenuOpen && user && (
-        <div className="sm:hidden bg-[var(--ink)] border-t border-white/10">
+        <div className="sm:hidden bg-[var(--nav-bg)] border-t border-white/10">
           <div className="px-4 py-3 space-y-1">
             {[
               { href: '/dashboard', label: 'Mon book' },
@@ -136,8 +136,8 @@ export function Navbar() {
                 onClick={closeMobileMenu}
                 className={`block px-3 py-2 rounded-lg transition-colors ${
                   pathname.startsWith(href)
-                    ? 'text-[var(--cream)] bg-white/10 font-semibold'
-                    : 'text-[var(--cream)]/80 hover:text-[var(--cream)] hover:bg-white/10'
+                    ? 'text-[var(--nav-text)] bg-white/10 font-semibold'
+                    : 'text-[var(--nav-text)]/70 hover:text-[var(--nav-text)] hover:bg-white/10'
                 }`}
               >
                 {label}
@@ -154,7 +154,7 @@ export function Navbar() {
             <Link
               href="/profile"
               onClick={closeMobileMenu}
-              className="flex items-center gap-2 px-3 py-2 text-[var(--cream)]/80 hover:text-[var(--cream)] hover:bg-white/10 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-[var(--nav-text)]/70 hover:text-[var(--nav-text)] hover:bg-white/10 rounded-lg transition-colors"
             >
               <div className="w-6 h-6 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-xs font-bold">
                 {user.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}

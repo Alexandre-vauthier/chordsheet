@@ -209,7 +209,7 @@ export function ChordEditorModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-[var(--cell-bg)] rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="p-4 border-b border-[var(--line)]">
           <h2 className="text-lg font-medium text-[var(--ink)] mb-2">
             {chordName ? `Modifier l'accord : ${chordName}` : 'Ajouter un accord'}
@@ -228,7 +228,7 @@ export function ChordEditorModal({
                 <select
                   value={forcedCategory}
                   onChange={(e) => onCategoryChange(e.target.value)}
-                  className="px-2 py-2 border border-[var(--line)] rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                  className="px-2 py-2 border border-[var(--line)] rounded-lg text-sm bg-[var(--cell-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 >
                   {CATEGORY_OPTIONS.map(({ value, label }) => (
                     <option key={value} value={value}>{label}</option>
@@ -330,13 +330,13 @@ export function ChordEditorModal({
         <div className="p-4 border-t border-[var(--line)] flex gap-2 justify-end">
           <button
             onClick={handlePlay}
-            className="px-4 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm bg-[var(--line)] hover:bg-gray-200 rounded-lg transition-colors"
           >
             ▶ Écouter
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm border border-[var(--line)] hover:bg-gray-50 rounded-lg transition-colors"
+            className="px-4 py-2 text-sm border border-[var(--line)] hover:bg-[var(--cell-hover)] rounded-lg transition-colors"
           >
             Annuler
           </button>

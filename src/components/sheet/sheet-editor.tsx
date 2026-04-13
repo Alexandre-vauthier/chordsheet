@@ -270,7 +270,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
                 ${metronomeEnabled
                   ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
-                  : 'bg-white border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                  : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
                 }
               `}
             >
@@ -292,7 +292,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 transition-all duration-150 border-[1.5px]
                 ${isPlaying
                   ? 'bg-[var(--accent)] border-[var(--accent)] text-white hover:bg-[#a83d25]'
-                  : 'bg-white border-[var(--line)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                  : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
                 }
               `}
             >
@@ -364,7 +364,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
       </div>
 
       {/* Métadonnées */}
-      <div className="mb-6 p-4 bg-white rounded-lg border border-[var(--line)] space-y-4">
+      <div className="mb-6 p-4 bg-[var(--cell-bg)] rounded-lg border border-[var(--line)] space-y-4">
         {/* Instrument pour les diagrammes */}
         <div>
           <span className="text-sm text-[var(--ink-light)] block mb-2">Instrument :</span>
@@ -388,7 +388,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 className={`px-3 py-1 text-xs transition-colors ${
                   (sheet.beatsPerMeasure ?? 4) === 4
                     ? 'bg-[var(--accent)] text-white'
-                    : 'bg-white text-[var(--ink-light)] hover:bg-gray-50'
+                    : 'bg-[var(--cell-bg)] text-[var(--ink-light)] hover:bg-[var(--cell-hover)]'
                 }`}
               >
                 Binaire
@@ -401,7 +401,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 className={`px-3 py-1 text-xs border-l border-[var(--line)] transition-colors ${
                   sheet.beatsPerMeasure === 3
                     ? 'bg-[var(--accent)] text-white'
-                    : 'bg-white text-[var(--ink-light)] hover:bg-gray-50'
+                    : 'bg-[var(--cell-bg)] text-[var(--ink-light)] hover:bg-[var(--cell-hover)]'
                 }`}
               >
                 Ternaire
@@ -414,7 +414,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             <select
               value={sheet.capo ?? ''}
               onChange={(e) => updateSheet({ capo: e.target.value ? Number(e.target.value) : null })}
-              className="px-2 py-1 rounded border border-[var(--line)] text-sm bg-white
+              className="px-2 py-1 rounded border border-[var(--line)] text-sm bg-[var(--cell-bg)]
                 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             >
               <option value="">Aucun</option>
@@ -430,7 +430,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             <select
               value={sheet.difficulty ?? ''}
               onChange={(e) => updateSheet({ difficulty: (e.target.value ? Number(e.target.value) : null) as Difficulty | null })}
-              className="text-sm border border-[var(--line)] rounded-lg px-2 py-1 bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              className="text-sm border border-[var(--line)] rounded-lg px-2 py-1 bg-[var(--cell-bg)] text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             >
               <option value="">—</option>
               <option value="1">Facile</option>
@@ -459,7 +459,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                   className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
                     isSelected
                       ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
-                      : 'bg-white text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)]'
+                      : 'bg-[var(--cell-bg)] text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)]'
                   }`}
                 >
                   {genre}
@@ -571,7 +571,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
       />
 
       {/* Barre de sauvegarde fixe */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--line)] py-4 px-6 z-50">
+      <div className="fixed bottom-0 left-0 right-0 bg-[var(--cell-bg)] border-t border-[var(--line)] py-4 px-6 z-50">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="text-sm text-[var(--ink-light)]">
             {validationError ? (

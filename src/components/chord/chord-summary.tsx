@@ -82,7 +82,7 @@ export function ChordSummary({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-[var(--line)] p-4">
+    <div className="bg-[var(--cell-bg)] rounded-lg border border-[var(--line)] p-4">
       {!editable && (
         <h3 className="text-sm font-medium text-[var(--ink-light)] mb-3">
           Accords utilisés ({uniqueChords.length})
@@ -160,7 +160,7 @@ export function ChordSummary({
                 <div className="flex items-center gap-2 mb-1">
                   <button
                     onClick={() => prevVariant(chordName, allVariants.length)}
-                    className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-gray-100 rounded"
+                    className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--line)] rounded"
                   >
                     ‹
                   </button>
@@ -169,7 +169,7 @@ export function ChordSummary({
                   </span>
                   <button
                     onClick={() => nextVariant(chordName, allVariants.length)}
-                    className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-gray-100 rounded"
+                    className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--line)] rounded"
                   >
                     ›
                   </button>

@@ -212,7 +212,7 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
   }, [isPiano, config]);
 
   return (
-    <div className="bg-white rounded-xl border border-[var(--line)] p-6 max-w-lg">
+    <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-6 max-w-lg">
       {/* Sélecteur d'instrument */}
       <div className="mb-6">
         <label className="block text-sm text-[var(--ink-light)] mb-2">Instrument</label>
@@ -224,7 +224,7 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
               className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
                 instrumentId === inst
                   ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
-                  : 'bg-white text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)]'
+                  : 'bg-[var(--cell-bg)] text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)]'
               }`}
             >
               {inst === 'guitar' ? '🎸 Guitare' :
@@ -360,7 +360,7 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
         </button>
         <button
           onClick={handleClear}
-          className="px-4 py-2 bg-gray-100 text-[var(--ink-light)] rounded-lg
+          className="px-4 py-2 bg-[var(--line)] text-[var(--ink-light)] rounded-lg
             hover:bg-gray-200 transition-colors text-sm"
         >
           Effacer
@@ -380,7 +380,7 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
           <button
             onClick={onCancel}
             className="px-4 py-2 border border-[var(--line)] text-[var(--ink-light)] rounded-lg
-              hover:bg-gray-50 transition-colors text-sm"
+              hover:bg-[var(--cell-hover)] transition-colors text-sm"
           >
             Annuler
           </button>

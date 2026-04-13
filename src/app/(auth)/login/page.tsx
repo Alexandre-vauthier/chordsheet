@@ -72,7 +72,7 @@ export default function LoginPage() {
           <p className="text-[var(--ink-light)] mt-2">Connectez-vous à votre compte</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl p-8 shadow-sm border border-[var(--line)]">
+        <form onSubmit={handleSubmit} className="bg-[var(--cell-bg)] rounded-xl p-8 shadow-sm border border-[var(--line)]">
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
               {error}

@@ -70,7 +70,7 @@ export function ChordSuggestions({
       ref={containerRef}
       className={`absolute ${position === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'} left-1/2 -translate-x-1/2 z-50`}
     >
-      <div className="bg-white rounded-xl shadow-lg border border-[var(--line)] p-3 min-w-[140px]">
+      <div className="bg-[var(--cell-bg)] rounded-xl shadow-lg border border-[var(--line)] p-3 min-w-[140px]">
         {/* Diagramme */}
         <div
           className="flex justify-center cursor-pointer"
@@ -136,7 +136,7 @@ export function ChordSuggestions({
 
       {/* Flèche pointant vers la cellule */}
       <div
-        className={`absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-white border-[var(--line)] transform rotate-45 ${
+        className={`absolute left-1/2 -translate-x-1/2 w-3 h-3 bg-[var(--cell-bg)] border-[var(--line)] transform rotate-45 ${
           position === 'top'
             ? '-bottom-1.5 border-r border-b'
             : '-top-1.5 border-l border-t'

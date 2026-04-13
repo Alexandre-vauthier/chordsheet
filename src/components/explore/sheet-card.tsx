@@ -86,7 +86,7 @@ export function SheetCard({
   };
 
   return (
-    <div className="bg-white rounded-xl border border-[var(--line)] overflow-hidden hover:shadow-md transition-shadow group relative flex">
+    <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] overflow-hidden hover:shadow-md transition-shadow group relative flex">
       {/* Artwork à gauche */}
       {!hideArtwork && (
         <Link href={destination} className="flex-shrink-0 w-24 bg-gradient-to-br from-[var(--cell-bg)] to-[var(--line)]">

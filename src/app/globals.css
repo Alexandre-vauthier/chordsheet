@@ -11,6 +11,8 @@
   --cell-bg: #faf7f2;
   --cell-hover: #fff8ed;
   --cell-active: #fff3e0;
+  --nav-bg: #1a1410;
+  --nav-text: #f5f0e8;
 }
 
 /* ── Dark mode ────────────────────────────────────────────────────────────── */
@@ -25,6 +27,8 @@
   --cell-bg: #221e18;
   --cell-hover: #2a2420;
   --cell-active: #2e2218;
+  --nav-bg: #100e0b;
+  --nav-text: #f0ebe0;
   color-scheme: dark;
 }
 

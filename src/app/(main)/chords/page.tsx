@@ -252,7 +252,7 @@ function ChordsPageContent() {
             className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
               instrumentId === id
                 ? 'bg-[var(--ink)] text-white border-[var(--ink)]'
-                : 'bg-white text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--ink-faint)]'
+                : 'bg-[var(--cell-bg)] text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--ink-faint)]'
             }`}
           >
             {label}
@@ -261,14 +261,14 @@ function ChordsPageContent() {
       </div>
 
       {/* Onglets de catégorie — seulement les catégories non vides */}
-      <div className="flex flex-wrap gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
+      <div className="flex flex-wrap gap-1 mb-6 bg-[var(--line)] p-1 rounded-lg w-fit">
         {CAT_ORDER.filter((cat) => nonEmptyCategories.has(cat)).map((cat) => (
           <button
             key={cat}
             onClick={() => handleCategoryChange(cat)}
             className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
               categoryGroup === cat
-                ? 'bg-white text-[var(--ink)] shadow-sm'
+                ? 'bg-[var(--cell-bg)] text-[var(--ink)] shadow-sm'
                 : 'text-[var(--ink-light)] hover:text-[var(--ink)]'
             }`}
           >
@@ -316,7 +316,7 @@ function ChordsPageContent() {
 
       {saving && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 text-sm text-[var(--ink)]">Sauvegarde en cours…</div>
+          <div className="bg-[var(--cell-bg)] rounded-xl p-6 text-sm text-[var(--ink)]">Sauvegarde en cours…</div>
         </div>
       )}
     </div>
@@ -367,10 +367,10 @@ function UnifiedChordGroup({
       {hasMany && (
         <div className="flex items-center gap-2 mb-1">
           <button onClick={() => setIdx(i => (i === 0 ? group.variants.length - 1 : i - 1))}
-            className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-gray-100 rounded">‹</button>
+            className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--line)] rounded">‹</button>
           <span className="text-[10px] text-[var(--ink-faint)]">{safeIdx + 1}/{group.variants.length}</span>
           <button onClick={() => setIdx(i => (i + 1) % group.variants.length)}
-            className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-gray-100 rounded">›</button>
+            className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--line)] rounded">›</button>
         </div>
       )}
       <ChordCard chord={current} instrumentId={instrumentId} size="sm" displayName={group.name} />

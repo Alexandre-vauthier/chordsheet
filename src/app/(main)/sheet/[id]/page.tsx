@@ -142,7 +142,7 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
   return (
     <>
       {/* Barre d'actions (masquée à l'impression) */}
-      <div className="bg-white border-b border-[var(--line)] py-3 px-6 print:hidden">
+      <div className="bg-[var(--cell-bg)] border-b border-[var(--line)] py-3 px-6 print:hidden">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Button variant="ghost" onClick={() => router.back()}>

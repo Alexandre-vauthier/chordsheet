@@ -33,7 +33,7 @@ function VersionRow({ sheet, isBookmarked, onToggleBookmark }: {
   return (
     <Link
       href={`/sheet/${sheet.id}`}
-      className="flex items-center gap-4 px-4 py-3 rounded-xl border border-[var(--line)] bg-white
+      className="flex items-center gap-4 px-4 py-3 rounded-xl border border-[var(--line)] bg-[var(--cell-bg)]
         hover:border-[var(--accent)] hover:shadow-sm transition-all group"
     >
       {/* Note */}
@@ -61,7 +61,7 @@ function VersionRow({ sheet, isBookmarked, onToggleBookmark }: {
             par {sheet.ownerName || 'Anonyme'}
           </span>
           {sheet.difficulty && (
-            <span className="text-[10px] px-1.5 py-0.5 bg-gray-100 text-[var(--ink-faint)] rounded">
+            <span className="text-[10px] px-1.5 py-0.5 bg-[var(--line)] text-[var(--ink-faint)] rounded">
               {sheet.difficulty} · {DIFFICULTY_LABELS[sheet.difficulty as Difficulty]}
             </span>
           )}
@@ -191,7 +191,7 @@ export default function SongPage({ params }: { params: Promise<PageParams> }) {
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-20 rounded-xl border border-[var(--line)] bg-white animate-pulse" />
+            <div key={i} className="h-20 rounded-xl border border-[var(--line)] bg-[var(--cell-bg)] animate-pulse" />
           ))}
         </div>
       ) : sheets.length > 0 ? (
@@ -206,7 +206,7 @@ export default function SongPage({ params }: { params: Promise<PageParams> }) {
           ))}
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-[var(--line)] p-8 text-center text-[var(--ink-faint)]">
+        <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-8 text-center text-[var(--ink-faint)]">
           <p>Aucune version trouvée.</p>
           <Link href="/explore" className="mt-4 inline-block text-sm text-[var(--accent)] hover:underline">
             Retour à Explorer

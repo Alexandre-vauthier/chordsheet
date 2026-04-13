@@ -174,7 +174,7 @@ export default function ExplorePage() {
           <button
             onClick={handleRandom}
             disabled={sheets.length === 0}
-            className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[var(--line)] bg-white text-sm text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors disabled:opacity-40"
+            className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)] text-sm text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors disabled:opacity-40"
             title="Ouvrir une grille au hasard"
           >
             ⚄ Aléatoire
@@ -192,7 +192,7 @@ export default function ExplorePage() {
                 className={`px-3 py-1.5 text-sm transition-colors ${
                   sortBy === 'recent'
                     ? 'bg-[var(--accent)] text-white'
-                    : 'bg-white text-[var(--ink-light)] hover:bg-gray-50'
+                    : 'bg-[var(--cell-bg)] text-[var(--ink-light)] hover:bg-[var(--cell-hover)]'
                 }`}
               >
                 Récents
@@ -202,7 +202,7 @@ export default function ExplorePage() {
                 className={`px-3 py-1.5 text-sm border-l border-[var(--line)] transition-colors ${
                   sortBy === 'rated'
                     ? 'bg-[var(--accent)] text-white'
-                    : 'bg-white text-[var(--ink-light)] hover:bg-gray-50'
+                    : 'bg-[var(--cell-bg)] text-[var(--ink-light)] hover:bg-[var(--cell-hover)]'
                 }`}
               >
                 Mieux notés
@@ -212,7 +212,7 @@ export default function ExplorePage() {
                 className={`px-3 py-1.5 text-sm border-l border-[var(--line)] transition-colors ${
                   sortBy === 'viewed'
                     ? 'bg-[var(--accent)] text-white'
-                    : 'bg-white text-[var(--ink-light)] hover:bg-gray-50'
+                    : 'bg-[var(--cell-bg)] text-[var(--ink-light)] hover:bg-[var(--cell-hover)]'
                 }`}
               >
                 Plus consultés
@@ -227,7 +227,7 @@ export default function ExplorePage() {
           <select
             value={selectedGenre}
             onChange={(e) => setSelectedGenre(e.target.value)}
-            className="px-3 py-1.5 rounded-lg border border-[var(--line)] text-sm bg-white
+            className="px-3 py-1.5 rounded-lg border border-[var(--line)] text-sm bg-[var(--cell-bg)]
               text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           >
             <option value="">Tous les genres</option>
@@ -244,7 +244,7 @@ export default function ExplorePage() {
             <select
               value={selectedDifficulty ?? ''}
               onChange={(e) => setSelectedDifficulty(e.target.value ? Number(e.target.value) as Difficulty : null)}
-              className="text-sm border border-[var(--line)] rounded-lg px-2 py-1 bg-white text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              className="text-sm border border-[var(--line)] rounded-lg px-2 py-1 bg-[var(--cell-bg)] text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             >
               <option value="">Toutes</option>
               {(Object.entries(DIFFICULTY_LABELS) as [string, string][]).map(([val, label]) => (
@@ -271,7 +271,7 @@ export default function ExplorePage() {
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div
               key={i}
-              className="bg-white rounded-xl border border-[var(--line)] h-48 animate-pulse"
+              className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] h-48 animate-pulse"
             />
           ))}
         </div>
@@ -298,7 +298,7 @@ export default function ExplorePage() {
           </div>
         </>
       ) : sheets.length > 0 ? (
-        <div className="bg-white rounded-xl border border-[var(--line)] p-8 text-center">
+        <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-8 text-center">
           <div className="text-[var(--ink-faint)]">
             <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -314,7 +314,7 @@ export default function ExplorePage() {
           </div>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-[var(--line)] p-8 text-center">
+        <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-8 text-center">
           <div className="text-[var(--ink-faint)]">
             <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />

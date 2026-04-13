@@ -40,7 +40,7 @@ export function ChordCard({
       className={`flex flex-col items-center gap-2 p-3 rounded-xl border transition-all ${
         selected
           ? 'border-[var(--accent)] bg-[var(--accent)]/5'
-          : 'border-[var(--line)] bg-white hover:border-[var(--ink-faint)]'
+          : 'border-[var(--line)] bg-[var(--cell-bg)] hover:border-[var(--ink-faint)]'
       } ${onClick ? 'cursor-pointer' : ''}`}
       onClick={onClick}
     >
