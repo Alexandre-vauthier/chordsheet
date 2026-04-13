@@ -22,6 +22,7 @@ export default function ProfilePage() {
   const [notation, setNotation] = useState<NotationPreference>('american');
   const [colorCoding, setColorCoding] = useState(false);
   const [inlineDiagram, setInlineDiagram] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteZone, setShowDeleteZone] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
@@ -37,6 +38,7 @@ export default function ProfilePage() {
       if (user.notationPreference) setNotation(user.notationPreference);
       setColorCoding(user.chordColorCoding ?? false);
       setInlineDiagram(user.showInlineDiagram ?? false);
+      setDarkMode(user.darkMode ?? false);
     }
   }, [user]);
 
@@ -326,6 +328,30 @@ export default function ProfilePage() {
             }`}
           >
             <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${inlineDiagram ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Mode sombre */}
+      <div className="bg-white rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Mode sombre</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              Thème sombre pour réduire la fatigue visuelle
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !darkMode;
+              setDarkMode(newVal);
+              try { await updateUser({ darkMode: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              darkMode ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${darkMode ? 'translate-x-5' : ''}`} />
           </button>
         </div>
       </div>

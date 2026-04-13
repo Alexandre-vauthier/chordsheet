@@ -13,6 +13,21 @@
   --cell-active: #fff3e0;
 }
 
+/* ── Dark mode ────────────────────────────────────────────────────────────── */
+[data-theme="dark"] {
+  --cream: #1a1612;
+  --ink: #f0ebe0;
+  --ink-light: #c4b89a;
+  --ink-faint: #6b5e4a;
+  --accent: #e05c3a;
+  --accent-soft: rgba(224,92,58,0.15);
+  --line: #2e2820;
+  --cell-bg: #221e18;
+  --cell-hover: #2a2420;
+  --cell-active: #2e2218;
+  color-scheme: dark;
+}
+
 body {
   background: var(--cream);
   color: var(--ink);
