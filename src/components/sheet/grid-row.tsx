@@ -1,12 +1,12 @@
 'use client';
 
-import type { Row, Cell, CellSpan, BeatsPerMeasure, InstrumentId } from '@/types';
+import type { Row, Cell, CellSpan, InstrumentId } from '@/types';
 import { BeatCell } from './beat-cell';
 
 interface GridRowProps {
   row: Row;
   rowIndex: number;
-  beatsPerMeasure: BeatsPerMeasure;
+  beatsPerMeasure: number;
   instrumentId: InstrumentId;
   onCellChange: (cellIndex: number, updates: Partial<Cell>) => void;
   onSplit: (cellIndex: number) => void;
@@ -17,17 +17,8 @@ interface GridRowProps {
   activeDurationMs?: number;
 }
 
-const spanToGridCols: Record<CellSpan, number> = {
-  0.25: 1,
-  0.5: 2,
-  1: 4,
-  1.5: 6,
-  2: 8,
-  3: 12,
-  4: 16,
-};
-
-const VALID_SPANS = new Set<number>([0.25, 0.5, 1, 1.5, 2, 3, 4]);
+// Chaque 0.25 de span = 1 colonne dans la grille de 16 colonnes
+const spanToGridCols = (span: CellSpan) => Math.round(span / 0.25);
 
 export function GridRow({
   row,
@@ -48,7 +39,7 @@ export function GridRow({
   const cumCols: number[] = [];
   let acc = 0;
   for (const cell of row) {
-    acc += spanToGridCols[cell.span];
+    acc += spanToGridCols(cell.span);
     cumCols.push(acc);
   }
 
@@ -60,7 +51,7 @@ export function GridRow({
         style={{ gridTemplateColumns: `repeat(${totalGridCols}, minmax(0, 1fr))` }}
       >
         {row.map((cell, cellIndex) => {
-          const cols = spanToGridCols[cell.span];
+          const cols = spanToGridCols(cell.span);
           const canSplit = cell.span > 0.25;
 
           return (
@@ -97,7 +88,6 @@ export function GridRow({
         const prevCell = row[cellIndex - 1];
         const mergedSpan = prevCell.span + cell.span;
         if (mergedSpan > 4) return null;
-        if (!VALID_SPANS.has(mergedSpan)) return null;
 
         const leftPercent = (cumCols[cellIndex - 1] / totalGridCols) * 100;
 

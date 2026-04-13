@@ -53,9 +53,8 @@ export function SectionBlock({
     onUpdate({ rows: newRows });
   };
 
-  const VALID_SPANS: CellSpan[] = [0.25, 0.5, 1, 1.5, 2, 3, 4];
-
-  // Diviser une cellule en deux
+  // Diviser une cellule : toujours en deux parties dont la plus grande est à gauche
+  // On prend la moitié arrondie au 0.25 supérieur pour spanA, le reste pour spanB
   const splitCell = (rowIndex: number, cellIndex: number) => {
     const newRows = [...section.rows];
     const row = [...newRows[rowIndex]];
@@ -63,17 +62,12 @@ export function SectionBlock({
 
     if (cell.span <= 0.25) return;
 
-    const [spanA, spanB]: [CellSpan, CellSpan] = cell.span === 3
-      ? [2, 1]       // 3 → 2+1
-      : cell.span === 1.5
-      ? [1, 0.5]     // 1.5 → 1+0.5
-      : (() => {
-          const half = cell.span / 2;
-          if (!VALID_SPANS.includes(half as CellSpan)) return [null, null] as unknown as [CellSpan, CellSpan];
-          return [half as CellSpan, half as CellSpan];
-        })();
+    // Arrondir spanA au 0.25 supérieur, spanB = reste
+    const half = cell.span / 2;
+    const spanA = (Math.ceil(half / 0.25) * 0.25) as CellSpan;
+    const spanB = (cell.span - spanA) as CellSpan;
 
-    if (!spanA) return;
+    if (spanB <= 0) return;
 
     row.splice(cellIndex, 1,
       { chord: cell.chord, span: spanA },
@@ -83,7 +77,7 @@ export function SectionBlock({
     onUpdate({ rows: newRows });
   };
 
-  // Fusionner une cellule avec la précédente
+  // Fusionner une cellule avec la précédente — tout span ≤ 4 est valide
   const mergeCells = (rowIndex: number, cellIndex: number) => {
     if (cellIndex === 0) return;
 
@@ -93,9 +87,7 @@ export function SectionBlock({
     const currentCell = row[cellIndex];
 
     const newSpan = prevCell.span + currentCell.span;
-    const maxSpan = 4;
-    if (newSpan > maxSpan) return;
-    if (!VALID_SPANS.includes(newSpan as CellSpan)) return;
+    if (newSpan > 4) return;
 
     // Garder l'accord de la cellule de gauche si elle en a un, sinon celui de droite
     const chord = prevCell.chord || currentCell.chord;

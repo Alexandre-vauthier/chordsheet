@@ -38,15 +38,7 @@ function getRefLabel(url: string): string {
   return '🔗 Référence';
 }
 
-const spanToGridCols: Record<CellSpan, number> = {
-  0.25: 1,
-  0.5: 2,
-  1: 4,
-  1.5: 6,
-  2: 8,
-  3: 12,
-  4: 16,
-};
+const spanToGridCols = (span: CellSpan) => Math.round(span / 0.25);
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
@@ -283,7 +275,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                           return (
                             <div
                               key={cellIndex}
-                              style={{ gridColumn: `span ${spanToGridCols[cell.span]}` }}
+                              style={{ gridColumn: `span ${spanToGridCols(cell.span)}` }}
                             />
                           );
                         }
@@ -416,7 +408,7 @@ function ViewerChordCell({
   return (
     <div
       style={{
-        gridColumn: `span ${spanToGridCols[span]}`,
+        gridColumn: `span ${spanToGridCols(span)}`,
         ...(color ? { borderLeftColor: color.border, borderLeftWidth: '5px' } : {}),
       }}
       className={`
