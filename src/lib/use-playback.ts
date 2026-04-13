@@ -27,12 +27,18 @@ function buildSequence(sections: Section[], beatMs: number): PlayStep[] {
       for (let r = 0; r < section.rows.length; r++) {
         const rowRepeat = section.rowRepeats?.[r] ?? 1;
         for (let rr = 0; rr < rowRepeat; rr++) {
-          for (let c = 0; c < section.rows[r].length; c++) {
+          const row = section.rows[r];
+          // Trouver le dernier index avec un accord non vide
+          let lastNonEmpty = row.length - 1;
+          while (lastNonEmpty > 0 && !row[lastNonEmpty].chord.trim()) {
+            lastNonEmpty--;
+          }
+          for (let c = 0; c <= lastNonEmpty; c++) {
             steps.push({
               sectionId: section.id,
               rowIndex: r,
               cellIndex: c,
-              durationMs: section.rows[r][c].span * bpm * beatMs,
+              durationMs: row[c].span * bpm * beatMs,
             });
           }
         }
