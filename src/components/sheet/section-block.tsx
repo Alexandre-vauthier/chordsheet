@@ -63,12 +63,20 @@ export function SectionBlock({
 
     if (cell.span <= 0.25) return;
 
-    const halfSpan = cell.span / 2;
-    if (!VALID_SPANS.includes(halfSpan as CellSpan)) return;
+    // span=3 (ternaire) → 2+1 car 1.5 n'est pas un span valide
+    const [spanA, spanB]: [CellSpan, CellSpan] = cell.span === 3
+      ? [2, 1]
+      : (() => {
+          const half = cell.span / 2;
+          if (!VALID_SPANS.includes(half as CellSpan)) return [null, null] as unknown as [CellSpan, CellSpan];
+          return [half as CellSpan, half as CellSpan];
+        })();
+
+    if (!spanA) return;
 
     row.splice(cellIndex, 1,
-      { chord: cell.chord, span: halfSpan as CellSpan },
-      { chord: '', span: halfSpan as CellSpan }
+      { chord: cell.chord, span: spanA },
+      { chord: '', span: spanB }
     );
     newRows[rowIndex] = row;
     onUpdate({ rows: newRows });
