@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { Sheet, Section, NewSheet, Difficulty, StringChord, PianoChord, CustomChord } from '@/types';
 import { createEmptySection, GENRES } from '@/types';
 import { SectionBlock } from './section-block';
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { InstrumentSelector, ChordSummary, ChordEditorModal } from '@/components/chord';
 import type { CustomChordMap } from '@/components/chord';
 import { usePlayback, parseTempo } from '@/lib/use-playback';
+import { stopPreviewAudio } from '@/components/explore/sheet-card';
 
 interface SheetEditorProps {
   initialSheet: NewSheet | Sheet;
@@ -34,6 +35,22 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   });
 
   const bpm = parseTempo(sheet.tempo);
+
+  // Alerte si l'utilisateur quitte sans sauvegarder (refresh / fermeture onglet)
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (!hasChanges) return;
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [hasChanges]);
+
+  // Stopper la prévisualisation iTunes au démontage (changement de page)
+  useEffect(() => {
+    return () => { stopPreviewAudio(); };
+  }, []);
 
   // État pour la modal d'édition d'accord
   const [chordModalOpen, setChordModalOpen] = useState(false);

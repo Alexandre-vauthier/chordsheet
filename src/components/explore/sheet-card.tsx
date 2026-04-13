@@ -24,7 +24,7 @@ function playPreviewAudio(url: string, onStop: () => void) {
   audio.onended = () => { _audio = null; _stopCb = null; onStop(); };
 }
 
-function stopPreviewAudio() {
+export function stopPreviewAudio() {
   if (_audio) { _audio.pause(); _audio = null; }
   if (_stopCb) { _stopCb(); _stopCb = null; }
 }
