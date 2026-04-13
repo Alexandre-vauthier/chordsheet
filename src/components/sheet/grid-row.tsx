@@ -95,7 +95,7 @@ export function GridRow({
 
         const prevCell = row[cellIndex - 1];
         const mergedSpan = prevCell.span + cell.span;
-        if (mergedSpan > beatsPerMeasure) return null;
+        if (mergedSpan > 4) return null;
         if (!VALID_SPANS.has(mergedSpan)) return null;
 
         const leftPercent = (cumCols[cellIndex - 1] / totalGridCols) * 100;
