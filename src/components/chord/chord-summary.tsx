@@ -17,6 +17,7 @@ interface ChordSummaryProps {
   onEditChord?: (chordName: string, currentChord: StringChord | PianoChord | null) => void;
   onDeleteCustomChord?: (chordName: string) => void;
   editable?: boolean;
+  onVariantChange?: (chordName: string, chord: StringChord | PianoChord) => void;
 }
 
 /**
@@ -34,6 +35,7 @@ export function ChordSummary({
   onEditChord,
   onDeleteCustomChord,
   editable = false,
+  onVariantChange,
 }: ChordSummaryProps) {
   const translate = useChordNotation();
   const { overrides, additions } = useLibraryChords();
@@ -66,18 +68,22 @@ export function ChordSummary({
   }
 
   // Naviguer vers la variante précédente
-  const prevVariant = (chordName: string, totalVariants: number) => {
+  const prevVariant = (chordName: string, allVariants: (StringChord | PianoChord)[]) => {
     setVariantIndices(prev => {
       const current = prev[chordName] || 0;
-      return { ...prev, [chordName]: current > 0 ? current - 1 : totalVariants - 1 };
+      const next = current > 0 ? current - 1 : allVariants.length - 1;
+      onVariantChange?.(chordName, allVariants[next]);
+      return { ...prev, [chordName]: next };
     });
   };
 
   // Naviguer vers la variante suivante
-  const nextVariant = (chordName: string, totalVariants: number) => {
+  const nextVariant = (chordName: string, allVariants: (StringChord | PianoChord)[]) => {
     setVariantIndices(prev => {
       const current = prev[chordName] || 0;
-      return { ...prev, [chordName]: (current + 1) % totalVariants };
+      const next = (current + 1) % allVariants.length;
+      onVariantChange?.(chordName, allVariants[next]);
+      return { ...prev, [chordName]: next };
     });
   };
 
@@ -159,7 +165,7 @@ export function ChordSummary({
               {hasMultipleVariants && (
                 <div className="flex items-center gap-2 mb-1">
                   <button
-                    onClick={() => prevVariant(chordName, allVariants.length)}
+                    onClick={() => prevVariant(chordName, allVariants)}
                     className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--line)] rounded"
                   >
                     ‹
@@ -168,7 +174,7 @@ export function ChordSummary({
                     {currentIndex + 1}/{allVariants.length}
                   </span>
                   <button
-                    onClick={() => nextVariant(chordName, allVariants.length)}
+                    onClick={() => nextVariant(chordName, allVariants)}
                     className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--line)] rounded"
                   >
                     ›

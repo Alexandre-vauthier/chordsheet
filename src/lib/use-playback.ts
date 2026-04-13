@@ -53,10 +53,11 @@ interface UsePlaybackOptions {
   tempo: string | undefined;
   instrumentId: InstrumentId;
   customChords?: Record<string, unknown>;
+  selectedChords?: Record<string, StringChord | PianoChord>;
   metronomeEnabled?: boolean;
 }
 
-export function usePlayback({ sections, tempo, instrumentId, customChords, metronomeEnabled }: UsePlaybackOptions) {
+export function usePlayback({ sections, tempo, instrumentId, customChords, selectedChords, metronomeEnabled }: UsePlaybackOptions) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeStep, setActiveStep] = useState<PlayStep | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -142,9 +143,11 @@ export function usePlayback({ sections, tempo, instrumentId, customChords, metro
         .find(s => s.id === step.sectionId)
         ?.rows[step.rowIndex]?.[step.cellIndex];
       if (cell?.chord) {
+        // Priorité : variante sélectionnée dans ChordSummary > accord custom > première variante statique
+        const selected = selectedChords?.[cell.chord];
         const customKey = `${cell.chord.toLowerCase()}-${instrumentId}`;
         const custom = customChords?.[customKey];
-        const chordData = custom ?? findChordVariants(cell.chord, instrumentId)[0];
+        const chordData = selected ?? (custom as StringChord | PianoChord | undefined) ?? findChordVariants(cell.chord, instrumentId)[0];
         if (chordData) playChord(chordData as StringChord | PianoChord, instrumentId);
       }
 
@@ -153,7 +156,7 @@ export function usePlayback({ sections, tempo, instrumentId, customChords, metro
     };
 
     advance();
-  }, [tempo, instrumentId, customChords]);
+  }, [tempo, instrumentId, customChords, selectedChords]);
 
   const play = useCallback(() => {
     playSequence(sections);

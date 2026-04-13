@@ -59,6 +59,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
 
   const [metronomeEnabled, setMetronomeEnabled] = useState(false);
   const [transpose, setTranspose] = useState(0);
+  const [selectedChords, setSelectedChords] = useState<Record<string, StringChord | PianoChord>>({});
 
   const displaySections = transposeSections(sheet.sections, transpose);
   const displayKey = transposeKey(sheet.key, transpose);
@@ -69,6 +70,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
     tempo: sheet.tempo,
     instrumentId,
     customChords: sheet.customChords as Record<string, unknown>,
+    selectedChords,
     metronomeEnabled,
   });
 
@@ -371,6 +373,9 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
           sections={displaySections}
           instrumentId={instrumentId}
           customChords={sheet.customChords as CustomChordMap}
+          onVariantChange={(chordName, chord) =>
+            setSelectedChords(prev => ({ ...prev, [chordName]: chord }))
+          }
         />
       </div>
     </div>
