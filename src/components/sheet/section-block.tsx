@@ -53,7 +53,7 @@ export function SectionBlock({
     onUpdate({ rows: newRows });
   };
 
-  const VALID_SPANS: CellSpan[] = [0.25, 0.5, 1, 2, 3, 4];
+  const VALID_SPANS: CellSpan[] = [0.25, 0.5, 1, 1.5, 2, 3, 4];
 
   // Diviser une cellule en deux
   const splitCell = (rowIndex: number, cellIndex: number) => {
@@ -63,9 +63,10 @@ export function SectionBlock({
 
     if (cell.span <= 0.25) return;
 
-    // span=3 (ternaire) → 2+1 car 1.5 n'est pas un span valide
     const [spanA, spanB]: [CellSpan, CellSpan] = cell.span === 3
-      ? [2, 1]
+      ? [2, 1]       // 3 → 2+1
+      : cell.span === 1.5
+      ? [1, 0.5]     // 1.5 → 1+0.5
       : (() => {
           const half = cell.span / 2;
           if (!VALID_SPANS.includes(half as CellSpan)) return [null, null] as unknown as [CellSpan, CellSpan];

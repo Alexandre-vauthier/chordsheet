@@ -21,12 +21,13 @@ const spanToGridCols: Record<CellSpan, number> = {
   0.25: 1,
   0.5: 2,
   1: 4,
+  1.5: 6,
   2: 8,
   3: 12,
   4: 16,
 };
 
-const VALID_SPANS = new Set<number>([0.25, 0.5, 1, 2, 3, 4]);
+const VALID_SPANS = new Set<number>([0.25, 0.5, 1, 1.5, 2, 3, 4]);
 
 export function GridRow({
   row,
