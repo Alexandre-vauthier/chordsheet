@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { Section, InstrumentId, StringChord, PianoChord } from '@/types';
-import { findChordVariants } from '@/lib/chord-data';
+import { findChordVariants, enharmonicEquivalent } from '@/lib/chord-data';
 import { playChord, playMetronomeTick } from '@/lib/chord-audio';
+import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
 
 export interface PlayStep {
   sectionId: string;
@@ -58,6 +59,7 @@ interface UsePlaybackOptions {
 }
 
 export function usePlayback({ sections, tempo, instrumentId, customChords, selectedChords, metronomeEnabled }: UsePlaybackOptions) {
+  const { overrides } = useLibraryChords();
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeStep, setActiveStep] = useState<PlayStep | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -143,11 +145,19 @@ export function usePlayback({ sections, tempo, instrumentId, customChords, selec
         .find(s => s.id === step.sectionId)
         ?.rows[step.rowIndex]?.[step.cellIndex];
       if (cell?.chord) {
-        // Priorité : variante sélectionnée dans ChordSummary > accord custom > première variante statique
+        // Priorité : sélection ChordSummary > custom grille > override admin > statique[0]
         const selected = selectedChords?.[cell.chord];
         const customKey = `${cell.chord.toLowerCase()}-${instrumentId}`;
         const custom = customChords?.[customKey];
-        const chordData = selected ?? (custom as StringChord | PianoChord | undefined) ?? findChordVariants(cell.chord, instrumentId)[0];
+        const enh = enharmonicEquivalent(cell.chord);
+        const adminOverride =
+          overrides.get(libraryKey(cell.chord, instrumentId))?.chord ??
+          (enh ? overrides.get(libraryKey(enh, instrumentId))?.chord : undefined);
+        const chordData =
+          selected ??
+          (custom as StringChord | PianoChord | undefined) ??
+          adminOverride ??
+          findChordVariants(cell.chord, instrumentId)[0];
         if (chordData) playChord(chordData as StringChord | PianoChord, instrumentId);
       }
 
@@ -156,7 +166,7 @@ export function usePlayback({ sections, tempo, instrumentId, customChords, selec
     };
 
     advance();
-  }, [tempo, instrumentId, customChords, selectedChords]);
+  }, [tempo, instrumentId, customChords, selectedChords, overrides]);
 
   const play = useCallback(() => {
     playSequence(sections);
