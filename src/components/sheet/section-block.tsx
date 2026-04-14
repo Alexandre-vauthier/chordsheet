@@ -4,6 +4,9 @@ import { useState } from 'react';
 import type { Section, Cell, CellSpan, InstrumentId } from '@/types';
 import { GridRow } from './grid-row';
 import { createEmptyRow } from '@/types';
+import { CoachMark } from './coach-mark';
+
+const EXAMPLE_CHORDS = ['Am', 'C', 'F', 'G'];
 
 interface SectionBlockProps {
   section: Section;
@@ -17,12 +20,13 @@ interface SectionBlockProps {
   activeCellIndex?: number;
   activeDurationMs?: number;
   onNavigateToCell: (sectionId: string, rowIndex: number, cellIndex: number) => void;
-  // Drag & drop
   onDragStart: () => void;
   onDragEnd: () => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: () => void;
   isDragOver: boolean;
+  isFirstSection?: boolean;
+  onDismissOnboarding?: () => void;
 }
 
 export function SectionBlock({
@@ -42,10 +46,11 @@ export function SectionBlock({
   onDragOver,
   onDrop,
   isDragOver,
+  isFirstSection = false,
+  onDismissOnboarding,
 }: SectionBlockProps) {
   const [isHovered, setIsHovered] = useState(false);
 
-  // Modifier une cellule
   const updateCell = (rowIndex: number, cellIndex: number, updates: Partial<Cell>) => {
     const newRows = [...section.rows];
     newRows[rowIndex] = [...newRows[rowIndex]];
@@ -53,22 +58,15 @@ export function SectionBlock({
     onUpdate({ rows: newRows });
   };
 
-  // Diviser une cellule : toujours en deux parties dont la plus grande est à gauche
-  // On prend la moitié arrondie au 0.25 supérieur pour spanA, le reste pour spanB
   const splitCell = (rowIndex: number, cellIndex: number) => {
     const newRows = [...section.rows];
     const row = [...newRows[rowIndex]];
     const cell = row[cellIndex];
-
     if (cell.span <= 0.25) return;
-
-    // Arrondir spanA au 0.25 supérieur, spanB = reste
     const half = cell.span / 2;
     const spanA = (Math.ceil(half / 0.25) * 0.25) as CellSpan;
     const spanB = (cell.span - spanA) as CellSpan;
-
     if (spanB <= 0) return;
-
     row.splice(cellIndex, 1,
       { chord: cell.chord, span: spanA },
       { chord: '', span: spanB }
@@ -77,33 +75,24 @@ export function SectionBlock({
     onUpdate({ rows: newRows });
   };
 
-  // Fusionner une cellule avec la précédente — tout span ≤ 4 est valide
   const mergeCells = (rowIndex: number, cellIndex: number) => {
     if (cellIndex === 0) return;
-
     const newRows = [...section.rows];
     const row = [...newRows[rowIndex]];
     const prevCell = row[cellIndex - 1];
     const currentCell = row[cellIndex];
-
     const newSpan = prevCell.span + currentCell.span;
     if (newSpan > 4) return;
-
-    // Garder l'accord de la cellule de gauche si elle en a un, sinon celui de droite
     const chord = prevCell.chord || currentCell.chord;
     row.splice(cellIndex - 1, 2, { chord, span: newSpan as CellSpan });
     newRows[rowIndex] = row;
     onUpdate({ rows: newRows });
   };
 
-  // Ajouter une mesure
   const addRow = () => {
-    const newRows = [...section.rows, createEmptyRow(4)];
-    onUpdate({ rows: newRows });
+    onUpdate({ rows: [...section.rows, createEmptyRow(4)] });
   };
 
-
-  // Supprimer une mesure
   const deleteRow = (rowIndex: number) => {
     if (section.rows.length <= 1) return;
     const newRows = section.rows.filter((_, i) => i !== rowIndex);
@@ -111,54 +100,57 @@ export function SectionBlock({
     onUpdate({ rows: newRows, rowRepeats: newRepeats });
   };
 
-  // Modifier la répétition d'une mesure
   const setRowRepeat = (rowIndex: number, value: number) => {
     const repeats = [...(section.rowRepeats || section.rows.map(() => 1))];
     repeats[rowIndex] = Math.max(1, Math.min(9, value));
     onUpdate({ rowRepeats: repeats });
   };
 
+  // Contrôles header visibles si hovered OU première section (onboarding)
+  const headerControlsVisible = isHovered || isFirstSection;
+
   return (
     <div
       className={`mb-10 animate-fadeIn transition-all ${isDragOver ? 'border-t-2 border-[var(--accent)] pt-2' : ''}`}
       draggable
-      onDragStart={(e) => {
-        e.dataTransfer.effectAllowed = 'move';
-        onDragStart();
-      }}
+      onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; onDragStart(); }}
       onDragEnd={onDragEnd}
-      onDrop={(e) => {
-        e.preventDefault();
-        onDrop();
-      }}
+      onDrop={(e) => { e.preventDefault(); onDrop(); }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Header de section — zone de détection du drag-over */}
+      {/* Header de section */}
       <div
         className="flex items-center gap-3 mb-3"
-        onDragOver={(e) => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = 'move';
-          onDragOver(e);
-        }}
+        onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; onDragOver(e); }}
       >
-        {/* Drag handle */}
-        <span
-          className={`cursor-grab active:cursor-grabbing text-[var(--ink-faint)] transition-opacity ${isHovered ? 'opacity-100' : 'opacity-0'}`}
-          title="Glisser pour réordonner"
-        >
-          ⠿
-        </span>
+        {/* Drag handle avec coach mark */}
+        <div className="relative">
+          <span
+            className={`cursor-grab active:cursor-grabbing text-[var(--ink-faint)] transition-opacity ${headerControlsVisible ? 'opacity-100' : 'opacity-0'}`}
+            title="Glisser pour réordonner"
+          >
+            ⠿
+          </span>
+          {isFirstSection && (
+            <CoachMark text="Glisse pour réordonner les sections" position="bottom" onDismiss={() => onDismissOnboarding?.()} />
+          )}
+        </div>
 
-        <input
-          type="text"
-          value={section.label}
-          onChange={(e) => onUpdate({ label: e.target.value })}
-          placeholder="Section…"
-          className="font-sans text-sm font-semibold uppercase tracking-wider text-[var(--ink)]
-            bg-transparent border-none outline-none w-36"
-        />
+        {/* Label de section avec coach mark */}
+        <div className="relative">
+          <input
+            type="text"
+            value={section.label}
+            onChange={(e) => onUpdate({ label: e.target.value })}
+            placeholder="Section…"
+            className="font-sans text-sm font-semibold uppercase tracking-wider text-[var(--ink)]
+              bg-transparent border-none outline-none w-36"
+          />
+          {isFirstSection && (
+            <CoachMark text="Clique pour renommer (ex: Intro, Refrain…)" position="bottom" onDismiss={() => onDismissOnboarding?.()} />
+          )}
+        </div>
 
         <span className="flex items-center gap-1">
           <span className="text-xs text-[var(--ink-faint)]">×</span>
@@ -173,11 +165,7 @@ export function SectionBlock({
           />
         </span>
 
-        <div
-          className={`flex gap-1.5 ml-auto transition-opacity duration-150 ${
-            isHovered ? 'opacity-100' : 'opacity-0'
-          }`}
-        >
+        <div className={`flex gap-1.5 ml-auto transition-opacity duration-150 ${headerControlsVisible ? 'opacity-100' : 'opacity-0'}`}>
           <button
             onClick={addRow}
             className="bg-transparent border-none cursor-pointer text-[var(--ink-light)] px-2 py-1
@@ -235,8 +223,11 @@ export function SectionBlock({
               totalRows={section.rows.length}
               activeCellIndex={activeRowIndex === rowIndex ? activeCellIndex : undefined}
               activeDurationMs={activeRowIndex === rowIndex ? activeDurationMs : undefined}
+              isFirstRow={isFirstSection && rowIndex === 0}
+              exampleChords={isFirstSection && rowIndex === 0 ? EXAMPLE_CHORDS : undefined}
+              onDismissOnboarding={onDismissOnboarding}
             />
-            {/* Badge répétition — visible si > 1, au survol sinon */}
+            {/* Badge répétition */}
             <div className={`absolute -right-10 top-1/2 -translate-y-1/2 flex items-center gap-0.5 transition-opacity ${(section.rowRepeats?.[rowIndex] ?? 1) > 1 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
               <span className="text-[10px] text-[var(--ink-faint)]">×</span>
               <input
@@ -250,7 +241,6 @@ export function SectionBlock({
                 title="Répétitions de cette mesure"
               />
             </div>
-            {/* Bouton supprimer — toujours au survol seulement */}
             {section.rows.length > 1 && (
               <button
                 onClick={() => deleteRow(rowIndex)}

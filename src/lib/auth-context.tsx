@@ -40,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const db = getDb();
 
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+      setLoading(true);
       setFirebaseUser(fbUser);
 
       if (fbUser) {

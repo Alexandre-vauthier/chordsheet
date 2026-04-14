@@ -11,14 +11,14 @@ import { Button } from '@/components/ui/button';
 import { SheetCard } from '@/components/explore/sheet-card';
 import type { Sheet } from '@/types';
 
-type Tab = 'mine' | 'book';
+type Tab = 'all' | 'mine' | 'book';
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const { bookmarkedSheets, isLoading: bookLoading, isBookmarked, toggleBookmark, removeBookmark } = useBookmarks(user?.id);
   const [sheets, setSheets] = useState<Sheet[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<Tab>('mine');
+  const [tab, setTab] = useState<Tab>('all');
 
   useEffect(() => {
     async function loadSheets() {
@@ -66,7 +66,14 @@ export default function DashboardPage() {
     await removeBookmark(sheetId);
   };
 
-  const isCurrentlyLoading = tab === 'mine' ? loading : bookLoading;
+  const isCurrentlyLoading = tab === 'mine' ? loading : tab === 'book' ? bookLoading : loading || bookLoading;
+
+  // Onglet "Tout" : fusion dédupliquée (mes grilles + favoris)
+  const ownedIds = new Set(sheets.map(s => s.id));
+  const allSheets: Sheet[] = [
+    ...sheets,
+    ...bookmarkedSheets.filter(s => !ownedIds.has(s.id)),
+  ];
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
@@ -77,13 +84,17 @@ export default function DashboardPage() {
             Mon book
           </h1>
           <p className="text-[var(--ink-light)] mt-1">
-            {tab === 'mine'
-              ? sheets.length > 0
-                ? `${sheets.length} grille${sheets.length > 1 ? 's' : ''} créée${sheets.length > 1 ? 's' : ''}`
-                : 'Gérez vos grilles d\'accords'
-              : bookmarkedSheets.length > 0
-                ? `${bookmarkedSheets.length} grille${bookmarkedSheets.length > 1 ? 's' : ''} sauvegardée${bookmarkedSheets.length > 1 ? 's' : ''}`
-                : 'Vos grilles favorites'
+            {tab === 'all'
+              ? allSheets.length > 0
+                ? `${allSheets.length} grille${allSheets.length > 1 ? 's' : ''}`
+                : 'Toutes vos grilles'
+              : tab === 'mine'
+                ? sheets.length > 0
+                  ? `${sheets.length} grille${sheets.length > 1 ? 's' : ''} créée${sheets.length > 1 ? 's' : ''}`
+                  : 'Gérez vos grilles d\'accords'
+                : bookmarkedSheets.length > 0
+                  ? `${bookmarkedSheets.length} grille${bookmarkedSheets.length > 1 ? 's' : ''} sauvegardée${bookmarkedSheets.length > 1 ? 's' : ''}`
+                  : 'Vos grilles favorites'
             }
           </p>
         </div>
@@ -99,6 +110,16 @@ export default function DashboardPage() {
 
       {/* Onglets */}
       <div className="flex gap-1 mb-6 bg-[var(--line)] rounded-lg p-1 w-fit">
+        <button
+          onClick={() => setTab('all')}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            tab === 'all'
+              ? 'bg-[var(--cell-bg)] text-[var(--ink)] shadow-sm'
+              : 'text-[var(--ink-light)] hover:text-[var(--ink)]'
+          }`}
+        >
+          Tout
+        </button>
         <button
           onClick={() => setTab('mine')}
           className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
@@ -136,6 +157,41 @@ export default function DashboardPage() {
             />
           ))}
         </div>
+      ) : tab === 'all' ? (
+        /* Tout */
+        allSheets.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {allSheets.map((sheet) => {
+              const isOwned = ownedIds.has(sheet.id);
+              return (
+                <div key={sheet.id} className="relative group">
+                  <SheetCard
+                    sheet={sheet}
+                    onDelete={isOwned ? () => handleDelete(sheet.id!) : undefined}
+                    isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
+                    onToggleBookmark={sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
+                    showOwner={!isOwned}
+                    showPublicBadge={isOwned}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-8 text-center">
+            <div className="text-[var(--ink-faint)] mb-4">
+              <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+              <p className="text-lg">Votre book est vide</p>
+              <p className="text-sm mt-1">Créez une grille ou explorez-en depuis la communauté !</p>
+            </div>
+            <div className="flex gap-3 justify-center">
+              <Link href="/sheet/new"><Button variant="primary">Créer une grille</Button></Link>
+              <Link href="/explore"><Button variant="ghost">Explorer</Button></Link>
+            </div>
+          </div>
+        )
       ) : tab === 'mine' ? (
         /* Mes grilles */
         sheets.length > 0 ? (

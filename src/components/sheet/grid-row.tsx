@@ -2,6 +2,7 @@
 
 import type { Row, Cell, CellSpan, InstrumentId } from '@/types';
 import { BeatCell } from './beat-cell';
+import { CoachMark } from './coach-mark';
 
 interface GridRowProps {
   row: Row;
@@ -15,6 +16,9 @@ interface GridRowProps {
   totalRows: number;
   activeCellIndex?: number;
   activeDurationMs?: number;
+  isFirstRow?: boolean;
+  exampleChords?: string[];
+  onDismissOnboarding?: () => void;
 }
 
 // Chaque 0.25 de span = 1 colonne dans la grille de 16 colonnes
@@ -23,7 +27,6 @@ const spanToGridCols = (span: CellSpan) => Math.round(span / 0.25);
 export function GridRow({
   row,
   rowIndex,
-  beatsPerMeasure,
   instrumentId,
   onCellChange,
   onSplit,
@@ -32,6 +35,9 @@ export function GridRow({
   totalRows,
   activeCellIndex,
   activeDurationMs,
+  isFirstRow = false,
+  exampleChords,
+  onDismissOnboarding,
 }: GridRowProps) {
   const totalGridCols = 16;
 
@@ -60,11 +66,14 @@ export function GridRow({
               cell={cell}
               cols={cols}
               instrumentId={instrumentId}
-              onChordChange={(chord) => onCellChange(cellIndex, { chord })}
+              onChordChange={(chord) => { onDismissOnboarding?.(); onCellChange(cellIndex, { chord }); }}
               canSplit={canSplit}
               onSplit={() => onSplit(cellIndex)}
               isActive={activeCellIndex === cellIndex}
               activeDurationMs={activeCellIndex === cellIndex ? activeDurationMs : undefined}
+              exampleChord={isFirstRow ? exampleChords?.[cellIndex] : undefined}
+              showSplitCoach={isFirstRow && cellIndex === 0 && canSplit}
+              onDismissOnboarding={onDismissOnboarding}
               onNavigateNext={() => {
                 let nextCellIndex = cellIndex + 1;
                 let nextRowIndex = rowIndex;
@@ -81,7 +90,7 @@ export function GridRow({
         })}
       </div>
 
-      {/* Boutons de fusion — centrés verticalement entre les cellules */}
+      {/* Boutons de fusion — entre les cellules */}
       {row.map((cell, cellIndex) => {
         if (cellIndex === 0) return null;
 
@@ -90,22 +99,31 @@ export function GridRow({
         if (mergedSpan > 4) return null;
 
         const leftPercent = (cumCols[cellIndex - 1] / totalGridCols) * 100;
+        const showMergeCoach = isFirstRow && cellIndex === 1;
 
         return (
-          <button
+          <div
             key={`merge-${cellIndex}`}
-            onClick={() => onMerge(cellIndex)}
-            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10
-              w-5 h-5 flex items-center justify-center rounded-full
-              bg-[var(--cell-bg)] border border-[var(--line)] text-[var(--ink-faint)]
-              hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] hover:border-[var(--accent)]
-              transition-all text-[10px] leading-none shadow-sm
-              opacity-0 group-hover/row:opacity-100 pointer-events-auto"
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-10"
             style={{ left: `${leftPercent}%` }}
-            title="Fusionner"
           >
-            ⟷
-          </button>
+            <button
+              onClick={() => { onDismissOnboarding?.(); onMerge(cellIndex); }}
+              className={`
+                w-5 h-5 flex items-center justify-center rounded-full
+                bg-[var(--cell-bg)] border border-[var(--line)] text-[var(--ink-faint)]
+                hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] hover:border-[var(--accent)]
+                transition-all text-[10px] leading-none shadow-sm pointer-events-auto
+                ${isFirstRow ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'}
+              `}
+              title="Fusionner"
+            >
+              ⟷
+            </button>
+            {showMergeCoach && (
+              <CoachMark text="Fusionne avec la case précédente" position="top" onDismiss={() => onDismissOnboarding?.()} />
+            )}
+          </div>
         );
       })}
     </div>

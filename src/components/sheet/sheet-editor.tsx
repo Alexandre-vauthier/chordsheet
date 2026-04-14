@@ -9,6 +9,7 @@ import { InstrumentSelector, ChordSummary, ChordEditorModal } from '@/components
 import type { CustomChordMap } from '@/components/chord';
 import { usePlayback, parseTempo } from '@/lib/use-playback';
 import { stopPreviewAudio } from '@/components/explore/sheet-card';
+import { CoachMark } from './coach-mark';
 
 interface SheetEditorProps {
   initialSheet: NewSheet | Sheet;
@@ -24,6 +25,34 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const [metronomeEnabled, setMetronomeEnabled] = useState(false);
+
+  // Onboarding première grille
+  const [isFirstSheet, setIsFirstSheet] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return !('id' in initialSheet) && !localStorage.getItem('chordsheet_first_sheet_done');
+  });
+  const dismissOnboarding = useCallback(() => {
+    if (typeof window !== 'undefined') localStorage.setItem('chordsheet_first_sheet_done', '1');
+    setIsFirstSheet(false);
+  }, []);
+
+  // Tooltips premier survol (tonalité, référence)
+  const [keyTooltip, setKeyTooltip] = useState(false);
+  const [refTooltip, setRefTooltip] = useState(false);
+  const handleKeyHover = () => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('chordsheet_tt_key')) {
+      localStorage.setItem('chordsheet_tt_key', '1');
+      setKeyTooltip(true);
+      setTimeout(() => setKeyTooltip(false), 4000);
+    }
+  };
+  const handleRefHover = () => {
+    if (typeof window !== 'undefined' && !localStorage.getItem('chordsheet_tt_ref')) {
+      localStorage.setItem('chordsheet_tt_ref', '1');
+      setRefTooltip(true);
+      setTimeout(() => setRefTooltip(false), 4000);
+    }
+  };
 
   // Playback
   const { isPlaying, activeStep, playSection, togglePlay, stop } = usePlayback({
@@ -243,6 +272,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     setValidationError(null);
     await onSave(sheet);
     setHasChanges(false);
+    dismissOnboarding();
   };
 
   return (
@@ -327,7 +357,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             className="font-sans text-sm text-[var(--ink-light)] bg-transparent border-none outline-none
               placeholder:text-[var(--ink-faint)]"
           />
-          <span className="flex items-center gap-1 text-[var(--ink-faint)]">
+          <div className="relative flex items-center gap-1 text-[var(--ink-faint)]" onMouseEnter={isFirstSheet ? handleKeyHover : undefined}>
             <span className="text-sm">♯♭</span>
             <input
               type="text"
@@ -337,7 +367,10 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
               className="font-sans text-sm text-[var(--ink-light)] bg-transparent border-none outline-none
                 placeholder:text-[var(--ink-faint)] w-24"
             />
-          </span>
+            {keyTooltip && (
+              <CoachMark text="Indique la tonalité du morceau (ex: Am, G, C…)" position="bottom" onDismiss={() => setKeyTooltip(false)} />
+            )}
+          </div>
           <span className="flex items-center gap-1 text-[var(--ink-faint)]">
             <span className="text-base leading-none">♩</span>
             <input
@@ -349,7 +382,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 placeholder:text-[var(--ink-faint)] w-24"
             />
           </span>
-          <span className="flex items-center gap-1 text-[var(--ink-faint)]">
+          <div className="relative flex items-center gap-1 text-[var(--ink-faint)]" onMouseEnter={isFirstSheet ? handleRefHover : undefined}>
             <span className="text-sm">🔗</span>
             <input
               type="url"
@@ -359,7 +392,10 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
               className="font-sans text-sm text-[var(--ink-light)] bg-transparent border-none outline-none
                 placeholder:text-[var(--ink-faint)] w-64"
             />
-          </span>
+            {refTooltip && (
+              <CoachMark text="Colle ici un lien YouTube ou Spotify pour retrouver le morceau" position="bottom" onDismiss={() => setRefTooltip(false)} />
+            )}
+          </div>
         </div>
       </div>
 
@@ -491,7 +527,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
 
       {/* Sections */}
       <div>
-        {sheet.sections.map((section) => {
+        {sheet.sections.map((section, sectionIndex) => {
           const isDragging = dragSectionId === section.id;
           return (
             <div
@@ -518,6 +554,8 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 onDragOver={(e) => { e.preventDefault(); handleDragOver(section.id); }}
                 onDrop={() => handleDrop(section.id)}
                 isDragOver={dragOverSectionId === section.id && dragSectionId !== section.id}
+                isFirstSection={isFirstSheet && sectionIndex === 0}
+                onDismissOnboarding={dismissOnboarding}
               />
             </div>
           );

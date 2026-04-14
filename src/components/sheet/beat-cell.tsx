@@ -5,6 +5,7 @@ import type { Cell, InstrumentId } from '@/types';
 import { ChordSuggestions } from '@/components/chord';
 import { useChordNotation } from '@/lib/use-chord-notation';
 import { useChordColor } from '@/lib/use-chord-color';
+import { CoachMark } from './coach-mark';
 
 interface BeatCellProps {
   cell: Cell;
@@ -16,6 +17,9 @@ interface BeatCellProps {
   onNavigateNext: () => void;
   isActive?: boolean;
   activeDurationMs?: number;
+  exampleChord?: string;
+  showSplitCoach?: boolean;
+  onDismissOnboarding?: () => void;
 }
 
 export function BeatCell({
@@ -28,6 +32,9 @@ export function BeatCell({
   onNavigateNext,
   isActive = false,
   activeDurationMs = 0,
+  exampleChord,
+  showSplitCoach = false,
+  onDismissOnboarding,
 }: BeatCellProps) {
   const translate = useChordNotation();
   const getColor = useChordColor();
@@ -77,6 +84,7 @@ export function BeatCell({
   }, [showDiagram]);
 
   const handleClick = () => {
+    onDismissOnboarding?.();
     setIsEditing(true);
     setShowDiagram(false);
   };
@@ -159,11 +167,12 @@ export function BeatCell({
         ) : (
           <span
             className={`
-              font-mono font-medium text-[var(--ink)] pointer-events-none
+              font-mono font-medium pointer-events-none
               ${isSmall ? 'text-[0.82rem]' : 'text-[1.05rem]'}
+              ${!cell.chord && exampleChord ? 'text-[var(--ink-faint)]' : 'text-[var(--ink)]'}
             `}
           >
-            {translate(cell.chord) || ''}
+            {cell.chord ? translate(cell.chord) : (exampleChord ?? '')}
           </span>
         )}
 
@@ -209,18 +218,24 @@ export function BeatCell({
 
       {/* Bouton diviser — centré en bas de la cellule, en absolute */}
       {canSplit && (
-        <button
-          onClick={(e) => { e.stopPropagation(); onSplit(); }}
-          title="Diviser"
-          className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10
-            w-5 h-5 flex items-center justify-center rounded-full
-            bg-[var(--cell-bg)] border border-[var(--line)] text-[var(--ink-faint)]
-            cursor-pointer transition-all text-[10px] leading-none
-            opacity-0 group-hover/row:opacity-100
-            hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] hover:border-[var(--accent)]"
-        >
-          /
-        </button>
+        <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10">
+          <button
+            onClick={(e) => { e.stopPropagation(); onDismissOnboarding?.(); onSplit(); }}
+            title="Diviser en deux"
+            className={`
+              w-5 h-5 flex items-center justify-center rounded-full
+              bg-[var(--cell-bg)] border border-[var(--line)] text-[var(--ink-faint)]
+              cursor-pointer transition-all text-[10px] leading-none
+              hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] hover:border-[var(--accent)]
+              ${showSplitCoach ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'}
+            `}
+          >
+            /
+          </button>
+          {showSplitCoach && (
+            <CoachMark text="Divise en deux temps" position="bottom" onDismiss={() => onDismissOnboarding?.()} />
+          )}
+        </div>
       )}
     </div>
   );
