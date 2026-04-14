@@ -116,16 +116,19 @@ export function ChordSummary({
             )
             .map(a => a.chord);
 
-          // Construire la liste de toutes les variantes disponibles
-          // L'override remplace totalement les variantes statiques
+          // Construire la liste de toutes les variantes disponibles (sans doublons par id)
           const allVariants: (StringChord | PianoChord)[] = [];
-          if (customChord) allVariants.push(customChord);
+          const seenIds = new Set<string>();
+          const addVariant = (c: StringChord | PianoChord) => {
+            if (!seenIds.has(c.id)) { seenIds.add(c.id); allVariants.push(c); }
+          };
+          if (customChord) addVariant(customChord);
           if (adminOverride) {
-            allVariants.push(adminOverride.chord);
-            allVariants.push(...adminAdditions);
+            addVariant(adminOverride.chord);
+            adminAdditions.forEach(addVariant);
           } else {
-            allVariants.push(...adminAdditions);
-            allVariants.push(...staticVariants);
+            adminAdditions.forEach(addVariant);
+            staticVariants.forEach(addVariant);
           }
 
           const currentIndex = variantIndices[chordName] || 0;

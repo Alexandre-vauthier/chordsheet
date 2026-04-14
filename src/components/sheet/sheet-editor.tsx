@@ -246,6 +246,18 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     setHasChanges(true);
   }, [editingChordName, sheet.instrumentId]);
 
+  // Sauvegarder la variante sélectionnée dans ChordSummary
+  const handleVariantSelect = useCallback((chordName: string, chord: StringChord | PianoChord) => {
+    const instrumentId = sheet.instrumentId || 'guitar';
+    const key = `${chordName.toLowerCase()}-${instrumentId}`;
+    const customChord: CustomChord = { ...chord, instrumentId } as CustomChord;
+    setSheet(prev => ({
+      ...prev,
+      customChords: { ...(prev.customChords || {}), [key]: customChord },
+    }));
+    setHasChanges(true);
+  }, [sheet.instrumentId]);
+
   // Supprimer un accord personnalisé
   const handleDeleteCustomChord = useCallback((chordName: string) => {
     const instrumentId = sheet.instrumentId || 'guitar';
@@ -595,6 +607,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
           editable
           onEditChord={handleEditChord}
           onDeleteCustomChord={handleDeleteCustomChord}
+          onVariantChange={handleVariantSelect}
         />
       </div>
 
