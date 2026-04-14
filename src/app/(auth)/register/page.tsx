@@ -36,7 +36,8 @@ export default function RegisterPage() {
 
     try {
       await signUp(email, password, displayName);
-      router.push('/book');
+      localStorage.setItem('chordsheet_show_welcome', '1');
+      router.push('/explore');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la création du compte';
       if (errorMessage.includes('email-already-in-use')) {

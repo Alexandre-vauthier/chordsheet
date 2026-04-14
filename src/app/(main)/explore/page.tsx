@@ -8,6 +8,7 @@ import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
 import { Input } from '@/components/ui/input';
 import { SheetCard } from '@/components/explore/sheet-card';
+import { WelcomeBanner } from '@/components/explore/welcome-banner';
 import { GENRES, DIFFICULTY_LABELS, type Difficulty } from '@/types';
 import type { Sheet } from '@/types';
 
@@ -149,6 +150,7 @@ export default function ExplorePage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+      <WelcomeBanner />
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-[var(--ink)]">Explorer</h1>
         <p className="text-[var(--ink-light)] mt-1">
