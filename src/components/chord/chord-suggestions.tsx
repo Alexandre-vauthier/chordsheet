@@ -15,6 +15,7 @@ interface ChordSuggestionsProps {
   customChord?: StringChord | PianoChord | null;
   onSelectVariant?: (chord: StringChord | PianoChord) => void;
   position?: 'top' | 'bottom';
+  capo?: number;
 }
 
 export function ChordSuggestions({
@@ -23,6 +24,7 @@ export function ChordSuggestions({
   customChord,
   onSelectVariant,
   position = 'bottom',
+  capo = 0,
 }: ChordSuggestionsProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -58,7 +60,7 @@ export function ChordSuggestions({
 
   const handlePlay = (e: React.MouseEvent) => {
     e.stopPropagation();
-    playChord(currentChord, instrumentId);
+    playChord(currentChord, instrumentId, capo);
   };
 
   const handleSelect = () => {

@@ -501,9 +501,10 @@ function ViewerChordCell({
       {hovered && !showInlineDiagram && (
         <div className="print:hidden" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
           <ChordSuggestions
-            chordName={chord}
+            chordName={lookupChord}
             instrumentId={instrumentId}
             customChord={custom}
+            capo={capo}
             position="bottom"
           />
         </div>
