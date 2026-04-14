@@ -45,13 +45,14 @@ function getAudioContext(): AudioContext {
 }
 
 // Obtenir les fréquences d'un accord pour instrument à cordes
-function getStringChordFrequencies(chord: StringChord, instrumentId: InstrumentId): number[] {
+function getStringChordFrequencies(chord: StringChord, instrumentId: InstrumentId, capo = 0): number[] {
   const tuning = OPEN_FREQS[instrumentId];
   if (!tuning) return [];
 
   const { fingers = [], barre, open = [], muted = [] } = chord;
   const numStrings = Object.keys(tuning).length;
   const freqs: { s: number; freq: number }[] = [];
+  const capoShift = Math.pow(2, capo / 12);
 
   for (let s = 1; s <= numStrings; s++) {
     if (muted.includes(s)) continue;
@@ -59,23 +60,23 @@ function getStringChordFrequencies(chord: StringChord, instrumentId: InstrumentI
     const openFreq = tuning[s];
     if (!openFreq) continue;
 
-    // Si corde ouverte
+    // Si corde ouverte (sonne au capo)
     if (open.includes(s)) {
-      freqs.push({ s, freq: openFreq });
+      freqs.push({ s, freq: openFreq * capoShift });
       continue;
     }
 
     // Vérifier si un doigt est sur cette corde
     const finger = fingers.find(([fs]) => fs === s);
     if (finger) {
-      freqs.push({ s, freq: openFreq * Math.pow(2, finger[1] / 12) });
+      freqs.push({ s, freq: openFreq * Math.pow(2, (finger[1] + capo) / 12) });
       continue;
     }
 
     // Vérifier le barré
     if (barre && s >= Math.min(barre.fromString, barre.toString)
               && s <= Math.max(barre.fromString, barre.toString)) {
-      freqs.push({ s, freq: openFreq * Math.pow(2, barre.fret / 12) });
+      freqs.push({ s, freq: openFreq * Math.pow(2, (barre.fret + capo) / 12) });
       continue;
     }
 
@@ -86,11 +87,13 @@ function getStringChordFrequencies(chord: StringChord, instrumentId: InstrumentI
   return freqs.sort((a, b) => b.s - a.s).map(x => x.freq);
 }
 
-// Obtenir les fréquences d'un accord piano
-function getPianoChordFrequencies(chord: PianoChord): number[] {
+// Obtenir les fréquences d'un accord piano (capo = décalage en demi-tons)
+function getPianoChordFrequencies(chord: PianoChord, capo = 0): number[] {
+  const capoShift = Math.pow(2, capo / 12);
   return (chord.notes || [])
     .map(noteNameToFreq)
-    .filter((f): f is number => f !== null);
+    .filter((f): f is number => f !== null)
+    .map(f => f * capoShift);
 }
 
 // Jouer une seule note
@@ -151,7 +154,8 @@ export function playMetronomeTick(accent = false): void {
 // Jouer un accord complet
 export function playChord(
   chord: StringChord | PianoChord,
-  instrumentId: InstrumentId
+  instrumentId: InstrumentId,
+  capo = 0,
 ): void {
   const ctx = getAudioContext();
   const isPiano = instrumentId === 'piano';
@@ -160,8 +164,8 @@ export function playChord(
   stopActiveChord();
 
   const freqs = isPianoChord(chord)
-    ? getPianoChordFrequencies(chord)
-    : getStringChordFrequencies(chord, instrumentId);
+    ? getPianoChordFrequencies(chord, capo)
+    : getStringChordFrequencies(chord, instrumentId, capo);
 
   const strumDelay = isPiano ? 0.06 : 0.04;
   const decay = isPiano ? 1.8 : 2.2;

@@ -61,6 +61,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     instrumentId: sheet.instrumentId || 'guitar',
     customChords: sheet.customChords as Record<string, unknown>,
     metronomeEnabled,
+    capo: sheet.capo ?? 0,
   });
 
   const bpm = parseTempo(sheet.tempo);

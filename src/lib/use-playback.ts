@@ -56,9 +56,10 @@ interface UsePlaybackOptions {
   customChords?: Record<string, unknown>;
   selectedChords?: Record<string, StringChord | PianoChord>;
   metronomeEnabled?: boolean;
+  capo?: number;
 }
 
-export function usePlayback({ sections, tempo, instrumentId, customChords, selectedChords, metronomeEnabled }: UsePlaybackOptions) {
+export function usePlayback({ sections, tempo, instrumentId, customChords, selectedChords, metronomeEnabled, capo = 0 }: UsePlaybackOptions) {
   const { overrides } = useLibraryChords();
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeStep, setActiveStep] = useState<PlayStep | null>(null);
@@ -158,7 +159,7 @@ export function usePlayback({ sections, tempo, instrumentId, customChords, selec
           (custom as StringChord | PianoChord | undefined) ??
           adminOverride ??
           findChordVariants(cell.chord, instrumentId)[0];
-        if (chordData) playChord(chordData as StringChord | PianoChord, instrumentId);
+        if (chordData) playChord(chordData as StringChord | PianoChord, instrumentId, capo);
       }
 
       i++;

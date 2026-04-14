@@ -10,6 +10,7 @@ import type { StringChord, PianoChord, CustomChord } from '@/types';
 import { isPianoChord } from '@/types';
 import { useChordNotation } from '@/lib/use-chord-notation';
 import { useChordColor } from '@/lib/use-chord-color';
+import { transposeChord } from '@/lib/transpose';
 import { usePlayback, parseTempo } from '@/lib/use-playback';
 import type { PlayStep } from '@/lib/use-playback';
 import { useArtwork } from '@/lib/use-artwork';
@@ -72,6 +73,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
     customChords: sheet.customChords as Record<string, unknown>,
     selectedChords,
     metronomeEnabled,
+    capo: sheet.capo ?? 0,
   });
 
   const bpm = parseTempo(sheet.tempo);
@@ -324,6 +326,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                             translate={translate}
                             getColor={getColor}
                             showInlineDiagram={showInlineDiagram}
+                            capo={sheet.capo ?? 0}
                           />
                         );
                       })}
@@ -373,6 +376,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
           sections={displaySections}
           instrumentId={instrumentId}
           customChords={sheet.customChords as CustomChordMap}
+          capo={sheet.capo ?? 0}
           onVariantChange={(chordName, chord) =>
             setSelectedChords(prev => ({ ...prev, [chordName]: chord }))
           }
@@ -408,6 +412,7 @@ function ViewerChordCell({
   translate,
   getColor,
   showInlineDiagram,
+  capo = 0,
 }: {
   chord: string;
   span: CellSpan;
@@ -418,11 +423,14 @@ function ViewerChordCell({
   translate: (name: string) => string;
   getColor: (chord: string) => { border: string; bg: string } | null;
   showInlineDiagram: boolean;
+  capo?: number;
 }) {
   const [hovered, setHovered] = useState(false);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const custom = resolveCustomChord(chord, instrumentId, customChords);
-  const libraryVariants = useChordVariants(chord, instrumentId);
+  // Pour le piano, le capo décale la hauteur → chercher l'accord transposé
+  const lookupChord = instrumentId === 'piano' && capo > 0 ? transposeChord(chord, capo) : chord;
+  const custom = resolveCustomChord(lookupChord, instrumentId, customChords);
+  const libraryVariants = useChordVariants(lookupChord, instrumentId);
 
   const handleMouseEnter = () => {
     if (leaveTimer.current) clearTimeout(leaveTimer.current);

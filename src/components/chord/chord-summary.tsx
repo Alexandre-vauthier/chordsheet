@@ -6,6 +6,7 @@ import { ChordCard } from './chord-card';
 import { useChordNotation } from '@/lib/use-chord-notation';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
 import { findChordVariants, enharmonicEquivalent } from '@/lib/chord-data';
+import { transposeChord } from '@/lib/transpose';
 
 // Type pour les accords personnalisés stockés dans la grille
 export type CustomChordMap = Record<string, StringChord | PianoChord>;
@@ -18,6 +19,7 @@ interface ChordSummaryProps {
   onDeleteCustomChord?: (chordName: string) => void;
   editable?: boolean;
   onVariantChange?: (chordName: string, chord: StringChord | PianoChord) => void;
+  capo?: number;
 }
 
 /**
@@ -36,6 +38,7 @@ export function ChordSummary({
   onDeleteCustomChord,
   editable = false,
   onVariantChange,
+  capo = 0,
 }: ChordSummaryProps) {
   const translate = useChordNotation();
   const { overrides, additions } = useLibraryChords();
@@ -96,17 +99,22 @@ export function ChordSummary({
       )}
       <div className="flex flex-wrap gap-4">
         {uniqueChords.map((chordName) => {
+          // Pour le piano, le capo décale la hauteur → chercher l'accord transposé
+          const lookupName = instrumentId === 'piano' && capo > 0
+            ? transposeChord(chordName, capo)
+            : chordName;
+
           // Chercher d'abord dans les accords personnalisés de la grille
-          const customChordKey = `${chordName.toLowerCase()}-${instrumentId}`;
+          const customChordKey = `${lookupName.toLowerCase()}-${instrumentId}`;
           const customChord = customChords[customChordKey];
 
           // Overrides admin (Firestore) — fallback enharmonique (C# → Db)
-          const key = libraryKey(chordName, instrumentId);
-          const enh = enharmonicEquivalent(chordName);
+          const key = libraryKey(lookupName, instrumentId);
+          const enh = enharmonicEquivalent(lookupName);
           const enhKey = enh ? libraryKey(enh, instrumentId) : null;
           const adminOverride = overrides.get(key) ?? (enhKey ? overrides.get(enhKey) : undefined);
-          const staticVariants = findChordVariants(chordName, instrumentId);
-          const nameLower = chordName.trim().toLowerCase();
+          const staticVariants = findChordVariants(lookupName, instrumentId);
+          const nameLower = lookupName.trim().toLowerCase();
           const enhLower = enh?.trim().toLowerCase();
           const adminAdditions = additions
             .filter(a =>
@@ -190,7 +198,7 @@ export function ChordSummary({
                 chord={currentChord}
                 instrumentId={instrumentId}
                 size="sm"
-                displayName={translate(chordName)}
+                displayName={translate(lookupName)}
               />
 
               {/* Badge si c'est un accord personnalisé */}
