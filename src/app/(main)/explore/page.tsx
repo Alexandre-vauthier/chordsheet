@@ -305,14 +305,22 @@ export default function ExplorePage() {
             <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <p className="text-lg">Aucun résultat</p>
-            <p className="text-sm mt-1">Essayez de modifier vos filtres</p>
-            <button
-              onClick={clearFilters}
-              className="mt-4 px-4 py-2 text-sm text-[var(--accent)] border border-[var(--accent)] rounded-lg hover:bg-[var(--accent-soft)]"
-            >
-              Réinitialiser les filtres
-            </button>
+            <p className="text-lg">Aucun résultat pour &laquo;&nbsp;{searchQuery}&nbsp;&raquo;</p>
+            <p className="text-sm mt-1">Cette grille n&apos;existe pas encore — pourquoi ne pas la créer ?</p>
+            <div className="flex gap-3 justify-center mt-4">
+              <button
+                onClick={clearFilters}
+                className="px-4 py-2 text-sm text-[var(--ink-light)] border border-[var(--line)] rounded-lg hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+              >
+                Réinitialiser
+              </button>
+              <a
+                href={`/sheet/new`}
+                className="px-4 py-2 text-sm text-white bg-[var(--accent)] rounded-lg hover:bg-[#a83d25] transition-colors"
+              >
+                + Créer cette grille
+              </a>
+            </div>
           </div>
         </div>
       ) : (

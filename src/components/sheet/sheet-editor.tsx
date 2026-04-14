@@ -284,7 +284,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             type="text"
             value={sheet.title}
             onChange={(e) => {
-              const val = e.target.value.replace(/\b\w/g, (c) => c.toUpperCase());
+              const val = e.target.value.replace(/(^|\s)\S/g, (c) => c.toUpperCase());
               updateSheet({ title: val });
             }}
             placeholder="Titre de la chanson…"
@@ -350,7 +350,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             type="text"
             value={sheet.artist}
             onChange={(e) => {
-              const val = e.target.value.replace(/\b\w/g, (c) => c.toUpperCase());
+              const val = e.target.value.replace(/(^|\s)\S/g, (c) => c.toUpperCase());
               updateSheet({ artist: val });
             }}
             placeholder="Artiste…"
