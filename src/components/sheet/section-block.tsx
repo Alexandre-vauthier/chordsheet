@@ -125,17 +125,12 @@ export function SectionBlock({
         onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; onDragOver(e); }}
       >
         {/* Drag handle avec coach mark */}
-        <div className="relative">
-          <span
-            className={`cursor-grab active:cursor-grabbing text-[var(--ink-faint)] transition-opacity ${headerControlsVisible ? 'opacity-100' : 'opacity-0'}`}
-            title="Glisser pour réordonner"
-          >
-            ⠿
-          </span>
-          {isFirstSection && (
-            <CoachMark text="Glisse pour réordonner les sections" position="bottom" onDismiss={() => onDismissOnboarding?.()} />
-          )}
-        </div>
+        <span
+          className={`cursor-grab active:cursor-grabbing text-[var(--ink-faint)] transition-opacity ${headerControlsVisible ? 'opacity-100' : 'opacity-0'}`}
+          title="Glisser pour réordonner"
+        >
+          ⠿
+        </span>
 
         {/* Label de section avec coach mark */}
         <div className="relative">
