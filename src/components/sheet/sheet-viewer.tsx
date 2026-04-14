@@ -477,7 +477,7 @@ function ViewerChordCell({
 
       <div className="relative z-10 flex flex-col items-center gap-1 py-1">
         <span className={`font-mono font-medium text-[var(--ink)] ${span <= 0.5 ? 'text-sm' : 'text-base'} print:text-sm`}>
-          {translate(chord)}
+          {translate(lookupChord)}
         </span>
         {inlineDiagramChord && !isPianoChord(inlineDiagramChord) && (
           <div className={showInlineDiagram ? '' : 'print:hidden'}>
