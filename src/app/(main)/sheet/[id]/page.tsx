@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, increment, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
@@ -74,6 +74,17 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleAdminDelete = async () => {
+    if (!confirm('Supprimer cette grille ? Cette action est irréversible.')) return;
+    try {
+      await deleteDoc(doc(getDb(), 'sheets', id));
+      router.push('/explore');
+    } catch (err) {
+      console.error('Error deleting sheet:', err);
+      alert('Erreur lors de la suppression');
+    }
   };
 
   const handleToggleBookmark = async () => {
@@ -165,6 +176,11 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
               <Link href={`/sheet/${id}/edit`} className="hidden sm:block">
                 <Button variant="ghost">Modifier</Button>
               </Link>
+            )}
+            {isAdmin && (
+              <Button variant="ghost" onClick={handleAdminDelete} className="text-red-500 hover:text-red-600 hidden sm:flex">
+                Supprimer
+              </Button>
             )}
             <Button onClick={handlePrint} className="hidden sm:flex">
               Imprimer / PDF
