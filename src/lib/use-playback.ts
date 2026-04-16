@@ -60,7 +60,7 @@ interface UsePlaybackOptions {
 }
 
 export function usePlayback({ sections, tempo, instrumentId, customChords, selectedChords, metronomeEnabled, capo = 0 }: UsePlaybackOptions) {
-  const { overrides } = useLibraryChords();
+  const { overrides, additions } = useLibraryChords();
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeStep, setActiveStep] = useState<PlayStep | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -154,10 +154,18 @@ export function usePlayback({ sections, tempo, instrumentId, customChords, selec
         const adminOverride =
           overrides.get(libraryKey(cell.chord, instrumentId))?.chord ??
           (enh ? overrides.get(libraryKey(enh, instrumentId))?.chord : undefined);
+        const nameLower = cell.chord.trim().toLowerCase();
+        const enhLower = enh?.trim().toLowerCase();
+        const adminAddition = additions.find(
+          a => a.instrumentId === instrumentId &&
+            (a.chord.name.trim().toLowerCase() === nameLower ||
+             (enhLower && a.chord.name.trim().toLowerCase() === enhLower))
+        )?.chord;
         const chordData =
           selected ??
           (custom as StringChord | PianoChord | undefined) ??
           adminOverride ??
+          adminAddition ??
           findChordVariants(cell.chord, instrumentId)[0];
         if (chordData) playChord(chordData as StringChord | PianoChord, instrumentId, capo);
       }
