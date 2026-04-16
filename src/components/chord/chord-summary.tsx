@@ -139,7 +139,12 @@ export function ChordSummary({
             allVariants.unshift(customChord);
           }
 
-          const currentIndex = variantIndices[chordName] || 0;
+          // Si pas encore navigué, initialiser sur la position du customChord sauvegardé
+          const currentIndex = variantIndices[chordName] !== undefined
+            ? variantIndices[chordName]
+            : customChord
+              ? Math.max(0, allVariants.findIndex(v => v.id === customChord.id))
+              : 0;
           const currentChord = allVariants[currentIndex] || null;
           const hasMultipleVariants = allVariants.length > 1;
 
