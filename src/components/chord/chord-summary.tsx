@@ -72,22 +72,18 @@ export function ChordSummary({
 
   // Naviguer vers la variante précédente
   const prevVariant = (chordName: string, allVariants: (StringChord | PianoChord)[]) => {
-    setVariantIndices(prev => {
-      const current = prev[chordName] || 0;
-      const next = current > 0 ? current - 1 : allVariants.length - 1;
-      onVariantChange?.(chordName, allVariants[next]);
-      return { ...prev, [chordName]: next };
-    });
+    const current = variantIndices[chordName] || 0;
+    const next = current > 0 ? current - 1 : allVariants.length - 1;
+    setVariantIndices(prev => ({ ...prev, [chordName]: next }));
+    onVariantChange?.(chordName, allVariants[next]);
   };
 
   // Naviguer vers la variante suivante
   const nextVariant = (chordName: string, allVariants: (StringChord | PianoChord)[]) => {
-    setVariantIndices(prev => {
-      const current = prev[chordName] || 0;
-      const next = (current + 1) % allVariants.length;
-      onVariantChange?.(chordName, allVariants[next]);
-      return { ...prev, [chordName]: next };
-    });
+    const current = variantIndices[chordName] || 0;
+    const next = (current + 1) % allVariants.length;
+    setVariantIndices(prev => ({ ...prev, [chordName]: next }));
+    onVariantChange?.(chordName, allVariants[next]);
   };
 
   return (
@@ -125,18 +121,22 @@ export function ChordSummary({
             .map(a => a.chord);
 
           // Construire la liste de toutes les variantes disponibles (sans doublons par id)
+          // Ne pas réordonner si customChord vient de la bibliothèque (juste une sélection)
           const allVariants: (StringChord | PianoChord)[] = [];
           const seenIds = new Set<string>();
           const addVariant = (c: StringChord | PianoChord) => {
             if (!seenIds.has(c.id)) { seenIds.add(c.id); allVariants.push(c); }
           };
-          if (customChord) addVariant(customChord);
           if (adminOverride) {
             addVariant(adminOverride.chord);
             adminAdditions.forEach(addVariant);
           } else {
             adminAdditions.forEach(addVariant);
             staticVariants.forEach(addVariant);
+          }
+          // Ajouter customChord seulement s'il n'est pas déjà dans la liste (accord vraiment custom)
+          if (customChord && !seenIds.has(customChord.id)) {
+            allVariants.unshift(customChord);
           }
 
           const currentIndex = variantIndices[chordName] || 0;
