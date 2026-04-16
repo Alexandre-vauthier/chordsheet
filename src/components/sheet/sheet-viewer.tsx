@@ -61,6 +61,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
   const [metronomeEnabled, setMetronomeEnabled] = useState(false);
   const [transpose, setTranspose] = useState(0);
   const [selectedChords, setSelectedChords] = useState<Record<string, StringChord | PianoChord>>({});
+  const [localTempo, setLocalTempo] = useState<string>(sheet.tempo || '90');
 
   const displaySections = transposeSections(sheet.sections, transpose);
   const displayKey = transposeKey(sheet.key, transpose);
@@ -68,7 +69,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
   // Playback
   const { isPlaying, activeStep, playSection, togglePlay, stop } = usePlayback({
     sections: displaySections,
-    tempo: sheet.tempo,
+    tempo: localTempo,
     instrumentId,
     customChords: sheet.customChords as Record<string, unknown>,
     selectedChords,
@@ -113,63 +114,84 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
             )}
           </div>
 
-          {/* Boutons Play + Métronome */}
-          <div className="print:hidden flex-shrink-0 flex items-center gap-2">
-            {/* Toggle métronome */}
-            <button
-              onClick={() => setMetronomeEnabled(v => !v)}
-              title={metronomeEnabled ? 'Désactiver le métronome' : 'Activer le métronome'}
-              className={`
-                flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
-                ${metronomeEnabled
-                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
-                  : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
-                }
-              `}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
-                <path d="M12 3 8 21" strokeLinecap="round"/>
-                <path d="M12 3l4 18" strokeLinecap="round"/>
-                <path d="M8.5 14.5l7-4" strokeLinecap="round"/>
-                <ellipse cx="12" cy="21" rx="3" ry="1.5"/>
-                <line x1="9.5" y1="3" x2="14.5" y2="3" strokeLinecap="round"/>
-              </svg>
-            </button>
+          {/* Ligne 1 : Métronome + Tempo + Play */}
+          <div className="print:hidden flex-shrink-0 flex flex-col items-end gap-2">
+            <div className="flex items-center gap-2">
+              {/* Toggle métronome */}
+              <button
+                onClick={() => setMetronomeEnabled(v => !v)}
+                title={metronomeEnabled ? 'Désactiver le métronome' : 'Activer le métronome'}
+                className={`
+                  flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
+                  ${metronomeEnabled
+                    ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                    : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                  }
+                `}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+                  <path d="M12 3 8 21" strokeLinecap="round"/>
+                  <path d="M12 3l4 18" strokeLinecap="round"/>
+                  <path d="M8.5 14.5l7-4" strokeLinecap="round"/>
+                  <ellipse cx="12" cy="21" rx="3" ry="1.5"/>
+                  <line x1="9.5" y1="3" x2="14.5" y2="3" strokeLinecap="round"/>
+                </svg>
+              </button>
 
-            {/* Play / Stop */}
-          <button
-            onClick={togglePlay}
-            title={isPlaying ? 'Stop' : `Play — ${bpm} BPM`}
-            className={`
-              flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
-              transition-all duration-150 border-[1.5px]
-              ${isPlaying
-                ? 'bg-[var(--accent)] border-[var(--accent)] text-white hover:bg-[#a83d25]'
-                : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
-              }
-            `}
-          >
-            {isPlaying ? (
-              <>
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <rect x="4" y="3" width="4" height="14" rx="1" />
-                  <rect x="12" y="3" width="4" height="14" rx="1" />
-                </svg>
-                Stop
-              </>
-            ) : (
-              <>
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                </svg>
-                Play
-              </>
-            )}
-          </button>
+              {/* Tempo éditable */}
+              <div className="flex items-center gap-1 px-2 py-1 bg-orange-50 text-orange-700 rounded border border-transparent hover:border-orange-200 transition-colors">
+                <span className="text-base leading-none">♩</span>
+                <input
+                  type="number"
+                  min={40}
+                  max={300}
+                  value={bpm}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value);
+                    if (v >= 40 && v <= 300) setLocalTempo(String(v));
+                  }}
+                  className="w-10 bg-transparent border-none outline-none text-sm font-medium text-orange-700 text-center
+                    [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  title="Modifier le tempo"
+                />
+                <span className="text-xs opacity-70">BPM</span>
+              </div>
+
+              {/* Play / Stop */}
+              <button
+                onClick={togglePlay}
+                title={isPlaying ? 'Stop' : `Play — ${bpm} BPM`}
+                className={`
+                  flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
+                  transition-all duration-150 border-[1.5px]
+                  ${isPlaying
+                    ? 'bg-[var(--accent)] border-[var(--accent)] text-white hover:bg-[#a83d25]'
+                    : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                  }
+                `}
+              >
+                {isPlaying ? (
+                  <>
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <rect x="4" y="3" width="4" height="14" rx="1" />
+                      <rect x="12" y="3" width="4" height="14" rx="1" />
+                    </svg>
+                    Stop
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                    </svg>
+                    Play
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Métadonnées */}
+        {/* Ligne 2 : Tonalité + Capo + autres métadonnées */}
         <div className="flex flex-wrap items-center gap-3 mt-3">
           {/* Tonalité + transpose */}
           <div className="flex items-center gap-1 print:hidden">
@@ -202,20 +224,14 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
               {displayKey}
             </span>
           )}
-          {sheet.tempo && (
-            <span className="flex items-center gap-1.5 px-2 py-1 bg-orange-50 text-orange-700 rounded text-sm print:bg-transparent print:text-[var(--ink)]">
-              <span className="text-base leading-none">♩</span>
-              {sheet.tempo}
+          {sheet.capo ? (
+            <span className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm print:bg-transparent print:text-[var(--ink)]">
+              Capo {sheet.capo}
             </span>
-          )}
+          ) : null}
           {sheet.beatsPerMeasure === 3 && (
             <span className="flex items-center gap-1.5 px-2 py-1 bg-purple-50 text-purple-700 rounded text-sm print:bg-transparent print:text-[var(--ink)]">
               Ternaire
-            </span>
-          )}
-          {sheet.capo && (
-            <span className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm print:bg-transparent print:text-[var(--ink)]">
-              Capo {sheet.capo}
             </span>
           )}
           {sheet.difficulty && DIFFICULTY_LABELS[sheet.difficulty] && (
@@ -234,6 +250,11 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
               {getRefLabel(sheet.referenceUrl)}
             </a>
           )}
+          {/* Tempo pour l'impression */}
+          <span className="hidden print:flex items-center gap-1.5 px-2 py-1 text-[var(--ink)] text-sm">
+            <span className="text-base leading-none">♩</span>
+            {localTempo} BPM
+          </span>
         </div>
 
         {/* Genres */}
