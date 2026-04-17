@@ -78,7 +78,24 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
   });
 
   const bpm = parseTempo(sheet.tempo);
-  const { artworkUrl } = useArtwork(sheet.artist, sheet.title);
+  const { artworkUrl, previewUrl } = useArtwork(sheet.artist, sheet.title);
+  const previewRef = useRef<HTMLAudioElement | null>(null);
+  const [previewPlaying, setPreviewPlaying] = useState(false);
+
+  const togglePreview = () => {
+    if (!previewUrl) return;
+    if (previewPlaying) {
+      previewRef.current?.pause();
+      setPreviewPlaying(false);
+    } else {
+      if (!previewRef.current) {
+        previewRef.current = new Audio(previewUrl);
+        previewRef.current.onended = () => setPreviewPlaying(false);
+      }
+      previewRef.current.play();
+      setPreviewPlaying(true);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 print:p-0 print:max-w-none">
@@ -88,11 +105,24 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
           {/* Artwork */}
           {artworkUrl && (
             <div className="flex-shrink-0 print:hidden">
-              <img
-                src={artworkUrl}
-                alt={`${sheet.artist} — ${sheet.title}`}
-                className="w-20 h-20 rounded-lg shadow-md object-cover"
-              />
+              <div
+                className="relative w-20 h-20 group/art cursor-pointer"
+                onClick={previewUrl ? togglePreview : undefined}
+                title={previewUrl ? (previewPlaying ? 'Pause l\'extrait' : 'Écouter l\'extrait') : undefined}
+              >
+                <img
+                  src={artworkUrl}
+                  alt={`${sheet.artist} — ${sheet.title}`}
+                  className="w-20 h-20 rounded-lg shadow-md object-cover"
+                />
+                {previewUrl && (
+                  <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-black/0 group-hover/art:bg-black/30 transition-all duration-200">
+                    <span className={`text-white text-xl transition-opacity duration-200 ${previewPlaying ? 'opacity-100' : 'opacity-0 group-hover/art:opacity-100'}`}>
+                      {previewPlaying ? '⏸' : '▶'}
+                    </span>
+                  </div>
+                )}
+              </div>
               <p className="text-[8px] text-[var(--ink-faint)] mt-0.5 text-center">via iTunes</p>
             </div>
           )}
