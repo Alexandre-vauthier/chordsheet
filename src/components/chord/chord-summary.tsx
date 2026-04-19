@@ -90,7 +90,7 @@ export function ChordSummary({
 
   return (
     <div className="bg-[var(--cell-bg)] rounded-lg border border-[var(--line)] p-4">
-      {!editable && (
+      {!editable && !compact && (
         <h3 className="text-sm font-medium text-[var(--ink-light)] mb-3">
           Accords utilisés ({uniqueChords.length})
         </h3>
