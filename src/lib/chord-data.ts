@@ -6,7 +6,7 @@ import type { StringChord, PianoChord, Instrument, InstrumentId, FingerPosition 
 export const INSTRUMENT_CONFIG: Record<InstrumentId, Instrument> = {
   guitar: { id: 'guitar', label: 'Guitare', strings: 6 },
   mandolin: { id: 'mandolin', label: 'Mandoline', strings: 4 },
-  banjo: { id: 'banjo', label: 'Banjo', strings: 5 },
+  banjo: { id: 'banjo', label: 'Banjo', strings: 4 },
   ukulele: { id: 'ukulele', label: 'Ukulélé', strings: 4 },
   piano: { id: 'piano', label: 'Piano', strings: 0 },
 };

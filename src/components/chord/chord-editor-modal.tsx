@@ -35,7 +35,7 @@ const INSTRUMENT_CONFIG: Record<Exclude<InstrumentId, 'piano'>, { strings: numbe
   guitar: { strings: 6, frets: 5 },
   ukulele: { strings: 4, frets: 5 },
   mandolin: { strings: 4, frets: 5 },
-  banjo: { strings: 5, frets: 5 },
+  banjo: { strings: 4, frets: 5 },
 };
 
 // Notes du piano

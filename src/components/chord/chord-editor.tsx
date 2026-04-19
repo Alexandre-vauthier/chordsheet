@@ -10,7 +10,7 @@ const INSTRUMENT_CONFIG: Record<Exclude<InstrumentId, 'piano'>, { strings: numbe
   guitar: { strings: 6, frets: 5, label: 'Guitare' },
   ukulele: { strings: 4, frets: 5, label: 'Ukulélé' },
   mandolin: { strings: 4, frets: 5, label: 'Mandoline' },
-  banjo: { strings: 5, frets: 5, label: 'Banjo' },
+  banjo: { strings: 4, frets: 5, label: 'Banjo' },
 };
 
 // Notes du piano (2 octaves)

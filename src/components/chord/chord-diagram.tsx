@@ -140,8 +140,11 @@ export function ChordDiagram({
 
       {/* Barré */}
       {barre && (() => {
-        const x1 = getSX(barre.fromString);
-        const x2 = getSX(barre.toString);
+        // Clamp aux cordes affichées (ex: banjo 4 cordes)
+        const clampedFrom = Math.min(barre.fromString, numStrings);
+        const clampedTo = Math.min(barre.toString, numStrings);
+        const x1 = getSX(clampedFrom);
+        const x2 = getSX(clampedTo);
         const cy = getFY(barre.fret);
         const pad = DOT_R;
         return (
@@ -157,7 +160,7 @@ export function ChordDiagram({
       })()}
 
       {/* Points de doigts */}
-      {fingers.filter(([, f]) => f > 0).map(([s, f, finger], i) => {
+      {fingers.filter(([s, f]) => f > 0 && s <= numStrings).map(([s, f, finger], i) => {
         const cx = getSX(s);
         const cy = getFY(f);
         const inBarre = barre
