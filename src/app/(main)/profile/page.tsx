@@ -6,7 +6,7 @@ import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
-import type { NotationPreference } from '@/types';
+import type { NotationPreference, InstrumentId } from '@/types';
 
 interface UserStats {
   sheetsCount: number;
@@ -23,6 +23,7 @@ export default function ProfilePage() {
   const [colorCoding, setColorCoding] = useState(false);
   const [inlineDiagram, setInlineDiagram] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [preferredInstrument, setPreferredInstrument] = useState<InstrumentId | undefined>(undefined);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteZone, setShowDeleteZone] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
@@ -39,6 +40,7 @@ export default function ProfilePage() {
       setColorCoding(user.chordColorCoding ?? false);
       setInlineDiagram(user.showInlineDiagram ?? false);
       setDarkMode(user.darkMode ?? false);
+      setPreferredInstrument(user.preferredInstrument);
     }
   }, [user]);
 
@@ -329,6 +331,38 @@ export default function ProfilePage() {
           >
             <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${inlineDiagram ? 'translate-x-5' : ''}`} />
           </button>
+        </div>
+      </div>
+
+      {/* Instrument de prédilection */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
+        <h2 className="text-base font-semibold text-[var(--ink)] mb-1">Instrument par défaut</h2>
+        <p className="text-xs text-[var(--ink-faint)] mb-4">
+          Instrument affiché par défaut en consultation, sur tous vos appareils
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {([
+            { id: 'guitar',   label: 'Guitare' },
+            { id: 'ukulele',  label: 'Ukulélé' },
+            { id: 'piano',    label: 'Piano' },
+            { id: 'mandolin', label: 'Mandoline' },
+            { id: 'banjo',    label: 'Banjo' },
+          ] as { id: InstrumentId; label: string }[]).map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={async () => {
+                setPreferredInstrument(id);
+                try { await updateUser({ preferredInstrument: id }); } catch { /* silent */ }
+              }}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                preferredInstrument === id
+                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                  : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)]'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 

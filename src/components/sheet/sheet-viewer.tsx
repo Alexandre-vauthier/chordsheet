@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import type { Sheet, CellSpan, InstrumentId } from '@/types';
 import { INSTRUMENTS, DIFFICULTY_LABELS } from '@/types';
@@ -27,6 +27,12 @@ function getSavedInstrument(fallback: InstrumentId): InstrumentId {
   return v && (INSTRUMENTS as readonly string[]).includes(v) ? v : fallback;
 }
 
+function hasLocalInstrument(): boolean {
+  if (typeof window === 'undefined') return false;
+  const v = localStorage.getItem(LS_KEY) as InstrumentId;
+  return !!(v && (INSTRUMENTS as readonly string[]).includes(v));
+}
+
 interface SheetViewerProps {
   sheet: Sheet;
 }
@@ -47,15 +53,25 @@ const spanToGridCols = (span: CellSpan) => Math.round(span / 0.25);
 export function SheetViewer({ sheet }: SheetViewerProps) {
   const translate = useChordNotation();
   const getColor = useChordColor();
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [showInlineDiagram, setShowInlineDiagram] = useState(() => user?.showInlineDiagram ?? false);
   const [instrumentId, setInstrumentId] = useState<InstrumentId>(
     () => getSavedInstrument(sheet.instrumentId || 'guitar')
   );
 
+  // Appliquer la préférence du profil si aucun choix local (premier appareil / nouveau navigateur)
+  useEffect(() => {
+    if (user?.preferredInstrument && !hasLocalInstrument()) {
+      setInstrumentId(user.preferredInstrument);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.preferredInstrument]);
+
   const handleInstrumentChange = (id: InstrumentId) => {
     setInstrumentId(id);
     localStorage.setItem(LS_KEY, id);
+    // Sauvegarder comme instrument de prédilection dans le profil
+    updateUser({ preferredInstrument: id }).catch(() => {/* silent */});
   };
 
   const [metronomeEnabled, setMetronomeEnabled] = useState(false);

@@ -12,7 +12,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, getDocs, deleteDoc, collection, query, where, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { getAuth, getDb } from './firebase';
-import type { User, UserRole, NotationPreference } from '@/types';
+import type { User, UserRole, NotationPreference, InstrumentId } from '@/types';
 import { isAdminEmail } from '@/types';
 
 interface AuthContextType {
@@ -24,7 +24,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
-  updateUser: (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean }) => Promise<void>;
+  updateUser: (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -171,7 +171,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // Mettre à jour le profil utilisateur
-  const updateUser = async (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean }) => {
+  const updateUser = async (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId }) => {
     const auth = getAuth();
     const db = getDb();
     const currentUser = auth.currentUser;
@@ -182,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Mettre à jour Firebase Auth (ne supporte que displayName et photoURL)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { notationPreference: _np, chordColorCoding: _cc, showInlineDiagram: _sid, darkMode: _dm, ...authUpdates } = updates;
+    const { notationPreference: _np, chordColorCoding: _cc, showInlineDiagram: _sid, darkMode: _dm, preferredInstrument: _pi, ...authUpdates } = updates;
     // Appliquer le thème immédiatement si changé
     if (updates.darkMode !== undefined) {
       document.documentElement.setAttribute('data-theme', updates.darkMode ? 'dark' : 'light');
