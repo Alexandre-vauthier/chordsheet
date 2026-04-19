@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { ChordCard } from '@/components/chord';
 import { ChordEditorModal } from '@/components/chord/chord-editor-modal';
 import type { StringChord, PianoChord, InstrumentId } from '@/types';
-import { getChordsByInstrument } from '@/lib/chord-data';
+import { getChordsByInstrument, getAllExtendedChords } from '@/lib/chord-data';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
 import { useAuth } from '@/lib/auth-context';
 
@@ -26,6 +26,15 @@ const CAT_LABELS: Record<CategoryGroup, string> = {
 
 // Ordre d'affichage des onglets
 const CAT_ORDER: CategoryGroup[] = ['major', 'minor', 'dom7', 'maj7', 'min7', 'dim', 'aug', 'sus', 'other'];
+
+// Tri chromatique
+const ROOT_SEMI: Record<string, number> = {
+  C: 0, Db: 1, D: 2, Eb: 3, E: 4, F: 5, 'F#': 6, G: 7, Ab: 8, A: 9, Bb: 10, B: 11,
+};
+function chromaticRootSemi(name: string): number {
+  const m = name.match(/^([A-G][b#]?)/);
+  return m ? (ROOT_SEMI[m[1]] ?? 99) : 99;
+}
 
 function getCategoryGroup(category: string): CategoryGroup {
   if (category === 'major') return 'major';
@@ -93,17 +102,20 @@ function ChordsPageContent() {
     return all.filter((c) => getCategoryGroup(c.category) === categoryGroup);
   }, [instrumentId, categoryGroup]);
 
+  // Tous les accords étendus algorithmiques pour l'instrument courant
+  const extendedChords = useMemo(() => getAllExtendedChords(instrumentId), [instrumentId]);
+
   // Vérifier quelles catégories ont des accords (pour masquer les onglets vides)
   const nonEmptyCategories = useMemo(() => {
     const all = getChordsByInstrument(instrumentId);
     const cats = new Set<CategoryGroup>();
     all.forEach((c) => cats.add(getCategoryGroup(c.category)));
-    // Ajouter les catégories des additions admin
+    extendedChords.forEach((c) => cats.add(getCategoryGroup(c.category)));
     additions
       .filter(a => a.instrumentId === instrumentId)
       .forEach(a => cats.add(getCategoryGroup(a.chord.category)));
     return cats;
-  }, [instrumentId, additions]);
+  }, [instrumentId, additions, extendedChords]);
 
   // Liste unifiée : statiques + ajouts admin, groupés par nom, triés alphabétiquement
   const unifiedGroups = useMemo(() => {
@@ -135,7 +147,18 @@ function ChordsPageContent() {
       }
     });
 
-    // 1. Accords statiques — override par nom exact uniquement (pas d'alias enharmonique)
+    // 1a. Accords étendus algorithmiques (filtrés par catégorie)
+    extendedChords
+      .filter(c => getCategoryGroup(c.category) === categoryGroup)
+      .forEach((chord) => {
+        const nameLower = chord.name.trim().toLowerCase();
+        if (!groups.has(nameLower)) {
+          groups.set(nameLower, { name: chord.name, variants: [], hasOverride: false, additionDocIds: [], additionStartIdx: 0 });
+        }
+        groups.get(nameLower)!.variants.push(chord);
+      });
+
+    // 1b. Accords statiques — override par nom exact uniquement (pas d'alias enharmonique)
     //    La recherche enharmonique est réservée à useChordVariants (inline dans les grilles)
     staticChords.forEach((chord) => {
       const key = libraryKey(chord.name, instrumentId);
@@ -174,11 +197,16 @@ function ChordsPageContent() {
         g.additionDocIds.push(a.docId);
       });
 
-    // 3. Trier alphabétiquement, exclure les groupes vides (sécurité)
+    // 3. Tri chromatique (C → Db → D → … → B), puis alphabétique sur le suffixe
     return Array.from(groups.values())
       .filter(g => g.variants.length > 0)
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [staticChords, instrumentId, overrides, additions, categoryGroup]);
+      .sort((a, b) => {
+        const sa = chromaticRootSemi(a.name);
+        const sb = chromaticRootSemi(b.name);
+        if (sa !== sb) return sa - sb;
+        return a.name.localeCompare(b.name);
+      });
+  }, [staticChords, instrumentId, overrides, additions, categoryGroup, extendedChords]);
 
   const openEditModal = (chord: StringChord | PianoChord, isOverride: boolean) => {
     setEditingChordName(chord.name);

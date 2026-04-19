@@ -1061,6 +1061,49 @@ export function findChordVariants(
   return [];
 }
 
+// ─── Génération bibliothèque complète (accords étendus algorithmiques) ────────
+
+// Suffixe canonique par clé de formule (pour nommage bibliothèque)
+const FORMULA_SUFFIX: Record<string, string> = {
+  'mMaj7': 'mMaj7', 'mMaj9': 'mMaj9',
+  'm7b5': 'm7b5',   'dim7': 'dim7',   'm7#5': 'm7#5',
+  'm7b9': 'm7b9',   'm7#9': 'm7#9',   'm7b13': 'm7b13', 'm7#13': 'm7#13',
+  'aug7': 'aug7',   'augMaj7': 'augMaj7',
+  '6': '6',         'm6': 'm6',
+  '9': '9',         'maj9': 'maj9',   'min9': 'm9',
+  'add9': 'add9',   'madd9': 'madd9',
+  '11': '11',       'maj11': 'maj11', 'min11': 'm11',
+  '13': '13',       'maj13': 'maj13', 'min13': 'm13',
+  '7b5': '7b5',     '7#5': '7#5',    '7b9': '7b9',     '7#9': '7#9',
+  '7#11': '7#11',   '7b13': '7b13',  '7#13': '7#13',
+  'sus2': 'sus2',   'sus4': 'sus4',
+};
+
+const CHROMATIC_ROOTS_GEN = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'] as const;
+
+/** Génère tous les accords étendus algorithmiques pour un instrument donné */
+export function getAllExtendedChords(instrumentId: InstrumentId): (StringChord | PianoChord)[] {
+  const results: (StringChord | PianoChord)[] = [];
+  for (const root of CHROMATIC_ROOTS_GEN) {
+    const rootSemi = NOTE_SEMITONES[root];
+    for (const [formulaKey, formula] of Object.entries(EXTENDED_FORMULAS)) {
+      const suffix = FORMULA_SUFFIX[formulaKey];
+      if (!suffix) continue;
+      const name = `${root}${suffix}`;
+      const full = `${root} ${formula.label}`;
+      const safeId = name.replace(/[^a-zA-Z0-9]/g, '_');
+      const id = `gen_${instrumentId}_${safeId}`;
+      if (instrumentId === 'piano') {
+        results.push(generatePianoVoicing(rootSemi, formula.intervals, id, name, full, formula.category));
+      } else {
+        const chord = generateStringVoicing(rootSemi, formula.intervals, instrumentId, id, name, full, formula.category);
+        if (chord) results.push(chord);
+      }
+    }
+  }
+  return results;
+}
+
 // ─── Traduction notation française ───────────────────────────────────────────
 
 const FR_NOTES: Record<string, string> = {
