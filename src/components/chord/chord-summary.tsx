@@ -179,26 +179,24 @@ export function ChordSummary({
 
           return (
             <div key={chordName} className="flex flex-col items-center">
-              {/* Navigation variantes */}
-              {hasMultipleVariants && (
-                <div className="flex items-center gap-2 mb-1">
-                  <button
-                    onClick={() => prevVariant(chordName, allVariants)}
-                    className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--line)] rounded"
-                  >
-                    ‹
-                  </button>
-                  <span className="text-[10px] text-[var(--ink-faint)]">
-                    {currentIndex + 1}/{allVariants.length}
-                  </span>
-                  <button
-                    onClick={() => nextVariant(chordName, allVariants)}
-                    className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--line)] rounded"
-                  >
-                    ›
-                  </button>
-                </div>
-              )}
+              {/* Navigation variantes — toujours rendu pour uniformiser la hauteur */}
+              <div className={`flex items-center gap-2 mb-1 ${hasMultipleVariants ? '' : 'invisible'}`}>
+                <button
+                  onClick={() => prevVariant(chordName, allVariants)}
+                  className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--line)] rounded"
+                >
+                  ‹
+                </button>
+                <span className="text-[10px] text-[var(--ink-faint)]">
+                  {currentIndex + 1}/{allVariants.length}
+                </span>
+                <button
+                  onClick={() => nextVariant(chordName, allVariants)}
+                  className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--line)] rounded"
+                >
+                  ›
+                </button>
+              </div>
 
               {/* Carte de l'accord */}
               <ChordCard

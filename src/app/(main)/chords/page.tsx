@@ -392,15 +392,13 @@ function UnifiedChordGroup({
 
   return (
     <div className="relative group flex flex-col items-center">
-      {hasMany && (
-        <div className="flex items-center gap-2 mb-1">
-          <button onClick={() => setIdx(i => (i === 0 ? group.variants.length - 1 : i - 1))}
-            className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--line)] rounded">‹</button>
-          <span className="text-[10px] text-[var(--ink-faint)]">{safeIdx + 1}/{group.variants.length}</span>
-          <button onClick={() => setIdx(i => (i + 1) % group.variants.length)}
-            className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--line)] rounded">›</button>
-        </div>
-      )}
+      <div className={`flex items-center gap-2 mb-1 ${hasMany ? '' : 'invisible'}`}>
+        <button onClick={() => setIdx(i => (i === 0 ? group.variants.length - 1 : i - 1))}
+          className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--line)] rounded">‹</button>
+        <span className="text-[10px] text-[var(--ink-faint)]">{safeIdx + 1}/{group.variants.length}</span>
+        <button onClick={() => setIdx(i => (i + 1) % group.variants.length)}
+          className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--line)] rounded">›</button>
+      </div>
       <ChordCard chord={current} instrumentId={instrumentId} size="sm" displayName={group.name} />
       {/* Badge "modifié" uniquement visible pour l'admin */}
       {isAdmin && isCurrentOverride && (
