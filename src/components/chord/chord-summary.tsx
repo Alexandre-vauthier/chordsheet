@@ -207,7 +207,7 @@ export function ChordSummary({
               />
 
               {/* Badge si c'est un accord personnalisé */}
-              {currentIndex === 0 && customChord && (
+              {customChord && currentChord?.id === customChord.id && (
                 <span className="text-[9px] text-[var(--accent)] mt-1">personnalisé</span>
               )}
 
