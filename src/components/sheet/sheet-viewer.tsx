@@ -99,6 +99,18 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
   const previewRef = useRef<HTMLAudioElement | null>(null);
   const [previewPlaying, setPreviewPlaying] = useState(false);
 
+  // Stopper l'extrait si l'utilisateur change d'onglet
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.hidden && previewRef.current) {
+        previewRef.current.pause();
+        setPreviewPlaying(false);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
+
   const togglePreview = () => {
     if (!previewUrl) return;
     if (previewPlaying) {
