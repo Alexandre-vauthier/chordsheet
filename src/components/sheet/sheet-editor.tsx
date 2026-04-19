@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import Link from 'next/link';
 import type { Sheet, Section, NewSheet, Difficulty, StringChord, PianoChord, CustomChord } from '@/types';
 import { createEmptySection, GENRES } from '@/types';
 import { SectionBlock } from './section-block';
@@ -638,6 +639,14 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             <Button variant="ghost" onClick={() => window.history.back()}>
               Annuler
             </Button>
+            {('id' in sheet) && (
+              <Link
+                href={`/sheet/${sheet.id}`}
+                className="px-4 py-2 rounded-lg border border-[var(--line)] text-sm font-medium text-[var(--ink-light)] hover:text-[var(--ink)] hover:border-[var(--ink-faint)] transition-colors"
+              >
+                Consulter
+              </Link>
+            )}
             <Button onClick={handleSave} isLoading={isSaving} disabled={!hasChanges && 'id' in sheet}>
               {('id' in sheet) ? 'Sauvegarder' : 'Créer la grille'}
             </Button>
