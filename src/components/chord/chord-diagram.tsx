@@ -20,7 +20,9 @@ export function ChordDiagram({
 
   const { startFret = 1 } = chord;
   const needsWideLabel = startFret >= 10;
-  const PAD_L = xs ? (needsWideLabel ? 18 : 12) : sm ? (needsWideLabel ? 30 : 20) : (needsWideLabel ? 42 : 30);
+  // En xs : PAD_L fixe pour que tous les diagrammes aient la même largeur
+  // et que l'étiquette de case de départ soit toujours visible
+  const PAD_L = xs ? 28 : sm ? (needsWideLabel ? 30 : 20) : (needsWideLabel ? 42 : 30);
   const PAD_R = xs ? 10 : sm ? 20 : 30;
   const TOP = xs ? 13 : sm ? 22 : 37;
   const BOTTOM = xs ? 68 : sm ? 132 : 217;
@@ -65,7 +67,7 @@ export function ChordDiagram({
           y={TOP + CELL_H / 2}
           textAnchor="end"
           dy="0.35em"
-          fontSize={sm ? 12 : 17}
+          fontSize={xs ? 9 : sm ? 12 : 17}
           fontWeight={600}
           fill="var(--ink, #111)"
         >
