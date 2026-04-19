@@ -17,6 +17,7 @@ import { useArtwork } from '@/lib/use-artwork';
 import { useAuth } from '@/lib/auth-context';
 import { INSTRUMENT_CONFIG } from '@/lib/chord-data';
 import { useChordVariants } from '@/lib/use-chord-variants';
+import { playChord } from '@/lib/chord-audio';
 import { transposeSections, transposeKey } from '@/lib/transpose';
 
 const LS_KEY = 'chordsheet_instrument';
@@ -562,6 +563,18 @@ function ViewerChordCell({
         <span className="absolute bottom-0.5 left-1 text-[8px] text-[var(--ink-faint)] font-mono print:hidden">
           {span === 0.25 ? '¼' : '½'}
         </span>
+      )}
+
+      {/* Bouton play au survol en mode inline */}
+      {hovered && showInlineDiagram && inlineDiagramChord && (
+        <button
+          className="print:hidden absolute top-1 right-1 z-20 w-5 h-5 flex items-center justify-center
+            rounded-full bg-[var(--nav-bg)] text-white text-[10px] opacity-80 hover:opacity-100 transition-opacity"
+          title="Écouter"
+          onClick={(e) => { e.stopPropagation(); playChord(inlineDiagramChord, instrumentId, capo); }}
+        >
+          ▶
+        </button>
       )}
 
       {/* Popup diagramme au survol — seulement si l'option inline est désactivée */}
