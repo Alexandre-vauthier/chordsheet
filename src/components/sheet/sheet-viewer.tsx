@@ -514,7 +514,12 @@ function ViewerChordCell({
   const inlineDiagramChord = showInlineDiagram && span >= 1
     ? (custom ?? libraryVariants[0] ?? null)
     : null;
+  const playableChord = custom ?? libraryVariants[0] ?? null;
   const numStrings = INSTRUMENT_CONFIG[instrumentId]?.strings ?? 6;
+
+  const handleClick = () => {
+    if (playableChord) playChord(playableChord, instrumentId, capo);
+  };
 
   return (
     <div
@@ -531,6 +536,7 @@ function ViewerChordCell({
       `}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
     >
       {/* Sweep animation */}
       {isActive && activeStep && (
@@ -563,18 +569,6 @@ function ViewerChordCell({
         <span className="absolute bottom-0.5 left-1 text-[8px] text-[var(--ink-faint)] font-mono print:hidden">
           {span === 0.25 ? '¼' : '½'}
         </span>
-      )}
-
-      {/* Bouton play au survol en mode inline */}
-      {hovered && showInlineDiagram && inlineDiagramChord && (
-        <button
-          className="print:hidden absolute top-1 right-1 z-20 w-5 h-5 flex items-center justify-center
-            rounded-full bg-[var(--nav-bg)] text-white text-[10px] opacity-80 hover:opacity-100 transition-opacity"
-          title="Écouter"
-          onClick={(e) => { e.stopPropagation(); playChord(inlineDiagramChord, instrumentId, capo); }}
-        >
-          ▶
-        </button>
       )}
 
       {/* Popup diagramme au survol — seulement si l'option inline est désactivée */}
