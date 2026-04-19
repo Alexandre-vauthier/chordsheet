@@ -10,7 +10,6 @@ import { playChord } from '@/lib/chord-audio';
 interface ChordCardProps {
   chord: StringChord | PianoChord;
   instrumentId: InstrumentId;
-  showPlayButton?: boolean;
   showName?: boolean;
   size?: 'xs' | 'sm' | 'md';
   onClick?: () => void;
@@ -21,7 +20,6 @@ interface ChordCardProps {
 export function ChordCard({
   chord,
   instrumentId,
-  showPlayButton = true,
   showName = true,
   size = 'sm',
   onClick,
@@ -30,7 +28,7 @@ export function ChordCard({
 }: ChordCardProps) {
   const instrument = INSTRUMENT_CONFIG[instrumentId];
 
-  const handlePlay = (e: React.MouseEvent) => {
+  const handleDiagramClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     playChord(chord, instrumentId);
   };
@@ -44,8 +42,12 @@ export function ChordCard({
       } ${onClick ? 'cursor-pointer' : ''}`}
       onClick={onClick}
     >
-      {/* Diagramme */}
-      <div className="flex justify-center">
+      {/* Diagramme — cliquable pour jouer */}
+      <div
+        className="group/play relative flex justify-center cursor-pointer"
+        onClick={handleDiagramClick}
+        title="Cliquer pour écouter"
+      >
         {isPianoChord(chord) ? (
           <PianoKeyboard chord={chord} />
         ) : (
@@ -55,6 +57,10 @@ export function ChordCard({
             numStrings={instrument.strings}
           />
         )}
+        {/* Overlay ▶ au survol du diagramme */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/play:opacity-100 transition-opacity rounded-lg bg-[var(--ink)]/10">
+          <span className="text-[var(--ink)] text-sm opacity-70">▶</span>
+        </div>
       </div>
 
       {/* Nom de l'accord */}
@@ -63,16 +69,6 @@ export function ChordCard({
           <div className="font-medium text-sm text-[var(--ink)]">{displayName ?? chord.name}</div>
           <div className="text-xs text-[var(--ink-faint)]">{chord.full}</div>
         </div>
-      )}
-
-      {/* Bouton play */}
-      {showPlayButton && (
-        <button
-          onClick={handlePlay}
-          className={`w-full text-xs font-semibold rounded-lg bg-[var(--nav-bg)] text-white hover:bg-[var(--ink-light)] transition-colors ${size === 'xs' ? 'py-0.5' : 'py-1.5'}`}
-        >
-          ▶
-        </button>
       )}
     </div>
   );

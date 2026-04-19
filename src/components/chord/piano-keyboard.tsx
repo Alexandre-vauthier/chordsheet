@@ -38,7 +38,7 @@ export function PianoKeyboard({ chord, onClick }: PianoKeyboardProps) {
       width={W}
       height={H}
       viewBox={`0 0 ${W} ${H}`}
-      style={{ display: 'block', cursor: onClick ? 'pointer' : 'default' }}
+      style={{ display: 'block', cursor: onClick ? 'pointer' : 'inherit' }}
       onClick={onClick}
     >
       {/* Fond blanc + bordure */}

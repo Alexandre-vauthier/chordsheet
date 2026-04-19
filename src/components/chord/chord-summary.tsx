@@ -141,6 +141,10 @@ export function ChordSummary({
             allVariants.unshift(customChord);
           }
 
+          // Un accord est "vraiment custom" seulement s'il a été créé via l'éditeur (id commence par "custom-")
+          // Les variantes de bibliothèque sauvegardées comme préférence ne sont pas des accords custom
+          const isTrulyCustom = !!customChord && customChord.id.startsWith('custom-');
+
           // Si pas encore navigué, initialiser sur la position du customChord sauvegardé
           const currentIndex = variantIndices[chordName] !== undefined
             ? variantIndices[chordName]
@@ -206,8 +210,8 @@ export function ChordSummary({
                 displayName={translate(lookupName)}
               />
 
-              {/* Badge si c'est un accord personnalisé */}
-              {customChord && currentChord?.id === customChord.id && (
+              {/* Badge si c'est un accord vraiment personnalisé (créé via l'éditeur) */}
+              {isTrulyCustom && currentChord?.id === customChord!.id && (
                 <span className="text-[9px] text-[var(--accent)] mt-1">personnalisé</span>
               )}
 
@@ -222,7 +226,7 @@ export function ChordSummary({
                       Modifier
                     </button>
                   )}
-                  {onDeleteCustomChord && customChord && (
+                  {onDeleteCustomChord && isTrulyCustom && (
                     <button
                       onClick={() => onDeleteCustomChord(chordName)}
                       className="text-xs text-[var(--ink-faint)] hover:text-red-500 hover:underline"

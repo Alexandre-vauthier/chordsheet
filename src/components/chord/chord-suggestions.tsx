@@ -13,7 +13,7 @@ interface ChordSuggestionsProps {
   chordName: string;
   instrumentId: InstrumentId;
   customChord?: StringChord | PianoChord | null;
-  onSelectVariant?: (chord: StringChord | PianoChord) => void;
+
   position?: 'top' | 'bottom';
   capo?: number;
 }
@@ -22,7 +22,6 @@ export function ChordSuggestions({
   chordName,
   instrumentId,
   customChord,
-  onSelectVariant,
   position = 'bottom',
   capo = 0,
 }: ChordSuggestionsProps) {
@@ -58,13 +57,9 @@ export function ChordSuggestions({
     setCurrentIndex((prev) => (prev === variants.length - 1 ? 0 : prev + 1));
   };
 
-  const handlePlay = (e: React.MouseEvent) => {
+  const handleDiagramClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     playChord(currentChord, instrumentId, capo);
-  };
-
-  const handleSelect = () => {
-    onSelectVariant?.(currentChord);
   };
 
   return (
@@ -73,11 +68,11 @@ export function ChordSuggestions({
       className={`absolute ${position === 'top' ? 'bottom-full mb-2' : 'top-full mt-2'} left-1/2 -translate-x-1/2 z-50`}
     >
       <div className="bg-[var(--cell-bg)] rounded-xl shadow-lg border border-[var(--line)] p-3 min-w-[140px]">
-        {/* Diagramme */}
+        {/* Diagramme — cliquable pour jouer */}
         <div
-          className="flex justify-center cursor-pointer"
-          onClick={handleSelect}
-          title="Cliquer pour sélectionner"
+          className="group/play relative flex justify-center cursor-pointer"
+          onClick={handleDiagramClick}
+          title="Cliquer pour écouter"
         >
           {isPianoChord(currentChord) ? (
             <PianoKeyboard chord={currentChord} />
@@ -88,6 +83,10 @@ export function ChordSuggestions({
               numStrings={instrument.strings}
             />
           )}
+          {/* Overlay ▶ au survol */}
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/play:opacity-100 transition-opacity rounded-lg bg-[var(--ink)]/10">
+            <span className="text-[var(--ink)] text-sm opacity-70">▶</span>
+          </div>
         </div>
 
         {/* Nom de l'accord */}
@@ -102,38 +101,26 @@ export function ChordSuggestions({
           )}
         </div>
 
-        {/* Navigation et actions */}
-        <div className="flex items-center justify-center gap-2 mt-3">
-          {/* Navigation entre variantes */}
-          {hasMultipleVariants && (
-            <>
-              <button
-                onClick={handlePrev}
-                className="w-7 h-7 flex items-center justify-center rounded-full bg-[var(--paper)] hover:bg-[var(--line)] transition-colors text-[var(--ink-light)]"
-              >
-                ‹
-              </button>
-              <span className="text-xs text-[var(--ink-faint)]">
-                {currentIndex + 1}/{variants.length}
-              </span>
-              <button
-                onClick={handleNext}
-                className="w-7 h-7 flex items-center justify-center rounded-full bg-[var(--paper)] hover:bg-[var(--line)] transition-colors text-[var(--ink-light)]"
-              >
-                ›
-              </button>
-            </>
-          )}
-
-          {/* Bouton play */}
-          <button
-            onClick={handlePlay}
-            className="w-7 h-7 flex items-center justify-center rounded-full bg-[var(--nav-bg)] text-white hover:bg-[var(--ink-light)] transition-colors text-sm"
-            title="Écouter l'accord"
-          >
-            ▶
-          </button>
-        </div>
+        {/* Navigation entre variantes */}
+        {hasMultipleVariants && (
+          <div className="flex items-center justify-center gap-2 mt-3">
+            <button
+              onClick={handlePrev}
+              className="w-7 h-7 flex items-center justify-center rounded-full bg-[var(--paper)] hover:bg-[var(--line)] transition-colors text-[var(--ink-light)]"
+            >
+              ‹
+            </button>
+            <span className="text-xs text-[var(--ink-faint)]">
+              {currentIndex + 1}/{variants.length}
+            </span>
+            <button
+              onClick={handleNext}
+              className="w-7 h-7 flex items-center justify-center rounded-full bg-[var(--paper)] hover:bg-[var(--line)] transition-colors text-[var(--ink-light)]"
+            >
+              ›
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Flèche pointant vers la cellule */}

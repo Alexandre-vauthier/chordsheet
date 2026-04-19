@@ -537,10 +537,6 @@ function ViewerChordCell({
     : null;
   const numStrings = INSTRUMENT_CONFIG[instrumentId]?.strings ?? 6;
 
-  const handleClick = () => {
-    if (playableChord) playChord(playableChord, instrumentId, capo);
-  };
-
   return (
     <div
       style={{
@@ -549,14 +545,13 @@ function ViewerChordCell({
       }}
       className={`
         relative rounded-lg border-[1.5px] min-h-12 flex items-center justify-center
-        bg-[var(--cell-bg)] border-[#8a7a6a] cursor-pointer
+        bg-[var(--cell-bg)] border-[#8a7a6a]
         ${span <= 0.5 ? 'bg-[#f7f3ec] border-[var(--ink-faint)]' : ''}
         ${isActive ? 'border-[var(--accent)]' : ''}
         print:min-h-10 print:border
       `}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onClick={handleClick}
     >
       {/* Sweep animation */}
       {isActive && activeStep && (
@@ -573,14 +568,24 @@ function ViewerChordCell({
         <span className={`font-mono font-medium text-[var(--ink)] ${span <= 0.5 ? 'text-sm' : 'text-base'} print:text-sm`}>
           {translate(lookupChord)}
         </span>
-        {inlineDiagramChord && !isPianoChord(inlineDiagramChord) && (
-          <div className={showInlineDiagram ? '' : 'print:hidden'}>
-            <ChordDiagram chord={inlineDiagramChord} size="xs" numStrings={numStrings} />
-          </div>
-        )}
-        {inlineDiagramChord && isPianoChord(inlineDiagramChord) && (
-          <div className={showInlineDiagram ? '' : 'print:hidden'}>
-            <PianoKeyboard chord={inlineDiagramChord} />
+        {/* Diagramme inline — cliquable pour jouer, avec overlay ▶ au survol */}
+        {inlineDiagramChord && (
+          <div
+            className={`group/play relative cursor-pointer ${showInlineDiagram ? '' : 'print:hidden'}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (playableChord) playChord(playableChord, instrumentId, capo);
+            }}
+            title="Cliquer pour écouter"
+          >
+            {!isPianoChord(inlineDiagramChord) ? (
+              <ChordDiagram chord={inlineDiagramChord} size="xs" numStrings={numStrings} />
+            ) : (
+              <PianoKeyboard chord={inlineDiagramChord} />
+            )}
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/play:opacity-100 transition-opacity rounded bg-[var(--ink)]/10 print:hidden">
+              <span className="text-[var(--ink)] text-xs opacity-70">▶</span>
+            </div>
           </div>
         )}
       </div>
