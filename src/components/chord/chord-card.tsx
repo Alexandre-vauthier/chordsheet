@@ -12,7 +12,7 @@ interface ChordCardProps {
   instrumentId: InstrumentId;
   showPlayButton?: boolean;
   showName?: boolean;
-  size?: 'sm' | 'md';
+  size?: 'xs' | 'sm' | 'md';
   onClick?: () => void;
   selected?: boolean;
   displayName?: string; // override chord.name (pour les alias enharmoniques)
@@ -37,7 +37,7 @@ export function ChordCard({
 
   return (
     <div
-      className={`flex flex-col items-center gap-2 p-3 rounded-xl border transition-all ${
+      className={`flex flex-col items-center gap-1 ${size === 'xs' ? 'p-1.5' : 'p-3 gap-2'} rounded-xl border transition-all ${
         selected
           ? 'border-[var(--accent)] bg-[var(--accent)]/5'
           : 'border-[var(--line)] bg-[var(--cell-bg)] hover:border-[var(--ink-faint)]'
@@ -69,7 +69,7 @@ export function ChordCard({
       {showPlayButton && (
         <button
           onClick={handlePlay}
-          className="w-full py-1.5 text-xs font-semibold rounded-lg bg-[var(--nav-bg)] text-white hover:bg-[var(--ink-light)] transition-colors"
+          className={`w-full text-xs font-semibold rounded-lg bg-[var(--nav-bg)] text-white hover:bg-[var(--ink-light)] transition-colors ${size === 'xs' ? 'py-0.5' : 'py-1.5'}`}
         >
           ▶
         </button>

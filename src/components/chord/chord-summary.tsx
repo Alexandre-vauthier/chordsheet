@@ -20,6 +20,7 @@ interface ChordSummaryProps {
   editable?: boolean;
   onVariantChange?: (chordName: string, chord: StringChord | PianoChord) => void;
   capo?: number;
+  compact?: boolean;
 }
 
 /**
@@ -39,6 +40,7 @@ export function ChordSummary({
   editable = false,
   onVariantChange,
   capo = 0,
+  compact = false,
 }: ChordSummaryProps) {
   const translate = useChordNotation();
   const { overrides, additions } = useLibraryChords();
@@ -93,7 +95,7 @@ export function ChordSummary({
           Accords utilisés ({uniqueChords.length})
         </h3>
       )}
-      <div className="flex flex-wrap gap-4">
+      <div className={`flex flex-wrap ${compact ? 'gap-2' : 'gap-4'}`}>
         {uniqueChords.map((chordName) => {
           // Pour le piano, le capo décale la hauteur → chercher l'accord transposé
           const lookupName = instrumentId === 'piano' && capo > 0
@@ -202,7 +204,7 @@ export function ChordSummary({
               <ChordCard
                 chord={currentChord}
                 instrumentId={instrumentId}
-                size="sm"
+                size={compact && instrumentId !== 'piano' ? 'xs' : 'sm'}
                 displayName={translate(lookupName)}
               />
 
