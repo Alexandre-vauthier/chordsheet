@@ -440,6 +440,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                             activeStep={activeStep}
                             instrumentId={instrumentId}
                             customChords={sheet.customChords as Record<string, CustomChord> | undefined}
+                            selectedChords={selectedChords}
                             translate={translate}
                             getColor={getColor}
                             showInlineDiagram={showInlineDiagram}
@@ -491,6 +492,7 @@ function ViewerChordCell({
   activeStep,
   instrumentId,
   customChords,
+  selectedChords,
   translate,
   getColor,
   showInlineDiagram,
@@ -502,6 +504,7 @@ function ViewerChordCell({
   activeStep: PlayStep | null;
   instrumentId: InstrumentId;
   customChords?: Record<string, CustomChord>;
+  selectedChords?: Record<string, StringChord | PianoChord>;
   translate: (name: string) => string;
   getColor: (chord: string) => { border: string; bg: string } | null;
   showInlineDiagram: boolean;
@@ -524,11 +527,14 @@ function ViewerChordCell({
   };
   const color = getColor(chord);
 
-  // Résoudre le diagramme inline (accord custom en priorité, sinon première variante library)
+  // selectedChords reflète la variante naviguée dans ChordSummary (priorité sur customChords)
+  const selected = selectedChords?.[chord];
+  const playableChord = selected ?? custom ?? libraryVariants[0] ?? null;
+
+  // Résoudre le diagramme inline (variante sélectionnée > custom > première variante library)
   const inlineDiagramChord = showInlineDiagram && span >= 1
-    ? (custom ?? libraryVariants[0] ?? null)
+    ? (selected ?? custom ?? libraryVariants[0] ?? null)
     : null;
-  const playableChord = custom ?? libraryVariants[0] ?? null;
   const numStrings = INSTRUMENT_CONFIG[instrumentId]?.strings ?? 6;
 
   const handleClick = () => {
