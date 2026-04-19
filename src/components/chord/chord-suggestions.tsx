@@ -94,11 +94,6 @@ export function ChordSuggestions({
           <span className="text-sm font-medium text-[var(--ink)]">
             {chordName}
           </span>
-          {currentChord.full && (
-            <span className="text-xs text-[var(--ink-faint)] block">
-              {currentChord.full}
-            </span>
-          )}
         </div>
 
         {/* Navigation entre variantes */}

@@ -210,12 +210,7 @@ export function ChordSummary({
                 displayName={translate(lookupName)}
               />
 
-              {/* Badge si c'est un accord vraiment personnalisé (créé via l'éditeur) */}
-              {isTrulyCustom && currentChord?.id === customChord!.id && (
-                <span className="text-[9px] text-[var(--accent)] mt-1">personnalisé</span>
-              )}
-
-              {/* Boutons modifier / supprimer */}
+{/* Boutons modifier / supprimer */}
               {editable && (
                 <div className="flex gap-2 mt-2">
                   {onEditChord && (
