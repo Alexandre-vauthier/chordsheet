@@ -23,7 +23,7 @@ export function ChordDiagram({
   // En xs : PAD_L fixe pour que tous les diagrammes aient la même largeur
   // et que l'étiquette de case de départ soit toujours visible
   const PAD_L = xs ? 28 : sm ? (needsWideLabel ? 30 : 20) : (needsWideLabel ? 42 : 30);
-  const PAD_R = xs ? 10 : sm ? 20 : 30;
+  const PAD_R = PAD_L;
   const TOP = xs ? 13 : sm ? 22 : 37;
   const BOTTOM = xs ? 68 : sm ? 132 : 217;
   const CELL_W = xs ? 10 : sm ? 18 : 28;
