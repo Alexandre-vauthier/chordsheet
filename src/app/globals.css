@@ -80,6 +80,21 @@ body {
 
 /* Print styles */
 @media print {
+  /* Force light mode variables regardless of theme */
+  :root, [data-theme="dark"] {
+    --cream: #f5f0e8;
+    --ink: #1a1410;
+    --ink-light: #5a4a3a;
+    --ink-faint: #c4b89a;
+    --accent: #c84b2f;
+    --accent-soft: #f0e0da;
+    --line: #d4c9b0;
+    --cell-bg: #faf7f2;
+    --cell-hover: #fff8ed;
+    --cell-active: #fff3e0;
+    color-scheme: light;
+  }
+
   body {
     background: white !important;
     -webkit-print-color-adjust: exact;
