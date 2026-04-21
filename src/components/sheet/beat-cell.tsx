@@ -145,8 +145,9 @@ export function BeatCell({
         data-cell-id={cellId}
         onClick={handleClick}
         style={{
-          ...(color && !isEditing ? { borderLeftColor: color.border, borderLeftWidth: '5px' } : {}),
+          ...(isActive && color ? { borderColor: color.border } : {}),
           ...(isActive && !color ? { borderColor: 'var(--accent)' } : {}),
+          ...(color && !isEditing ? { borderLeftColor: color.border, borderLeftWidth: '5px' } : {}),
         }}
         className={`
           relative rounded-lg border-[1.5px] min-h-14 flex items-center justify-center cursor-pointer
