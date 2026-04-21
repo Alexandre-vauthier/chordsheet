@@ -557,15 +557,17 @@ function ViewerChordCell({
     <div
       style={{
         gridColumn: `span ${spanToGridCols(span)}`,
-        ...(isActive && color ? { borderColor: color.border } : {}),
-        ...(isActive && !color ? { borderColor: 'var(--accent)' } : {}),
-        ...(color ? { borderLeftColor: color.border, borderLeftWidth: '5px' } : {}),
+        ...(isActive
+          ? { borderColor: 'var(--accent)' }
+          : color
+            ? { borderColor: color.border, borderLeftWidth: '5px' }
+            : {}),
       }}
       className={`
         relative rounded-lg border-[1.5px] min-h-12 flex items-center justify-center
         bg-[var(--cell-bg)] border-[#8a7a6a]
         ${span <= 0.5 ? 'bg-[#f7f3ec] border-[var(--ink-faint)]' : ''}
-        ${isActive && !color ? 'border-[var(--accent)]' : ''}
+        ${isActive ? 'border-[var(--accent)]' : ''}
         print:min-h-10 print:border
       `}
       onMouseEnter={handleMouseEnter}
@@ -576,7 +578,7 @@ function ViewerChordCell({
         <div
           className="absolute inset-0 origin-left pointer-events-none"
           style={{
-            background: color ? color.border.substring(0, 7) + '21' : 'rgba(200,75,47,0.13)',
+            background: 'rgba(200,75,47,0.13)',
             animation: `beatSweep ${activeStep.durationMs}ms linear forwards`,
           }}
         />
