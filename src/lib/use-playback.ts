@@ -182,8 +182,8 @@ export function usePlayback({ sections, tempo, instrumentId, customChords, selec
   }, [sections, playSequence]);
 
   const playSection = useCallback((sectionId: string) => {
-    const section = sections.find(s => s.id === sectionId);
-    if (section) playSequence([section]);
+    const idx = sections.findIndex(s => s.id === sectionId);
+    if (idx !== -1) playSequence(sections.slice(idx));
   }, [sections, playSequence]);
 
   const togglePlay = useCallback(() => {
