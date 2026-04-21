@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { collection, query, where, getDocs, limit, deleteDoc, doc } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
@@ -17,10 +17,11 @@ type SortOption = 'recent' | 'rated' | 'viewed';
 export default function ExplorePage() {
   const { isAdmin } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [sheets, setSheets] = useState<Sheet[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') ?? '');
 
   // Filtres
   const [sortBy, setSortBy] = useState<SortOption>('recent');

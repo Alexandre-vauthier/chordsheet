@@ -1,15 +1,26 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 
 export function Navbar() {
   const { user, loading, isAdmin } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchValue.trim();
+    router.push(q ? `/explore?q=${encodeURIComponent(q)}` : '/explore');
+    setSearchValue('');
+    searchInputRef.current?.blur();
+  };
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
@@ -48,6 +59,21 @@ export function Navbar() {
                     {label}
                   </Link>
                 ))}
+
+                {/* Barre de recherche desktop */}
+                <form onSubmit={handleSearch} className="relative">
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchValue}
+                    onChange={(e) => setSearchValue(e.target.value)}
+                    placeholder="Rechercher…"
+                    className="w-44 pl-8 pr-3 py-1.5 rounded-lg text-sm bg-white/10 text-[var(--nav-text)] placeholder:text-[var(--nav-text)]/50 border border-white/15 outline-none focus:bg-white/15 focus:border-white/30 transition-all"
+                  />
+                  <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--nav-text)]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                  </svg>
+                </form>
                 <Link
                   href="/sheet/new"
                   className="flex items-center gap-1 px-3 py-1.5 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm rounded-lg font-medium transition-colors"
@@ -124,6 +150,19 @@ export function Navbar() {
       {mobileMenuOpen && user && (
         <div className="sm:hidden bg-[var(--nav-bg)] border-t border-white/10">
           <div className="px-4 py-3 space-y-1">
+            {/* Recherche mobile */}
+            <form onSubmit={handleSearch} className="relative mb-2">
+              <input
+                type="text"
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                placeholder="Rechercher…"
+                className="w-full pl-8 pr-3 py-2 rounded-lg text-sm bg-white/10 text-[var(--nav-text)] placeholder:text-[var(--nav-text)]/50 border border-white/15 outline-none focus:bg-white/15 focus:border-white/30 transition-all"
+              />
+              <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--nav-text)]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+              </svg>
+            </form>
             {[
               { href: '/dashboard', label: 'Mon book' },
               { href: '/sets', label: 'Mes sets' },
