@@ -47,9 +47,26 @@ export function BeatCell({
 
   const FORBIDDEN_CHARS = /[-*]/;
 
+  // Formatage automatique : 1ère lettre maj, après "/" la lettre suivante maj, reste en min
+  const formatChord = (raw: string): string => {
+    let result = '';
+    let nextUpper = true; // la 1ère lettre est toujours maj
+    for (const ch of raw) {
+      if (ch === '/') {
+        result += ch;
+        nextUpper = true; // note de basse après "/" = maj
+      } else if (/[a-zA-Z]/.test(ch)) {
+        result += nextUpper ? ch.toUpperCase() : ch.toLowerCase();
+        nextUpper = false;
+      } else {
+        result += ch; // chiffres, #, espace, etc. — inchangés
+      }
+    }
+    return result;
+  };
+
   const handleChordInput = (raw: string) => {
-    // Majuscule sur la première lettre
-    const normalized = raw.length > 0 ? raw.charAt(0).toUpperCase() + raw.slice(1) : raw;
+    const normalized = raw.length > 0 ? formatChord(raw) : raw;
     if (FORBIDDEN_CHARS.test(normalized)) {
       setChordError(true);
       setValue(normalized);
