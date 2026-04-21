@@ -40,12 +40,13 @@ export function computeDifficulty(sections: Section[]): Difficulty {
 
   const unique = seen.size;
 
-  // Avancé : ≥ 10 accords uniques, OU au moins 1 accord avancé
-  if (unique >= 10 || advancedCount >= 1) return 3;
+  // Avancé : au moins 1 accord avancé (dim, aug, m7b5, extensions…)
+  if (advancedCount >= 1) return 3;
 
-  // Intermédiaire : 6–9 accords uniques, OU au moins 2 accords intermédiaires
-  if (unique >= 6 || intermediateCount >= 2) return 2;
+  // Intermédiaire : au moins 1 accord intermédiaire (7e, maj7, sus, add…)
+  //                 OU vraiment beaucoup d'accords basiques (≥ 10)
+  if (intermediateCount >= 1 || unique >= 10) return 2;
 
-  // Facile
+  // Facile : que des accords basiques, peu importe le nombre
   return 1;
 }
