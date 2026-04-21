@@ -204,10 +204,14 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                   type="number"
                   min={40}
                   max={300}
-                  value={parseTempo(localTempo)}
-                  onChange={(e) => {
+                  value={localTempo}
+                  onChange={(e) => setLocalTempo(e.target.value)}
+                  onBlur={(e) => {
                     const v = parseInt(e.target.value);
-                    if (v >= 40 && v <= 300) setLocalTempo(String(v));
+                    setLocalTempo(String(v >= 40 && v <= 300 ? v : parseTempo(sheet.tempo)));
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
                   }}
                   className="w-10 bg-transparent border-none outline-none text-sm font-medium text-center
                     [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
