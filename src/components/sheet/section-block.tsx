@@ -8,6 +8,41 @@ import { CoachMark } from './coach-mark';
 
 const EXAMPLE_CHORDS = ['Am', 'C', 'F', 'G'];
 
+// Composant de saisie de répétition avec boutons ‹/› custom
+function RepeatInput({ value, onChange, size = 'md' }: {
+  value: number;
+  onChange: (v: number) => void;
+  size?: 'sm' | 'md';
+}) {
+  const sm = size === 'sm';
+  const btnCls = sm
+    ? 'w-4 h-4 text-[9px]'
+    : 'w-5 h-5 text-xs';
+  const inputCls = sm
+    ? 'w-6 text-[10px]'
+    : 'w-8 text-xs';
+  return (
+    <div className="flex items-center gap-0.5">
+      <button
+        onClick={() => onChange(Math.max(1, value - 1))}
+        className={`${btnCls} flex items-center justify-center rounded bg-[var(--accent)]/80 hover:bg-[var(--accent)] text-white transition-colors leading-none`}
+      >‹</button>
+      <input
+        type="number"
+        min={1}
+        value={value}
+        onChange={(e) => onChange(Math.max(1, parseInt(e.target.value) || 1))}
+        className={`${inputCls} text-center font-semibold text-white bg-[var(--accent)] border-none rounded px-0.5 py-0.5 outline-none
+          [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none`}
+      />
+      <button
+        onClick={() => onChange(value + 1)}
+        className={`${btnCls} flex items-center justify-center rounded bg-[var(--accent)]/80 hover:bg-[var(--accent)] text-white transition-colors leading-none`}
+      >›</button>
+    </div>
+  );
+}
+
 interface SectionBlockProps {
   section: Section;
   instrumentId: InstrumentId;
@@ -102,7 +137,7 @@ export function SectionBlock({
 
   const setRowRepeat = (rowIndex: number, value: number) => {
     const repeats = [...(section.rowRepeats || section.rows.map(() => 1))];
-    repeats[rowIndex] = Math.max(1, Math.min(9, value));
+    repeats[rowIndex] = Math.max(1, value);
     onUpdate({ rowRepeats: repeats });
   };
 
@@ -149,15 +184,7 @@ export function SectionBlock({
 
         <span className="flex items-center gap-1">
           <span className="text-xs text-[var(--ink-faint)]">×</span>
-          <input
-            type="number"
-            min={1}
-            max={9}
-            value={section.repeat}
-            onChange={(e) => onUpdate({ repeat: parseInt(e.target.value) || 1 })}
-            className="font-mono text-xs font-semibold text-white bg-[var(--accent)]
-              border-none rounded px-1.5 py-0.5 w-9 text-center outline-none"
-          />
+          <RepeatInput value={section.repeat} onChange={(v) => onUpdate({ repeat: v })} size="md" />
         </span>
 
         <div className={`flex gap-1.5 ml-auto transition-opacity duration-150 ${headerControlsVisible ? 'opacity-100' : 'opacity-0'}`}>
@@ -226,15 +253,10 @@ export function SectionBlock({
             {/* Badge répétition */}
             <div className={`absolute -right-10 top-1/2 -translate-y-1/2 flex items-center gap-0.5 transition-opacity ${(section.rowRepeats?.[rowIndex] ?? 1) > 1 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
               <span className="text-[10px] text-[var(--ink-faint)]">×</span>
-              <input
-                type="number"
-                min={1}
+              <RepeatInput
                 value={section.rowRepeats?.[rowIndex] ?? 1}
-                onChange={(e) => setRowRepeat(rowIndex, parseInt(e.target.value) || 1)}
-                className="w-7 text-center text-[10px] font-semibold text-white bg-[var(--accent)]
-                  border-none rounded px-0.5 py-0.5 outline-none cursor-pointer
-                  [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                title="Répétitions de cette mesure"
+                onChange={(v) => setRowRepeat(rowIndex, v)}
+                size="sm"
               />
             </div>
             {section.rows.length > 1 && (
