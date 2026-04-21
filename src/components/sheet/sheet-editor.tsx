@@ -502,15 +502,6 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             </select>
           </div>
 
-          {/* Difficulté — calculée automatiquement */}
-          {sheet.difficulty && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-[var(--ink-light)]">Difficulté :</span>
-              <span className="text-sm font-medium text-[var(--ink)]">
-                {sheet.difficulty === 1 ? 'Facile' : sheet.difficulty === 2 ? 'Intermédiaire' : 'Avancé'}
-              </span>
-            </div>
-          )}
         </div>
 
         {/* Genres */}
