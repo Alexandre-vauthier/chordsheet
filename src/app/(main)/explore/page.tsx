@@ -30,8 +30,13 @@ export default function ExplorePage() {
 
   // Filtres
   const [sortBy, setSortBy] = useState<SortOption>('recent');
-  const [selectedGenre, setSelectedGenre] = useState<string>('');
+  const [selectedGenre, setSelectedGenre] = useState<string>(() => searchParams.get('genre') ?? '');
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | null>(null);
+
+  // Mettre à jour le genre si le param URL change
+  useEffect(() => {
+    setSelectedGenre(searchParams.get('genre') ?? '');
+  }, [searchParams]);
 
   // Sauvegarder le scroll à chaque mouvement
   useEffect(() => {

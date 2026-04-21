@@ -173,7 +173,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
             )}
           </div>
 
-          {/* Ligne 1 : Métronome + Tempo + Play */}
+          {/* Colonne droite : contrôles + métadonnées compactes */}
           <div className="print:hidden flex-shrink-0 flex flex-col items-end gap-2">
             <div className="flex items-center gap-2">
               {/* Toggle métronome */}
@@ -247,88 +247,88 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                 )}
               </button>
             </div>
+
+            {/* Tonalité + métadonnées compactes sous les boutons */}
+            <div className="flex flex-wrap items-center justify-end gap-1.5">
+              {/* Tonalité + transpose */}
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setTranspose(t => t - 1)}
+                  className="w-5 h-5 flex items-center justify-center rounded border border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors text-xs font-medium"
+                >−</button>
+                <span className="flex items-center gap-1 px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded text-xs min-w-[3rem] justify-center">
+                  <span className="text-xs">♯♭</span>
+                  {displayKey || '—'}
+                  {transpose !== 0 && (
+                    <span className="text-[9px] opacity-70">{transpose > 0 ? `+${transpose}` : transpose}</span>
+                  )}
+                </span>
+                <button
+                  onClick={() => setTranspose(t => t + 1)}
+                  className="w-5 h-5 flex items-center justify-center rounded border border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors text-xs font-medium"
+                >+</button>
+                {transpose !== 0 && (
+                  <button
+                    onClick={() => setTranspose(0)}
+                    className="text-[9px] text-[var(--ink-faint)] hover:text-[var(--accent)] transition-colors"
+                    title="Réinitialiser"
+                  >↺</button>
+                )}
+              </div>
+
+              {sheet.capo ? (
+                <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">
+                  Capo {sheet.capo}
+                </span>
+              ) : null}
+              {sheet.beatsPerMeasure === 3 && (
+                <span className="px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded text-xs">
+                  Ternaire
+                </span>
+              )}
+              {sheet.difficulty && DIFFICULTY_LABELS[sheet.difficulty] && (
+                <span className="px-1.5 py-0.5 bg-[var(--cell-bg)] text-[var(--ink-light)] rounded text-xs">
+                  {DIFFICULTY_LABELS[sheet.difficulty]}
+                </span>
+              )}
+              {sheet.referenceUrl && (
+                <a
+                  href={sheet.referenceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-1.5 py-0.5 bg-red-50 text-red-700 rounded text-xs hover:bg-red-100 transition-colors"
+                >
+                  {getRefLabel(sheet.referenceUrl)}
+                </a>
+              )}
+
+              {/* Genres — cliquables vers Explorer filtré */}
+              {sheet.genres?.map((genre) => (
+                <Link
+                  key={genre}
+                  href={`/explore?genre=${encodeURIComponent(genre)}`}
+                  className="px-2 py-0.5 bg-[var(--line)] text-[var(--ink-light)] rounded-full text-xs font-medium hover:bg-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
+                >
+                  {genre}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Ligne 2 : Tonalité + Capo + autres métadonnées */}
-        <div className="flex flex-wrap items-center gap-3 mt-3">
-          {/* Tonalité + transpose */}
-          <div className="flex items-center gap-1 print:hidden">
-            <button
-              onClick={() => setTranspose(t => t - 1)}
-              className="w-6 h-6 flex items-center justify-center rounded border border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors text-sm font-medium"
-            >−</button>
-            <span className="flex items-center gap-1.5 px-2 py-1 bg-purple-50 text-purple-700 rounded text-sm min-w-[3.5rem] justify-center">
-              <span className="text-sm">♯♭</span>
-              {displayKey || '—'}
-              {transpose !== 0 && (
-                <span className="text-[10px] opacity-70">{transpose > 0 ? `+${transpose}` : transpose}</span>
-              )}
-            </span>
-            <button
-              onClick={() => setTranspose(t => t + 1)}
-              className="w-6 h-6 flex items-center justify-center rounded border border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors text-sm font-medium"
-            >+</button>
-            {transpose !== 0 && (
-              <button
-                onClick={() => setTranspose(0)}
-                className="text-[10px] text-[var(--ink-faint)] hover:text-[var(--accent)] transition-colors"
-                title="Réinitialiser"
-              >↺</button>
-            )}
-          </div>
+        {/* Métadonnées print uniquement */}
+        <div className="hidden print:flex flex-wrap items-center gap-3 mt-3">
           {sheet.key && (
-            <span className="hidden print:flex items-center gap-1.5 px-2 py-1 bg-purple-50 text-purple-700 rounded text-sm">
+            <span className="flex items-center gap-1.5 px-2 py-1 bg-purple-50 text-purple-700 rounded text-sm">
               <span className="text-sm">♯♭</span>
               {displayKey}
             </span>
           )}
-          {sheet.capo ? (
-            <span className="flex items-center gap-1.5 px-2 py-1 bg-blue-50 text-blue-700 rounded text-sm print:bg-transparent print:text-[var(--ink)]">
-              Capo {sheet.capo}
-            </span>
-          ) : null}
-          {sheet.beatsPerMeasure === 3 && (
-            <span className="flex items-center gap-1.5 px-2 py-1 bg-purple-50 text-purple-700 rounded text-sm print:bg-transparent print:text-[var(--ink)]">
-              Ternaire
-            </span>
-          )}
-          {sheet.difficulty && DIFFICULTY_LABELS[sheet.difficulty] && (
-            <span className="flex items-center gap-1.5 px-2 py-1 bg-[var(--cell-bg)] text-[var(--ink-light)] rounded text-sm print:bg-transparent print:text-[var(--ink)]">
-              {DIFFICULTY_LABELS[sheet.difficulty]}
-            </span>
-          )}
-          {sheet.referenceUrl && (
-            <a
-              href={sheet.referenceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-2 py-1 bg-red-50 text-red-700 rounded text-sm
-                hover:bg-red-100 transition-colors print:hidden"
-            >
-              {getRefLabel(sheet.referenceUrl)}
-            </a>
-          )}
-          {/* Tempo pour l'impression */}
-          <span className="hidden print:flex items-center gap-1.5 px-2 py-1 text-[var(--ink)] text-sm">
+          <span className="flex items-center gap-1.5 px-2 py-1 text-[var(--ink)] text-sm">
             <span className="text-base leading-none">♩</span>
             {localTempo} BPM
           </span>
         </div>
-
-        {/* Genres */}
-        {sheet.genres && sheet.genres.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-3 print:hidden">
-            {sheet.genres.map((genre) => (
-              <span
-                key={genre}
-                className="px-2.5 py-1 bg-[var(--line)] text-[var(--ink-light)] rounded-full text-xs font-medium"
-              >
-                {genre}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Diagrammes des accords */}
