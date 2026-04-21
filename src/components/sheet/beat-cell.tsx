@@ -146,7 +146,7 @@ export function BeatCell({
         onClick={handleClick}
         style={{
           ...(color && !isEditing ? { borderLeftColor: color.border, borderLeftWidth: '5px' } : {}),
-          ...(isActive ? { borderColor: color ? color.border : 'var(--accent)' } : {}),
+          ...(isActive && !color ? { borderColor: 'var(--accent)' } : {}),
         }}
         className={`
           relative rounded-lg border-[1.5px] min-h-14 flex items-center justify-center cursor-pointer
@@ -158,6 +158,7 @@ export function BeatCell({
               : 'bg-[var(--cell-bg)] border-[var(--line)] hover:bg-[var(--cell-hover)] hover:border-[var(--ink-faint)]'
           }
           ${isSmall ? 'bg-[#f7f3ec] border-[var(--ink-faint)]' : ''}
+          ${isActive && !color ? 'border-[var(--accent)]' : ''}
         `}
       >
         {/* Sweep animation pendant la lecture */}

@@ -558,12 +558,13 @@ function ViewerChordCell({
       style={{
         gridColumn: `span ${spanToGridCols(span)}`,
         ...(color ? { borderLeftColor: color.border, borderLeftWidth: '5px' } : {}),
-        ...(isActive ? { borderColor: color ? color.border : 'var(--accent)' } : {}),
+        ...(isActive && !color ? { borderColor: 'var(--accent)' } : {}),
       }}
       className={`
         relative rounded-lg border-[1.5px] min-h-12 flex items-center justify-center
         bg-[var(--cell-bg)] border-[#8a7a6a]
         ${span <= 0.5 ? 'bg-[#f7f3ec] border-[var(--ink-faint)]' : ''}
+        ${isActive && !color ? 'border-[var(--accent)]' : ''}
         print:min-h-10 print:border
       `}
       onMouseEnter={handleMouseEnter}
