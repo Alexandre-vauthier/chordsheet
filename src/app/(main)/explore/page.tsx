@@ -23,6 +23,11 @@ export default function ExplorePage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') ?? '');
 
+  // Mettre à jour la recherche si le param URL change (nouvelle recherche depuis la navbar)
+  useEffect(() => {
+    setSearchQuery(searchParams.get('q') ?? '');
+  }, [searchParams]);
+
   // Filtres
   const [sortBy, setSortBy] = useState<SortOption>('recent');
   const [selectedGenre, setSelectedGenre] = useState<string>('');
