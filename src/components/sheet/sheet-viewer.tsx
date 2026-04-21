@@ -271,7 +271,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                   onClick={() => setTranspose(t => t - 1)}
                   className="w-5 h-5 flex items-center justify-center rounded border border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors text-xs font-medium"
                 >−</button>
-                <span className="flex items-center gap-1 px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded text-xs min-w-[3rem] justify-center">
+                <span className="flex items-center gap-1 px-1.5 py-0.5 bg-[var(--cell-bg)] text-[var(--ink)] rounded text-xs min-w-[3rem] justify-center border border-[var(--line)]">
                   <span className="text-xs">♯♭</span>
                   {displayKey || '—'}
                   {transpose !== 0 && (
@@ -292,12 +292,12 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
               </div>
 
               {sheet.capo ? (
-                <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded text-xs">
+                <span className="px-1.5 py-0.5 bg-[var(--cell-bg)] text-[var(--ink-light)] rounded text-xs border border-[var(--line)]">
                   Capo {sheet.capo}
                 </span>
               ) : null}
               {sheet.beatsPerMeasure === 3 && (
-                <span className="px-1.5 py-0.5 bg-purple-50 text-purple-700 rounded text-xs">
+                <span className="px-1.5 py-0.5 bg-[var(--cell-bg)] text-[var(--ink-light)] rounded text-xs border border-[var(--line)]">
                   Ternaire
                 </span>
               )}
@@ -318,7 +318,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
         {/* Métadonnées print uniquement */}
         <div className="hidden print:flex flex-wrap items-center gap-3 mt-3">
           {sheet.key && (
-            <span className="flex items-center gap-1.5 px-2 py-1 bg-purple-50 text-purple-700 rounded text-sm">
+            <span className="flex items-center gap-1.5 px-2 py-1 bg-[var(--cell-bg)] text-[var(--ink)] rounded text-sm border border-[var(--line)]">
               <span className="text-sm">♯♭</span>
               {displayKey}
             </span>
