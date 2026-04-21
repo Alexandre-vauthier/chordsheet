@@ -2,7 +2,8 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import type { Sheet, Section, NewSheet, Difficulty, StringChord, PianoChord, CustomChord } from '@/types';
+import { computeDifficulty } from '@/lib/compute-difficulty';
+import type { Sheet, Section, NewSheet, StringChord, PianoChord, CustomChord } from '@/types';
 import { createEmptySection, GENRES } from '@/types';
 import { SectionBlock } from './section-block';
 import { Button } from '@/components/ui/button';
@@ -82,6 +83,13 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   useEffect(() => {
     return () => { stopPreviewAudio(); };
   }, []);
+
+  // Recalculer la difficulté automatiquement à chaque changement de sections
+  useEffect(() => {
+    const auto = computeDifficulty(sheet.sections);
+    setSheet(prev => ({ ...prev, difficulty: auto }));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sheet.sections]);
 
   // État pour la modal d'édition d'accord
   const [chordModalOpen, setChordModalOpen] = useState(false);
@@ -494,20 +502,15 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             </select>
           </div>
 
-          {/* Difficulté */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-[var(--ink-light)]">Difficulté :</span>
-            <select
-              value={sheet.difficulty ?? ''}
-              onChange={(e) => updateSheet({ difficulty: (e.target.value ? Number(e.target.value) : null) as Difficulty | null })}
-              className="text-sm border border-[var(--line)] rounded-lg px-2 py-1 bg-[var(--cell-bg)] text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-            >
-              <option value="">—</option>
-              <option value="1">Facile</option>
-              <option value="2">Intermédiaire</option>
-              <option value="3">Avancé</option>
-            </select>
-          </div>
+          {/* Difficulté — calculée automatiquement */}
+          {sheet.difficulty && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-[var(--ink-light)]">Difficulté :</span>
+              <span className="text-sm font-medium text-[var(--ink)]">
+                {sheet.difficulty === 1 ? 'Facile' : sheet.difficulty === 2 ? 'Intermédiaire' : 'Avancé'}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Genres */}
