@@ -46,16 +46,17 @@ export default function ExplorePage() {
     const saved = sessionStorage.getItem('explore_scroll');
     if (!saved) return;
     const y = parseInt(saved);
-    sessionStorage.removeItem('explore_scroll');
-    // Boucler jusqu'à ce que la page soit assez haute pour atteindre la position
+    // Boucler jusqu'à ce que la page soit assez haute — supprimer la clé seulement au succès
     let attempts = 0;
     const tryRestore = () => {
-      if (document.body.scrollHeight >= y || attempts > 30) {
+      if (document.body.scrollHeight >= y + window.innerHeight) {
+        sessionStorage.removeItem('explore_scroll');
         window.scrollTo({ top: y, behavior: 'instant' });
-      } else {
+      } else if (attempts < 100) {
         attempts++;
         requestAnimationFrame(tryRestore);
       }
+      // Si 100 tentatives échouées, on laisse la clé — la prochaine visite réessaiera
     };
     requestAnimationFrame(tryRestore);
   }, [loading]);
