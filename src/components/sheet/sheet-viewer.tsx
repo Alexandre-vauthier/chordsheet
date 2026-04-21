@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import type { Sheet, CellSpan, InstrumentId } from '@/types';
-import { INSTRUMENTS, DIFFICULTY_LABELS } from '@/types';
+import { INSTRUMENTS } from '@/types';
 import { ChordSummary, InstrumentSelector, ChordSuggestions, ChordDiagram, PianoKeyboard } from '@/components/chord';
 import type { CustomChordMap } from '@/components/chord';
 import type { StringChord, PianoChord, CustomChord } from '@/types';
@@ -248,8 +248,19 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
               </button>
             </div>
 
-            {/* Tonalité + métadonnées compactes sous les boutons */}
+            {/* Métadonnées compactes sous les boutons */}
             <div className="flex flex-wrap items-center justify-end gap-1.5">
+              {/* Genres — cliquables vers Explorer filtré */}
+              {sheet.genres?.map((genre) => (
+                <Link
+                  key={genre}
+                  href={`/explore?genre=${encodeURIComponent(genre)}`}
+                  className="px-2 py-0.5 bg-[var(--line)] text-[var(--ink-light)] rounded-full text-xs font-medium hover:bg-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
+                >
+                  {genre}
+                </Link>
+              ))}
+
               {/* Tonalité + transpose */}
               <div className="flex items-center gap-1">
                 <button
@@ -286,11 +297,6 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                   Ternaire
                 </span>
               )}
-              {sheet.difficulty && DIFFICULTY_LABELS[sheet.difficulty] && (
-                <span className="px-1.5 py-0.5 bg-[var(--cell-bg)] text-[var(--ink-light)] rounded text-xs">
-                  {DIFFICULTY_LABELS[sheet.difficulty]}
-                </span>
-              )}
               {sheet.referenceUrl && (
                 <a
                   href={sheet.referenceUrl}
@@ -301,17 +307,6 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                   {getRefLabel(sheet.referenceUrl)}
                 </a>
               )}
-
-              {/* Genres — cliquables vers Explorer filtré */}
-              {sheet.genres?.map((genre) => (
-                <Link
-                  key={genre}
-                  href={`/explore?genre=${encodeURIComponent(genre)}`}
-                  className="px-2 py-0.5 bg-[var(--line)] text-[var(--ink-light)] rounded-full text-xs font-medium hover:bg-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
-                >
-                  {genre}
-                </Link>
-              ))}
             </div>
           </div>
         </div>
