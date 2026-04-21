@@ -40,14 +40,24 @@ export default function ExplorePage() {
     return () => window.removeEventListener('scroll', saveScroll);
   }, []);
 
-  // Restaurer la position de scroll au retour (après chargement du contenu)
+  // Restaurer la position de scroll au retour (après rendu effectif du contenu)
   useEffect(() => {
     if (loading) return;
     const saved = sessionStorage.getItem('explore_scroll');
     if (!saved) return;
     const y = parseInt(saved);
     sessionStorage.removeItem('explore_scroll');
-    requestAnimationFrame(() => window.scrollTo({ top: y, behavior: 'instant' }));
+    // Boucler jusqu'à ce que la page soit assez haute pour atteindre la position
+    let attempts = 0;
+    const tryRestore = () => {
+      if (document.body.scrollHeight >= y || attempts > 30) {
+        window.scrollTo({ top: y, behavior: 'instant' });
+      } else {
+        attempts++;
+        requestAnimationFrame(tryRestore);
+      }
+    };
+    requestAnimationFrame(tryRestore);
   }, [loading]);
 
   useEffect(() => {
