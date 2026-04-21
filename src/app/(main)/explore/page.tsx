@@ -28,6 +28,23 @@ export default function ExplorePage() {
   const [selectedGenre, setSelectedGenre] = useState<string>('');
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | null>(null);
 
+  // Sauvegarder le scroll à chaque mouvement
+  useEffect(() => {
+    const saveScroll = () => sessionStorage.setItem('explore_scroll', String(window.scrollY));
+    window.addEventListener('scroll', saveScroll, { passive: true });
+    return () => window.removeEventListener('scroll', saveScroll);
+  }, []);
+
+  // Restaurer la position de scroll au retour (après chargement du contenu)
+  useEffect(() => {
+    if (loading) return;
+    const saved = sessionStorage.getItem('explore_scroll');
+    if (!saved) return;
+    const y = parseInt(saved);
+    sessionStorage.removeItem('explore_scroll');
+    requestAnimationFrame(() => window.scrollTo({ top: y, behavior: 'instant' }));
+  }, [loading]);
+
   useEffect(() => {
     async function loadPublicSheets() {
       try {
