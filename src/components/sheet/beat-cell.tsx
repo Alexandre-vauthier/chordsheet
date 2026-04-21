@@ -139,9 +139,10 @@ export function BeatCell({
   const color = getColor(cell.chord);
 
   return (
-    <div ref={cellRef} className="flex flex-col relative" style={{ gridColumn: `span ${cols}` }} data-cell-id={cellId}>
+    <div ref={cellRef} className="flex flex-col relative" style={{ gridColumn: `span ${cols}` }}>
       {/* Cellule */}
       <div
+        data-cell-id={cellId}
         onClick={handleClick}
         style={color && !isEditing ? { borderLeftColor: color.border, borderLeftWidth: '5px' } : undefined}
         className={`
