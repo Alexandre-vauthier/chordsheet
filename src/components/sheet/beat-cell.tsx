@@ -145,11 +145,8 @@ export function BeatCell({
         data-cell-id={cellId}
         onClick={handleClick}
         style={{
-          ...(isActive
-            ? { borderColor: 'var(--accent)' }
-            : color && !isEditing
-              ? { borderColor: color.border, borderLeftWidth: '5px' }
-              : {}),
+          ...(color && !isEditing ? { borderColor: color.border, borderLeftWidth: '5px' } : {}),
+          ...(isActive && !color ? { borderColor: 'var(--accent)' } : {}),
         }}
         className={`
           relative rounded-lg border-[1.5px] min-h-14 flex items-center justify-center cursor-pointer
@@ -161,7 +158,7 @@ export function BeatCell({
               : 'bg-[var(--cell-bg)] border-[var(--line)] hover:bg-[var(--cell-hover)] hover:border-[var(--ink-faint)]'
           }
           ${isSmall ? 'bg-[#f7f3ec] border-[var(--ink-faint)]' : ''}
-          ${isActive ? 'border-[var(--accent)]' : ''}
+          ${isActive && !color ? 'border-[var(--accent)]' : ''}
         `}
       >
         {/* Sweep animation pendant la lecture */}
@@ -169,7 +166,7 @@ export function BeatCell({
           <div
             className="absolute inset-0 origin-left pointer-events-none rounded-[inherit]"
             style={{
-              background: 'rgba(200,75,47,0.13)',
+              background: color ? color.border.substring(0, 7) + '21' : 'rgba(200,75,47,0.13)',
               animation: `beatSweep ${activeDurationMs}ms linear forwards`,
             }}
           />
