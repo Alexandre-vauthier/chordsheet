@@ -73,6 +73,7 @@ function ChordsPageContent() {
   const [editingChordName, setEditingChordName] = useState('');
   const [editingInitialChord, setEditingInitialChord] = useState<StringChord | PianoChord | null>(null);
   const [editingIsOverride, setEditingIsOverride] = useState(true);
+  const [editingDocId, setEditingDocId] = useState<string | null>(null);
   // Catégorie forcée pour les nouveaux accords (additions)
   const [forcedCategory, setForcedCategory] = useState<string>('major');
   const [saving, setSaving] = useState(false);
@@ -148,10 +149,13 @@ function ChordsPageContent() {
     });
 
     // 1a. Accords étendus algorithmiques (filtrés par catégorie)
+    // Skip si un override admin existe déjà pour cet accord (évite doublon override + statique généré)
     extendedChords
       .filter(c => getCategoryGroup(c.category) === categoryGroup)
       .forEach((chord) => {
         const nameLower = chord.name.trim().toLowerCase();
+        const overrideKey = libraryKey(chord.name, instrumentId);
+        if (overrides.has(overrideKey)) return; // l'override le remplace entièrement
         if (!groups.has(nameLower)) {
           groups.set(nameLower, { name: chord.name, variants: [], hasOverride: false, additionDocIds: [], additionStartIdx: 0 });
         }
@@ -208,10 +212,11 @@ function ChordsPageContent() {
       });
   }, [staticChords, instrumentId, overrides, additions, categoryGroup, extendedChords]);
 
-  const openEditModal = (chord: StringChord | PianoChord, isOverride: boolean) => {
+  const openEditModal = (chord: StringChord | PianoChord, isOverride: boolean, docId?: string) => {
     setEditingChordName(chord.name);
     setEditingInitialChord(chord);
     setEditingIsOverride(isOverride);
+    setEditingDocId(docId ?? null);
     setForcedCategory(chord.category);
     setModalOpen(true);
   };
@@ -220,6 +225,7 @@ function ChordsPageContent() {
     setEditingChordName('');
     setEditingInitialChord(null);
     setEditingIsOverride(false);
+    setEditingDocId(null);
     // Catégorie par défaut = onglet actuel
     setForcedCategory(categoryGroup);
     setModalOpen(true);
@@ -233,7 +239,7 @@ function ChordsPageContent() {
       const finalChord = editingIsOverride
         ? chord
         : { ...chord, category: forcedCategory };
-      await saveLibraryChord(finalChord, instrumentId, editingIsOverride, user.email);
+      await saveLibraryChord(finalChord, instrumentId, editingIsOverride, user.email, editingDocId ?? undefined);
       setModalOpen(false);
     } finally {
       setSaving(false);
@@ -319,7 +325,7 @@ function ChordsPageContent() {
               instrumentId={instrumentId}
               isAdmin={isAdmin}
               onEditOverride={(chord) => openEditModal(chord, true)}
-              onEditAddition={(chord) => openEditModal(chord, false)}
+              onEditAddition={(chord, docId) => openEditModal(chord, false, docId)}
               onDeleteOverride={handleDeleteOverride}
               onDeleteAddition={handleDeleteAddition}
             />
@@ -375,7 +381,7 @@ function UnifiedChordGroup({
   instrumentId: InstrumentId;
   isAdmin: boolean;
   onEditOverride: (chord: StringChord | PianoChord) => void;
-  onEditAddition: (chord: StringChord | PianoChord) => void;
+  onEditAddition: (chord: StringChord | PianoChord, docId: string) => void;
   onDeleteOverride: (docId: string) => void;
   onDeleteAddition: (docId: string) => void;
 }) {
@@ -411,7 +417,7 @@ function UnifiedChordGroup({
         >
           {isCurrentAddition && currentAdditionDocId ? (
             <>
-              <button onClick={() => onEditAddition(current)}
+              <button onClick={() => onEditAddition(current, currentAdditionDocId)}
                 className="w-6 h-6 bg-blue-500 text-white rounded text-xs flex items-center justify-center" title="Modifier cet ajout">✎</button>
               <button onClick={() => onDeleteAddition(currentAdditionDocId)}
                 className="w-6 h-6 bg-red-500 text-white rounded text-xs flex items-center justify-center" title="Supprimer">✕</button>

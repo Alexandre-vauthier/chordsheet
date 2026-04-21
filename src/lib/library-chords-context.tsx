@@ -34,6 +34,7 @@ interface LibraryChordsCtx {
     instrumentId: InstrumentId,
     isOverride: boolean,
     createdBy: string,
+    existingDocId?: string,
   ) => Promise<void>;
   deleteLibraryChord: (docId: string) => Promise<void>;
 }
@@ -84,11 +85,12 @@ export function LibraryChordsProvider({ children }: { children: ReactNode }) {
     instrumentId: InstrumentId,
     isOverride: boolean,
     createdBy: string,
+    existingDocId?: string,
   ) => {
     const db = getDb();
     const key = libraryKey(chord.name, instrumentId);
-    // Pour les overrides, docId = clé pour dédupliquer ; pour les ajouts, timestamp
-    const docId = isOverride ? key : `${key}-${Date.now()}`;
+    // Pour les overrides : clé fixe (upsert). Pour les ajouts : réutilise le docId existant si dispo, sinon timestamp.
+    const docId = isOverride ? key : (existingDocId ?? `${key}-${Date.now()}`);
     await setDoc(doc(db, 'library_chords', docId), {
       instrumentId,
       chord: chordToFirestore(chord),
