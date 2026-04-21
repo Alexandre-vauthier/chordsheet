@@ -60,6 +60,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   const { isPlaying, activeStep, playSection, togglePlay, stop } = usePlayback({
     sections: sheet.sections,
     tempo: sheet.tempo,
+    tempoUnit: sheet.tempoUnit,
     instrumentId: sheet.instrumentId || 'guitar',
     customChords: sheet.customChords as Record<string, unknown>,
     metronomeEnabled,
@@ -414,14 +415,32 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             )}
           </div>
           <span className="flex items-center gap-1 text-[var(--ink-faint)]">
-            <span className="text-base leading-none">♩</span>
+            <button
+              type="button"
+              onClick={() => {
+                const units = ['quarter', 'eighth', 'sixteenth'] as const;
+                const cur = sheet.tempoUnit ?? 'quarter';
+                const next = units[(units.indexOf(cur) + 1) % units.length];
+                updateSheet({ tempoUnit: next });
+              }}
+              title="Changer l'unité de tempo (♩ noire → ♪ croche → ♬ double croche)"
+              className="text-base leading-none hover:text-[var(--accent)] transition-colors cursor-pointer"
+            >
+              {sheet.tempoUnit === 'eighth' ? '♪' : sheet.tempoUnit === 'sixteenth' ? '♬' : '♩'}
+            </button>
             <input
-              type="text"
-              value={sheet.tempo}
-              onChange={(e) => updateSheet({ tempo: e.target.value })}
-              placeholder="Tempo…"
+              type="number"
+              min={40}
+              max={300}
+              value={sheet.tempo.replace(/\D/g, '') || ''}
+              onChange={(e) => {
+                const v = e.target.value.replace(/\D/g, '');
+                updateSheet({ tempo: v });
+              }}
+              placeholder="90"
               className="font-sans text-sm text-[var(--ink-light)] bg-transparent border-none outline-none
-                placeholder:text-[var(--ink-faint)] w-24"
+                placeholder:text-[var(--ink-faint)] w-12
+                [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
           </span>
           <div className="relative flex items-center gap-1 text-[var(--ink-faint)]" onMouseEnter={isFirstSheet ? handleRefHover : undefined}>

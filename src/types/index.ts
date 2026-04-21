@@ -171,6 +171,8 @@ export interface Sheet {
   referenceUrl?: string;
   // V5 - Métrique globale
   beatsPerMeasure?: BeatsPerMeasure;
+  // V6 - Unité de tempo (♩ noire, ♪ croche, ♬ double croche)
+  tempoUnit?: 'quarter' | 'eighth' | 'sixteenth';
 }
 
 // Type pour la création d'une nouvelle grille

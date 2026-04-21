@@ -79,6 +79,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
   const [transpose, setTranspose] = useState(0);
   const [selectedChords, setSelectedChords] = useState<Record<string, StringChord | PianoChord>>({});
   const [localTempo, setLocalTempo] = useState<string>(sheet.tempo || '90');
+  const [localTempoUnit, setLocalTempoUnit] = useState<'quarter' | 'eighth' | 'sixteenth'>(sheet.tempoUnit ?? 'quarter');
 
   const displaySections = transposeSections(sheet.sections, transpose);
   const displayKey = transposeKey(sheet.key, transpose);
@@ -87,6 +88,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
   const { isPlaying, activeStep, playSection, togglePlay, stop } = usePlayback({
     sections: displaySections,
     tempo: localTempo,
+    tempoUnit: localTempoUnit,
     instrumentId,
     customChords: sheet.customChords as Record<string, unknown>,
     selectedChords,
@@ -199,7 +201,17 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
 
               {/* Tempo éditable */}
               <div className="flex items-center gap-1 px-3 py-2 bg-[var(--cell-bg)] text-[var(--ink)] rounded-lg border-[1.5px] border-[var(--line)] hover:border-[var(--ink-faint)] transition-colors">
-                <span className="text-base leading-none">♩</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const units = ['quarter', 'eighth', 'sixteenth'] as const;
+                    setLocalTempoUnit(u => units[(units.indexOf(u) + 1) % units.length]);
+                  }}
+                  title="Changer l'unité de tempo (♩ noire → ♪ croche → ♬ double croche)"
+                  className="text-base leading-none hover:text-[var(--accent)] transition-colors cursor-pointer"
+                >
+                  {localTempoUnit === 'eighth' ? '♪' : localTempoUnit === 'sixteenth' ? '♬' : '♩'}
+                </button>
                 <input
                   type="number"
                   min={40}
@@ -324,7 +336,9 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
             </span>
           )}
           <span className="flex items-center gap-1.5 px-2 py-1 text-[var(--ink)] text-sm">
-            <span className="text-base leading-none">♩</span>
+            <span className="text-base leading-none">
+              {localTempoUnit === 'eighth' ? '♪' : localTempoUnit === 'sixteenth' ? '♬' : '♩'}
+            </span>
             {localTempo} BPM
           </span>
         </div>

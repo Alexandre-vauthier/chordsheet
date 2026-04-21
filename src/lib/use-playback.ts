@@ -49,9 +49,18 @@ function buildSequence(sections: Section[], beatMs: number): PlayStep[] {
   return steps;
 }
 
+type TempoUnit = 'quarter' | 'eighth' | 'sixteenth';
+
+const TEMPO_UNIT_FACTOR: Record<TempoUnit, number> = {
+  quarter: 1,
+  eighth: 2,
+  sixteenth: 4,
+};
+
 interface UsePlaybackOptions {
   sections: Section[];
   tempo: string | undefined;
+  tempoUnit?: TempoUnit;
   instrumentId: InstrumentId;
   customChords?: Record<string, unknown>;
   selectedChords?: Record<string, StringChord | PianoChord>;
@@ -59,20 +68,21 @@ interface UsePlaybackOptions {
   capo?: number;
 }
 
-export function usePlayback({ sections, tempo, instrumentId, customChords, selectedChords, metronomeEnabled, capo = 0 }: UsePlaybackOptions) {
+export function usePlayback({ sections, tempo, tempoUnit, instrumentId, customChords, selectedChords, metronomeEnabled, capo = 0 }: UsePlaybackOptions) {
   const { overrides, additions } = useLibraryChords();
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeStep, setActiveStep] = useState<PlayStep | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const metronomeRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // Refs pour que le useEffect métronome accède aux valeurs courantes
-  const beatMsRef = useRef<number>((60 / parseTempo(tempo)) * 1000);
+  const factor = TEMPO_UNIT_FACTOR[tempoUnit ?? 'quarter'];
+  const beatMsRef = useRef<number>((60 / parseTempo(tempo)) * 1000 * factor);
   const bpMeasureRef = useRef<number>(sections[0]?.beatsPerMeasure || 4);
 
-  // Mettre à jour les refs quand tempo/sections changent
+  // Mettre à jour les refs quand tempo/tempoUnit/sections changent
   useEffect(() => {
-    beatMsRef.current = (60 / parseTempo(tempo)) * 1000;
-  }, [tempo]);
+    beatMsRef.current = (60 / parseTempo(tempo)) * 1000 * TEMPO_UNIT_FACTOR[tempoUnit ?? 'quarter'];
+  }, [tempo, tempoUnit]);
   useEffect(() => {
     bpMeasureRef.current = sections[0]?.beatsPerMeasure || 4;
   }, [sections]);
@@ -124,7 +134,8 @@ export function usePlayback({ sections, tempo, instrumentId, customChords, selec
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
     const bpm = parseTempo(tempo);
-    const beatMs = (60 / bpm) * 1000;
+    const factor = TEMPO_UNIT_FACTOR[tempoUnit ?? 'quarter'];
+    const beatMs = (60 / bpm) * 1000 * factor;
     const sequence = buildSequence(targetSections, beatMs);
     if (!sequence.length) return;
 
@@ -175,7 +186,7 @@ export function usePlayback({ sections, tempo, instrumentId, customChords, selec
     };
 
     advance();
-  }, [tempo, instrumentId, customChords, selectedChords, overrides]);
+  }, [tempo, tempoUnit, instrumentId, customChords, selectedChords, overrides]);
 
   const play = useCallback(() => {
     playSequence(sections);
