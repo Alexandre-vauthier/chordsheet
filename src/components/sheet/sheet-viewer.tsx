@@ -345,12 +345,15 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
               }`}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <rect x="3" y="3" width="7" height="7" rx="1" strokeWidth="2"/>
-                <rect x="14" y="3" width="7" height="7" rx="1" strokeWidth="2"/>
-                <rect x="3" y="14" width="7" height="7" rx="1" strokeWidth="2"/>
-                <rect x="14" y="14" width="7" height="7" rx="1" strokeWidth="2"/>
+                <rect x="3" y="2" width="18" height="20" rx="2" strokeWidth="1.8"/>
+                <line x1="7" y1="7" x2="17" y2="7" strokeWidth="1.5"/>
+                <line x1="7" y1="11" x2="17" y2="11" strokeWidth="1.5"/>
+                <line x1="7" y1="15" x2="17" y2="15" strokeWidth="1.5"/>
+                <line x1="7" y1="2" x2="7" y2="22" strokeWidth="1.2"/>
+                <line x1="12" y1="2" x2="12" y2="22" strokeWidth="1.2"/>
+                <line x1="17" y1="2" x2="17" y2="22" strokeWidth="1.2"/>
               </svg>
-              Inline
+              Diagrammes
             </button>
             <InstrumentSelector value={instrumentId} onChange={handleInstrumentChange} />
           </div>
