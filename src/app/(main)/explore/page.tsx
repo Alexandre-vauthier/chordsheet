@@ -9,7 +9,7 @@ import { fromFirestore } from '@/lib/firestore-helpers';
 import { Input } from '@/components/ui/input';
 import { SheetCard } from '@/components/explore/sheet-card';
 import { WelcomeBanner } from '@/components/explore/welcome-banner';
-import { GENRES, DIFFICULTY_LABELS, type Difficulty } from '@/types';
+import { GENRES, DIFFICULTY_OPTIONS, type Difficulty } from '@/types';
 import type { Sheet } from '@/types';
 
 type SortOption = 'recent' | 'rated' | 'viewed';
@@ -249,8 +249,8 @@ export default function ExplorePage() {
               className="text-sm border border-[var(--line)] rounded-lg px-2 py-1 bg-[var(--cell-bg)] text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             >
               <option value="">Toutes</option>
-              {(Object.entries(DIFFICULTY_LABELS) as [string, string][]).map(([val, label]) => (
-                <option key={val} value={val}>{val} · {label}</option>
+              {DIFFICULTY_OPTIONS.map(({ value, label }) => (
+                <option key={value} value={value}>{label}</option>
               ))}
             </select>
           </div>

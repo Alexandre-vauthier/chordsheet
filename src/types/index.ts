@@ -33,6 +33,13 @@ export const DIFFICULTY_LABELS: Record<number, string> = {
   5: 'Avancé',
 };
 
+// Niveaux de difficulté uniques pour les sélecteurs (pas de doublons)
+export const DIFFICULTY_OPTIONS: { value: number; label: string }[] = [
+  { value: 1, label: 'Facile' },
+  { value: 2, label: 'Intermédiaire' },
+  { value: 3, label: 'Avancé' },
+];
+
 // Genres musicaux disponibles
 export const GENRES = [
   'Rock',
@@ -49,10 +56,10 @@ export const GENRES = [
   'Punk',
   'Classique',
   'Chanson française',
-  'Variété',
   'Bossa Nova',
   'Latino',
-  'World',
+  'Films',
+  'Jeux vidéo',
 ] as const;
 
 export type Genre = typeof GENRES[number];
