@@ -40,25 +40,38 @@ export default function ExplorePage() {
     return () => window.removeEventListener('scroll', saveScroll);
   }, []);
 
-  // Restaurer la position de scroll au retour (après rendu effectif du contenu)
+  // Restaurer la position de scroll au retour
   useEffect(() => {
     if (loading) return;
     const saved = sessionStorage.getItem('explore_scroll');
     if (!saved) return;
     const y = parseInt(saved);
-    // Boucler jusqu'à ce que la page soit assez haute — supprimer la clé seulement au succès
-    let attempts = 0;
-    const tryRestore = () => {
-      if (document.body.scrollHeight >= y + window.innerHeight) {
-        sessionStorage.removeItem('explore_scroll');
+    sessionStorage.removeItem('explore_scroll');
+
+    // Next.js App Router peut réinitialiser le scroll après le rendu.
+    // On verrouille la position pendant 800ms en écoutant chaque scroll vers 0.
+    let done = false;
+    const lock = () => {
+      if (!done && window.scrollY < y / 2) {
         window.scrollTo({ top: y, behavior: 'instant' });
-      } else if (attempts < 100) {
-        attempts++;
-        requestAnimationFrame(tryRestore);
       }
-      // Si 100 tentatives échouées, on laisse la clé — la prochaine visite réessaiera
     };
-    requestAnimationFrame(tryRestore);
+    window.addEventListener('scroll', lock, { passive: true });
+
+    // Premiers essais rapides pour le cas où tout est déjà en place
+    const t1 = setTimeout(() => window.scrollTo({ top: y, behavior: 'instant' }), 50);
+    const t2 = setTimeout(() => window.scrollTo({ top: y, behavior: 'instant' }), 150);
+    const t3 = setTimeout(() => window.scrollTo({ top: y, behavior: 'instant' }), 400);
+    const cleanup = setTimeout(() => {
+      done = true;
+      window.removeEventListener('scroll', lock);
+    }, 800);
+
+    return () => {
+      done = true;
+      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(cleanup);
+      window.removeEventListener('scroll', lock);
+    };
   }, [loading]);
 
   useEffect(() => {
