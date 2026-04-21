@@ -198,22 +198,22 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
               </button>
 
               {/* Tempo éditable */}
-              <div className="flex items-center gap-1 px-2 py-1 bg-orange-50 text-orange-700 rounded border border-transparent hover:border-orange-200 transition-colors">
+              <div className="flex items-center gap-1 px-3 py-2 bg-[var(--cell-bg)] text-[var(--ink)] rounded-lg border-[1.5px] border-[var(--line)] hover:border-[var(--ink-faint)] transition-colors">
                 <span className="text-base leading-none">♩</span>
                 <input
                   type="number"
                   min={40}
                   max={300}
-                  value={bpm}
+                  value={parseTempo(localTempo)}
                   onChange={(e) => {
                     const v = parseInt(e.target.value);
                     if (v >= 40 && v <= 300) setLocalTempo(String(v));
                   }}
-                  className="w-10 bg-transparent border-none outline-none text-sm font-medium text-orange-700 text-center
+                  className="w-10 bg-transparent border-none outline-none text-sm font-medium text-center
                     [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   title="Modifier le tempo"
                 />
-                <span className="text-xs opacity-70">BPM</span>
+                <span className="text-xs text-[var(--ink-light)]">BPM</span>
               </div>
 
               {/* Play / Stop */}
