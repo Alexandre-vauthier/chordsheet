@@ -207,6 +207,7 @@ export function SectionBlock({
             <GridRow
               row={row}
               rowIndex={rowIndex}
+              sectionId={section.id}
               beatsPerMeasure={section.beatsPerMeasure || 4}
               instrumentId={instrumentId}
               onCellChange={(cellIndex, updates) => updateCell(rowIndex, cellIndex, updates)}

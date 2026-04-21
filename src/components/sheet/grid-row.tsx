@@ -7,6 +7,7 @@ import { CoachMark } from './coach-mark';
 interface GridRowProps {
   row: Row;
   rowIndex: number;
+  sectionId: string;
   beatsPerMeasure: number;
   instrumentId: InstrumentId;
   onCellChange: (cellIndex: number, updates: Partial<Cell>) => void;
@@ -27,6 +28,7 @@ const spanToGridCols = (span: CellSpan) => Math.round(span / 0.25);
 export function GridRow({
   row,
   rowIndex,
+  sectionId,
   instrumentId,
   onCellChange,
   onSplit,
@@ -65,6 +67,7 @@ export function GridRow({
               key={cellIndex}
               cell={cell}
               cols={cols}
+              cellId={`cell-${sectionId}-${rowIndex}-${cellIndex}`}
               instrumentId={instrumentId}
               onChordChange={(chord) => { onDismissOnboarding?.(); onCellChange(cellIndex, { chord }); }}
               canSplit={canSplit}

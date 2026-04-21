@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import type { Sheet, Section, NewSheet, Difficulty, StringChord, PianoChord, CustomChord } from '@/types';
 import { createEmptySection, GENRES } from '@/types';
@@ -211,11 +211,15 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     setDragOverSectionId(null);
   }, [dragSectionId]);
 
-  // Navigation entre cellules (placeholder pour future implémentation)
+  // Ref vers l'input artiste pour le focus via TAB depuis le titre
+  const artistInputRef = useRef<HTMLInputElement>(null);
+
+  // Navigation entre cellules via TAB — focus la cellule cible par data-cell-id
   const navigateToCell = useCallback(
     (sectionId: string, rowIndex: number, cellIndex: number) => {
-      // TODO: implémenter la navigation focus
-      console.log('Navigate to:', sectionId, rowIndex, cellIndex);
+      const id = `cell-${sectionId}-${rowIndex}-${cellIndex}`;
+      const el = document.querySelector<HTMLElement>(`[data-cell-id="${id}"]`);
+      el?.click();
     },
     []
   );
@@ -301,6 +305,12 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
               const val = e.target.value.replace(/(^|\s)\S/g, (c) => c.toUpperCase());
               updateSheet({ title: val });
             }}
+            onKeyDown={(e) => {
+              if (e.key === 'Tab') {
+                e.preventDefault();
+                artistInputRef.current?.focus();
+              }
+            }}
             placeholder="Titre de la chanson…"
             className="font-playfair text-3xl font-bold bg-transparent border-none outline-none flex-1
               caret-[var(--accent)] placeholder:text-[var(--ink-faint)]"
@@ -361,6 +371,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
         </div>
         <div className="flex flex-wrap gap-4 mt-3">
           <input
+            ref={artistInputRef}
             type="text"
             value={sheet.artist}
             onChange={(e) => {
@@ -376,7 +387,16 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             <input
               type="text"
               value={sheet.key}
-              onChange={(e) => updateSheet({ key: e.target.value })}
+              onChange={(e) => {
+                const raw = e.target.value;
+                // Bloquer les chiffres
+                if (/\d/.test(raw)) return;
+                // 1ère lettre : majuscule ; caractères suivants : m, #, b autorisés tels quels
+                const normalized = raw.length > 0
+                  ? raw.charAt(0).toUpperCase() + raw.slice(1)
+                  : raw;
+                updateSheet({ key: normalized });
+              }}
               placeholder="Tonalité…"
               className="font-sans text-sm text-[var(--ink-light)] bg-transparent border-none outline-none
                 placeholder:text-[var(--ink-faint)] w-24"

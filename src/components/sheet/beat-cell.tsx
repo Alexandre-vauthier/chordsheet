@@ -10,6 +10,7 @@ import { CoachMark } from './coach-mark';
 interface BeatCellProps {
   cell: Cell;
   cols: number;
+  cellId?: string;
   instrumentId: InstrumentId;
   onChordChange: (chord: string) => void;
   canSplit: boolean;
@@ -25,6 +26,7 @@ interface BeatCellProps {
 export function BeatCell({
   cell,
   cols,
+  cellId,
   instrumentId,
   onChordChange,
   canSplit,
@@ -120,7 +122,7 @@ export function BeatCell({
   const color = getColor(cell.chord);
 
   return (
-    <div ref={cellRef} className="flex flex-col relative" style={{ gridColumn: `span ${cols}` }}>
+    <div ref={cellRef} className="flex flex-col relative" style={{ gridColumn: `span ${cols}` }} data-cell-id={cellId}>
       {/* Cellule */}
       <div
         onClick={handleClick}
