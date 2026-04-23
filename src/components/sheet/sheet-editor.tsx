@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { computeDifficulty } from '@/lib/compute-difficulty';
-import type { Sheet, Section, NewSheet, StringChord, PianoChord, CustomChord } from '@/types';
+import type { Sheet, Section, NewSheet, StringChord, PianoChord, CustomChord, InstrumentId } from '@/types';
 import { createEmptySection, GENRES } from '@/types';
 import { SectionBlock } from './section-block';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,8 @@ import type { CustomChordMap } from '@/components/chord';
 import { usePlayback, parseTempo } from '@/lib/use-playback';
 import { stopPreviewAudio } from '@/components/explore/sheet-card';
 import { CoachMark } from './coach-mark';
+import { getChordsByInstrument, getAllExtendedChords } from '@/lib/chord-data';
+import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
 
 interface SheetEditorProps {
   initialSheet: NewSheet | Sheet;
@@ -68,6 +70,27 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   });
 
   const bpm = parseTempo(sheet.tempo);
+
+  // Pool d'accords indexé par instrument pour le chord finder
+  const { overrides, additions } = useLibraryChords();
+  const finderChordPool = useMemo(() => {
+    const INSTR = ['guitar', 'ukulele', 'mandolin', 'banjo', 'piano'] as InstrumentId[];
+    const pool: Record<string, (StringChord | PianoChord)[]> = {};
+    for (const inst of INSTR) {
+      const statics = inst === 'piano'
+        ? getChordsByInstrument(inst)
+        : [...getChordsByInstrument(inst), ...getAllExtendedChords(inst)];
+      const instChords: (StringChord | PianoChord)[] = [];
+      for (const chord of statics) {
+        const key = libraryKey(chord.name, inst);
+        const ov = overrides.get(key);
+        instChords.push(ov ? ov.chord : chord);
+      }
+      additions.filter(a => a.instrumentId === inst).forEach(a => instChords.push(a.chord));
+      pool[inst] = instChords;
+    }
+    return pool as Record<InstrumentId, (StringChord | PianoChord)[]>;
+  }, [overrides, additions]);
 
   // Alerte si l'utilisateur quitte sans sauvegarder (refresh / fermeture onglet)
   useEffect(() => {
@@ -612,6 +635,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 isDragOver={dragOverSectionId === section.id && dragSectionId !== section.id}
                 isFirstSection={isFirstSheet && sectionIndex === 0}
                 onDismissOnboarding={dismissOnboarding}
+                finderChordPool={finderChordPool}
               />
             </div>
           );

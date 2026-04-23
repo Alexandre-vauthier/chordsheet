@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { Section, Cell, CellSpan, InstrumentId } from '@/types';
+import type { Section, Cell, CellSpan, InstrumentId, StringChord, PianoChord } from '@/types';
 import { GridRow } from './grid-row';
 import { createEmptyRow } from '@/types';
 import { CoachMark } from './coach-mark';
@@ -62,6 +62,7 @@ interface SectionBlockProps {
   isDragOver: boolean;
   isFirstSection?: boolean;
   onDismissOnboarding?: () => void;
+  finderChordPool?: Record<InstrumentId, (StringChord | PianoChord)[]>;
 }
 
 export function SectionBlock({
@@ -83,6 +84,7 @@ export function SectionBlock({
   isDragOver,
   isFirstSection = false,
   onDismissOnboarding,
+  finderChordPool,
 }: SectionBlockProps) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -249,6 +251,7 @@ export function SectionBlock({
               isFirstRow={isFirstSection && rowIndex === 0}
               exampleChords={isFirstSection && rowIndex === 0 ? EXAMPLE_CHORDS : undefined}
               onDismissOnboarding={onDismissOnboarding}
+              finderChordPool={finderChordPool}
             />
             {/* Badge répétition */}
             <div className={`absolute -right-10 top-1/2 -translate-y-1/2 flex items-center gap-0.5 transition-opacity ${(section.rowRepeats?.[rowIndex] ?? 1) > 1 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>

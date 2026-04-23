@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import type { Cell, InstrumentId } from '@/types';
+import type { Cell, InstrumentId, StringChord, PianoChord } from '@/types';
 import { ChordSuggestions } from '@/components/chord';
+import { ChordFinder } from '@/components/chord/chord-finder';
 import { useChordNotation } from '@/lib/use-chord-notation';
 import { useChordColor } from '@/lib/use-chord-color';
 import { CoachMark } from './coach-mark';
@@ -21,6 +22,7 @@ interface BeatCellProps {
   exampleChord?: string;
   showSplitCoach?: boolean;
   onDismissOnboarding?: () => void;
+  finderChordPool?: Record<InstrumentId, (StringChord | PianoChord)[]>;
 }
 
 export function BeatCell({
@@ -37,6 +39,7 @@ export function BeatCell({
   exampleChord,
   showSplitCoach = false,
   onDismissOnboarding,
+  finderChordPool,
 }: BeatCellProps) {
   const translate = useChordNotation();
   const getColor = useChordColor();
@@ -44,6 +47,7 @@ export function BeatCell({
   const [value, setValue] = useState(cell.chord);
   const [chordError, setChordError] = useState(false);
   const [showDiagram, setShowDiagram] = useState(false);
+  const [finderOpen, setFinderOpen] = useState(false);
 
   const FORBIDDEN_CHARS = /[-*]/;
 
@@ -173,20 +177,31 @@ export function BeatCell({
         )}
 
         {isEditing ? (
-          <input
-            ref={inputRef}
-            type="text"
-            value={value}
-            onChange={(e) => handleChordInput(e.target.value)}
-            onBlur={handleBlur}
-            onKeyDown={handleKeyDown}
-            placeholder="—"
-            className={`
-              font-mono font-medium text-[var(--ink)] bg-transparent border-none outline-none
-              text-center w-full px-1 caret-[var(--accent)]
-              ${isSmall ? 'text-[0.82rem]' : 'text-[1.05rem]'}
-            `}
-          />
+          <>
+            <input
+              ref={inputRef}
+              type="text"
+              value={value}
+              onChange={(e) => handleChordInput(e.target.value)}
+              onBlur={handleBlur}
+              onKeyDown={handleKeyDown}
+              placeholder="—"
+              className={`
+                font-mono font-medium text-[var(--ink)] bg-transparent border-none outline-none
+                text-center w-full px-1 caret-[var(--accent)]
+                ${isSmall ? 'text-[0.82rem]' : 'text-[1.05rem]'}
+              `}
+            />
+            {finderChordPool && (
+              <button
+                onMouseDown={(e) => { e.preventDefault(); setFinderOpen(true); }}
+                className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded bg-[var(--accent-soft)] hover:bg-[var(--line)] text-[var(--accent)] text-xs transition-colors"
+                title="Identifier un accord"
+              >
+                🔍
+              </button>
+            )}
+          </>
         ) : (
           <span
             className={`
@@ -236,6 +251,21 @@ export function BeatCell({
           chordName={cell.chord}
           instrumentId={instrumentId}
           position="bottom"
+        />
+      )}
+
+      {/* Chord Finder modal */}
+      {finderOpen && finderChordPool && (
+        <ChordFinder
+          initialInstrument={instrumentId}
+          allChords={finderChordPool}
+          onClose={() => setFinderOpen(false)}
+          onSelect={(name) => {
+            onChordChange(name);
+            setValue(name);
+            setFinderOpen(false);
+            setIsEditing(false);
+          }}
         />
       )}
 

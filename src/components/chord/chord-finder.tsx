@@ -32,9 +32,10 @@ interface ChordFinderProps {
   initialInstrument?: InstrumentId;
   allChords: Record<InstrumentId, (StringChord | PianoChord)[]>;
   onClose: () => void;
+  onSelect?: (chordName: string) => void; // optionnel : insère le nom dans une case
 }
 
-export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose }: ChordFinderProps) {
+export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, onSelect }: ChordFinderProps) {
   const [instrumentId, setInstrumentId] = useState<InstrumentId>(initialInstrument);
   const isPiano = instrumentId === 'piano';
   const config = !isPiano ? INSTRUMENT_CONFIG[instrumentId as Exclude<InstrumentId, 'piano'>] : null;
@@ -266,7 +267,7 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose }
             </p>
             <div className="space-y-2">
               {matches.map(({ chord, score }) => (
-                <MatchCard key={chord.id} chord={chord} instrumentId={instrumentId} score={score} />
+                <MatchCard key={chord.id} chord={chord} instrumentId={instrumentId} score={score} onSelect={onSelect ? (name) => { onSelect(name); onClose(); } : undefined} />
               ))}
             </div>
           </div>
@@ -282,13 +283,16 @@ function isPianoChord(chord: StringChord | PianoChord): chord is PianoChord {
   return 'notes' in chord;
 }
 
-function MatchCard({ chord, instrumentId, score }: { chord: StringChord | PianoChord; instrumentId: InstrumentId; score: number }) {
+function MatchCard({ chord, instrumentId, score, onSelect }: { chord: StringChord | PianoChord; instrumentId: InstrumentId; score: number; onSelect?: (name: string) => void }) {
   const pct = Math.round(score * 100);
   return (
     <div
       className="flex items-center gap-3 p-3 rounded-xl border border-[var(--line)] bg-[var(--cell-bg)] cursor-pointer hover:border-[var(--accent)] transition-colors group"
-      onClick={() => playChord(chord, instrumentId)}
-      title="Cliquer pour écouter"
+      onClick={() => {
+        playChord(chord, instrumentId);
+        onSelect?.(chord.name);
+      }}
+      title={onSelect ? `Insérer "${chord.name}"` : 'Cliquer pour écouter'}
     >
       <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center group-hover:opacity-80 transition-opacity">
         {isPianoChord(chord) ? (

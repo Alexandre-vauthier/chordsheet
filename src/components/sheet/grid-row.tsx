@@ -1,6 +1,6 @@
 'use client';
 
-import type { Row, Cell, CellSpan, InstrumentId } from '@/types';
+import type { Row, Cell, CellSpan, InstrumentId, StringChord, PianoChord } from '@/types';
 import { BeatCell } from './beat-cell';
 import { CoachMark } from './coach-mark';
 
@@ -20,6 +20,7 @@ interface GridRowProps {
   isFirstRow?: boolean;
   exampleChords?: string[];
   onDismissOnboarding?: () => void;
+  finderChordPool?: Record<InstrumentId, (StringChord | PianoChord)[]>;
 }
 
 // Chaque 0.25 de span = 1 colonne dans la grille de 16 colonnes
@@ -40,6 +41,7 @@ export function GridRow({
   isFirstRow = false,
   exampleChords,
   onDismissOnboarding,
+  finderChordPool,
 }: GridRowProps) {
   const totalGridCols = 16;
 
@@ -77,6 +79,7 @@ export function GridRow({
               exampleChord={isFirstRow ? exampleChords?.[cellIndex] : undefined}
               showSplitCoach={isFirstRow && cellIndex === 0 && canSplit}
               onDismissOnboarding={onDismissOnboarding}
+              finderChordPool={finderChordPool}
               onNavigateNext={() => {
                 let nextCellIndex = cellIndex + 1;
                 let nextRowIndex = rowIndex;
