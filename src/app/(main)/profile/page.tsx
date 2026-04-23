@@ -23,6 +23,7 @@ export default function ProfilePage() {
   const [colorCoding, setColorCoding] = useState(false);
   const [inlineDiagram, setInlineDiagram] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [minimizeRepeated, setMinimizeRepeated] = useState(false);
   const [preferredInstrument, setPreferredInstrument] = useState<InstrumentId | undefined>(undefined);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteZone, setShowDeleteZone] = useState(false);
@@ -41,6 +42,7 @@ export default function ProfilePage() {
       setInlineDiagram(user.showInlineDiagram ?? false);
       setDarkMode(user.darkMode ?? false);
       setPreferredInstrument(user.preferredInstrument);
+      setMinimizeRepeated(user.minimizeRepeatedSections ?? false);
     }
   }, [user]);
 
@@ -330,6 +332,30 @@ export default function ProfilePage() {
             }`}
           >
             <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${inlineDiagram ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Minimiser les sections répétées */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Minimiser les sections identiques</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              N&apos;affiche pas les accords quand une section est identique à une précédente
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !minimizeRepeated;
+              setMinimizeRepeated(newVal);
+              try { await updateUser({ minimizeRepeatedSections: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              minimizeRepeated ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${minimizeRepeated ? 'translate-x-5' : ''}`} />
           </button>
         </div>
       </div>

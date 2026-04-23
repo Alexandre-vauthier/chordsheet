@@ -199,6 +199,7 @@ export interface User {
   chordColorCoding?: boolean;
   showInlineDiagram?: boolean;
   darkMode?: boolean;
+  minimizeRepeatedSections?: boolean;
 }
 
 // Vérifier si un email est admin

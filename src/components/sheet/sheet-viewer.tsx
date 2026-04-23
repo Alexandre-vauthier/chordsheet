@@ -49,6 +49,13 @@ function getRefLabel(url: string): string {
 
 const spanToGridCols = (span: CellSpan) => Math.round(span / 0.25);
 
+// Signature d'une section = empreinte de ses accords (indépendante du label, repeat, rowRepeats)
+function sectionSignature(section: { rows: { chord: string; span: number }[][] }): string {
+  return section.rows
+    .map(row => row.map(c => `${c.chord}:${c.span}`).join(','))
+    .join('|');
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function SheetViewer({ sheet }: SheetViewerProps) {
@@ -80,6 +87,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
   const [selectedChords, setSelectedChords] = useState<Record<string, StringChord | PianoChord>>({});
   const [localTempo, setLocalTempo] = useState<string>(sheet.tempo || '90');
   const [localTempoUnit, setLocalTempoUnit] = useState<'quarter' | 'eighth' | 'sixteenth'>(sheet.tempoUnit ?? 'quarter');
+  const [minimizeRepeated, setMinimizeRepeated] = useState(() => user?.minimizeRepeatedSections ?? false);
 
   const displaySections = transposeSections(sheet.sections, transpose);
   const displayKey = transposeKey(sheet.key, transpose);
@@ -350,6 +358,24 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
           <h2 className="text-sm font-medium text-[var(--ink-light)]">Accords utilisés</h2>
           <div className="flex items-center gap-3">
             <button
+              onClick={() => {
+                const next = !minimizeRepeated;
+                setMinimizeRepeated(next);
+                updateUser({ minimizeRepeatedSections: next }).catch(() => {/* silent */});
+              }}
+              title="Masquer les accords des sections identiques"
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs border transition-colors ${
+                minimizeRepeated
+                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                  : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)]'
+              }`}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+                <path d="M4 6h16M4 12h10M4 18h7" strokeLinecap="round"/>
+              </svg>
+              Minimiser
+            </button>
+            <button
               onClick={() => setShowInlineDiagram(v => !v)}
               title={showInlineDiagram ? 'Masquer les diagrammes dans les cases' : 'Afficher les diagrammes dans les cases'}
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs border transition-colors ${
@@ -386,7 +412,16 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
 
       {/* Sections */}
       <div className="space-y-8 print:space-y-6">
-        {displaySections.map((section) => (
+        {(() => {
+          const seenSignatures = new Map<string, string>(); // signature → label de la première occurrence
+          return displaySections.map((section) => {
+            const sig = sectionSignature(section);
+            const firstLabel = seenSignatures.get(sig);
+            const isDuplicate = minimizeRepeated && !!firstLabel;
+            if (!seenSignatures.has(sig)) seenSignatures.set(sig, section.label);
+            return { section, isDuplicate, firstLabel: firstLabel ?? null };
+          });
+        })().map(({ section, isDuplicate, firstLabel }) => (
           <div key={section.id} className="print:break-inside-avoid">
             {/* Header de section */}
             <div className="flex items-center gap-3 mb-3">
@@ -418,7 +453,15 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
               </button>
             </div>
 
-            {/* Grille */}
+            {/* Grille — masquée si doublon en mode minimisé */}
+            {isDuplicate ? (
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-[var(--line)] text-xs text-[var(--ink-faint)] print:hidden">
+                <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+                  <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2M10 20h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Identique à <span className="font-medium text-[var(--ink-light)] uppercase tracking-wide ml-0.5">{firstLabel}</span>
+              </div>
+            ) : (
             <div className="space-y-2">
               {section.rows.map((row, rowIndex) => {
                 if (row.every(c => !c.chord)) return null;
@@ -476,6 +519,7 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
                 );
               })}
             </div>
+            )}
           </div>
         ))}
       </div>

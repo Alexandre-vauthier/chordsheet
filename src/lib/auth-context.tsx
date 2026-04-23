@@ -24,7 +24,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
-  updateUser: (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId }) => Promise<void>;
+  updateUser: (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -67,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             showInlineDiagram: userData.showInlineDiagram ?? false,
             darkMode: userData.darkMode ?? false,
             preferredInstrument: userData.preferredInstrument,
+            minimizeRepeatedSections: userData.minimizeRepeatedSections ?? false,
             createdAt: userData.createdAt?.toDate() || new Date(),
             updatedAt: userData.updatedAt?.toDate() || new Date(),
           });
@@ -171,7 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // Mettre à jour le profil utilisateur
-  const updateUser = async (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId }) => {
+  const updateUser = async (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean }) => {
     const auth = getAuth();
     const db = getDb();
     const currentUser = auth.currentUser;
@@ -182,7 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Mettre à jour Firebase Auth (ne supporte que displayName et photoURL)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { notationPreference: _np, chordColorCoding: _cc, showInlineDiagram: _sid, darkMode: _dm, preferredInstrument: _pi, ...authUpdates } = updates;
+    const { notationPreference: _np, chordColorCoding: _cc, showInlineDiagram: _sid, darkMode: _dm, preferredInstrument: _pi, minimizeRepeatedSections: _mrs, ...authUpdates } = updates;
     // Appliquer le thème immédiatement si changé
     if (updates.darkMode !== undefined) {
       document.documentElement.setAttribute('data-theme', updates.darkMode ? 'dark' : 'light');
