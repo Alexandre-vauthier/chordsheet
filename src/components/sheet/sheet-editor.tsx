@@ -556,7 +556,16 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
         <div className="flex items-center justify-between pt-2 border-t border-[var(--line)]">
           <span className="text-sm text-[var(--ink-light)]">Grille publique (visible par tous)</span>
           <button
-            onClick={() => updateSheet({ isPublic: !sheet.isPublic })}
+            onClick={() => {
+              const goingPublic = !sheet.isPublic;
+              if (goingPublic && 'forkedFrom' in sheet && sheet.forkedFrom) {
+                const confirmed = confirm(
+                  'Cette grille est une duplication.\n\nÊtes-vous sûr de vouloir la rendre publique ?\n\nSi vous n\'avez pas apporté de modifications significatives, il vaut mieux garder l\'original ou contribuer directement à la grille source.'
+                );
+                if (!confirmed) return;
+              }
+              updateSheet({ isPublic: goingPublic });
+            }}
             className={`relative w-11 h-6 rounded-full transition-colors ${
               sheet.isPublic ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
             }`}
