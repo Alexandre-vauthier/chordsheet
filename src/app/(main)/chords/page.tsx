@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ChordCard } from '@/components/chord';
 import { ChordEditorModal } from '@/components/chord/chord-editor-modal';
+import { ChordFinder } from '@/components/chord/chord-finder';
 import type { StringChord, PianoChord, InstrumentId } from '@/types';
 import { getChordsByInstrument, getAllExtendedChords } from '@/lib/chord-data';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
@@ -67,6 +68,9 @@ function ChordsPageContent() {
 
   const [instrumentId, setInstrumentId] = useState<InstrumentId>(instrumentParam);
   const [categoryGroup, setCategoryGroup] = useState<CategoryGroup>(categoryParam);
+
+  // Modal finder
+  const [finderOpen, setFinderOpen] = useState(false);
 
   // Modal d'édition admin
   const [modalOpen, setModalOpen] = useState(false);
@@ -267,14 +271,25 @@ function ChordsPageContent() {
             Tous les accords de la bibliothèque, par instrument et catégorie.
           </p>
         </div>
-        {isAdmin && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={openNewModal}
-            className="flex-shrink-0 px-4 py-2 rounded-lg border text-sm font-medium transition-colors bg-[var(--accent)] text-white border-[var(--accent)] hover:bg-[#a83d25]"
+            onClick={() => setFinderOpen(true)}
+            className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm font-medium transition-colors bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
           >
-            + Ajouter un accord
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" strokeLinecap="round"/>
+            </svg>
+            Identifier
           </button>
-        )}
+          {isAdmin && (
+            <button
+              onClick={openNewModal}
+              className="flex-shrink-0 px-4 py-2 rounded-lg border text-sm font-medium transition-colors bg-[var(--accent)] text-white border-[var(--accent)] hover:bg-[#a83d25]"
+            >
+              + Ajouter un accord
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Sélecteur d'instrument */}
@@ -331,6 +346,26 @@ function ChordsPageContent() {
             />
           ))}
         </div>
+      )}
+
+      {/* Modal finder — tous instruments, statiques + additions admin */}
+      {finderOpen && (
+        <ChordFinder
+          initialInstrument={instrumentId}
+          allChords={[
+            ...getChordsByInstrument('guitar'),
+            ...getChordsByInstrument('ukulele'),
+            ...getChordsByInstrument('mandolin'),
+            ...getChordsByInstrument('banjo'),
+            ...getChordsByInstrument('piano'),
+            ...getAllExtendedChords('guitar'),
+            ...getAllExtendedChords('ukulele'),
+            ...getAllExtendedChords('mandolin'),
+            ...getAllExtendedChords('banjo'),
+            ...additions.map(a => a.chord),
+          ]}
+          onClose={() => setFinderOpen(false)}
+        />
       )}
 
       {/* Modal d'édition admin */}
