@@ -173,6 +173,8 @@ export interface Sheet {
   beatsPerMeasure?: BeatsPerMeasure;
   // V6 - Unité de tempo (♩ noire, ♪ croche, ♬ double croche)
   tempoUnit?: 'quarter' | 'eighth' | 'sixteenth';
+  // V7 - Fork
+  forkedFrom?: string; // id de la grille source
 }
 
 // Type pour la création d'une nouvelle grille

@@ -664,6 +664,8 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
               <span className="text-red-600">⚠ {validationError}</span>
             ) : hasChanges ? (
               <span className="text-[var(--accent)]">● Modifications non sauvegardées</span>
+            ) : 'forkedFrom' in sheet && sheet.forkedFrom ? (
+              <span className="text-[var(--ink-faint)]">⎘ Dupliquée depuis une grille existante</span>
             ) : (
               <span>Toutes les modifications sont sauvegardées</span>
             )}
