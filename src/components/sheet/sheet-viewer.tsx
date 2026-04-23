@@ -92,6 +92,17 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
   const displaySections = transposeSections(sheet.sections, transpose);
   const displayKey = transposeKey(sheet.key, transpose);
 
+  // Y a-t-il au moins une section en doublon ?
+  const hasRepeatedSections = (() => {
+    const seen = new Set<string>();
+    for (const s of displaySections) {
+      const sig = sectionSignature(s);
+      if (seen.has(sig)) return true;
+      seen.add(sig);
+    }
+    return false;
+  })();
+
   // Playback
   const { isPlaying, activeStep, playSection, togglePlay, stop } = usePlayback({
     sections: displaySections,
@@ -357,24 +368,26 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-medium text-[var(--ink-light)]">Accords utilisés</h2>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => {
-                const next = !minimizeRepeated;
-                setMinimizeRepeated(next);
-                updateUser({ minimizeRepeatedSections: next }).catch(() => {/* silent */});
-              }}
-              title="Masquer les accords des sections identiques"
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs border transition-colors ${
-                minimizeRepeated
-                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
-                  : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)]'
-              }`}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
-                <path d="M4 6h16M4 12h10M4 18h7" strokeLinecap="round"/>
-              </svg>
-              Minimiser
-            </button>
+            {hasRepeatedSections && (
+              <button
+                onClick={() => {
+                  const next = !minimizeRepeated;
+                  setMinimizeRepeated(next);
+                  updateUser({ minimizeRepeatedSections: next }).catch(() => {/* silent */});
+                }}
+                title="Masquer les accords des sections identiques"
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs border transition-colors ${
+                  minimizeRepeated
+                    ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                    : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)]'
+                }`}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+                  <path d="M4 6h16M4 12h10M4 18h7" strokeLinecap="round"/>
+                </svg>
+                Minimiser
+              </button>
+            )}
             <button
               onClick={() => setShowInlineDiagram(v => !v)}
               title={showInlineDiagram ? 'Masquer les diagrammes dans les cases' : 'Afficher les diagrammes dans les cases'}
