@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { InstrumentId, StringChord, PianoChord, FingerPosition, ChordBarre } from '@/types';
 import { playChord, playNote, OPEN_FREQS, noteNameToFreq } from '@/lib/chord-audio';
 import { selectionToPitchClasses, pianoPitchClasses, findMatchingChords, type ChordMatch } from '@/lib/chord-finder';
@@ -146,8 +146,14 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose }
 
   const hasSelection = isPiano ? pianoNotes.length > 0 : fingers.length > 0;
 
+  // Bloquer le scroll du body pendant que le modal est ouvert
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 px-4 bg-black/40" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 px-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div
         className="bg-[var(--paper)] rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
