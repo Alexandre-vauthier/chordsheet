@@ -30,7 +30,7 @@ const INSTRUMENTS: { id: InstrumentId; label: string }[] = [
 
 interface ChordFinderProps {
   initialInstrument?: InstrumentId;
-  allChords: (StringChord | PianoChord)[];
+  allChords: Record<InstrumentId, (StringChord | PianoChord)[]>;
   onClose: () => void;
 }
 
@@ -136,11 +136,9 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose }
     return selectionToPitchClasses(instrumentId, fingers, openStrings, barre);
   }, [isPiano, pianoNotes, instrumentId, fingers, openStrings, barre]);
 
-  // Matching en temps réel
+  // Matching en temps réel — uniquement les accords de l'instrument courant
   const matches = useMemo<ChordMatch[]>(() => {
-    const chordsForInstrument = allChords.filter(c =>
-      isPianoChord(c) ? instrumentId === 'piano' : instrumentId !== 'piano'
-    );
+    const chordsForInstrument = allChords[instrumentId] ?? [];
     return findMatchingChords(selectionPcs, chordsForInstrument, instrumentId);
   }, [selectionPcs, allChords, instrumentId]);
 

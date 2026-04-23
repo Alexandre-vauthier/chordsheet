@@ -216,23 +216,25 @@ function ChordsPageContent() {
       });
   }, [staticChords, instrumentId, overrides, additions, categoryGroup, extendedChords]);
 
-  // Pool complet pour le finder : statiques + algorithmiques, overrides appliqués, additions incluses
+  // Pool indexé par instrument pour le finder
   const finderChordPool = useMemo(() => {
     const INSTR = ['guitar', 'ukulele', 'mandolin', 'banjo', 'piano'] as InstrumentId[];
-    const pool: (StringChord | PianoChord)[] = [];
+    const pool: Record<string, (StringChord | PianoChord)[]> = {};
     for (const inst of INSTR) {
       const statics = inst === 'piano'
         ? getChordsByInstrument(inst)
         : [...getChordsByInstrument(inst), ...getAllExtendedChords(inst)];
+      const instChords: (StringChord | PianoChord)[] = [];
       for (const chord of statics) {
         const key = libraryKey(chord.name, inst);
         const ov = overrides.get(key);
-        pool.push(ov ? ov.chord : chord);
+        instChords.push(ov ? ov.chord : chord);
       }
+      // Additions admin pour cet instrument
+      additions.filter(a => a.instrumentId === inst).forEach(a => instChords.push(a.chord));
+      pool[inst] = instChords;
     }
-    // Additions admin (nouveaux accords)
-    for (const a of additions) pool.push(a.chord);
-    return pool;
+    return pool as Record<InstrumentId, (StringChord | PianoChord)[]>;
   }, [overrides, additions]);
 
   const openEditModal = (chord: StringChord | PianoChord, isOverride: boolean, docId?: string) => {
