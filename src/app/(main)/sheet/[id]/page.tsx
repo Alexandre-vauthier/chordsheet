@@ -3,10 +3,10 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { doc, getDoc, updateDoc, increment, deleteDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, increment, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
-import { fromFirestore, toFirestore } from '@/lib/firestore-helpers';
+import { fromFirestore } from '@/lib/firestore-helpers';
 import { useBookmarks } from '@/lib/use-bookmarks';
 import { useRatings } from '@/lib/use-ratings';
 import { SheetViewer } from '@/components/sheet/sheet-viewer';
@@ -28,7 +28,6 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isTogglingBookmark, setIsTogglingBookmark] = useState(false);
-  const [isForking, setIsForking] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -88,34 +87,9 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
     }
   };
 
-  const handleFork = async () => {
-    if (!user || !sheet) return;
-    setIsForking(true);
-    try {
-      const db = getDb();
-      const { id: _id, viewCount: _v, averageRating: _a, ratingCount: _r, createdAt: _c, updatedAt: _u, ...rest } = sheet;
-      const docRef = await addDoc(collection(db, 'sheets'), {
-        ...toFirestore({
-          ...rest,
-          ownerId: user.id,
-          ownerName: user.displayName,
-          isPublic: false,
-          forkedFrom: sheet.id,
-          viewCount: 0,
-          averageRating: null,
-          ratingCount: 0,
-        }),
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        viewCount: 0,
-      });
-      router.push(`/sheet/${docRef.id}/edit`);
-    } catch (err) {
-      console.error('Error forking sheet:', err);
-      alert('Erreur lors de la duplication');
-    } finally {
-      setIsForking(false);
-    }
+  const handleFork = () => {
+    if (!sheet) return;
+    router.push(`/sheet/new?forkFrom=${sheet.id}`);
   };
 
   const handleToggleBookmark = async () => {
@@ -207,11 +181,10 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
               <Button
                 variant="ghost"
                 onClick={handleFork}
-                disabled={isForking}
                 className="hidden sm:flex text-xs sm:text-sm"
                 title="Dupliquer cette grille dans votre compte"
               >
-                {isForking ? '…' : '⎘ Dupliquer'}
+                ⎘ Dupliquer
               </Button>
             )}
             {isOwner && (
