@@ -146,6 +146,12 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
     }
     base.customChords = firestoreChords as unknown as Record<string, CustomChord>;
   }
+  if (sheet.tempoUnit) {
+    (base as unknown as Record<string, unknown>).tempoUnit = sheet.tempoUnit;
+  }
+  if (sheet.forkedFrom) {
+    (base as unknown as Record<string, unknown>).forkedFrom = sheet.forkedFrom;
+  }
 
   return base;
 }
@@ -185,6 +191,10 @@ export function fromFirestore(
     ratingCount: (data.ratingCount as number) || 0,
     // V5 - Métrique globale
     beatsPerMeasure: (data.beatsPerMeasure as BeatsPerMeasure) || undefined,
+    // V6 - Unité de tempo
+    tempoUnit: (data.tempoUnit as 'quarter' | 'eighth' | 'sixteenth') || undefined,
+    // V7 - Fork
+    forkedFrom: (data.forkedFrom as string) || undefined,
     // V3+ - Diagrammes d'accords & référence
     referenceUrl: (data.referenceUrl as string) || undefined,
     instrumentId: (data.instrumentId as InstrumentId) || undefined,
