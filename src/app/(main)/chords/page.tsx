@@ -216,6 +216,25 @@ function ChordsPageContent() {
       });
   }, [staticChords, instrumentId, overrides, additions, categoryGroup, extendedChords]);
 
+  // Pool complet pour le finder : statiques + algorithmiques, overrides appliqués, additions incluses
+  const finderChordPool = useMemo(() => {
+    const INSTR = ['guitar', 'ukulele', 'mandolin', 'banjo', 'piano'] as InstrumentId[];
+    const pool: (StringChord | PianoChord)[] = [];
+    for (const inst of INSTR) {
+      const statics = inst === 'piano'
+        ? getChordsByInstrument(inst)
+        : [...getChordsByInstrument(inst), ...getAllExtendedChords(inst)];
+      for (const chord of statics) {
+        const key = libraryKey(chord.name, inst);
+        const ov = overrides.get(key);
+        pool.push(ov ? ov.chord : chord);
+      }
+    }
+    // Additions admin (nouveaux accords)
+    for (const a of additions) pool.push(a.chord);
+    return pool;
+  }, [overrides, additions]);
+
   const openEditModal = (chord: StringChord | PianoChord, isOverride: boolean, docId?: string) => {
     setEditingChordName(chord.name);
     setEditingInitialChord(chord);
@@ -352,18 +371,7 @@ function ChordsPageContent() {
       {finderOpen && (
         <ChordFinder
           initialInstrument={instrumentId}
-          allChords={[
-            ...getChordsByInstrument('guitar'),
-            ...getChordsByInstrument('ukulele'),
-            ...getChordsByInstrument('mandolin'),
-            ...getChordsByInstrument('banjo'),
-            ...getChordsByInstrument('piano'),
-            ...getAllExtendedChords('guitar'),
-            ...getAllExtendedChords('ukulele'),
-            ...getAllExtendedChords('mandolin'),
-            ...getAllExtendedChords('banjo'),
-            ...additions.map(a => a.chord),
-          ]}
+          allChords={finderChordPool}
           onClose={() => setFinderOpen(false)}
         />
       )}
