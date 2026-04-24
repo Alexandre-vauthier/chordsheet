@@ -198,7 +198,7 @@ export function fromFirestore(
     // V5 - Métrique globale
     beatsPerMeasure: (data.beatsPerMeasure as BeatsPerMeasure) || undefined,
     // V6 - Unité de tempo
-    tempoUnit: (data.tempoUnit as 'quarter' | 'eighth' | 'sixteenth') || undefined,
+    tempoUnit: (data.tempoUnit as 'quarter' | 'eighth') || undefined,
     // V7 - Fork
     forkedFrom: (data.forkedFrom as string) || undefined,
     // V8 - Non répertorié
