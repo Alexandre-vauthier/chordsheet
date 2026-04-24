@@ -167,6 +167,7 @@ export function SectionBlock({
     <div
       className="mb-10 animate-fadeIn"
       draggable
+      onMouseDown={() => { handlePressed.current = false; }}
       onDragStart={(e) => {
         if (!handlePressed.current) { e.preventDefault(); return; }
         e.dataTransfer.effectAllowed = 'move';
@@ -176,7 +177,7 @@ export function SectionBlock({
       onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; onDragOver(e); }}
       onDrop={(e) => { e.preventDefault(); onDrop(); }}
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => { setIsHovered(false); handlePressed.current = false; }}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Header de section */}
       <div className="flex items-center gap-3 mb-3">
@@ -184,7 +185,7 @@ export function SectionBlock({
         <span
           className={`cursor-grab active:cursor-grabbing text-[var(--ink-faint)] transition-opacity select-none ${headerControlsVisible ? 'opacity-100' : 'opacity-0'}`}
           title="Glisser pour réordonner"
-          onMouseDown={() => { handlePressed.current = true; }}
+          onMouseDown={(e) => { e.stopPropagation(); handlePressed.current = true; }}
         >
           ⠿
         </span>
