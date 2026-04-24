@@ -243,6 +243,19 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     setDragOverSectionId(null);
   }, [dragSectionId]);
 
+  const moveSection = useCallback((sectionId: string, direction: 'up' | 'down') => {
+    setSheet((prev) => {
+      const sections = [...prev.sections];
+      const idx = sections.findIndex((s) => s.id === sectionId);
+      if (idx === -1) return prev;
+      const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (targetIdx < 0 || targetIdx >= sections.length) return prev;
+      [sections[idx], sections[targetIdx]] = [sections[targetIdx], sections[idx]];
+      return { ...prev, sections };
+    });
+    setHasChanges(true);
+  }, []);
+
   // Ref vers l'input artiste pour le focus via TAB depuis le titre
   const artistInputRef = useRef<HTMLInputElement>(null);
 
@@ -642,6 +655,8 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 isFirstSection={isFirstSheet && sectionIndex === 0}
                 onDismissOnboarding={dismissOnboarding}
                 finderChordPool={finderChordPool}
+                onMoveUp={sectionIndex > 0 ? () => moveSection(section.id, 'up') : undefined}
+                onMoveDown={sectionIndex < sheet.sections.length - 1 ? () => moveSection(section.id, 'down') : undefined}
               />
             </div>
           );

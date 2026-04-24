@@ -63,6 +63,8 @@ interface SectionBlockProps {
   isFirstSection?: boolean;
   onDismissOnboarding?: () => void;
   finderChordPool?: Record<InstrumentId, (StringChord | PianoChord)[]>;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
 }
 
 export function SectionBlock({
@@ -85,6 +87,8 @@ export function SectionBlock({
   isFirstSection = false,
   onDismissOnboarding,
   finderChordPool,
+  onMoveUp,
+  onMoveDown,
 }: SectionBlockProps) {
   const [isHovered, setIsHovered] = useState(false);
   const dragHandleRef = useRef(false);
@@ -162,8 +166,8 @@ export function SectionBlock({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Header de section */}
-      <div className="flex items-center gap-3 mb-3">
+      {/* Header de section — sticky pour les sections hautes */}
+      <div className="sticky top-0 z-10 bg-[var(--cream)] flex items-center gap-3 mb-3 py-1">
         {/* Drag handle */}
         <span
           className={`cursor-grab active:cursor-grabbing text-[var(--ink-faint)] transition-opacity select-none ${headerControlsVisible ? 'opacity-100' : 'opacity-0'}`}
@@ -195,6 +199,20 @@ export function SectionBlock({
         </span>
 
         <div className={`flex gap-1.5 ml-auto transition-opacity duration-150 ${headerControlsVisible ? 'opacity-100' : 'opacity-0'}`}>
+          {onMoveUp && (
+            <button
+              onClick={onMoveUp}
+              className="bg-transparent border-none cursor-pointer text-[var(--ink-light)] px-2 py-1 rounded text-xs transition-all hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]"
+              title="Monter la section"
+            >↑</button>
+          )}
+          {onMoveDown && (
+            <button
+              onClick={onMoveDown}
+              className="bg-transparent border-none cursor-pointer text-[var(--ink-light)] px-2 py-1 rounded text-xs transition-all hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]"
+              title="Descendre la section"
+            >↓</button>
+          )}
           <button
             onClick={addRow}
             className="bg-transparent border-none cursor-pointer text-[var(--ink-light)] px-2 py-1
