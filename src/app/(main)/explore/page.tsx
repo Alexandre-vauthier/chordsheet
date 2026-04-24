@@ -36,7 +36,7 @@ export default function ExplorePage() {
   // Filtres — initialisés depuis l'URL pour survivre au retour arrière
   const [sortBy, setSortBy] = useState<SortOption>(() => (searchParams.get('sort') as SortOption) ?? 'recent');
   const [selectedGenre, setSelectedGenre] = useState<string>(() => searchParams.get('genre') ?? '');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | null>(() => (searchParams.get('difficulty') as Difficulty) ?? null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | null>(() => { const d = searchParams.get('difficulty'); return d ? (Number(d) as Difficulty) : null; });
 
   // Synchroniser l'URL quand les filtres changent
   const updateUrl = (params: { sort?: SortOption; genre?: string; difficulty?: Difficulty | null; q?: string }) => {
