@@ -235,9 +235,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
 
   const handleDrop = useCallback((targetSectionId: string) => {
     const fromId = dragSectionIdRef.current;
-    console.log('[Editor] handleDrop target:', targetSectionId, 'fromId ref:', fromId);
     if (!fromId || fromId === targetSectionId) {
-      console.log('[Editor] drop aborted — no fromId or same section');
       dragSectionIdRef.current = null;
       setDragSectionId(null);
       setDragOverSectionId(null);
@@ -305,6 +303,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     const customChord: CustomChord = {
       ...chord,
       instrumentId,
+      isExplicitlyCreated: true,
     } as CustomChord;
 
     setSheet(prev => ({

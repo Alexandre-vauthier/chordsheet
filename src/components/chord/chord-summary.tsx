@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { Section, InstrumentId, StringChord, PianoChord } from '@/types';
+import type { Section, InstrumentId, StringChord, PianoChord, CustomChord } from '@/types';
 import { ChordCard } from './chord-card';
 import { useChordNotation } from '@/lib/use-chord-notation';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
@@ -136,8 +136,12 @@ export function ChordSummary({
             adminAdditions.forEach(addVariant);
             staticVariants.forEach(addVariant);
           }
-          // Ajouter customChord seulement s'il n'est pas déjà dans la liste (accord vraiment custom)
-          if (customChord && !seenIds.has(customChord.id)) {
+          // Ajouter customChord seulement s'il a été créé manuellement par l'utilisateur
+          // (isExplicitlyCreated = true) et n'est pas déjà dans la liste.
+          // Les préférences de bibliothèque sauvegardées (sélection via navigation) ne sont
+          // pas ajoutées comme entrée supplémentaire : si leur ID n'est plus dans la
+          // bibliothèque (accord modifié/supprimé), on tombe simplement sur la variante 0.
+          if (customChord && !seenIds.has(customChord.id) && (customChord as CustomChord).isExplicitlyCreated) {
             allVariants.unshift(customChord);
           }
 

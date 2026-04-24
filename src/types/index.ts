@@ -120,12 +120,16 @@ export const isPianoChord = (chord: ChordData): chord is PianoChord => {
 export interface CustomStringChord extends StringChord {
   createdBy?: string;
   instrumentId: InstrumentId;
+  /** true = créé manuellement via l'éditeur (pas une sélection de bibliothèque) */
+  isExplicitlyCreated?: boolean;
 }
 
 // Accord personnalisé créé par l'utilisateur (piano)
 export interface CustomPianoChord extends PianoChord {
   createdBy?: string;
   instrumentId: 'piano';
+  /** true = créé manuellement via l'éditeur (pas une sélection de bibliothèque) */
+  isExplicitlyCreated?: boolean;
 }
 
 // Union des accords personnalisés

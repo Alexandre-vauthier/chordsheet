@@ -168,11 +168,10 @@ export function SectionBlock({
     <div
       className={`${anyDragging ? 'mb-2' : 'mb-10'} animate-fadeIn`}
       draggable
-      onMouseDown={(e) => console.log('[SectionBlock] mousedown', section.label, e.target)}
-      onDragStart={(e) => { console.log('[SectionBlock] dragStart', section.label); e.dataTransfer.effectAllowed = 'move'; requestAnimationFrame(() => onDragStart()); }}
-      onDragEnd={() => { console.log('[SectionBlock] dragEnd', section.label); onDragEnd(); }}
+      onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; requestAnimationFrame(() => onDragStart()); }}
+      onDragEnd={() => onDragEnd()}
       onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; onDragOver(e); }}
-      onDrop={(e) => { console.log('[SectionBlock] drop on', section.label); e.preventDefault(); onDrop(); }}
+      onDrop={(e) => { e.preventDefault(); onDrop(); }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
