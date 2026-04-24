@@ -641,6 +641,10 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
       <div>
         {sheet.sections.map((section, sectionIndex) => {
           const isDragging = dragSectionId === section.id;
+          const draggedIdx = sheet.sections.findIndex(s => s.id === dragSectionId);
+          // Ne pas afficher "Déposer ici" sur la section immédiatement après la section draggée
+          // (ce serait un no-op : insérer avant B alors que A est déjà avant B)
+          const isNoOpTarget = draggedIdx !== -1 && sectionIndex === draggedIdx + 1;
           return (
             <div
               key={section.id}
@@ -665,7 +669,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 onDragEnd={handleDragEnd}
                 onDragOver={(e) => { e.preventDefault(); if (dragSectionIdRef.current !== section.id) handleDragOver(section.id); }}
                 onDrop={() => handleDrop(section.id)}
-                isDragOver={dragOverSectionId === section.id && dragSectionId !== section.id}
+                isDragOver={dragOverSectionId === section.id && dragSectionId !== section.id && !isNoOpTarget}
                 isFirstSection={isFirstSheet && sectionIndex === 0}
                 onDismissOnboarding={dismissOnboarding}
                 finderChordPool={finderChordPool}
