@@ -209,6 +209,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   const [anyDragging, setAnyDragging] = useState(false);
 
   const handleDragStart = useCallback((sectionId: string) => {
+    console.log('[Editor] handleDragStart', sectionId, 'ref before:', dragSectionIdRef.current);
     dragSectionIdRef.current = sectionId;
     setDragSectionId(sectionId);
     setAnyDragging(true);
@@ -219,6 +220,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   }, []);
 
   const handleDragEnd = useCallback(() => {
+    console.log('[Editor] handleDragEnd, ref was:', dragSectionIdRef.current);
     dragSectionIdRef.current = null;
     setDragSectionId(null);
     setDragOverSectionId(null);
@@ -227,7 +229,9 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
 
   const handleDrop = useCallback((targetSectionId: string) => {
     const fromId = dragSectionIdRef.current;
+    console.log('[Editor] handleDrop target:', targetSectionId, 'fromId ref:', fromId);
     if (!fromId || fromId === targetSectionId) {
+      console.log('[Editor] drop aborted — no fromId or same section');
       dragSectionIdRef.current = null;
       setDragSectionId(null);
       setDragOverSectionId(null);
