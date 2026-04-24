@@ -672,6 +672,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 onMoveUp={sectionIndex > 0 ? () => moveSection(section.id, 'up') : undefined}
                 onMoveDown={sectionIndex < sheet.sections.length - 1 ? () => moveSection(section.id, 'down') : undefined}
                 anyDragging={anyDragging}
+                isSelf={dragSectionId === section.id}
               />
             </div>
           );

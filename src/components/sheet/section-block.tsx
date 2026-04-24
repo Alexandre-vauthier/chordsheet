@@ -66,6 +66,7 @@ interface SectionBlockProps {
   onMoveUp?: () => void;
   onMoveDown?: () => void;
   anyDragging?: boolean;
+  isSelf?: boolean;
 }
 
 export function SectionBlock({
@@ -91,6 +92,7 @@ export function SectionBlock({
   onMoveUp,
   onMoveDown,
   anyDragging = false,
+  isSelf = false,
 }: SectionBlockProps) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -154,7 +156,7 @@ export function SectionBlock({
 
   return (
     <>
-    {isDragOver && (
+    {isDragOver && !isSelf && (
       <div
         className="h-10 mb-1 rounded-lg border-2 border-dashed border-[var(--accent)] bg-[var(--accent-soft)] flex items-center justify-center"
         onDragOver={(e) => { e.preventDefault(); onDragOver(e); }}
