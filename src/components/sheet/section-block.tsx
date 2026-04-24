@@ -93,7 +93,6 @@ export function SectionBlock({
   anyDragging = false,
 }: SectionBlockProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const handlePressed = useRef(false);
 
   const updateCell = (rowIndex: number, cellIndex: number, updates: Partial<Cell>) => {
     const newRows = [...section.rows];
@@ -167,13 +166,13 @@ export function SectionBlock({
     <div
       className="mb-10 animate-fadeIn"
       draggable
-      onMouseDown={() => { handlePressed.current = false; }}
       onDragStart={(e) => {
-        if (!handlePressed.current) { e.preventDefault(); return; }
+        const fromHandle = !!(e.target as HTMLElement).closest('[data-drag-handle]');
+        if (!fromHandle) { e.preventDefault(); return; }
         e.dataTransfer.effectAllowed = 'move';
         onDragStart();
       }}
-      onDragEnd={() => { handlePressed.current = false; onDragEnd(); }}
+      onDragEnd={onDragEnd}
       onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; onDragOver(e); }}
       onDrop={(e) => { e.preventDefault(); onDrop(); }}
       onMouseEnter={() => setIsHovered(true)}
@@ -185,7 +184,7 @@ export function SectionBlock({
         <span
           className={`cursor-grab active:cursor-grabbing text-[var(--ink-faint)] transition-opacity select-none ${headerControlsVisible ? 'opacity-100' : 'opacity-0'}`}
           title="Glisser pour réordonner"
-          onMouseDown={(e) => { e.stopPropagation(); handlePressed.current = true; }}
+          data-drag-handle="true"
         >
           ⠿
         </span>
