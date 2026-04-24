@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { Section, Cell, CellSpan, InstrumentId, StringChord, PianoChord } from '@/types';
 import { GridRow } from './grid-row';
 import { createEmptyRow } from '@/types';
@@ -87,6 +87,7 @@ export function SectionBlock({
   finderChordPool,
 }: SectionBlockProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const dragHandleRef = useRef(false);
 
   const updateCell = (rowIndex: number, cellIndex: number, updates: Partial<Cell>) => {
     const newRows = [...section.rows];
@@ -150,21 +151,25 @@ export function SectionBlock({
     <div
       className={`mb-10 animate-fadeIn transition-all ${isDragOver ? 'border-t-2 border-[var(--accent)] pt-2' : ''}`}
       draggable
-      onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; onDragStart(); }}
-      onDragEnd={onDragEnd}
+      onDragStart={(e) => {
+        if (!dragHandleRef.current) { e.preventDefault(); return; }
+        e.dataTransfer.effectAllowed = 'move';
+        onDragStart();
+      }}
+      onDragEnd={() => { dragHandleRef.current = false; onDragEnd(); }}
+      onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; onDragOver(e); }}
       onDrop={(e) => { e.preventDefault(); onDrop(); }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Header de section */}
-      <div
-        className="flex items-center gap-3 mb-3"
-        onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; onDragOver(e); }}
-      >
-        {/* Drag handle avec coach mark */}
+      <div className="flex items-center gap-3 mb-3">
+        {/* Drag handle */}
         <span
-          className={`cursor-grab active:cursor-grabbing text-[var(--ink-faint)] transition-opacity ${headerControlsVisible ? 'opacity-100' : 'opacity-0'}`}
+          className={`cursor-grab active:cursor-grabbing text-[var(--ink-faint)] transition-opacity select-none ${headerControlsVisible ? 'opacity-100' : 'opacity-0'}`}
           title="Glisser pour réordonner"
+          onMouseDown={() => { dragHandleRef.current = true; }}
+          onMouseUp={() => { dragHandleRef.current = false; }}
         >
           ⠿
         </span>
