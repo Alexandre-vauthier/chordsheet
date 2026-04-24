@@ -429,7 +429,7 @@ function FinderPianoEditor({ notes, onToggleNote }: { notes: string[]; onToggleN
         const pos = blackKeyPositions[i] ?? 0;
         return (
           <rect key={note} x={pos * wW + 2} y={0} width={bW} height={bH}
-            fill={active ? 'var(--accent)' : 'var(--ink)'} rx={2}
+            fill={active ? 'var(--accent)' : '#1a1410'} rx={2}
             className="cursor-pointer" onClick={() => onToggleNote(note)} />
         );
       })}
