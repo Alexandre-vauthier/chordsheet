@@ -204,12 +204,14 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   // Drag & drop sections
   const [dragSectionId, setDragSectionId] = useState<string | null>(null);
   const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
-  // Ref pour éviter les closures périmées dans handleDrop
+  // Refs pour éviter les closures périmées et avoir des valeurs synchrones
   const dragSectionIdRef = useRef<string | null>(null);
+  const [anyDragging, setAnyDragging] = useState(false);
 
   const handleDragStart = useCallback((sectionId: string) => {
     dragSectionIdRef.current = sectionId;
     setDragSectionId(sectionId);
+    setAnyDragging(true);
   }, []);
 
   const handleDragOver = useCallback((sectionId: string) => {
@@ -220,6 +222,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     dragSectionIdRef.current = null;
     setDragSectionId(null);
     setDragOverSectionId(null);
+    setAnyDragging(false);
   }, []);
 
   const handleDrop = useCallback((targetSectionId: string) => {
@@ -664,7 +667,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 finderChordPool={finderChordPool}
                 onMoveUp={sectionIndex > 0 ? () => moveSection(section.id, 'up') : undefined}
                 onMoveDown={sectionIndex < sheet.sections.length - 1 ? () => moveSection(section.id, 'down') : undefined}
-                anyDragging={dragSectionId !== null}
+                anyDragging={anyDragging}
               />
             </div>
           );

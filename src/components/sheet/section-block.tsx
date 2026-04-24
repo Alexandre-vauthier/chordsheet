@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { Section, Cell, CellSpan, InstrumentId, StringChord, PianoChord } from '@/types';
 import { GridRow } from './grid-row';
 import { createEmptyRow } from '@/types';
@@ -93,7 +93,7 @@ export function SectionBlock({
   anyDragging = false,
 }: SectionBlockProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const [isDraggable, setIsDraggable] = useState(false);
+  const handlePressed = useRef(false);
 
   const updateCell = (rowIndex: number, cellIndex: number, updates: Partial<Cell>) => {
     const newRows = [...section.rows];
@@ -166,13 +166,17 @@ export function SectionBlock({
     )}
     <div
       className="mb-10 animate-fadeIn"
-      draggable={isDraggable}
-      onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; onDragStart(); }}
-      onDragEnd={() => { setIsDraggable(false); onDragEnd(); }}
+      draggable
+      onDragStart={(e) => {
+        if (!handlePressed.current) { e.preventDefault(); return; }
+        e.dataTransfer.effectAllowed = 'move';
+        onDragStart();
+      }}
+      onDragEnd={() => { handlePressed.current = false; onDragEnd(); }}
       onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; onDragOver(e); }}
       onDrop={(e) => { e.preventDefault(); onDrop(); }}
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => { setIsHovered(false); setIsDraggable(false); }}
+      onMouseLeave={() => { setIsHovered(false); handlePressed.current = false; }}
     >
       {/* Header de section */}
       <div className="flex items-center gap-3 mb-3">
@@ -180,7 +184,7 @@ export function SectionBlock({
         <span
           className={`cursor-grab active:cursor-grabbing text-[var(--ink-faint)] transition-opacity select-none ${headerControlsVisible ? 'opacity-100' : 'opacity-0'}`}
           title="Glisser pour réordonner"
-          onMouseDown={() => setIsDraggable(true)}
+          onMouseDown={() => { handlePressed.current = true; }}
         >
           ⠿
         </span>
@@ -307,7 +311,7 @@ export function SectionBlock({
       </div>
 
       {/* Bouton ajouter mesure — masqué pendant le drag */}
-      {!isDraggable && !anyDragging && (
+      {!anyDragging && (
         <button
           onClick={addRow}
           className="w-full mt-2 py-2 border-[1.5px] border-dashed border-[var(--line)] rounded-lg
