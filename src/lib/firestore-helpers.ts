@@ -152,6 +152,12 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
   if (sheet.forkedFrom) {
     (base as unknown as Record<string, unknown>).forkedFrom = sheet.forkedFrom;
   }
+  if (sheet.isUnlisted) {
+    (base as unknown as Record<string, unknown>).isUnlisted = sheet.isUnlisted;
+  }
+  if (sheet.unlistedBySetIds && sheet.unlistedBySetIds.length > 0) {
+    (base as unknown as Record<string, unknown>).unlistedBySetIds = sheet.unlistedBySetIds;
+  }
 
   return base;
 }
@@ -195,6 +201,9 @@ export function fromFirestore(
     tempoUnit: (data.tempoUnit as 'quarter' | 'eighth' | 'sixteenth') || undefined,
     // V7 - Fork
     forkedFrom: (data.forkedFrom as string) || undefined,
+    // V8 - Non répertorié
+    isUnlisted: (data.isUnlisted as boolean) || undefined,
+    unlistedBySetIds: (data.unlistedBySetIds as string[]) || undefined,
     // V3+ - Diagrammes d'accords & référence
     referenceUrl: (data.referenceUrl as string) || undefined,
     instrumentId: (data.instrumentId as InstrumentId) || undefined,

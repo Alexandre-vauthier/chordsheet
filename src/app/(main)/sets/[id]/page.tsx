@@ -23,7 +23,7 @@ export default function SetPage({ params }: SetPageProps) {
   const router = useRouter();
   const { user } = useAuth();
   const { set, sheets, isLoading, error } = useSet(id);
-  const { updateSet, reorderSheets, removeSheetFromSet, addSheetToSet } = useSets(user?.id);
+  const { updateSet, updateSetVisibility, reorderSheets, removeSheetFromSet, addSheetToSet } = useSets(user?.id);
   const { bookmarkedSheets } = useBookmarks(user?.id);
 
   const [name, setName] = useState('');
@@ -94,11 +94,12 @@ export default function SetPage({ params }: SetPageProps) {
 
     setIsSaving(true);
     try {
-      await updateSet(set.id, {
-        name,
-        description,
-        isPublic,
-      });
+      // Mettre à jour les métadonnées du set
+      await updateSet(set.id, { name, description });
+      // Propager la visibilité aux grilles si elle a changé
+      if (isPublic !== set.isPublic) {
+        await updateSetVisibility(set.id, isPublic, set.sheetIds);
+      }
       setHasChanges(false);
     } catch (error) {
       console.error('Error saving set:', error);

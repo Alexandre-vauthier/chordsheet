@@ -175,6 +175,9 @@ export interface Sheet {
   tempoUnit?: 'quarter' | 'eighth' | 'sixteenth';
   // V7 - Fork
   forkedFrom?: string; // id de la grille source
+  // V8 - Non répertorié (accessible via lien, non listé dans l'Explore)
+  isUnlisted?: boolean;
+  unlistedBySetIds?: string[]; // IDs des sets publics qui ont rendu cette grille non répertoriée
 }
 
 // Type pour la création d'une nouvelle grille

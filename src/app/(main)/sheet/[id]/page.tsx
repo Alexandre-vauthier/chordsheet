@@ -48,7 +48,7 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
         const data = docSnap.data();
 
         // Vérifier les droits d'accès
-        if (!data.isPublic && data.ownerId !== user?.id) {
+        if (!data.isPublic && !data.isUnlisted && data.ownerId !== user?.id) {
           setError('Cette grille est privée');
           return;
         }

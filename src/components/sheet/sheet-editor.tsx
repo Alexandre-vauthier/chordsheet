@@ -587,7 +587,13 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 );
                 if (!confirmed) return;
               }
-              updateSheet({ isPublic: goingPublic });
+              if (!goingPublic) {
+                // Si la grille est référencée par des sets publics, garder isUnlisted
+                const hasSetRefs = 'unlistedBySetIds' in sheet && (sheet.unlistedBySetIds?.length ?? 0) > 0;
+                updateSheet({ isPublic: false, ...(hasSetRefs ? {} : { isUnlisted: false }) });
+              } else {
+                updateSheet({ isPublic: true });
+              }
             }}
             className={`relative w-11 h-6 rounded-full transition-colors ${
               sheet.isPublic ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'

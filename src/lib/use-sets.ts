@@ -24,6 +24,7 @@ interface UseSetsReturn {
   isLoading: boolean;
   createSet: (set: NewSet) => Promise<string>;
   updateSet: (setId: string, updates: Partial<Set>) => Promise<void>;
+  updateSetVisibility: (setId: string, isPublic: boolean, sheetIds: string[]) => Promise<void>;
   deleteSet: (setId: string) => Promise<void>;
   addSheetToSet: (setId: string, sheetId: string) => Promise<void>;
   removeSheetFromSet: (setId: string, sheetId: string) => Promise<void>;
@@ -118,6 +119,46 @@ export function useSets(userId: string | undefined): UseSetsReturn {
     []
   );
 
+  // Mettre à jour la visibilité d'un set + propager aux grilles privées
+  const updateSetVisibility = useCallback(async (setId: string, isPublic: boolean, sheetIds: string[]) => {
+    const db = getDb();
+    // 1. Mettre à jour le set
+    await updateDoc(doc(db, 'sets', setId), { isPublic, updatedAt: serverTimestamp() });
+
+    // 2. Propager aux grilles
+    const sheetsPromises = sheetIds.map(async (sheetId) => {
+      try {
+        const sheetDoc = await getDoc(doc(db, 'sheets', sheetId));
+        if (!sheetDoc.exists()) return;
+        const data = sheetDoc.data();
+        const currentUnlistedBySetIds: string[] = (data.unlistedBySetIds as string[]) || [];
+
+        if (isPublic) {
+          // Set devient public : les grilles privées passent en non répertoriées
+          if (!data.isPublic && !currentUnlistedBySetIds.includes(setId)) {
+            await updateDoc(doc(db, 'sheets', sheetId), {
+              isUnlisted: true,
+              unlistedBySetIds: [...currentUnlistedBySetIds, setId],
+            });
+          }
+        } else {
+          // Set devient privé : retirer ce setId des grilles
+          const newSetIds = currentUnlistedBySetIds.filter(id => id !== setId);
+          if (currentUnlistedBySetIds.includes(setId)) {
+            await updateDoc(doc(db, 'sheets', sheetId), {
+              unlistedBySetIds: newSetIds,
+              // Si plus aucun set public ne référence cette grille, repasser en privé
+              ...(newSetIds.length === 0 ? { isUnlisted: false } : {}),
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Cannot update sheet visibility:', sheetId, err);
+      }
+    });
+    await Promise.all(sheetsPromises);
+  }, []);
+
   // Supprimer un set
   const deleteSet = useCallback(async (setId: string) => {
     const db = getDb();
@@ -175,6 +216,7 @@ export function useSets(userId: string | undefined): UseSetsReturn {
     isLoading,
     createSet,
     updateSet,
+    updateSetVisibility,
     deleteSet,
     addSheetToSet,
     removeSheetFromSet,
