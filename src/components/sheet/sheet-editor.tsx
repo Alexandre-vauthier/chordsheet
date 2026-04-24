@@ -644,7 +644,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
           return (
             <div
               key={section.id}
-              className={isDragging ? 'h-10 overflow-hidden opacity-30 mb-10 border-2 border-dashed border-[var(--line)] rounded-lg' : ''}
+              className={isDragging ? 'opacity-30 pointer-events-none' : ''}
             >
               <SectionBlock
                 section={section}
