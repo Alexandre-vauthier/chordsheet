@@ -78,6 +78,14 @@ body {
   animation: fadeIn 0.2s ease;
 }
 
+/* Chord Finder overlay — clair : fond blanc semi-transparent / sombre : fond noir */
+.finder-overlay {
+  background: rgba(245, 240, 232, 0.82); /* --cream clair */
+}
+[data-theme="dark"] .finder-overlay {
+  background: rgba(0, 0, 0, 0.72);
+}
+
 /* Print styles */
 @media print {
   /* Force light mode variables regardless of theme */

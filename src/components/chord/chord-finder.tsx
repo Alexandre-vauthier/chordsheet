@@ -152,7 +152,7 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, 
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-8 px-4 bg-black/70 backdrop-blur-md" onClick={onClose}>
+    <div className="finder-overlay fixed inset-0 z-50 flex items-start justify-center pt-8 px-4 backdrop-blur-md" onClick={onClose}>
       <div
         className="bg-[var(--paper)] rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
