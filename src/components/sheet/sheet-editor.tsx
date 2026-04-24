@@ -204,8 +204,11 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   // Drag & drop sections
   const [dragSectionId, setDragSectionId] = useState<string | null>(null);
   const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
+  // Ref pour éviter les closures périmées dans handleDrop
+  const dragSectionIdRef = useRef<string | null>(null);
 
   const handleDragStart = useCallback((sectionId: string) => {
+    dragSectionIdRef.current = sectionId;
     setDragSectionId(sectionId);
   }, []);
 
@@ -214,19 +217,22 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   }, []);
 
   const handleDragEnd = useCallback(() => {
+    dragSectionIdRef.current = null;
     setDragSectionId(null);
     setDragOverSectionId(null);
   }, []);
 
   const handleDrop = useCallback((targetSectionId: string) => {
-    if (!dragSectionId || dragSectionId === targetSectionId) {
+    const fromId = dragSectionIdRef.current;
+    if (!fromId || fromId === targetSectionId) {
+      dragSectionIdRef.current = null;
       setDragSectionId(null);
       setDragOverSectionId(null);
       return;
     }
     setSheet((prev) => {
       const sections = [...prev.sections];
-      const fromIdx = sections.findIndex((s) => s.id === dragSectionId);
+      const fromIdx = sections.findIndex((s) => s.id === fromId);
       if (fromIdx === -1) return prev;
       const [moved] = sections.splice(fromIdx, 1);
       if (targetSectionId === '__end__') {
@@ -239,9 +245,10 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
       return { ...prev, sections };
     });
     setHasChanges(true);
+    dragSectionIdRef.current = null;
     setDragSectionId(null);
     setDragOverSectionId(null);
-  }, [dragSectionId]);
+  }, []);
 
   const moveSection = useCallback((sectionId: string, direction: 'up' | 'down') => {
     setSheet((prev) => {
