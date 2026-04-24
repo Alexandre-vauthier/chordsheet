@@ -473,15 +473,15 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             <button
               type="button"
               onClick={() => {
-                const units = ['quarter', 'eighth', 'sixteenth'] as const;
+                const units = ['quarter', 'eighth'] as const;
                 const cur = sheet.tempoUnit ?? 'quarter';
                 const next = units[(units.indexOf(cur) + 1) % units.length];
                 updateSheet({ tempoUnit: next });
               }}
-              title="Changer l'unité de tempo (♩ noire → ♪ croche → ♬ double croche)"
+              title="Changer l'unité de tempo (♩ noire → ♪ croche)"
               className="text-base leading-none hover:text-[var(--accent)] transition-colors cursor-pointer"
             >
-              {sheet.tempoUnit === 'eighth' ? '♪' : sheet.tempoUnit === 'sixteenth' ? '♬' : '♩'}
+              {sheet.tempoUnit === 'eighth' ? '♪' : '♩'}
             </button>
             <input
               type="number"

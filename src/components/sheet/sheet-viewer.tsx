@@ -89,7 +89,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   const [transpose, setTranspose] = useState(0);
   const [selectedChords, setSelectedChords] = useState<Record<string, StringChord | PianoChord>>({});
   const [localTempo, setLocalTempo] = useState<string>(sheet.tempo || '90');
-  const [localTempoUnit, setLocalTempoUnit] = useState<'quarter' | 'eighth' | 'sixteenth'>(sheet.tempoUnit ?? 'quarter');
+  const [localTempoUnit, setLocalTempoUnit] = useState<'quarter' | 'eighth'>(sheet.tempoUnit ?? 'quarter');
   const [minimizeRepeated, setMinimizeRepeated] = useState(() => user?.minimizeRepeatedSections ?? false);
 
   const displaySections = transposeSections(sheet.sections, transpose);
@@ -240,13 +240,13 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 <button
                   type="button"
                   onClick={() => {
-                    const units = ['quarter', 'eighth', 'sixteenth'] as const;
+                    const units = ['quarter', 'eighth'] as const;
                     setLocalTempoUnit(u => units[(units.indexOf(u) + 1) % units.length]);
                   }}
-                  title="Changer l'unité de tempo (♩ noire → ♪ croche → ♬ double croche)"
+                  title="Changer l'unité de tempo (♩ noire → ♪ croche)"
                   className="text-base leading-none hover:text-[var(--accent)] transition-colors cursor-pointer"
                 >
-                  {localTempoUnit === 'eighth' ? '♪' : localTempoUnit === 'sixteenth' ? '♬' : '♩'}
+                  {localTempoUnit === 'eighth' ? '♪' : '♩'}
                 </button>
                 <input
                   type="number"
@@ -373,7 +373,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
           )}
           <span className="flex items-center gap-1.5 px-2 py-1 text-[var(--ink)] text-sm">
             <span className="text-base leading-none">
-              {localTempoUnit === 'eighth' ? '♪' : localTempoUnit === 'sixteenth' ? '♬' : '♩'}
+              {localTempoUnit === 'eighth' ? '♪' : '♩'}
             </span>
             {localTempo} BPM
           </span>

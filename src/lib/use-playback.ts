@@ -49,12 +49,11 @@ function buildSequence(sections: Section[], beatMs: number): PlayStep[] {
   return steps;
 }
 
-type TempoUnit = 'quarter' | 'eighth' | 'sixteenth';
+type TempoUnit = 'quarter' | 'eighth';
 
 const TEMPO_UNIT_FACTOR: Record<TempoUnit, number> = {
   quarter: 1,
-  eighth: 2,
-  sixteenth: 4,
+  eighth: 0.5,
 };
 
 interface UsePlaybackOptions {
