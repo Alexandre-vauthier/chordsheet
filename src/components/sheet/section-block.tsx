@@ -172,8 +172,8 @@ export function SectionBlock({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Header de section — sticky sous la navbar */}
-      <div className="sticky top-14 z-10 bg-[var(--cream)] flex items-center gap-3 mb-3 py-1">
+      {/* Header de section */}
+      <div className="flex items-center gap-3 mb-3">
         {/* Drag handle */}
         <span
           className={`cursor-grab active:cursor-grabbing text-[var(--ink-faint)] transition-opacity select-none ${headerControlsVisible ? 'opacity-100' : 'opacity-0'}`}
