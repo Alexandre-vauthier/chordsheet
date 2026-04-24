@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, useRef, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { doc, getDoc, updateDoc, increment, deleteDoc } from 'firebase/firestore';
@@ -11,7 +11,7 @@ import { useBookmarks } from '@/lib/use-bookmarks';
 import { useRatings } from '@/lib/use-ratings';
 import { SheetViewer } from '@/components/sheet/sheet-viewer';
 import { RatingStars } from '@/components/sheet/rating-stars';
-import { Button } from '@/components/ui/button';
+
 import type { Sheet } from '@/types';
 
 interface ViewSheetPageProps {
@@ -28,6 +28,8 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isTogglingBookmark, setIsTogglingBookmark] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -127,6 +129,18 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
 
   const sheetIsBookmarked = sheet?.id ? isBookmarked(sheet.id) : false;
 
+  // Fermer le menu "..." au clic extérieur
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -157,93 +171,96 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
 
   return (
     <>
-      {/* Barre d'actions (masquée à l'impression) */}
-      <div className="bg-[var(--cell-bg)] border-b border-[var(--line)] py-3 px-6 print:hidden">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={() => router.back()}>
-              ← Retour
-            </Button>
+      {/* Barre unique : avis + notation + menu "..." */}
+      <div className="bg-[var(--cell-bg)] border-b border-[var(--line)] py-2.5 px-4 sm:px-6 print:hidden">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 flex items-center gap-3">
+
+          {/* Gauche : note moyenne + vues */}
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            {sheet.isPublic && (
+              <>
+                <div className="flex items-center gap-1.5">
+                  <RatingStars value={sheet.averageRating} readonly size="sm" showCount={sheet.ratingCount} />
+                </div>
+                {sheet.viewCount > 0 && (
+                  <span className="text-xs text-[var(--ink-faint)] whitespace-nowrap">
+                    {sheet.viewCount} vue{sheet.viewCount > 1 ? 's' : ''}
+                  </span>
+                )}
+              </>
+            )}
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            {user && (
-              <Button
-                variant="ghost"
-                onClick={handleToggleBookmark}
-                disabled={isTogglingBookmark}
-                className={`${sheetIsBookmarked ? 'text-amber-500' : ''} text-xs sm:text-sm`}
-              >
-                {sheetIsBookmarked ? '★' : '☆'}
-                <span className="hidden sm:inline ml-1">{sheetIsBookmarked ? 'Dans mon book' : 'Ajouter au book'}</span>
-              </Button>
+
+          {/* Centre : noter cette grille */}
+          {canRate && !ratingLoading && (
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="text-xs text-[var(--ink-light)] hidden sm:inline">
+                {userRating ? 'Ma note :' : 'Noter :'}
+              </span>
+              <RatingStars value={userRating} onChange={handleRate} size="sm" />
+            </div>
+          )}
+
+          {/* Droite : menu "..." */}
+          <div className="relative shrink-0" ref={menuRef}>
+            <button
+              onClick={() => setMenuOpen(v => !v)}
+              className="w-8 h-8 flex items-center justify-center rounded-full text-[var(--ink-light)] hover:bg-[var(--line)] hover:text-[var(--ink)] transition-colors text-lg leading-none"
+              title="Actions"
+            >
+              •••
+            </button>
+
+            {menuOpen && (
+              <div className="absolute right-0 top-full mt-1 z-50 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl shadow-lg py-1 min-w-[180px]">
+                <button
+                  onClick={() => { handlePrint(); setMenuOpen(false); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors"
+                >
+                  🖨 Imprimer / PDF
+                </button>
+                {user && (
+                  <button
+                    onClick={() => { handleToggleBookmark(); setMenuOpen(false); }}
+                    disabled={isTogglingBookmark}
+                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors ${sheetIsBookmarked ? 'text-amber-500' : 'text-[var(--ink)]'}`}
+                  >
+                    {sheetIsBookmarked ? '★ Dans mon book' : '☆ Ajouter au book'}
+                  </button>
+                )}
+                {user && !isActualOwner && (
+                  <button
+                    onClick={() => { handleFork(); setMenuOpen(false); }}
+                    className="w-full text-left px-4 py-2.5 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors"
+                  >
+                    ⎘ Dupliquer
+                  </button>
+                )}
+                {isOwner && (
+                  <Link
+                    href={`/sheet/${id}/edit`}
+                    onClick={() => setMenuOpen(false)}
+                    className="block px-4 py-2.5 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors"
+                  >
+                    ✏ Modifier
+                  </Link>
+                )}
+                {isAdmin && (
+                  <>
+                    <div className="my-1 border-t border-[var(--line)]" />
+                    <button
+                      onClick={() => { handleAdminDelete(); setMenuOpen(false); }}
+                      className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                    >
+                      🗑 Supprimer
+                    </button>
+                  </>
+                )}
+              </div>
             )}
-            {user && !isActualOwner && (
-              <Button
-                variant="ghost"
-                onClick={handleFork}
-                className="hidden sm:flex text-xs sm:text-sm"
-                title="Dupliquer cette grille dans votre compte"
-              >
-                ⎘ Dupliquer
-              </Button>
-            )}
-            {isOwner && (
-              <Link href={`/sheet/${id}/edit`} className="hidden sm:block">
-                <Button variant="ghost">Modifier</Button>
-              </Link>
-            )}
-            {isAdmin && (
-              <Button variant="ghost" onClick={handleAdminDelete} className="text-red-500 hover:text-red-600 hidden sm:flex">
-                Supprimer
-              </Button>
-            )}
-            <Button onClick={handlePrint} className="hidden sm:flex">
-              Imprimer / PDF
-            </Button>
           </div>
         </div>
       </div>
-
-      {/* Section notation (masquée à l'impression) */}
-      {sheet.isPublic && (
-        <div className="bg-[var(--cell-bg)] border-b border-[var(--line)] py-3 px-4 sm:px-6 print:hidden">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div className="flex items-center gap-3 sm:gap-4">
-              {/* Note moyenne */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs sm:text-sm text-[var(--ink-light)]">Note :</span>
-                <RatingStars
-                  value={sheet.averageRating}
-                  readonly
-                  size="sm"
-                  showCount={sheet.ratingCount}
-                />
-              </div>
-
-              {/* Vues */}
-              {sheet.viewCount > 0 && (
-                <span className="text-xs sm:text-sm text-[var(--ink-faint)]">
-                  {sheet.viewCount} vue{sheet.viewCount > 1 ? 's' : ''}
-                </span>
-              )}
-            </div>
-
-            {/* Noter cette grille */}
-            {canRate && !ratingLoading && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs sm:text-sm text-[var(--ink-light)]">
-                  {userRating ? 'Votre note :' : 'Noter :'}
-                </span>
-                <RatingStars
-                  value={userRating}
-                  onChange={handleRate}
-                  size="sm"
-                />
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Contenu */}
       <SheetViewer sheet={sheet} />
