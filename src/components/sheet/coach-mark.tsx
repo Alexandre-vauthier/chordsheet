@@ -27,7 +27,7 @@ export function CoachMark({ text, position = 'bottom', onDismiss }: CoachMarkPro
         <span>{text}</span>
         <button
           onClick={(e) => { e.stopPropagation(); onDismiss(); }}
-          className="opacity-50 hover:opacity-100 transition-opacity ml-1"
+          className="cursor-pointer opacity-50 hover:opacity-100 transition-opacity ml-1"
           title="Fermer"
         >
           ✕

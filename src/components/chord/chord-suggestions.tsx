@@ -101,7 +101,7 @@ export function ChordSuggestions({
           <div className="flex items-center justify-center gap-2 mt-3">
             <button
               onClick={handlePrev}
-              className="w-7 h-7 flex items-center justify-center rounded-full bg-[var(--paper)] hover:bg-[var(--line)] transition-colors text-[var(--ink-light)]"
+              className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-[var(--paper)] hover:bg-[var(--line)] transition-colors text-[var(--ink-light)]"
             >
               ‹
             </button>
@@ -110,7 +110,7 @@ export function ChordSuggestions({
             </span>
             <button
               onClick={handleNext}
-              className="w-7 h-7 flex items-center justify-center rounded-full bg-[var(--paper)] hover:bg-[var(--line)] transition-colors text-[var(--ink-light)]"
+              className="cursor-pointer w-7 h-7 flex items-center justify-center rounded-full bg-[var(--paper)] hover:bg-[var(--line)] transition-colors text-[var(--ink-light)]"
             >
               ›
             </button>

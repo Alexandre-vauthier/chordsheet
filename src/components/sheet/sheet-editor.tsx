@@ -385,7 +385,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
               onClick={() => setMetronomeEnabled(v => !v)}
               title={metronomeEnabled ? 'Désactiver le métronome' : 'Activer le métronome'}
               className={`
-                flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
+                cursor-pointer flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
                 ${metronomeEnabled
                   ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
                   : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
@@ -406,7 +406,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
               onClick={togglePlay}
               title={isPlaying ? 'Stop' : `Play — ${bpm} BPM`}
               className={`
-                flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
+                cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
                 transition-all duration-150 border-[1.5px]
                 ${isPlaying
                   ? 'bg-[var(--accent)] border-[var(--accent)] text-white hover:bg-[#a83d25]'
@@ -537,7 +537,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                   beatsPerMeasure: 4,
                   sections: sheet.sections.map(s => ({ ...s, beatsPerMeasure: 4 as const })),
                 })}
-                className={`px-3 py-1 text-xs transition-colors ${
+                className={`cursor-pointer px-3 py-1 text-xs transition-colors ${
                   (sheet.beatsPerMeasure ?? 4) === 4
                     ? 'bg-[var(--accent)] text-white'
                     : 'bg-[var(--cell-bg)] text-[var(--ink-light)] hover:bg-[var(--cell-hover)]'
@@ -550,7 +550,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                   beatsPerMeasure: 3,
                   sections: sheet.sections.map(s => ({ ...s, beatsPerMeasure: 3 as const })),
                 })}
-                className={`px-3 py-1 text-xs border-l border-[var(--line)] transition-colors ${
+                className={`cursor-pointer px-3 py-1 text-xs border-l border-[var(--line)] transition-colors ${
                   sheet.beatsPerMeasure === 3
                     ? 'bg-[var(--accent)] text-white'
                     : 'bg-[var(--cell-bg)] text-[var(--ink-light)] hover:bg-[var(--cell-hover)]'
@@ -566,7 +566,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             <select
               value={sheet.capo ?? ''}
               onChange={(e) => updateSheet({ capo: e.target.value ? Number(e.target.value) : null })}
-              className="px-2 py-1 rounded border border-[var(--line)] text-sm bg-[var(--cell-bg)]
+              className="cursor-pointer px-2 py-1 rounded border border-[var(--line)] text-sm bg-[var(--cell-bg)]
                 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             >
               <option value="">Aucun</option>
@@ -594,7 +594,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                       : [...(sheet.genres || []), genre];
                     updateSheet({ genres: newGenres });
                   }}
-                  className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                  className={`cursor-pointer px-2.5 py-1 text-xs rounded-full border transition-colors ${
                     isSelected
                       ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
                       : 'bg-[var(--cell-bg)] text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)]'

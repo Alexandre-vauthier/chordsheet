@@ -221,7 +221,7 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
             <button
               key={inst}
               onClick={() => handleInstrumentChange(inst)}
-              className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+              className={`cursor-pointer px-3 py-1.5 text-sm rounded-lg border transition-colors ${
                 instrumentId === inst
                   ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
                   : 'bg-[var(--cell-bg)] text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)]'
@@ -353,14 +353,14 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
       <div className="flex gap-2 flex-wrap">
         <button
           onClick={handlePlay}
-          className="flex items-center gap-1.5 px-4 py-2 bg-[var(--accent)] text-white rounded-lg
+          className="cursor-pointer flex items-center gap-1.5 px-4 py-2 bg-[var(--accent)] text-white rounded-lg
             hover:bg-[#b54a2a] transition-colors text-sm font-medium"
         >
           ▶ Jouer
         </button>
         <button
           onClick={handleClear}
-          className="px-4 py-2 bg-[var(--line)] text-[var(--ink-light)] rounded-lg
+          className="cursor-pointer px-4 py-2 bg-[var(--line)] text-[var(--ink-light)] rounded-lg
             hover:bg-gray-200 transition-colors text-sm"
         >
           Effacer
@@ -369,7 +369,7 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
           <button
             onClick={handleSave}
             disabled={!chordName.trim()}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg
+            className="cursor-pointer px-4 py-2 bg-green-600 text-white rounded-lg
               hover:bg-green-700 transition-colors text-sm font-medium
               disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -379,7 +379,7 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
         {onCancel && (
           <button
             onClick={onCancel}
-            className="px-4 py-2 border border-[var(--line)] text-[var(--ink-light)] rounded-lg
+            className="cursor-pointer px-4 py-2 border border-[var(--line)] text-[var(--ink-light)] rounded-lg
               hover:bg-[var(--cell-hover)] transition-colors text-sm"
           >
             Annuler

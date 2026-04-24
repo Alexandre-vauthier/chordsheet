@@ -178,7 +178,7 @@ export function ChordSummary({
                 {editable && onEditChord && (
                   <button
                     onClick={() => onEditChord(chordName, null)}
-                    className="mt-2 text-xs text-[var(--accent)] hover:underline"
+                    className="cursor-pointer mt-2 text-xs text-[var(--accent)] hover:underline"
                   >
                     + Créer
                   </button>
@@ -193,7 +193,7 @@ export function ChordSummary({
               <div className={`flex items-center gap-2 mb-1 ${hasMultipleVariants ? '' : 'invisible'}`}>
                 <button
                   onClick={() => prevVariant(chordName, allVariants)}
-                  className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--line)] rounded"
+                  className="cursor-pointer w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--line)] rounded"
                 >
                   ‹
                 </button>
@@ -202,7 +202,7 @@ export function ChordSummary({
                 </span>
                 <button
                   onClick={() => nextVariant(chordName, allVariants)}
-                  className="w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--line)] rounded"
+                  className="cursor-pointer w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--line)] rounded"
                 >
                   ›
                 </button>
@@ -222,7 +222,7 @@ export function ChordSummary({
                   {onEditChord && (
                     <button
                       onClick={() => onEditChord(chordName, currentChord)}
-                      className="text-xs text-[var(--ink-light)] hover:text-[var(--accent)] hover:underline"
+                      className="cursor-pointer text-xs text-[var(--ink-light)] hover:text-[var(--accent)] hover:underline"
                     >
                       Modifier
                     </button>
@@ -230,7 +230,7 @@ export function ChordSummary({
                   {onDeleteCustomChord && isTrulyCustom && (
                     <button
                       onClick={() => onDeleteCustomChord(chordName)}
-                      className="text-xs text-[var(--ink-faint)] hover:text-red-500 hover:underline"
+                      className="cursor-pointer text-xs text-[var(--ink-faint)] hover:text-red-500 hover:underline"
                       title="Supprimer la version personnalisée"
                     >
                       Supprimer

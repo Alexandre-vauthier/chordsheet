@@ -165,7 +165,7 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, 
               Cliquez sur les cases ou les notes — les accords correspondants s&apos;affichent en temps réel
             </p>
           </div>
-          <button onClick={onClose} className="text-[var(--ink-faint)] hover:text-[var(--ink)] text-xl leading-none">×</button>
+          <button onClick={onClose} className="cursor-pointer text-[var(--ink-faint)] hover:text-[var(--ink)] text-xl leading-none">×</button>
         </div>
 
         <div className="p-6 flex flex-col gap-6 md:flex-row md:items-start">
@@ -179,7 +179,7 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, 
                   <button
                     key={id}
                     onClick={() => handleInstrumentChange(id)}
-                    className={`px-2.5 py-1 text-xs rounded-lg border transition-colors ${
+                    className={`cursor-pointer px-2.5 py-1 text-xs rounded-lg border transition-colors ${
                       instrumentId === id
                         ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
                         : 'bg-[var(--cell-bg)] text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)]'
@@ -243,13 +243,13 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, 
               <button
                 onClick={handlePlay}
                 disabled={!hasSelection}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--accent)] text-white rounded-lg text-xs font-medium disabled:opacity-40 hover:bg-[#b54a2a] transition-colors"
+                className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-[var(--accent)] text-white rounded-lg text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#b54a2a] transition-colors"
               >
                 ▶ Jouer
               </button>
               <button
                 onClick={handleClear}
-                className="px-3 py-1.5 border border-[var(--line)] text-[var(--ink-light)] rounded-lg text-xs hover:bg-[var(--cell-hover)] transition-colors"
+                className="cursor-pointer px-3 py-1.5 border border-[var(--line)] text-[var(--ink-light)] rounded-lg text-xs hover:bg-[var(--cell-hover)] transition-colors"
               >
                 Effacer
               </button>

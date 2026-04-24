@@ -38,7 +38,7 @@ export function WelcomeBanner() {
         {/* Fermer */}
         <button
           onClick={dismiss}
-          className="absolute top-4 right-4 p-1.5 rounded-lg text-[var(--ink-faint)] hover:text-[var(--ink)] hover:bg-[var(--line)] transition-colors"
+          className="cursor-pointer absolute top-4 right-4 p-1.5 rounded-lg text-[var(--ink-faint)] hover:text-[var(--ink)] hover:bg-[var(--line)] transition-colors"
           title="Fermer"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,7 +103,7 @@ export function WelcomeBanner() {
           </Link>
           <button
             onClick={dismiss}
-            className="flex-1 px-4 py-2.5 rounded-xl border border-[var(--line)] text-sm text-[var(--ink-light)] hover:border-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
+            className="cursor-pointer flex-1 px-4 py-2.5 rounded-xl border border-[var(--line)] text-sm text-[var(--ink-light)] hover:border-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
           >
             Explorer les grilles
           </button>

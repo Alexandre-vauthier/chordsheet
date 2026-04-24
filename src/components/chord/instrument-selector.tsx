@@ -25,7 +25,7 @@ export function InstrumentSelector({ value, onChange, compact = false }: Instrum
       <select
         value={value}
         onChange={(e) => onChange(e.target.value as InstrumentId)}
-        className="px-2 py-1 rounded border border-[var(--line)] text-sm bg-[var(--cell-bg)]
+        className="cursor-pointer px-2 py-1 rounded border border-[var(--line)] text-sm bg-[var(--cell-bg)]
           focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
       >
         {instruments.map((inst) => (
@@ -46,7 +46,7 @@ export function InstrumentSelector({ value, onChange, compact = false }: Instrum
             key={inst.id}
             type="button"
             onClick={() => onChange(inst.id)}
-            className={`px-3 py-1.5 text-sm rounded-full border transition-colors flex items-center gap-1.5 ${
+            className={`cursor-pointer px-3 py-1.5 text-sm rounded-full border transition-colors flex items-center gap-1.5 ${
               isSelected
                 ? 'bg-[var(--nav-bg)] text-white border-[var(--ink)]'
                 : 'bg-[var(--cell-bg)] text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)] hover:text-[var(--accent)]'

@@ -25,7 +25,7 @@ function RepeatInput({ value, onChange, size = 'md' }: {
     <div className="flex items-center gap-0.5">
       <button
         onClick={() => onChange(Math.max(1, value - 1))}
-        className={`${btnCls} flex items-center justify-center rounded bg-[var(--accent)]/80 hover:bg-[var(--accent)] text-white transition-colors leading-none`}
+        className={`cursor-pointer ${btnCls} flex items-center justify-center rounded bg-[var(--accent)]/80 hover:bg-[var(--accent)] text-white transition-colors leading-none`}
       >‹</button>
       <input
         type="number"
@@ -37,7 +37,7 @@ function RepeatInput({ value, onChange, size = 'md' }: {
       />
       <button
         onClick={() => onChange(value + 1)}
-        className={`${btnCls} flex items-center justify-center rounded bg-[var(--accent)]/80 hover:bg-[var(--accent)] text-white transition-colors leading-none`}
+        className={`cursor-pointer ${btnCls} flex items-center justify-center rounded bg-[var(--accent)]/80 hover:bg-[var(--accent)] text-white transition-colors leading-none`}
       >›</button>
     </div>
   );

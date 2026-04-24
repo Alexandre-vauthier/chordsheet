@@ -121,7 +121,7 @@ export function Navbar() {
             {!loading && user && (
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 text-[var(--nav-text)] hover:bg-white/10 rounded-lg transition-colors"
+                className="cursor-pointer p-2 text-[var(--nav-text)] hover:bg-white/10 rounded-lg transition-colors"
                 aria-label="Menu"
               >
                 {mobileMenuOpen ? (

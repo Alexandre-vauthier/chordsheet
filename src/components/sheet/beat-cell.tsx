@@ -195,7 +195,7 @@ export function BeatCell({
             {finderChordPool && (
               <button
                 onMouseDown={(e) => { e.preventDefault(); setFinderOpen(true); }}
-                className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded bg-[var(--accent-soft)] hover:bg-[var(--line)] text-[var(--accent)] text-xs transition-colors"
+                className="cursor-pointer absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded bg-[var(--accent-soft)] hover:bg-[var(--line)] text-[var(--accent)] text-xs transition-colors"
                 title="Identifier un accord"
               >
                 🔍
@@ -224,7 +224,7 @@ export function BeatCell({
         {cell.chord && !isEditing && (
           <button
             onClick={toggleDiagram}
-            className="absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded bg-[var(--paper)] hover:bg-[var(--line)] text-[var(--ink-faint)] hover:text-[var(--ink-light)] text-xs transition-colors"
+            className="cursor-pointer absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded bg-[var(--paper)] hover:bg-[var(--line)] text-[var(--ink-faint)] hover:text-[var(--ink-light)] text-xs transition-colors"
             title="Voir le diagramme"
           >
             ♫

@@ -228,7 +228,7 @@ export function ChordEditorModal({
                 <select
                   value={forcedCategory}
                   onChange={(e) => onCategoryChange(e.target.value)}
-                  className="px-2 py-2 border border-[var(--line)] rounded-lg text-sm bg-[var(--cell-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                  className="cursor-pointer px-2 py-2 border border-[var(--line)] rounded-lg text-sm bg-[var(--cell-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 >
                   {CATEGORY_OPTIONS.map(({ value, label }) => (
                     <option key={value} value={value}>{label}</option>
@@ -330,19 +330,19 @@ export function ChordEditorModal({
         <div className="p-4 border-t border-[var(--line)] flex gap-2 justify-end">
           <button
             onClick={handlePlay}
-            className="px-4 py-2 text-sm bg-[var(--line)] hover:bg-gray-200 rounded-lg transition-colors"
+            className="cursor-pointer px-4 py-2 text-sm bg-[var(--line)] hover:bg-gray-200 rounded-lg transition-colors"
           >
             ▶ Écouter
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm border border-[var(--line)] hover:bg-[var(--cell-hover)] rounded-lg transition-colors"
+            className="cursor-pointer px-4 py-2 text-sm border border-[var(--line)] hover:bg-[var(--cell-hover)] rounded-lg transition-colors"
           >
             Annuler
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 text-sm bg-[var(--accent)] text-white hover:bg-[#b54a2a] rounded-lg transition-colors"
+            className="cursor-pointer px-4 py-2 text-sm bg-[var(--accent)] text-white hover:bg-[#b54a2a] rounded-lg transition-colors"
           >
             Enregistrer
           </button>

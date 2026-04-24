@@ -114,7 +114,7 @@ export function SheetCard({
               e.stopPropagation();
               onToggleBookmark();
             }}
-            className={`absolute top-2 right-2 z-10 p-1.5 rounded-full transition-all
+            className={`cursor-pointer absolute top-2 right-2 z-10 p-1.5 rounded-full transition-all
               ${isBookmarked
                 ? 'bg-amber-100 text-amber-500'
                 : 'bg-white/80 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-amber-500 hover:bg-amber-50'
@@ -186,7 +186,7 @@ export function SheetCard({
           {previewUrl && (
             <button
               onClick={handlePreview}
-              className={`p-1.5 rounded transition-colors ${
+              className={`cursor-pointer p-1.5 rounded transition-colors ${
                 isPlaying
                   ? 'bg-[var(--accent)] text-white'
                   : 'text-[var(--ink-light)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]'
@@ -230,7 +230,7 @@ export function SheetCard({
               </Link>
               <button
                 onClick={onDelete}
-                className="p-1.5 rounded hover:bg-red-50 text-[var(--ink-light)] hover:text-red-600 transition-colors ml-auto"
+                className="cursor-pointer p-1.5 rounded hover:bg-red-50 text-[var(--ink-light)] hover:text-red-600 transition-colors ml-auto"
                 title="Supprimer"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
