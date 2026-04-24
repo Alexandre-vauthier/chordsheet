@@ -65,6 +65,7 @@ interface SectionBlockProps {
   finderChordPool?: Record<InstrumentId, (StringChord | PianoChord)[]>;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
+  anyDragging?: boolean;
 }
 
 export function SectionBlock({
@@ -89,6 +90,7 @@ export function SectionBlock({
   finderChordPool,
   onMoveUp,
   onMoveDown,
+  anyDragging = false,
 }: SectionBlockProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isDraggable, setIsDraggable] = useState(false);
@@ -305,7 +307,7 @@ export function SectionBlock({
       </div>
 
       {/* Bouton ajouter mesure — masqué pendant le drag */}
-      {!isDraggable && (
+      {!isDraggable && !anyDragging && (
         <button
           onClick={addRow}
           className="w-full mt-2 py-2 border-[1.5px] border-dashed border-[var(--line)] rounded-lg
