@@ -159,7 +159,7 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
     <>
       {/* Barre d'actions (masquée à l'impression) */}
       <div className="bg-[var(--cell-bg)] border-b border-[var(--line)] py-3 px-6 print:hidden">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Button variant="ghost" onClick={() => router.back()}>
               ← Retour
@@ -207,7 +207,7 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
       {/* Section notation (masquée à l'impression) */}
       {sheet.isPublic && (
         <div className="bg-[var(--cell-bg)] border-b border-[var(--line)] py-3 px-4 sm:px-6 print:hidden">
-          <div className="max-w-4xl mx-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div className="flex items-center gap-3 sm:gap-4">
               {/* Note moyenne */}
               <div className="flex items-center gap-2">
