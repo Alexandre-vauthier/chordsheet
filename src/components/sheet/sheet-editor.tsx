@@ -208,11 +208,16 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   const dragSectionIdRef = useRef<string | null>(null);
   const [anyDragging, setAnyDragging] = useState(false);
 
+  const wheelCleanupRef = useRef<(() => void) | null>(null);
+
   const handleDragStart = useCallback((sectionId: string) => {
-    console.log('[Editor] handleDragStart', sectionId, 'ref before:', dragSectionIdRef.current);
     dragSectionIdRef.current = sectionId;
     setDragSectionId(sectionId);
     setAnyDragging(true);
+    // Permettre le scroll à la molette pendant le drag
+    const onWheel = (e: WheelEvent) => { window.scrollBy(0, e.deltaY); };
+    window.addEventListener('wheel', onWheel, { passive: true });
+    wheelCleanupRef.current = () => window.removeEventListener('wheel', onWheel);
   }, []);
 
   const handleDragOver = useCallback((sectionId: string) => {
@@ -220,11 +225,12 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   }, []);
 
   const handleDragEnd = useCallback(() => {
-    console.log('[Editor] handleDragEnd, ref was:', dragSectionIdRef.current);
     dragSectionIdRef.current = null;
     setDragSectionId(null);
     setDragOverSectionId(null);
     setAnyDragging(false);
+    wheelCleanupRef.current?.();
+    wheelCleanupRef.current = null;
   }, []);
 
   const handleDrop = useCallback((targetSectionId: string) => {
