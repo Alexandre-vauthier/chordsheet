@@ -663,7 +663,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 onNavigateToCell={navigateToCell}
                 onDragStart={() => handleDragStart(section.id)}
                 onDragEnd={handleDragEnd}
-                onDragOver={(e) => { e.preventDefault(); handleDragOver(section.id); }}
+                onDragOver={(e) => { e.preventDefault(); if (dragSectionIdRef.current !== section.id) handleDragOver(section.id); }}
                 onDrop={() => handleDrop(section.id)}
                 isDragOver={dragOverSectionId === section.id && dragSectionId !== section.id}
                 isFirstSection={isFirstSheet && sectionIndex === 0}
@@ -672,7 +672,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 onMoveUp={sectionIndex > 0 ? () => moveSection(section.id, 'up') : undefined}
                 onMoveDown={sectionIndex < sheet.sections.length - 1 ? () => moveSection(section.id, 'down') : undefined}
                 anyDragging={anyDragging}
-                isSelf={dragSectionId === section.id}
+                isSelf={false}
               />
             </div>
           );
