@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import type { Sheet, CellSpan, InstrumentId } from '@/types';
 import { INSTRUMENTS } from '@/types';
-import { ChordSummary, InstrumentSelector, ChordSuggestions, ChordDiagram, PianoKeyboard } from '@/components/chord';
+import { ChordSummary, InstrumentSelector, ChordDiagram, PianoKeyboard } from '@/components/chord';
 import type { CustomChordMap } from '@/components/chord';
 import type { StringChord, PianoChord, CustomChord } from '@/types';
 import { isPianoChord } from '@/types';
@@ -685,15 +685,32 @@ function ViewerChordCell({
       )}
 
       {/* Popup diagramme au survol — seulement si l'option inline est désactivée */}
-      {hovered && !showInlineDiagram && (
-        <div className="print:hidden" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-          <ChordSuggestions
-            chordName={lookupChord}
-            instrumentId={instrumentId}
-            customChord={custom}
-            capo={capo}
-            position="bottom"
-          />
+      {hovered && !showInlineDiagram && displayChord && (
+        <div
+          className="print:hidden absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <div className="bg-[var(--cell-bg)] rounded-xl shadow-lg border border-[var(--line)] p-3 min-w-[140px]">
+            <div
+              className="group/play relative flex justify-center cursor-pointer"
+              onClick={(e) => { e.stopPropagation(); playChord(displayChord, instrumentId, capo); }}
+              title="Cliquer pour écouter"
+            >
+              {!isPianoChord(displayChord) ? (
+                <ChordDiagram chord={displayChord} size="sm" numStrings={numStrings} />
+              ) : (
+                <PianoKeyboard chord={displayChord} />
+              )}
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/play:opacity-100 transition-opacity rounded-lg bg-[var(--ink)]/10">
+                <span className="text-[var(--ink)] text-sm opacity-70">▶</span>
+              </div>
+            </div>
+            <div className="text-center mt-2 text-sm font-medium text-[var(--ink)]">
+              {translate(lookupChord)}
+            </div>
+          </div>
+          <div className="absolute left-1/2 -translate-x-1/2 -top-1.5 w-3 h-3 bg-[var(--cell-bg)] border-[var(--line)] border-l border-t transform rotate-45" />
         </div>
       )}
     </div>
