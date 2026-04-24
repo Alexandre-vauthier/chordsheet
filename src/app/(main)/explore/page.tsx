@@ -33,12 +33,26 @@ export default function ExplorePage() {
     return () => { stopPreviewAudio(); };
   }, []);
 
-  // Filtres
-  const [sortBy, setSortBy] = useState<SortOption>('recent');
+  // Filtres — initialisés depuis l'URL pour survivre au retour arrière
+  const [sortBy, setSortBy] = useState<SortOption>(() => (searchParams.get('sort') as SortOption) ?? 'recent');
   const [selectedGenre, setSelectedGenre] = useState<string>(() => searchParams.get('genre') ?? '');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | null>(() => (searchParams.get('difficulty') as Difficulty) ?? null);
 
-  // Mettre à jour le genre si le param URL change
+  // Synchroniser l'URL quand les filtres changent
+  const updateUrl = (params: { sort?: SortOption; genre?: string; difficulty?: Difficulty | null; q?: string }) => {
+    const p = new URLSearchParams(searchParams.toString());
+    if (params.sort !== undefined) { params.sort === 'recent' ? p.delete('sort') : p.set('sort', params.sort); }
+    if (params.genre !== undefined) { params.genre ? p.set('genre', params.genre) : p.delete('genre'); }
+    if (params.difficulty !== undefined) { params.difficulty ? p.set('difficulty', String(params.difficulty)) : p.delete('difficulty'); }
+    if (params.q !== undefined) { params.q ? p.set('q', params.q) : p.delete('q'); }
+    router.replace(`/explore?${p.toString()}`, { scroll: false });
+  };
+
+  const handleSortBy = (v: SortOption) => { setSortBy(v); updateUrl({ sort: v }); };
+  const handleGenre = (v: string) => { setSelectedGenre(v); updateUrl({ genre: v }); };
+  const handleDifficulty = (v: Difficulty | null) => { setSelectedDifficulty(v); updateUrl({ difficulty: v }); };
+
+  // Mettre à jour le genre si le param URL change (ex: depuis la navbar)
   useEffect(() => {
     setSelectedGenre(searchParams.get('genre') ?? '');
   }, [searchParams]);
@@ -195,6 +209,7 @@ export default function ExplorePage() {
     setSelectedGenre('');
     setSelectedDifficulty(null);
     setSortBy('recent');
+    router.replace('/explore', { scroll: false });
   };
 
   const hasActiveFilters = searchQuery || selectedGenre || selectedDifficulty || sortBy !== 'recent';
@@ -247,7 +262,7 @@ export default function ExplorePage() {
             <span className="text-sm text-[var(--ink-light)]">Trier par :</span>
             <div className="flex rounded-lg border border-[var(--line)] overflow-hidden">
               <button
-                onClick={() => setSortBy('recent')}
+                onClick={() => handleSortBy('recent')}
                 className={`px-3 py-1.5 text-sm transition-colors ${
                   sortBy === 'recent'
                     ? 'bg-[var(--accent)] text-white'
@@ -257,7 +272,7 @@ export default function ExplorePage() {
                 Récents
               </button>
               <button
-                onClick={() => setSortBy('rated')}
+                onClick={() => handleSortBy('rated')}
                 className={`px-3 py-1.5 text-sm border-l border-[var(--line)] transition-colors ${
                   sortBy === 'rated'
                     ? 'bg-[var(--accent)] text-white'
@@ -267,7 +282,7 @@ export default function ExplorePage() {
                 Mieux notés
               </button>
               <button
-                onClick={() => setSortBy('viewed')}
+                onClick={() => handleSortBy('viewed')}
                 className={`px-3 py-1.5 text-sm border-l border-[var(--line)] transition-colors ${
                   sortBy === 'viewed'
                     ? 'bg-[var(--accent)] text-white'
@@ -285,7 +300,7 @@ export default function ExplorePage() {
           {/* Genre */}
           <select
             value={selectedGenre}
-            onChange={(e) => setSelectedGenre(e.target.value)}
+            onChange={(e) => handleGenre(e.target.value)}
             className="px-3 py-1.5 rounded-lg border border-[var(--line)] text-sm bg-[var(--cell-bg)]
               text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           >
@@ -302,7 +317,7 @@ export default function ExplorePage() {
             <span className="text-sm text-[var(--ink-light)]">Difficulté :</span>
             <select
               value={selectedDifficulty ?? ''}
-              onChange={(e) => setSelectedDifficulty(e.target.value ? Number(e.target.value) as Difficulty : null)}
+              onChange={(e) => handleDifficulty(e.target.value ? Number(e.target.value) as Difficulty : null)}
               className="text-sm border border-[var(--line)] rounded-lg px-2 py-1 bg-[var(--cell-bg)] text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             >
               <option value="">Toutes</option>
