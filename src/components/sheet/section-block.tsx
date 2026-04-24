@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import type { Section, Cell, CellSpan, InstrumentId, StringChord, PianoChord } from '@/types';
 import { GridRow } from './grid-row';
 import { createEmptyRow } from '@/types';
@@ -93,7 +93,6 @@ export function SectionBlock({
   anyDragging = false,
 }: SectionBlockProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const sectionRef = useRef<HTMLDivElement>(null);
 
   const updateCell = (rowIndex: number, cellIndex: number, updates: Partial<Cell>) => {
     const newRows = [...section.rows];
@@ -165,13 +164,10 @@ export function SectionBlock({
       </div>
     )}
     <div
-      ref={sectionRef}
       className="mb-10 animate-fadeIn"
+      draggable
       onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; onDragStart(); }}
-      onDragEnd={() => {
-        sectionRef.current?.removeAttribute('draggable');
-        onDragEnd();
-      }}
+      onDragEnd={onDragEnd}
       onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; onDragOver(e); }}
       onDrop={(e) => { e.preventDefault(); onDrop(); }}
       onMouseEnter={() => setIsHovered(true)}
@@ -183,7 +179,6 @@ export function SectionBlock({
         <span
           className={`cursor-grab active:cursor-grabbing text-[var(--ink-faint)] transition-opacity select-none ${headerControlsVisible ? 'opacity-100' : 'opacity-0'}`}
           title="Glisser pour réordonner"
-          onMouseDown={() => { sectionRef.current?.setAttribute('draggable', 'true'); }}
         >
           ⠿
         </span>
