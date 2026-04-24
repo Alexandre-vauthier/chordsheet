@@ -91,7 +91,7 @@ export function SectionBlock({
   onMoveDown,
 }: SectionBlockProps) {
   const [isHovered, setIsHovered] = useState(false);
-  const dragHandleRef = useRef(false);
+  const [isDraggable, setIsDraggable] = useState(false);
 
   const updateCell = (rowIndex: number, cellIndex: number, updates: Partial<Cell>) => {
     const newRows = [...section.rows];
@@ -152,33 +152,33 @@ export function SectionBlock({
   const headerControlsVisible = isHovered || isFirstSection;
 
   return (
+    <>
+    {isDragOver && (
+      <div
+        className="h-10 mb-1 rounded-lg border-2 border-dashed border-[var(--accent)] bg-[var(--accent-soft)] flex items-center justify-center"
+        onDragOver={(e) => { e.preventDefault(); onDragOver(e); }}
+        onDrop={(e) => { e.preventDefault(); onDrop(); }}
+      >
+        <span className="text-xs text-[var(--accent)] font-medium">Déposer ici</span>
+      </div>
+    )}
     <div
-      className={`mb-10 animate-fadeIn transition-all relative`}
-      draggable
-      onDragStart={(e) => {
-        if (!dragHandleRef.current) { e.preventDefault(); return; }
-        e.dataTransfer.effectAllowed = 'move';
-        onDragStart();
-      }}
-      onDragEnd={() => { dragHandleRef.current = false; onDragEnd(); }}
+      className="mb-10 animate-fadeIn"
+      draggable={isDraggable}
+      onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; onDragStart(); }}
+      onDragEnd={() => { setIsDraggable(false); onDragEnd(); }}
       onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; onDragOver(e); }}
       onDrop={(e) => { e.preventDefault(); onDrop(); }}
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseLeave={() => { setIsHovered(false); setIsDraggable(false); }}
     >
-      {/* Indicateur de drop — à l'intérieur du div droppable */}
-      {isDragOver && (
-        <div className="absolute inset-x-0 -top-5 h-10 rounded-lg border-2 border-dashed border-[var(--accent)] bg-[var(--accent-soft)] flex items-center justify-center pointer-events-none z-20">
-          <span className="text-xs text-[var(--accent)] font-medium">Déposer ici</span>
-        </div>
-      )}
       {/* Header de section */}
       <div className="flex items-center gap-3 mb-3">
         {/* Drag handle */}
         <span
           className={`cursor-grab active:cursor-grabbing text-[var(--ink-faint)] transition-opacity select-none ${headerControlsVisible ? 'opacity-100' : 'opacity-0'}`}
           title="Glisser pour réordonner"
-          onMouseDown={(e) => { e.stopPropagation(); dragHandleRef.current = true; }}
+          onMouseDown={() => setIsDraggable(true)}
         >
           ⠿
         </span>
@@ -314,5 +314,6 @@ export function SectionBlock({
         + mesure
       </button>
     </div>
+    </>
   );
 }
