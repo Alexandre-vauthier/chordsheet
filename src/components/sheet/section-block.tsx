@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import type { Section, Cell, CellSpan, InstrumentId, StringChord, PianoChord } from '@/types';
 import { GridRow } from './grid-row';
 import { createEmptyRow } from '@/types';
@@ -304,15 +304,17 @@ export function SectionBlock({
         ))}
       </div>
 
-      {/* Bouton ajouter mesure */}
-      <button
-        onClick={addRow}
-        className="w-full mt-2 py-2 border-[1.5px] border-dashed border-[var(--line)] rounded-lg
-          text-[var(--ink-faint)] text-sm cursor-pointer transition-all bg-transparent
-          hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)]"
-      >
-        + mesure
-      </button>
+      {/* Bouton ajouter mesure — masqué pendant le drag */}
+      {!isDraggable && (
+        <button
+          onClick={addRow}
+          className="w-full mt-2 py-2 border-[1.5px] border-dashed border-[var(--line)] rounded-lg
+            text-[var(--ink-faint)] text-sm cursor-pointer transition-all bg-transparent
+            hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)]"
+        >
+          + mesure
+        </button>
+      )}
     </div>
     </>
   );
