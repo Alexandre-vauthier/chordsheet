@@ -600,14 +600,28 @@ function ViewerChordCell({
   };
   const color = getColor(chord);
 
-  // selectedChords reflète la variante naviguée dans ChordSummary (priorité sur customChords)
+  // selectedChords reflète la variante naviguée dans ChordSummary (priorité sur tout)
   const selected = selectedChords?.[chord];
-  const playableChord = selected ?? custom ?? libraryVariants[0] ?? null;
 
-  // Résoudre le diagramme inline (variante sélectionnée > custom > première variante library)
-  const inlineDiagramChord = showInlineDiagram && span >= 1
-    ? (selected ?? custom ?? libraryVariants[0] ?? null)
-    : null;
+  // Résoudre la variante à afficher — même logique que ChordSummary :
+  // 1. Navigation en cours (selectedChords)
+  // 2. Préférence auteur si toujours présente dans la bibliothèque
+  // 3. Préférence auteur si accord vraiment custom (isExplicitlyCreated)
+  // 4. Fallback : première variante de la bibliothèque
+  const displayChord = (() => {
+    if (selected) return selected;
+    if (custom) {
+      const inLib = libraryVariants.find(v => v.id === custom.id);
+      if (inLib) return inLib;
+      const rawCustom = customChords?.[`${lookupChord.toLowerCase()}-${instrumentId}`];
+      if (rawCustom?.isExplicitlyCreated) return custom;
+      return libraryVariants[0] ?? null;
+    }
+    return libraryVariants[0] ?? null;
+  })();
+
+  const playableChord = displayChord;
+  const inlineDiagramChord = showInlineDiagram && span >= 1 ? displayChord : null;
   const numStrings = INSTRUMENT_CONFIG[instrumentId]?.strings ?? 6;
 
   return (
