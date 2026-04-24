@@ -166,7 +166,7 @@ export function SectionBlock({
       </div>
     )}
     <div
-      className="mb-10 animate-fadeIn"
+      className={`${anyDragging ? 'mb-2' : 'mb-10'} animate-fadeIn`}
       draggable
       onMouseDown={(e) => console.log('[SectionBlock] mousedown', section.label, e.target)}
       onDragStart={(e) => { console.log('[SectionBlock] dragStart', section.label); e.dataTransfer.effectAllowed = 'move'; requestAnimationFrame(() => onDragStart()); }}
