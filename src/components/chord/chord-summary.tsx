@@ -129,12 +129,14 @@ export function ChordSummary({
           const addVariant = (c: StringChord | PianoChord) => {
             if (!seenIds.has(c.id)) { seenIds.add(c.id); allVariants.push(c); }
           };
+          // Même ordre que useChordVariants pour que l'index 0 corresponde
+          // toujours à ce que les cellules de la grille affichent par défaut.
           if (adminOverride) {
             addVariant(adminOverride.chord);
             adminAdditions.forEach(addVariant);
           } else {
-            adminAdditions.forEach(addVariant);
             staticVariants.forEach(addVariant);
+            adminAdditions.forEach(addVariant);
           }
           // Ajouter customChord seulement s'il a été créé manuellement par l'utilisateur
           // (isExplicitlyCreated = true) et n'est pas déjà dans la liste.
