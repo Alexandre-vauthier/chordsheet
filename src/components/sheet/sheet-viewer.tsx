@@ -36,6 +36,9 @@ function hasLocalInstrument(): boolean {
 
 interface SheetViewerProps {
   sheet: Sheet;
+  isBookmarked?: boolean;
+  onToggleBookmark?: () => void;
+  isTogglingBookmark?: boolean;
 }
 
 function getRefLabel(url: string): string {
@@ -58,7 +61,7 @@ function sectionSignature(section: { rows: { chord: string; span: number }[][] }
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function SheetViewer({ sheet }: SheetViewerProps) {
+export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingBookmark }: SheetViewerProps) {
   const translate = useChordNotation();
   const getColor = useChordColor();
   const { user, updateUser } = useAuth();
@@ -178,9 +181,23 @@ export function SheetViewer({ sheet }: SheetViewerProps) {
           )}
 
           <div className="flex-1 min-w-0">
-            <h1 className="font-playfair text-3xl font-bold text-[var(--ink)] print:text-2xl">
-              {sheet.title || 'Sans titre'}
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="font-playfair text-3xl font-bold text-[var(--ink)] print:text-2xl">
+                {sheet.title || 'Sans titre'}
+              </h1>
+              {onToggleBookmark && (
+                <button
+                  onClick={onToggleBookmark}
+                  disabled={isTogglingBookmark}
+                  title={isBookmarked ? 'Retirer du book' : 'Ajouter au book'}
+                  className={`print:hidden shrink-0 text-2xl leading-none transition-colors ${
+                    isBookmarked ? 'text-amber-400' : 'text-[var(--ink-faint)] hover:text-amber-400'
+                  }`}
+                >
+                  {isBookmarked ? '★' : '☆'}
+                </button>
+              )}
+            </div>
             {sheet.artist && (
               <Link
                 href={`/artist/${encodeURIComponent(sheet.artist)}`}

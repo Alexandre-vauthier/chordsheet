@@ -263,7 +263,12 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
       </div>
 
       {/* Contenu */}
-      <SheetViewer sheet={sheet} />
+      <SheetViewer
+        sheet={sheet}
+        isBookmarked={sheetIsBookmarked}
+        onToggleBookmark={user ? handleToggleBookmark : undefined}
+        isTogglingBookmark={isTogglingBookmark}
+      />
     </>
   );
 }
