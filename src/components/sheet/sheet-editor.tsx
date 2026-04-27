@@ -321,10 +321,14 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     const instrumentId = sheet.instrumentId || 'guitar';
     const key = `${chordName.toLowerCase()}-${instrumentId}`;
     const customChord: CustomChord = { ...chord, instrumentId } as CustomChord;
-    setSheet(prev => ({
-      ...prev,
-      customChords: { ...(prev.customChords || {}), [key]: customChord },
-    }));
+    setSheet(prev => {
+      const existing = (prev.customChords as Record<string, CustomChord> | undefined)?.[key];
+      if (existing?.isExplicitlyCreated) return prev;
+      return {
+        ...prev,
+        customChords: { ...(prev.customChords || {}), [key]: customChord },
+      };
+    });
     setHasChanges(true);
   }, [sheet.instrumentId]);
 
