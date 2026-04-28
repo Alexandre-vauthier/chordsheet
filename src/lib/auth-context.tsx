@@ -164,9 +164,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const setsSnap = await getDocs(query(collection(db, 'sets'), where('ownerId', '==', uid)));
     setsSnap.docs.forEach(d => batch.delete(d.ref));
 
-    // Supprimer les favoris
+    // Supprimer les favoris (grilles)
     const bookmarksSnap = await getDocs(query(collection(db, 'bookmarks'), where('userId', '==', uid)));
     bookmarksSnap.docs.forEach(d => batch.delete(d.ref));
+
+    // Supprimer les favoris (sets)
+    const setBookmarksSnap = await getDocs(query(collection(db, 'setBookmarks'), where('userId', '==', uid)));
+    setBookmarksSnap.docs.forEach(d => batch.delete(d.ref));
 
     // Supprimer le doc utilisateur
     batch.delete(doc(db, 'users', uid));

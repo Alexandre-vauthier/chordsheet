@@ -10,6 +10,7 @@ import { fromFirestore } from '@/lib/firestore-helpers';
 import { useSet } from '@/lib/use-sets';
 import { useSets } from '@/lib/use-sets';
 import { useBookmarks } from '@/lib/use-bookmarks';
+import { useSetBookmarks } from '@/lib/use-set-bookmarks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { Sheet } from '@/types';
@@ -25,6 +26,7 @@ export default function SetPage({ params }: SetPageProps) {
   const { set, sheets, isLoading, error } = useSet(id);
   const { updateSet, updateSetVisibility, reorderSheets, removeSheetFromSet, addSheetToSet } = useSets(user?.id);
   const { bookmarkedSheets } = useBookmarks(user?.id);
+  const { isBookmarked: isSetBookmarked, toggleBookmark: toggleSetBookmark } = useSetBookmarks(user?.id);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -195,7 +197,18 @@ export default function SetPage({ params }: SetPageProps) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-[var(--ink)]">{set.name}</h1>
+          <div className="flex items-start gap-3">
+            <h1 className="flex-1 text-2xl font-bold text-[var(--ink)]">{set.name}</h1>
+            <button
+              onClick={() => user ? toggleSetBookmark(id) : router.push('/login')}
+              title={isSetBookmarked(id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+              className={`shrink-0 text-2xl leading-none transition-colors cursor-pointer ${
+                isSetBookmarked(id) ? 'text-amber-400' : 'text-[var(--ink-faint)] hover:text-amber-400'
+              }`}
+            >
+              {isSetBookmarked(id) ? '★' : '☆'}
+            </button>
+          </div>
           {set.description && (
             <p className="text-[var(--ink-light)] mt-1">{set.description}</p>
           )}

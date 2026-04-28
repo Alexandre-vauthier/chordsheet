@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useSets } from '@/lib/use-sets';
+import { useSetBookmarks } from '@/lib/use-set-bookmarks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createEmptySet } from '@/types';
@@ -13,6 +14,7 @@ export default function SetsPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { sets, isLoading, createSet, deleteSet } = useSets(user?.id);
+  const { bookmarkedSets, removeBookmark: removeSetBookmark } = useSetBookmarks(user?.id);
   const [isCreating, setIsCreating] = useState(false);
   const [newSetName, setNewSetName] = useState('');
 
@@ -157,6 +159,65 @@ export default function SetsPage() {
             </svg>
             <p className="text-lg">Aucun set pour le moment</p>
             <p className="text-sm mt-1">Créez votre première setlist pour vos concerts !</p>
+          </div>
+        </div>
+      )}
+
+      {/* Sets en favoris */}
+      {bookmarkedSets.length > 0 && (
+        <div className="mt-10">
+          <h2 className="text-lg font-semibold text-[var(--ink)] mb-4">Sets en favoris</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {bookmarkedSets.map((set) => (
+              <div
+                key={set.id}
+                className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] overflow-hidden hover:shadow-md transition-shadow group"
+              >
+                <div className="p-5">
+                  <div className="flex items-start justify-between">
+                    <Link href={`/sets/${set.id}`} className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-[var(--ink)] group-hover:text-[var(--accent)] transition-colors truncate">
+                        {set.name || 'Sans nom'}
+                      </h3>
+                    </Link>
+                    <span className="text-amber-400 text-lg ml-2 shrink-0">★</span>
+                  </div>
+
+                  {set.description && (
+                    <p className="text-sm text-[var(--ink-light)] mt-1 line-clamp-2">
+                      {set.description}
+                    </p>
+                  )}
+
+                  <p className="text-xs text-[var(--ink-faint)] mt-2">
+                    par {set.ownerName} • {set.sheetIds.length} grille{set.sheetIds.length > 1 ? 's' : ''}
+                  </p>
+
+                  <div className="flex items-center gap-3 mt-4 pt-3 border-t border-[var(--line)]">
+                    <Link
+                      href={`/sets/${set.id}`}
+                      className="text-xs text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors"
+                    >
+                      Consulter
+                    </Link>
+                    {set.sheetIds.length > 0 && (
+                      <Link
+                        href={`/sets/${set.id}/play`}
+                        className="text-xs text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors"
+                      >
+                        Lancer
+                      </Link>
+                    )}
+                    <button
+                      onClick={() => removeSetBookmark(set.id!)}
+                      className="text-xs text-[var(--ink-faint)] hover:text-red-600 transition-colors ml-auto"
+                    >
+                      Retirer des favoris
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
