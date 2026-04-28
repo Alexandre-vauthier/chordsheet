@@ -150,9 +150,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const uid = currentUser.uid;
     const batch = writeBatch(db);
 
-    // Supprimer les grilles
+    // Anonymiser les grilles publiques, supprimer les privées
     const sheetsSnap = await getDocs(query(collection(db, 'sheets'), where('ownerId', '==', uid)));
-    sheetsSnap.docs.forEach(d => batch.delete(d.ref));
+    sheetsSnap.docs.forEach(d => {
+      if (d.data().isPublic) {
+        batch.update(d.ref, { ownerId: 'deleted', ownerName: 'Utilisateur supprimé' });
+      } else {
+        batch.delete(d.ref);
+      }
+    });
 
     // Supprimer les sets
     const setsSnap = await getDocs(query(collection(db, 'sets'), where('ownerId', '==', uid)));
