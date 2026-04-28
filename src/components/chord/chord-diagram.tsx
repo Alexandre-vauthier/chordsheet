@@ -48,6 +48,7 @@ export function ChordDiagram({
       width={W}
       height={H}
       viewBox={`0 0 ${W} ${H}`}
+      className="max-w-full h-auto"
       style={{ display: 'block', cursor: onClick ? 'pointer' : 'inherit' }}
       onClick={onClick}
     >

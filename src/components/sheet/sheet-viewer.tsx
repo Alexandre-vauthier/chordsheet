@@ -154,7 +154,9 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 print:p-0 print:max-w-none">
       {/* Header */}
       <div className="mb-8 border-b-2 border-[var(--ink)] pb-4 print:mb-6 print:pb-3">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          {/* Artwork + Titre : toujours sur la même ligne */}
+          <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
           {/* Artwork */}
           {artworkUrl && (
             <div className="flex-shrink-0 print:hidden">
@@ -210,9 +212,10 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               <p className="text-xs text-[var(--ink-faint)] mt-1 print:hidden">par {sheet.ownerName}</p>
             )}
           </div>
+          </div>{/* fin artwork+titre */}
 
-          {/* Colonne droite : contrôles + métadonnées compactes */}
-          <div className="print:hidden flex-shrink-0 flex flex-col items-end gap-2">
+          {/* Contrôles : ligne pleine largeur sous le titre sur mobile, colonne droite sur desktop */}
+          <div className="print:hidden flex flex-col gap-2 mt-3 sm:mt-0 sm:flex-shrink-0 sm:items-end">
             <div className="flex items-center gap-2">
               {/* Toggle métronome */}
               <button
@@ -301,7 +304,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             </div>
 
             {/* Métadonnées compactes sous les boutons */}
-            <div className="flex flex-wrap items-center justify-end gap-1.5">
+            <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
               {/* Genres — cliquables vers Explorer filtré */}
               {sheet.genres?.map((genre) => (
                 <Link
