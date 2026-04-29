@@ -130,7 +130,9 @@ export function BeatCell({
     if (e.key === 'Enter' || e.key === 'Tab') {
       e.preventDefault();
       handleBlur();
-      onNavigateNext();
+      // Différer la navigation pour que l'état (ex: onFillCells xN) soit propagé
+      // avant que la case suivante n'entre en mode édition
+      setTimeout(onNavigateNext, 0);
     }
     if (e.key === 'Escape') {
       setValue(translate(cell.chord) || cell.chord);
