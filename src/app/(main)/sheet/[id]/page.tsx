@@ -9,6 +9,7 @@ import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
 import { useBookmarks } from '@/lib/use-bookmarks';
 import { useRatings } from '@/lib/use-ratings';
+import { useSets } from '@/lib/use-sets';
 import { SheetViewer } from '@/components/sheet/sheet-viewer';
 import { RatingStars } from '@/components/sheet/rating-stars';
 
@@ -29,7 +30,10 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
   const [error, setError] = useState<string | null>(null);
   const [isTogglingBookmark, setIsTogglingBookmark] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [setPickerOpen, setSetPickerOpen] = useState(false);
+  const [addedToSetIds, setAddedToSetIds] = useState<string[]>([]);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { sets, addSheetToSet } = useSets(user?.id);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -129,6 +133,14 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
 
   const sheetIsBookmarked = sheet?.id ? isBookmarked(sheet.id) : false;
 
+  useEffect(() => { if (!menuOpen) setSetPickerOpen(false); }, [menuOpen]);
+
+  const handleAddToSet = async (setId: string) => {
+    if (!sheet?.id) return;
+    await addSheetToSet(setId, sheet.id);
+    setAddedToSetIds(prev => [...prev, setId]);
+  };
+
   // Fermer le menu "..." au clic extérieur
   useEffect(() => {
     if (!menuOpen) return;
@@ -227,6 +239,39 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
                   >
                     {sheetIsBookmarked ? '★ Dans mon book' : '☆ Ajouter au book'}
                   </button>
+                )}
+                {user && sets.length > 0 && (
+                  <>
+                    <button
+                      onClick={() => setSetPickerOpen(v => !v)}
+                      className="w-full text-left px-4 py-2.5 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors flex items-center justify-between"
+                    >
+                      <span>📋 Ajouter à un set</span>
+                      <span className="text-[var(--ink-faint)] text-xs">{setPickerOpen ? '▲' : '▶'}</span>
+                    </button>
+                    {setPickerOpen && (
+                      <div className="border-t border-b border-[var(--line)] max-h-44 overflow-y-auto">
+                        {sets.map(s => {
+                          const alreadyIn = s.sheetIds.includes(sheet?.id ?? '') || addedToSetIds.includes(s.id ?? '');
+                          return (
+                            <button
+                              key={s.id}
+                              onClick={() => { if (!alreadyIn && s.id) handleAddToSet(s.id); }}
+                              disabled={alreadyIn}
+                              className={`w-full text-left px-5 py-2 text-sm flex items-center justify-between gap-2 transition-colors
+                                ${alreadyIn
+                                  ? 'text-[var(--ink-faint)] cursor-default'
+                                  : 'text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] cursor-pointer'
+                                }`}
+                            >
+                              <span className="truncate">{s.name}</span>
+                              <span className="flex-shrink-0 text-xs font-medium">{alreadyIn ? '✓' : '+'}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </>
                 )}
                 {user && !isActualOwner && (
                   <button
