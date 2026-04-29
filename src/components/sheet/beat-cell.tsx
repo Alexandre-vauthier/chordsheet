@@ -6,6 +6,7 @@ import { ChordSuggestions } from '@/components/chord';
 import { ChordFinder } from '@/components/chord/chord-finder';
 import { useChordNotation } from '@/lib/use-chord-notation';
 import { useChordColor } from '@/lib/use-chord-color';
+import { parseChordInput } from '@/lib/chord-data';
 import { CoachMark } from './coach-mark';
 
 interface BeatCellProps {
@@ -106,10 +107,15 @@ export function BeatCell({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showDiagram]);
 
+  // Valeur canonique : normalise les vieilles données stockées en FR+xN, puis traduit
+  const canonicalDisplay = (() => {
+    const { chord } = parseChordInput(cell.chord);
+    return translate(chord) || chord;
+  })();
+
   const handleClick = () => {
     onDismissOnboarding?.();
-    // Initialiser l'input avec la valeur dans la langue de l'utilisateur
-    setValue(translate(cell.chord) || cell.chord);
+    setValue(canonicalDisplay);
     setIsEditing(true);
     setShowDiagram(false);
   };
@@ -117,12 +123,14 @@ export function BeatCell({
   const handleBlur = () => {
     setIsEditing(false);
     setChordError(false);
-    // Comparer contre la valeur traduite pour détecter un vrai changement
-    const translatedChord = translate(cell.chord) || cell.chord;
-    if (!FORBIDDEN_CHARS.test(value) && value !== translatedChord) {
+    if (FORBIDDEN_CHARS.test(value)) {
+      setValue(canonicalDisplay);
+    } else if (value !== canonicalDisplay) {
+      // L'utilisateur a changé la valeur
       onChordChange(value);
-    } else if (FORBIDDEN_CHARS.test(value)) {
-      setValue(translatedChord);
+    } else if (parseChordInput(cell.chord).chord !== cell.chord) {
+      // Valeur inchangée mais stockée en vieux format (ex: "Sim7x2") → normaliser
+      onChordChange(value);
     }
   };
 
@@ -135,7 +143,7 @@ export function BeatCell({
       setTimeout(onNavigateNext, 0);
     }
     if (e.key === 'Escape') {
-      setValue(translate(cell.chord) || cell.chord);
+      setValue(canonicalDisplay);
       setIsEditing(false);
     }
   };
@@ -216,7 +224,7 @@ export function BeatCell({
               ${!cell.chord && exampleChord ? 'text-[var(--ink-faint)]' : 'text-[var(--ink)]'}
             `}
           >
-            {cell.chord ? translate(cell.chord) : (exampleChord ?? '')}
+            {cell.chord ? canonicalDisplay : (exampleChord ?? '')}
           </span>
         )}
 
