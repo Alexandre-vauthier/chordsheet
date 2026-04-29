@@ -83,8 +83,8 @@ export function BeatCell({
   const cellRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setValue(cell.chord);
-  }, [cell.chord]);
+    if (!isEditing) setValue(cell.chord);
+  }, [cell.chord, isEditing]);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -108,6 +108,8 @@ export function BeatCell({
 
   const handleClick = () => {
     onDismissOnboarding?.();
+    // Initialiser l'input avec la valeur dans la langue de l'utilisateur
+    setValue(translate(cell.chord) || cell.chord);
     setIsEditing(true);
     setShowDiagram(false);
   };
@@ -115,10 +117,12 @@ export function BeatCell({
   const handleBlur = () => {
     setIsEditing(false);
     setChordError(false);
-    if (!FORBIDDEN_CHARS.test(value) && value !== cell.chord) {
+    // Comparer contre la valeur traduite pour détecter un vrai changement
+    const translatedChord = translate(cell.chord) || cell.chord;
+    if (!FORBIDDEN_CHARS.test(value) && value !== translatedChord) {
       onChordChange(value);
     } else if (FORBIDDEN_CHARS.test(value)) {
-      setValue(cell.chord); // revenir à la valeur précédente
+      setValue(translatedChord);
     }
   };
 
@@ -129,7 +133,7 @@ export function BeatCell({
       onNavigateNext();
     }
     if (e.key === 'Escape') {
-      setValue(cell.chord);
+      setValue(translate(cell.chord) || cell.chord);
       setIsEditing(false);
     }
   };
