@@ -59,7 +59,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   };
 
   // Playback
-  const { isPlaying, activeStep, playSection, togglePlay, stop } = usePlayback({
+  const { isPlaying, activeStep, playSection, playRow, togglePlay, stop } = usePlayback({
     sections: sheet.sections,
     tempo: sheet.tempo,
     tempoUnit: sheet.tempoUnit,
@@ -670,6 +670,10 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                   else playSection(section.id);
                 }}
                 isSectionPlaying={isPlaying && activeStep?.sectionId === section.id}
+                onPlayRow={(rowIndex) => {
+                  if (isPlaying && activeStep?.sectionId === section.id && activeStep.rowIndex === rowIndex) stop();
+                  else playRow(section.id, rowIndex);
+                }}
                 activeRowIndex={isPlaying && activeStep?.sectionId === section.id ? activeStep.rowIndex : undefined}
                 activeCellIndex={isPlaying && activeStep?.sectionId === section.id ? activeStep.cellIndex : undefined}
                 activeDurationMs={isPlaying && activeStep?.sectionId === section.id ? activeStep.durationMs : undefined}

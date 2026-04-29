@@ -51,6 +51,7 @@ interface SectionBlockProps {
   onDuplicate: () => void;
   onPlaySection?: () => void;
   isSectionPlaying?: boolean;
+  onPlayRow?: (rowIndex: number) => void;
   activeRowIndex?: number;
   activeCellIndex?: number;
   activeDurationMs?: number;
@@ -77,6 +78,7 @@ export function SectionBlock({
   onDuplicate,
   onPlaySection,
   isSectionPlaying,
+  onPlayRow,
   activeRowIndex,
   activeCellIndex,
   activeDurationMs,
@@ -283,25 +285,45 @@ export function SectionBlock({
               onDismissOnboarding={onDismissOnboarding}
               finderChordPool={finderChordPool}
             />
-            {/* Badge répétition */}
-            <div className={`absolute -right-10 top-1/2 -translate-y-1/2 flex items-center gap-0.5 transition-opacity ${(section.rowRepeats?.[rowIndex] ?? 1) > 1 ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+            {/* Contrôles droite : répétition + play + suppression */}
+            <div
+              className={`absolute top-1/2 -translate-y-1/2 flex items-center gap-1 pl-2 transition-opacity
+                ${(section.rowRepeats?.[rowIndex] ?? 1) > 1 || (isSectionPlaying && activeRowIndex === rowIndex)
+                  ? 'opacity-100'
+                  : 'opacity-0 group-hover:opacity-100'}`}
+              style={{ left: '100%' }}
+            >
               <span className="text-[10px] text-[var(--ink-faint)]">×</span>
               <RepeatInput
                 value={section.rowRepeats?.[rowIndex] ?? 1}
                 onChange={(v) => setRowRepeat(rowIndex, v)}
                 size="sm"
               />
+              {onPlayRow && (
+                <button
+                  onClick={() => onPlayRow(rowIndex)}
+                  className={`cursor-pointer w-5 h-5 flex items-center justify-center rounded text-[10px] transition-colors
+                    ${isSectionPlaying && activeRowIndex === rowIndex
+                      ? 'bg-[var(--accent)] text-white'
+                      : 'bg-[var(--cell-bg)] border border-[var(--line)] text-[var(--ink-faint)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] hover:border-[var(--accent)]'
+                    }`}
+                  title={isSectionPlaying && activeRowIndex === rowIndex ? 'Stop' : 'Jouer cette mesure'}
+                >
+                  {isSectionPlaying && activeRowIndex === rowIndex ? '■' : '▶'}
+                </button>
+              )}
+              {section.rows.length > 1 && (
+                <button
+                  onClick={() => deleteRow(rowIndex)}
+                  className="cursor-pointer w-5 h-5 flex items-center justify-center rounded text-[10px]
+                    bg-[var(--cell-bg)] border border-[var(--line)] text-[var(--ink-faint)]
+                    hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors"
+                  title="Supprimer cette mesure"
+                >
+                  ✕
+                </button>
+              )}
             </div>
-            {section.rows.length > 1 && (
-              <button
-                onClick={() => deleteRow(rowIndex)}
-                className="absolute -right-16 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100
-                  cursor-pointer text-[var(--ink-faint)] hover:text-red-500 transition-all text-sm"
-                title="Supprimer cette mesure"
-              >
-                ✕
-              </button>
-            )}
           </div>
         ))}
       </div>

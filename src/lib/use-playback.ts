@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import type { Section, InstrumentId, StringChord, PianoChord } from '@/types';
+import type { Section, Cell, InstrumentId, StringChord, PianoChord } from '@/types';
 import { findChordVariants, enharmonicEquivalent } from '@/lib/chord-data';
 import { playChord, playMetronomeTick } from '@/lib/chord-audio';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
@@ -129,63 +129,80 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, customCh
     };
   }, []);
 
-  const playSequence = useCallback((targetSections: Section[]) => {
+  const resolveChord = useCallback((chordName: string): StringChord | PianoChord | undefined => {
+    const selected = selectedChords?.[chordName];
+    const customKey = `${chordName.toLowerCase()}-${instrumentId}`;
+    const custom = customChords?.[customKey];
+    const enh = enharmonicEquivalent(chordName);
+    const adminOverride =
+      overrides.get(libraryKey(chordName, instrumentId))?.chord ??
+      (enh ? overrides.get(libraryKey(enh, instrumentId))?.chord : undefined);
+    const nameLower = chordName.trim().toLowerCase();
+    const enhLower = enh?.trim().toLowerCase();
+    const adminAddition = additions.find(
+      a => a.instrumentId === instrumentId &&
+        (a.chord.name.trim().toLowerCase() === nameLower ||
+         (enhLower && a.chord.name.trim().toLowerCase() === enhLower))
+    )?.chord;
+    return (
+      selected ??
+      (custom as StringChord | PianoChord | undefined) ??
+      adminOverride ??
+      adminAddition ??
+      findChordVariants(chordName, instrumentId)[0]
+    );
+  }, [instrumentId, customChords, selectedChords, overrides, additions]);
+
+  const runSteps = useCallback((steps: PlayStep[], getCellFn: (step: PlayStep) => Cell | undefined) => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
-    const bpm = parseTempo(tempo);
-    const factor = TEMPO_UNIT_FACTOR[tempoUnit ?? 'quarter'];
-    const beatMs = (60 / bpm) * 1000 * factor;
-    const sequence = buildSequence(targetSections, beatMs);
-    if (!sequence.length) return;
-
+    if (!steps.length) return;
     setIsPlaying(true);
-
     let i = 0;
-
     const advance = () => {
-      if (i >= sequence.length) {
-        setIsPlaying(false);
-        setActiveStep(null);
-        return;
-      }
-      const step = sequence[i];
+      if (i >= steps.length) { setIsPlaying(false); setActiveStep(null); return; }
+      const step = steps[i];
       setActiveStep(step);
-
-      // Jouer l'accord
-      const cell = targetSections
-        .find(s => s.id === step.sectionId)
-        ?.rows[step.rowIndex]?.[step.cellIndex];
+      const cell = getCellFn(step);
       if (cell?.chord) {
-        // Priorité : sélection ChordSummary > custom grille > override admin > statique[0]
-        const selected = selectedChords?.[cell.chord];
-        const customKey = `${cell.chord.toLowerCase()}-${instrumentId}`;
-        const custom = customChords?.[customKey];
-        const enh = enharmonicEquivalent(cell.chord);
-        const adminOverride =
-          overrides.get(libraryKey(cell.chord, instrumentId))?.chord ??
-          (enh ? overrides.get(libraryKey(enh, instrumentId))?.chord : undefined);
-        const nameLower = cell.chord.trim().toLowerCase();
-        const enhLower = enh?.trim().toLowerCase();
-        const adminAddition = additions.find(
-          a => a.instrumentId === instrumentId &&
-            (a.chord.name.trim().toLowerCase() === nameLower ||
-             (enhLower && a.chord.name.trim().toLowerCase() === enhLower))
-        )?.chord;
-        const chordData =
-          selected ??
-          (custom as StringChord | PianoChord | undefined) ??
-          adminOverride ??
-          adminAddition ??
-          findChordVariants(cell.chord, instrumentId)[0];
-        if (chordData) playChord(chordData as StringChord | PianoChord, instrumentId, capo);
+        const chordData = resolveChord(cell.chord);
+        if (chordData) playChord(chordData, instrumentId, capo);
       }
-
       i++;
       timeoutRef.current = setTimeout(advance, step.durationMs);
     };
-
     advance();
-  }, [tempo, tempoUnit, instrumentId, customChords, selectedChords, overrides]);
+  }, [resolveChord, instrumentId, capo]);
+
+  const playSequence = useCallback((targetSections: Section[]) => {
+    const bpm = parseTempo(tempo);
+    const factor = TEMPO_UNIT_FACTOR[tempoUnit ?? 'quarter'];
+    const beatMs = (60 / bpm) * 1000 * factor;
+    const steps = buildSequence(targetSections, beatMs);
+    runSteps(steps, (step) =>
+      targetSections.find(s => s.id === step.sectionId)?.rows[step.rowIndex]?.[step.cellIndex]
+    );
+  }, [tempo, tempoUnit, runSteps]);
+
+  const playRow = useCallback((sectionId: string, rowIndex: number) => {
+    const section = sections.find(s => s.id === sectionId);
+    if (!section) return;
+    const bpm = parseTempo(tempo);
+    const factor = TEMPO_UNIT_FACTOR[tempoUnit ?? 'quarter'];
+    const beatMs = (60 / bpm) * 1000 * factor;
+    const bpmeasure = section.beatsPerMeasure || 4;
+    const rowRepeat = section.rowRepeats?.[rowIndex] ?? 1;
+    const row = section.rows[rowIndex];
+    if (!row) return;
+    const steps: PlayStep[] = [];
+    for (let rr = 0; rr < rowRepeat; rr++) {
+      let lastNonEmpty = row.length - 1;
+      while (lastNonEmpty > 0 && !row[lastNonEmpty].chord.trim()) lastNonEmpty--;
+      for (let c = 0; c <= lastNonEmpty; c++) {
+        steps.push({ sectionId, rowIndex, cellIndex: c, durationMs: row[c].span * bpmeasure * beatMs });
+      }
+    }
+    runSteps(steps, (step) => section.rows[step.rowIndex]?.[step.cellIndex]);
+  }, [sections, tempo, tempoUnit, runSteps]);
 
   const play = useCallback(() => {
     playSequence(sections);
@@ -200,5 +217,5 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, customCh
     if (isPlaying) stop(); else play();
   }, [isPlaying, stop, play]);
 
-  return { isPlaying, activeStep, play, stop, playSection, togglePlay };
+  return { isPlaying, activeStep, play, stop, playSection, playRow, togglePlay };
 }
