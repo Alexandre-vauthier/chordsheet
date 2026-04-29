@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -225,6 +226,19 @@ export default function ProfilePage() {
               month: 'long',
               day: 'numeric',
             })}
+          </p>
+        </div>
+
+        {/* Profil public */}
+        <div className="pt-2 border-t border-[var(--line)]">
+          <Link
+            href={`/user/${user.id}`}
+            className="text-sm font-medium text-[var(--accent)] hover:underline"
+          >
+            Voir mon profil public →
+          </Link>
+          <p className="text-xs text-[var(--ink-faint)] mt-1">
+            Visible par tous · vos grilles publiées et vos statistiques
           </p>
         </div>
       </div>

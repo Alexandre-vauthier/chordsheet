@@ -167,9 +167,20 @@ export function SheetCard({
           </div>
 
           <div className="flex items-center gap-2 mt-1">
-            {showOwner && (
+            {showOwner && sheet.ownerName && (
               <p className="text-[10px] text-[var(--ink-faint)]">
-                par {sheet.ownerName}
+                par{' '}
+                {sheet.ownerId && sheet.ownerId !== 'deleted' ? (
+                  <Link
+                    href={`/user/${sheet.ownerId}`}
+                    className="hover:text-[var(--accent)] transition-colors"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {sheet.ownerName}
+                  </Link>
+                ) : (
+                  sheet.ownerName
+                )}
               </p>
             )}
             {showPublicBadge && sheet.isPublic && (

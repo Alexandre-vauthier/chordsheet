@@ -209,7 +209,19 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               </Link>
             )}
             {sheet.ownerName && (
-              <p className="text-xs text-[var(--ink-faint)] mt-1 print:hidden">par {sheet.ownerName}</p>
+              <p className="text-xs text-[var(--ink-faint)] mt-1 print:hidden">
+                par{' '}
+                {sheet.ownerId && sheet.ownerId !== 'deleted' ? (
+                  <Link
+                    href={`/user/${sheet.ownerId}`}
+                    className="hover:text-[var(--accent)] transition-colors"
+                  >
+                    {sheet.ownerName}
+                  </Link>
+                ) : (
+                  sheet.ownerName
+                )}
+              </p>
             )}
           </div>
           </div>{/* fin artwork+titre */}
