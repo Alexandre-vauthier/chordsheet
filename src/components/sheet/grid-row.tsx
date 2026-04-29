@@ -12,6 +12,7 @@ interface GridRowProps {
   beatsPerMeasure: number;
   instrumentId: InstrumentId;
   onCellChange: (cellIndex: number, updates: Partial<Cell>) => void;
+  onFillCells: (fromCellIndex: number, chord: string, count: number) => void;
   onSplit: (cellIndex: number) => void;
   onMerge: (cellIndex: number) => void;
   onNavigateToCell: (rowIndex: number, cellIndex: number) => void;
@@ -34,6 +35,7 @@ export function GridRow({
   sectionId,
   instrumentId,
   onCellChange,
+  onFillCells,
   onSplit,
   onMerge,
   onNavigateToCell,
@@ -77,14 +79,13 @@ export function GridRow({
               onChordChange={(rawChord) => {
                 onDismissOnboarding?.();
                 const { chord, repeat } = parseChordInput(rawChord);
-                onCellChange(cellIndex, { chord });
-                // Remplir les cases suivantes si suffixe xN détecté
                 if (repeat > 1) {
-                  for (let i = cellIndex + 1; i < Math.min(cellIndex + repeat, row.length); i++) {
-                    onCellChange(i, { chord });
-                  }
+                  // Mise à jour atomique pour éviter que les appels séquentiels
+                  // s'écrasent mutuellement via le closure sur section.rows
+                  onFillCells(cellIndex, chord, repeat);
+                } else {
+                  onCellChange(cellIndex, { chord });
                 }
-                // Détecter la notation française
                 if (isFrenchChordInput(rawChord)) onFrenchDetected?.();
               }}
               canSplit={canSplit}

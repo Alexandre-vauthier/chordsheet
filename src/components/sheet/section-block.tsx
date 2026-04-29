@@ -274,6 +274,14 @@ export function SectionBlock({
               beatsPerMeasure={section.beatsPerMeasure || 4}
               instrumentId={instrumentId}
               onCellChange={(cellIndex, updates) => updateCell(rowIndex, cellIndex, updates)}
+              onFillCells={(fromCellIndex, chord, count) => {
+                const newRows = [...section.rows];
+                newRows[rowIndex] = [...newRows[rowIndex]];
+                for (let i = fromCellIndex; i < Math.min(fromCellIndex + count, newRows[rowIndex].length); i++) {
+                  newRows[rowIndex][i] = { ...newRows[rowIndex][i], chord };
+                }
+                onUpdate({ rows: newRows });
+              }}
               onSplit={(cellIndex) => splitCell(rowIndex, cellIndex)}
               onMerge={(cellIndex) => mergeCells(rowIndex, cellIndex)}
               onNavigateToCell={(nextRowIndex, cellIndex) =>
