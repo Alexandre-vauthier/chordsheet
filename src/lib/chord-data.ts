@@ -1116,6 +1116,55 @@ const FR_NOTES: Record<string, string> = {
   'B#': 'Si#', 'Bb': 'Sib', 'B': 'Si',
 };
 
+// Notation française → anglaise (sens inverse de FR_NOTES)
+// Ordre : Sol avant Si pour éviter que "Sol" soit matché partiellement par "Si"
+const FR_TO_EN_REGEX = /^(Sol|Ré|Re|Fa|Mi|Do|La|Si)([#b]?)(.*)/;
+const FR_TO_EN_MAP: Record<string, string> = {
+  Do: 'C', Ré: 'D', Re: 'D', Mi: 'E', Fa: 'F', Sol: 'G', La: 'A', Si: 'B',
+};
+
+/**
+ * Normalise un accord saisi :
+ *  - Convertit la notation française → anglaise (Sol → G, Si → B, etc.)
+ *  - Extrait et retourne le suffixe xN (x2, x3…) comme `repeat`
+ * Exemples : "Simx2" → {chord:"Bm", repeat:2}, "Fa#m7" → {chord:"F#m7", repeat:1}
+ */
+export function parseChordInput(raw: string): { chord: string; repeat: number } {
+  let str = raw.trim();
+  if (!str) return { chord: '', repeat: 1 };
+
+  // Extraire "x2" / "x3" etc. en fin de chaîne
+  let repeat = 1;
+  const xMatch = str.match(/[xX](\d+)$/);
+  if (xMatch) {
+    repeat = Math.max(1, Math.min(8, parseInt(xMatch[1], 10)));
+    str = str.slice(0, -xMatch[0].length);
+  }
+
+  // Accord slash : normaliser les deux parties
+  const slashIdx = str.indexOf('/');
+  if (slashIdx > 0) {
+    const left = parseChordInput(str.slice(0, slashIdx)).chord;
+    const right = parseChordInput(str.slice(slashIdx + 1)).chord;
+    return { chord: `${left}/${right}`, repeat };
+  }
+
+  // Convertir nom de note français → anglais
+  const frMatch = str.match(FR_TO_EN_REGEX);
+  if (frMatch) {
+    const [, noteFr, accidental, suffix] = frMatch;
+    const noteEn = FR_TO_EN_MAP[noteFr];
+    if (noteEn) str = noteEn + accidental + suffix;
+  }
+
+  return { chord: str, repeat };
+}
+
+/** Vrai si la chaîne commence par un nom de note français. */
+export function isFrenchChordInput(str: string): boolean {
+  return FR_TO_EN_REGEX.test(str.trim());
+}
+
 export function translateChordName(name: string, notation: 'american' | 'french'): string {
   if (!name || notation === 'american') return name;
   // Accord slash : traduire chaque côté

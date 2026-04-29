@@ -1,6 +1,7 @@
 'use client';
 
 import type { Row, Cell, CellSpan, InstrumentId, StringChord, PianoChord } from '@/types';
+import { parseChordInput, isFrenchChordInput } from '@/lib/chord-data';
 import { BeatCell } from './beat-cell';
 import { CoachMark } from './coach-mark';
 
@@ -14,6 +15,7 @@ interface GridRowProps {
   onSplit: (cellIndex: number) => void;
   onMerge: (cellIndex: number) => void;
   onNavigateToCell: (rowIndex: number, cellIndex: number) => void;
+  onFrenchDetected?: () => void;
   totalRows: number;
   activeCellIndex?: number;
   activeDurationMs?: number;
@@ -35,6 +37,7 @@ export function GridRow({
   onSplit,
   onMerge,
   onNavigateToCell,
+  onFrenchDetected,
   totalRows,
   activeCellIndex,
   activeDurationMs,
@@ -71,7 +74,19 @@ export function GridRow({
               cols={cols}
               cellId={`cell-${sectionId}-${rowIndex}-${cellIndex}`}
               instrumentId={instrumentId}
-              onChordChange={(chord) => { onDismissOnboarding?.(); onCellChange(cellIndex, { chord }); }}
+              onChordChange={(rawChord) => {
+                onDismissOnboarding?.();
+                const { chord, repeat } = parseChordInput(rawChord);
+                onCellChange(cellIndex, { chord });
+                // Remplir les cases suivantes si suffixe xN détecté
+                if (repeat > 1) {
+                  for (let i = cellIndex + 1; i < Math.min(cellIndex + repeat, row.length); i++) {
+                    onCellChange(i, { chord });
+                  }
+                }
+                // Détecter la notation française
+                if (isFrenchChordInput(rawChord)) onFrenchDetected?.();
+              }}
               canSplit={canSplit}
               onSplit={() => onSplit(cellIndex)}
               isActive={activeCellIndex === cellIndex}

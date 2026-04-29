@@ -63,6 +63,7 @@ interface SectionBlockProps {
   isDragOver: boolean;
   isFirstSection?: boolean;
   onDismissOnboarding?: () => void;
+  onFrenchDetected?: () => void;
   finderChordPool?: Record<InstrumentId, (StringChord | PianoChord)[]>;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
@@ -90,6 +91,7 @@ export function SectionBlock({
   isDragOver,
   isFirstSection = false,
   onDismissOnboarding,
+  onFrenchDetected,
   finderChordPool,
   onMoveUp,
   onMoveDown,
@@ -283,6 +285,7 @@ export function SectionBlock({
               isFirstRow={isFirstSection && rowIndex === 0}
               exampleChords={isFirstSection && rowIndex === 0 ? EXAMPLE_CHORDS : undefined}
               onDismissOnboarding={onDismissOnboarding}
+              onFrenchDetected={onFrenchDetected}
               finderChordPool={finderChordPool}
             />
             {/* Contrôles droite : répétition + play + suppression */}

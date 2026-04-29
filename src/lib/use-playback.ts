@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { Section, Cell, InstrumentId, StringChord, PianoChord } from '@/types';
-import { findChordVariants, enharmonicEquivalent } from '@/lib/chord-data';
+import { findChordVariants, enharmonicEquivalent, parseChordInput } from '@/lib/chord-data';
 import { playChord, playMetronomeTick } from '@/lib/chord-audio';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
 
@@ -129,8 +129,9 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, customCh
     };
   }, []);
 
-  const resolveChord = useCallback((chordName: string): StringChord | PianoChord | undefined => {
-    const selected = selectedChords?.[chordName];
+  const resolveChord = useCallback((rawChordName: string): StringChord | PianoChord | undefined => {
+    const chordName = parseChordInput(rawChordName).chord;
+    const selected = selectedChords?.[chordName] ?? selectedChords?.[rawChordName];
     const customKey = `${chordName.toLowerCase()}-${instrumentId}`;
     const custom = customChords?.[customKey];
     const enh = enharmonicEquivalent(chordName);

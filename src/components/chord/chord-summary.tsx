@@ -5,7 +5,7 @@ import type { Section, InstrumentId, StringChord, PianoChord, CustomChord } from
 import { ChordCard } from './chord-card';
 import { useChordNotation } from '@/lib/use-chord-notation';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
-import { findChordVariants, enharmonicEquivalent } from '@/lib/chord-data';
+import { findChordVariants, enharmonicEquivalent, parseChordInput } from '@/lib/chord-data';
 import { transposeChord } from '@/lib/transpose';
 
 // Type pour les accords personnalisés stockés dans la grille
@@ -56,8 +56,10 @@ export function ChordSummary({
     for (const section of sections) {
       for (const row of section.rows) {
         for (const cell of row) {
-          const chord = cell.chord.trim();
-          if (chord && !seen.has(chord.toLowerCase())) {
+          const raw = cell.chord.trim();
+          if (!raw) continue;
+          const chord = parseChordInput(raw).chord; // normalise FR + strip xN
+          if (!seen.has(chord.toLowerCase())) {
             seen.add(chord.toLowerCase());
             chords.push(chord);
           }

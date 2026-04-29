@@ -14,6 +14,7 @@ import { stopPreviewAudio } from '@/components/explore/sheet-card';
 import { CoachMark } from './coach-mark';
 import { getChordsByInstrument, getAllExtendedChords } from '@/lib/chord-data';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
+import { useAuth } from '@/lib/auth-context';
 
 interface SheetEditorProps {
   initialSheet: NewSheet | Sheet;
@@ -24,6 +25,14 @@ interface SheetEditorProps {
 const SECTION_LABELS = ['Intro', 'Couplet', 'Refrain', 'Bridge', 'Pré-refrain', 'Outro', 'Solo'];
 
 export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEditorProps) {
+  const { user, updateUser } = useAuth();
+  const frenchDetectedRef = useRef(false);
+  const handleFrenchDetected = useCallback(() => {
+    if (frenchDetectedRef.current || user?.notationPreference === 'french') return;
+    frenchDetectedRef.current = true;
+    updateUser({ notationPreference: 'french' });
+  }, [user, updateUser]);
+
   const [sheet, setSheet] = useState<NewSheet | Sheet>(initialSheet);
   const [hasChanges, setHasChanges] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -685,6 +694,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 isDragOver={dragOverSectionId === section.id && dragSectionId !== section.id && !isNoOpTarget}
                 isFirstSection={isFirstSheet && sectionIndex === 0}
                 onDismissOnboarding={dismissOnboarding}
+                onFrenchDetected={handleFrenchDetected}
                 finderChordPool={finderChordPool}
                 onMoveUp={sectionIndex > 0 ? () => moveSection(section.id, 'up') : undefined}
                 onMoveDown={sectionIndex < sheet.sections.length - 1 ? () => moveSection(section.id, 'down') : undefined}
