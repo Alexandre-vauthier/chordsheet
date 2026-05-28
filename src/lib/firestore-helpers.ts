@@ -158,6 +158,9 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
   if (sheet.unlistedBySetIds && sheet.unlistedBySetIds.length > 0) {
     (base as unknown as Record<string, unknown>).unlistedBySetIds = sheet.unlistedBySetIds;
   }
+  if (sheet.lyrics) {
+    (base as unknown as Record<string, unknown>).lyrics = sheet.lyrics;
+  }
 
   return base;
 }
@@ -204,6 +207,8 @@ export function fromFirestore(
     // V8 - Non répertorié
     isUnlisted: (data.isUnlisted as boolean) || undefined,
     unlistedBySetIds: (data.unlistedBySetIds as string[]) || undefined,
+    // V9 - Paroles
+    lyrics: (data.lyrics as string) || undefined,
     // V3+ - Diagrammes d'accords & référence
     referenceUrl: (data.referenceUrl as string) || undefined,
     instrumentId: (data.instrumentId as InstrumentId) || undefined,

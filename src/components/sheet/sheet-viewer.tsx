@@ -395,8 +395,8 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
         </div>
       </div>
 
-      {/* Diagrammes des accords */}
-      <div className="mb-6 print:hidden">
+      {/* Diagrammes des accords — masqués pour Voix */}
+      <div className={`mb-6 print:hidden ${instrumentId === 'voice' ? 'hidden' : ''}`}>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-medium text-[var(--ink-light)]">Accords utilisés</h2>
           <div className="flex items-center gap-3">
@@ -455,8 +455,8 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
         />
       </div>
 
-      {/* Sections */}
-      <div className="space-y-8 print:space-y-6">
+      {/* Sections — masquées pour Voix */}
+      <div className={`space-y-8 print:space-y-6 ${instrumentId === 'voice' ? 'hidden' : ''}`}>
         {(() => {
           const seenSignatures = new Map<string, string>(); // signature → label de la première occurrence
           return displaySections.map((section) => {
@@ -569,16 +569,22 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
         ))}
       </div>
 
-      {/* Paroles — uniquement pour l'instrument Voix */}
+      {/* Paroles — uniquement quand instrument actif = Voix */}
       {instrumentId === 'voice' && sheet.lyrics && (
-        <div className="mt-10 print:mt-8">
+        <div className="mt-6 print:mt-8">
           <div className="flex items-center gap-3 mb-4">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Paroles</h2>
             <div className="flex-1 h-px bg-[var(--line)]" />
           </div>
-          <pre className="whitespace-pre-wrap font-sans text-sm text-[var(--ink)] leading-relaxed bg-[var(--cell-bg)] rounded-lg border border-[var(--line)] p-4">
+          <pre className="whitespace-pre-wrap font-sans text-[0.95rem] text-[var(--ink)] leading-loose bg-[var(--cell-bg)] rounded-lg border border-[var(--line)] p-6">
             {sheet.lyrics}
           </pre>
+        </div>
+      )}
+      {instrumentId === 'voice' && !sheet.lyrics && (
+        <div className="mt-6 flex flex-col items-center justify-center py-16 text-[var(--ink-faint)]">
+          <span className="text-4xl mb-3">🎤</span>
+          <p className="text-sm">Aucune parole enregistrée pour cette grille.</p>
         </div>
       )}
 

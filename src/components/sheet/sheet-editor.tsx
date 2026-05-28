@@ -40,15 +40,15 @@ function LyricsEditor({
   const [fetching, setFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  const fetchLyrics = async () => {
-    if (!artist.trim() || !title.trim()) {
+  const fetchLyrics = async (a = artist, t = title) => {
+    if (!a.trim() || !t.trim()) {
       setFetchError('Renseigne l\'artiste et le titre avant de récupérer les paroles.');
       return;
     }
     setFetching(true);
     setFetchError(null);
     try {
-      const url = `https://api.lyrics.ovh/v1/${encodeURIComponent(artist.trim())}/${encodeURIComponent(title.trim())}`;
+      const url = `https://api.lyrics.ovh/v1/${encodeURIComponent(a.trim())}/${encodeURIComponent(t.trim())}`;
       const res = await fetch(url);
       const data = await res.json();
       if (data.lyrics) {
@@ -63,6 +63,14 @@ function LyricsEditor({
     }
   };
 
+  // Auto-fetch au montage si les paroles sont vides et artiste+titre connus
+  useEffect(() => {
+    if (!lyrics && artist.trim() && title.trim()) {
+      fetchLyrics(artist, title);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="mt-8">
       <div className="flex items-center gap-3 mb-4">
@@ -70,7 +78,7 @@ function LyricsEditor({
         <div className="flex-1 h-px bg-[var(--line)]" />
         <button
           type="button"
-          onClick={fetchLyrics}
+          onClick={() => fetchLyrics()}
           disabled={fetching}
           className="cursor-pointer flex items-center gap-1.5 px-3 py-1 text-xs rounded-lg border border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors disabled:opacity-50"
         >
