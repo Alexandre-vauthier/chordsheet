@@ -234,8 +234,8 @@ export function BeatCell({
           </span>
         )}
 
-        {/* Bouton pour afficher le diagramme */}
-        {cell.chord && !isEditing && (
+        {/* Bouton pour afficher le diagramme — masqué pour voix */}
+        {cell.chord && !isEditing && instrumentId !== 'voice' && (
           <button
             onClick={toggleDiagram}
             className="cursor-pointer absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded bg-[var(--paper)] hover:bg-[var(--line)] text-[var(--ink-faint)] hover:text-[var(--ink-light)] text-xs transition-colors"

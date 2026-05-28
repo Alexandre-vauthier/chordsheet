@@ -24,6 +24,73 @@ interface SheetEditorProps {
 
 const SECTION_LABELS = ['Intro', 'Couplet', 'Refrain', 'Bridge', 'Pré-refrain', 'Outro', 'Solo'];
 
+// ─── Composant paroles ────────────────────────────────────────────────────────
+
+function LyricsEditor({
+  lyrics,
+  artist,
+  title,
+  onChange,
+}: {
+  lyrics: string;
+  artist: string;
+  title: string;
+  onChange: (v: string) => void;
+}) {
+  const [fetching, setFetching] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  const fetchLyrics = async () => {
+    if (!artist.trim() || !title.trim()) {
+      setFetchError('Renseigne l\'artiste et le titre avant de récupérer les paroles.');
+      return;
+    }
+    setFetching(true);
+    setFetchError(null);
+    try {
+      const url = `https://api.lyrics.ovh/v1/${encodeURIComponent(artist.trim())}/${encodeURIComponent(title.trim())}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.lyrics) {
+        onChange(data.lyrics.trim());
+      } else {
+        setFetchError('Paroles introuvables pour ce titre.');
+      }
+    } catch {
+      setFetchError('Impossible de contacter lyrics.ovh. Vérifie ta connexion.');
+    } finally {
+      setFetching(false);
+    }
+  };
+
+  return (
+    <div className="mt-8">
+      <div className="flex items-center gap-3 mb-4">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Paroles</h2>
+        <div className="flex-1 h-px bg-[var(--line)]" />
+        <button
+          type="button"
+          onClick={fetchLyrics}
+          disabled={fetching}
+          className="cursor-pointer flex items-center gap-1.5 px-3 py-1 text-xs rounded-lg border border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors disabled:opacity-50"
+        >
+          {fetching ? '⏳ Recherche…' : '🎤 Récupérer les paroles'}
+        </button>
+      </div>
+      {fetchError && (
+        <p className="text-xs text-red-600 mb-2">{fetchError}</p>
+      )}
+      <textarea
+        value={lyrics}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Les paroles apparaîtront ici. Tu peux aussi les saisir manuellement."
+        rows={16}
+        className="w-full px-4 py-3 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink)] text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder:text-[var(--ink-faint)]"
+      />
+    </div>
+  );
+}
+
 export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEditorProps) {
   const { user, updateUser } = useAuth();
   const frenchDetectedRef = useRef(false);
@@ -742,6 +809,16 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
           onVariantChange={handleVariantSelect}
         />
       </div>
+
+      {/* Paroles — uniquement pour l'instrument Voix */}
+      {(sheet.instrumentId === 'voice') && (
+        <LyricsEditor
+          lyrics={sheet.lyrics || ''}
+          artist={sheet.artist}
+          title={sheet.title}
+          onChange={(lyrics) => updateSheet({ lyrics })}
+        />
+      )}
 
       {/* Modal d'édition d'accord */}
       <ChordEditorModal

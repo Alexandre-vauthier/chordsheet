@@ -569,6 +569,18 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
         ))}
       </div>
 
+      {/* Paroles — uniquement pour l'instrument Voix */}
+      {instrumentId === 'voice' && sheet.lyrics && (
+        <div className="mt-10 print:mt-8">
+          <div className="flex items-center gap-3 mb-4">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Paroles</h2>
+            <div className="flex-1 h-px bg-[var(--line)]" />
+          </div>
+          <pre className="whitespace-pre-wrap font-sans text-sm text-[var(--ink)] leading-relaxed bg-[var(--cell-bg)] rounded-lg border border-[var(--line)] p-4">
+            {sheet.lyrics}
+          </pre>
+        </div>
+      )}
 
     </div>
   );

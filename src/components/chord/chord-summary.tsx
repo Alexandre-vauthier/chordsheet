@@ -165,6 +165,14 @@ export function ChordSummary({
           const hasMultipleVariants = allVariants.length > 1;
 
           if (!currentChord) {
+            // Voix : juste le nom de l'accord, sans diagramme ni message d'erreur
+            if (instrumentId === 'voice') {
+              return (
+                <div key={chordName} className="flex items-center px-2 py-1 rounded bg-[var(--cell-bg)] border border-[var(--line)]">
+                  <span className="font-mono text-sm font-medium text-[var(--ink)]">{translate(chordName)}</span>
+                </div>
+              );
+            }
             // Accord non trouvé - afficher bouton pour créer
             return (
               <div

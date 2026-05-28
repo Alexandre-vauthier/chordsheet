@@ -8,6 +8,7 @@ export const OPEN_FREQS: Record<string, Record<number, number>> = {
   ukulele: { 1: 440.00, 2: 329.63, 3: 261.63, 4: 392.00 },
   mandolin: { 1: 659.25, 2: 440.00, 3: 293.66, 4: 196.00 },
   banjo: { 1: 293.66, 2: 246.94, 3: 196.00, 4: 146.83, 5: 392.00 },
+  bass: { 1: 98.00, 2: 73.42, 3: 55.00, 4: 41.20 },  // G2 D2 A1 E1
 };
 
 // Conversion nom de note vers fréquence (ex: "C4" -> 261.63)

@@ -15,65 +15,25 @@ const INSTRUMENT_ICONS: Record<InstrumentId, string> = {
   mandolin: '🎻',
   banjo: '🪕',
   piano: '🎹',
+  bass: '🎸',
+  voice: '🎤',
 };
 
-export function InstrumentSelector({ value, onChange, compact = false }: InstrumentSelectorProps) {
+export function InstrumentSelector({ value, onChange }: InstrumentSelectorProps) {
   const instruments = Object.values(INSTRUMENT_CONFIG);
 
-  if (compact) {
-    return (
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value as InstrumentId)}
-        className="cursor-pointer px-2 py-1 rounded border border-[var(--line)] text-sm bg-[var(--cell-bg)]
-          focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-      >
-        {instruments.map((inst) => (
-          <option key={inst.id} value={inst.id}>
-            {INSTRUMENT_ICONS[inst.id]} {inst.label}
-          </option>
-        ))}
-      </select>
-    );
-  }
-
   return (
-    <>
-      {/* Mobile : liste déroulante */}
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value as InstrumentId)}
-        className="sm:hidden cursor-pointer px-2 py-1 rounded border border-[var(--line)] text-sm bg-[var(--cell-bg)]
-          focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-      >
-        {instruments.map((inst) => (
-          <option key={inst.id} value={inst.id}>
-            {INSTRUMENT_ICONS[inst.id]} {inst.label}
-          </option>
-        ))}
-      </select>
-
-      {/* Desktop : boutons pills */}
-      <div className="hidden sm:flex flex-wrap gap-2">
-        {instruments.map((inst) => {
-          const isSelected = inst.id === value;
-          return (
-            <button
-              key={inst.id}
-              type="button"
-              onClick={() => onChange(inst.id)}
-              className={`cursor-pointer px-3 py-1.5 text-sm rounded-full border transition-colors flex items-center gap-1.5 ${
-                isSelected
-                  ? 'bg-[var(--nav-bg)] text-white border-[var(--ink)]'
-                  : 'bg-[var(--cell-bg)] text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
-              }`}
-            >
-              <span>{INSTRUMENT_ICONS[inst.id]}</span>
-              <span>{inst.label}</span>
-            </button>
-          );
-        })}
-      </div>
-    </>
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value as InstrumentId)}
+      className="cursor-pointer px-2 py-1.5 rounded border border-[var(--line)] text-sm bg-[var(--cell-bg)]
+        text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)]"
+    >
+      {instruments.map((inst) => (
+        <option key={inst.id} value={inst.id}>
+          {INSTRUMENT_ICONS[inst.id]} {inst.label}
+        </option>
+      ))}
+    </select>
   );
 }

@@ -9,6 +9,8 @@ export const INSTRUMENT_CONFIG: Record<InstrumentId, Instrument> = {
   banjo: { id: 'banjo', label: 'Banjo', strings: 4 },
   ukulele: { id: 'ukulele', label: 'Ukulélé', strings: 4 },
   piano: { id: 'piano', label: 'Piano', strings: 0 },
+  bass: { id: 'bass', label: 'Basse', strings: 4 },
+  voice: { id: 'voice', label: 'Voix', strings: 0 },
 };
 
 // ─── Catégories d'accords ─────────────────────────────────────────────────────
@@ -22,6 +24,12 @@ const STRING_CATS = [
   { id: 'min7',  label: 'Min7' },
   { id: 'dim',   label: 'Dim' },
   { id: 'aug',   label: 'Aug' },
+  { id: 'sus2',  label: 'Sus2' },
+  { id: 'sus4',  label: 'Sus4' },
+];
+
+const BASS_CATS = [
+  { id: 'all', label: 'Tous' },
 ];
 
 export const CHORD_CATEGORIES = {
@@ -29,6 +37,8 @@ export const CHORD_CATEGORIES = {
   ukulele:  STRING_CATS,
   mandolin: STRING_CATS,
   banjo:    STRING_CATS,
+  bass:     BASS_CATS,
+  voice:    BASS_CATS,
   piano: [
     { id: 'all',   label: 'Tous' },
     { id: 'major', label: 'Majeurs' },
@@ -139,19 +149,29 @@ export const GUITAR_CHORDS: StringChord[] = [
   { id: "gBaug", name: "Baug", full: "B aug", category: "aug", fingers: [[1,3,1],[4,1,1],[5,2,1],[6,3,1]], open: [2,3], muted: [], startFret: 1 },
   // Sus2
   { id: "gCsus2",  name: "Csus2",  full: "C sus2",  category: "sus2", fingers: [[2,1,1],[4,2,1],[5,3,1]], open: [1,3], muted: [6], startFret: 1 },
+  { id: "gDbsus2", name: "Dbsus2", full: "Db sus2", category: "sus2", barre: { fret: 4, fromString: 1, toString: 5 }, fingers: [[3,6,1],[4,6,1]], open: [], muted: [6], startFret: 4 },
   { id: "gDsus2",  name: "Dsus2",  full: "D sus2",  category: "sus2", fingers: [[3,2,1],[4,3,1]], open: [1,2,5], muted: [6], startFret: 1 },
+  { id: "gEbsus2", name: "Ebsus2", full: "Eb sus2", category: "sus2", barre: { fret: 6, fromString: 1, toString: 5 }, fingers: [[3,8,1],[4,8,1]], open: [], muted: [6], startFret: 6 },
   { id: "gEsus2",  name: "Esus2",  full: "E sus2",  category: "sus2", fingers: [[4,2,1],[5,2,1]], open: [1,2,3,6], muted: [], startFret: 1 },
   { id: "gFsus2",  name: "Fsus2",  full: "F sus2",  category: "sus2", barre: { fret: 1, fromString: 1, toString: 5 }, fingers: [[3,3,1],[4,3,1]], open: [], muted: [6], startFret: 1 },
+  { id: "gFssus2", name: "F#sus2", full: "F# sus2", category: "sus2", barre: { fret: 2, fromString: 1, toString: 6 }, fingers: [[4,4,1],[5,4,1]], open: [], muted: [], startFret: 2 },
   { id: "gGsus2",  name: "Gsus2",  full: "G sus2",  category: "sus2", fingers: [[1,3,1],[5,2,1],[6,3,1]], open: [2,3,4], muted: [], startFret: 1 },
+  { id: "gAbsus2", name: "Absus2", full: "Ab sus2", category: "sus2", barre: { fret: 4, fromString: 1, toString: 6 }, fingers: [[4,6,1],[5,6,1]], open: [], muted: [3], startFret: 4 },
   { id: "gAsus2",  name: "Asus2",  full: "A sus2",  category: "sus2", fingers: [[3,2,1],[4,2,1]], open: [1,2,5], muted: [6], startFret: 1 },
+  { id: "gBbsus2", name: "Bbsus2", full: "Bb sus2", category: "sus2", fingers: [[5,1,1],[4,3,1],[3,3,1],[2,1,1],[1,1,1]], open: [], muted: [6], startFret: 1 },
   { id: "gBsus2",  name: "Bsus2",  full: "B sus2",  category: "sus2", barre: { fret: 2, fromString: 1, toString: 5 }, fingers: [[3,4,1],[4,4,1]], open: [], muted: [6], startFret: 2 },
   // Sus4
   { id: "gCsus4",  name: "Csus4",  full: "C sus4",  category: "sus4", fingers: [[2,1,1],[3,1,1],[4,2,1],[5,3,1]], open: [1], muted: [6], startFret: 1 },
+  { id: "gDbsus4", name: "Dbsus4", full: "Db sus4", category: "sus4", barre: { fret: 4, fromString: 1, toString: 5 }, fingers: [[3,6,1],[4,6,1],[2,7,1]], open: [], muted: [6], startFret: 4 },
   { id: "gDsus4",  name: "Dsus4",  full: "D sus4",  category: "sus4", fingers: [[1,3,1],[2,3,1],[3,2,1]], open: [4,5], muted: [6], startFret: 1 },
+  { id: "gEbsus4", name: "Ebsus4", full: "Eb sus4", category: "sus4", barre: { fret: 6, fromString: 1, toString: 5 }, fingers: [[3,8,1],[4,8,1],[2,9,1]], open: [], muted: [6], startFret: 6 },
   { id: "gEsus4",  name: "Esus4",  full: "E sus4",  category: "sus4", fingers: [[1,2,1],[2,2,1],[4,2,1],[5,2,1]], open: [3,6], muted: [], startFret: 1 },
   { id: "gFsus4",  name: "Fsus4",  full: "F sus4",  category: "sus4", barre: { fret: 1, fromString: 1, toString: 6 }, fingers: [[3,3,1],[4,3,1],[5,3,1]], open: [], muted: [], startFret: 1 },
+  { id: "gFssus4", name: "F#sus4", full: "F# sus4", category: "sus4", barre: { fret: 2, fromString: 1, toString: 6 }, fingers: [[3,4,1],[4,4,1],[5,4,1]], open: [], muted: [], startFret: 2 },
   { id: "gGsus4",  name: "Gsus4",  full: "G sus4",  category: "sus4", fingers: [[1,3,1],[4,1,1],[5,2,1],[6,3,1]], open: [2,3], muted: [], startFret: 1 },
+  { id: "gAbsus4", name: "Absus4", full: "Ab sus4", category: "sus4", barre: { fret: 4, fromString: 1, toString: 6 }, fingers: [[3,6,1],[4,6,1],[5,6,1]], open: [], muted: [], startFret: 4 },
   { id: "gAsus4",  name: "Asus4",  full: "A sus4",  category: "sus4", fingers: [[2,2,1],[3,2,1],[4,2,1],[5,2,1]], open: [1], muted: [6], startFret: 1 },
+  { id: "gBbsus4", name: "Bbsus4", full: "Bb sus4", category: "sus4", barre: { fret: 1, fromString: 1, toString: 5 }, fingers: [[4,3,1],[3,3,1],[2,4,1]], open: [], muted: [6], startFret: 1 },
   { id: "gBsus4",  name: "Bsus4",  full: "B sus4",  category: "sus4", barre: { fret: 2, fromString: 1, toString: 5 }, fingers: [[3,4,1],[4,4,1],[5,4,1]], open: [], muted: [6], startFret: 2 },
 ];
 
@@ -250,17 +270,31 @@ export const UKULELE_CHORDS: StringChord[] = [
   { id: "uBbaug", name: "Bbaug", full: "Bb aug", category: "aug", fingers: [[1,1,1],[2,2,1],[3,2,1],[4,3,1]], open: [], muted: [], startFret: 1 },
   { id: "uBaug", name: "Baug", full: "B aug", category: "aug", fingers: [[1,2,1],[2,3,1],[3,3,1]], open: [4], muted: [], startFret: 1 },
   // Sus2 (ukulélé : cordes GCEA)
-  { id: "uCsus2", name: "Csus2", full: "C sus2", category: "sus2", fingers: [[1,3,1],[2,2,1]], open: [3,4], muted: [], startFret: 1 },
-  { id: "uDsus2", name: "Dsus2", full: "D sus2", category: "sus2", fingers: [[1,2,1],[2,2,1],[3,2,1]], open: [4], muted: [], startFret: 1 },
-  { id: "uEsus2", name: "Esus2", full: "E sus2", category: "sus2", fingers: [[1,2,1],[2,4,1],[4,2,1]], open: [3], muted: [], startFret: 1 },
-  { id: "uGsus2", name: "Gsus2", full: "G sus2", category: "sus2", fingers: [[1,5,1],[2,5,1],[3,5,1]], open: [4], muted: [], startFret: 1 },
-  { id: "uAsus2", name: "Asus2", full: "A sus2", category: "sus2", fingers: [[1,2,1],[4,2,1]], open: [2,3], muted: [], startFret: 1 },
-  // Sus4
-  { id: "uCsus4", name: "Csus4", full: "C sus4", category: "sus4", fingers: [[1,3,1],[2,3,1]], open: [3,4], muted: [], startFret: 1 },
-  { id: "uDsus4", name: "Dsus4", full: "D sus4", category: "sus4", fingers: [[1,2,1],[2,2,1],[3,3,1]], open: [4], muted: [], startFret: 1 },
-  { id: "uEsus4", name: "Esus4", full: "E sus4", category: "sus4", fingers: [[1,2,1],[2,4,1],[3,2,1]], open: [4], muted: [], startFret: 1 },
-  { id: "uGsus4", name: "Gsus4", full: "G sus4", category: "sus4", fingers: [[1,5,1],[2,5,1],[3,6,1]], open: [4], muted: [], startFret: 1 },
-  { id: "uAsus4", name: "Asus4", full: "A sus4", category: "sus4", fingers: [[1,2,1],[2,2,1],[3,2,1],[4,2,1]], open: [], muted: [], startFret: 1 },
+  { id: "uCsus2",  name: "Csus2",  full: "C sus2",  category: "sus2", fingers: [[1,3,1],[2,2,1]], open: [3,4], muted: [], startFret: 1 },
+  { id: "uDbsus2", name: "Dbsus2", full: "Db sus2", category: "sus2", fingers: [[1,4,1],[2,3,1],[3,1,1],[4,1,1]], open: [], muted: [], startFret: 1 },
+  { id: "uDsus2",  name: "Dsus2",  full: "D sus2",  category: "sus2", fingers: [[1,2,1],[2,2,1],[3,2,1]], open: [4], muted: [], startFret: 1 },
+  { id: "uEbsus2", name: "Ebsus2", full: "Eb sus2", category: "sus2", fingers: [[1,3,1],[2,3,1],[3,3,1],[4,1,1]], open: [], muted: [], startFret: 1 },
+  { id: "uEsus2",  name: "Esus2",  full: "E sus2",  category: "sus2", fingers: [[1,2,1],[2,4,1],[4,2,1]], open: [3], muted: [], startFret: 1 },
+  { id: "uFsus2",  name: "Fsus2",  full: "F sus2",  category: "sus2", fingers: [[1,1,1],[2,1,1],[3,3,1]], open: [4], muted: [], startFret: 1 },
+  { id: "uFssus2", name: "F#sus2", full: "F# sus2", category: "sus2", fingers: [[1,2,1],[2,2,1],[3,4,1],[4,1,1]], open: [], muted: [], startFret: 1 },
+  { id: "uGsus2",  name: "Gsus2",  full: "G sus2",  category: "sus2", fingers: [[1,5,1],[2,5,1],[3,5,1]], open: [4], muted: [], startFret: 1 },
+  { id: "uAbsus2", name: "Absus2", full: "Ab sus2", category: "sus2", fingers: [[1,1,1],[2,1,1],[3,1,1],[4,6,1]], open: [], muted: [], startFret: 1 },
+  { id: "uAsus2",  name: "Asus2",  full: "A sus2",  category: "sus2", fingers: [[1,2,1],[4,2,1]], open: [2,3], muted: [], startFret: 1 },
+  { id: "uBbsus2", name: "Bbsus2", full: "Bb sus2", category: "sus2", fingers: [[1,3,1],[4,3,1]], open: [2,3], muted: [], startFret: 1 },
+  { id: "uBsus2",  name: "Bsus2",  full: "B sus2",  category: "sus2", fingers: [[1,4,1],[2,2,1],[4,4,1]], open: [3], muted: [], startFret: 2 },
+  // Sus4 (ukulélé : cordes GCEA)
+  { id: "uCsus4",  name: "Csus4",  full: "C sus4",  category: "sus4", fingers: [[1,3,1],[2,3,1]], open: [3,4], muted: [], startFret: 1 },
+  { id: "uDbsus4", name: "Dbsus4", full: "Db sus4", category: "sus4", fingers: [[1,4,1],[2,4,1],[3,1,1],[4,1,1]], open: [], muted: [], startFret: 1 },
+  { id: "uDsus4",  name: "Dsus4",  full: "D sus4",  category: "sus4", fingers: [[1,2,1],[2,2,1],[3,3,1]], open: [4], muted: [], startFret: 1 },
+  { id: "uEbsus4", name: "Ebsus4", full: "Eb sus4", category: "sus4", fingers: [[1,3,1],[2,3,1],[3,4,1],[4,1,1]], open: [], muted: [], startFret: 1 },
+  { id: "uEsus4",  name: "Esus4",  full: "E sus4",  category: "sus4", fingers: [[1,2,1],[2,4,1],[3,2,1]], open: [4], muted: [], startFret: 1 },
+  { id: "uFsus4",  name: "Fsus4",  full: "F sus4",  category: "sus4", fingers: [[2,1,1],[3,5,1],[4,5,1]], open: [1], muted: [], startFret: 1 },
+  { id: "uFssus4", name: "F#sus4", full: "F# sus4", category: "sus4", fingers: [[1,2,1],[2,2,1],[3,6,1],[4,2,1]], open: [], muted: [], startFret: 2 },
+  { id: "uGsus4",  name: "Gsus4",  full: "G sus4",  category: "sus4", fingers: [[1,5,1],[2,5,1],[3,6,1]], open: [4], muted: [], startFret: 1 },
+  { id: "uAbsus4", name: "Absus4", full: "Ab sus4", category: "sus4", fingers: [[1,1,1],[2,2,1],[3,1,1],[4,1,1]], open: [], muted: [], startFret: 1 },
+  { id: "uAsus4",  name: "Asus4",  full: "A sus4",  category: "sus4", fingers: [[1,2,1],[2,2,1],[3,2,1],[4,2,1]], open: [], muted: [], startFret: 1 },
+  { id: "uBbsus4", name: "Bbsus4", full: "Bb sus4", category: "sus4", fingers: [[1,3,1],[2,3,1],[3,3,1],[4,3,1]], open: [], muted: [], startFret: 3 },
+  { id: "uBsus4",  name: "Bsus4",  full: "B sus4",  category: "sus4", fingers: [[1,4,1],[2,4,1],[3,4,1],[4,4,1]], open: [], muted: [], startFret: 4 },
 ];
 
 // ─── Accords Mandoline ──────────────────────────────────────────────────────────
@@ -358,15 +392,31 @@ export const MANDOLIN_CHORDS: StringChord[] = [
   { id: "mBbaug", name: "Bbaug", full: "Bb aug", category: "aug", fingers: [[1,2,1],[2,1,1],[4,3,1]], open: [3], muted: [], startFret: 1 },
   { id: "mBaug", name: "Baug", full: "B aug", category: "aug", fingers: [[1,3,1],[2,2,1],[3,1,1]], open: [4], muted: [], startFret: 1 },
   // Sus2 (mandoline : cordes GDAE)
-  { id: "mGsus2", name: "Gsus2", full: "G sus2", category: "sus2", fingers: [[1,2,1],[2,2,1]], open: [3,4], muted: [], startFret: 1 },
-  { id: "mDsus2", name: "Dsus2", full: "D sus2", category: "sus2", fingers: [[2,2,1],[3,2,1]], open: [1,4], muted: [], startFret: 1 },
-  { id: "mAsus2", name: "Asus2", full: "A sus2", category: "sus2", fingers: [[3,2,1],[4,2,1]], open: [1,2], muted: [], startFret: 1 },
-  { id: "mEsus2", name: "Esus2", full: "E sus2", category: "sus2", fingers: [[1,2,1],[4,2,1]], open: [2,3], muted: [], startFret: 1 },
-  // Sus4
-  { id: "mGsus4", name: "Gsus4", full: "G sus4", category: "sus4", fingers: [[1,3,1],[2,3,1]], open: [3,4], muted: [], startFret: 1 },
-  { id: "mDsus4", name: "Dsus4", full: "D sus4", category: "sus4", fingers: [[2,3,1],[3,3,1]], open: [1,4], muted: [], startFret: 1 },
-  { id: "mAsus4", name: "Asus4", full: "A sus4", category: "sus4", fingers: [[3,3,1],[4,3,1]], open: [1,2], muted: [], startFret: 1 },
-  { id: "mEsus4", name: "Esus4", full: "E sus4", category: "sus4", fingers: [[1,3,1],[4,3,1]], open: [2,3], muted: [], startFret: 1 },
+  { id: "mCsus2",  name: "Csus2",  full: "C sus2",  category: "sus2", fingers: [[1,1,1],[2,2,1],[3,2,1]], open: [4], muted: [], startFret: 1 },
+  { id: "mDbsus2", name: "Dbsus2", full: "Db sus2", category: "sus2", fingers: [[1,2,1],[2,3,1],[3,3,1],[4,1,1]], open: [], muted: [], startFret: 1 },
+  { id: "mDsus2",  name: "Dsus2",  full: "D sus2",  category: "sus2", fingers: [[2,2,1],[3,2,1]], open: [1,4], muted: [], startFret: 1 },
+  { id: "mEbsus2", name: "Ebsus2", full: "Eb sus2", category: "sus2", fingers: [[1,1,1],[2,1,1],[3,1,1],[4,2,1]], open: [], muted: [], startFret: 1 },
+  { id: "mEsus2",  name: "Esus2",  full: "E sus2",  category: "sus2", fingers: [[1,2,1],[4,2,1]], open: [2,3], muted: [], startFret: 1 },
+  { id: "mFsus2",  name: "Fsus2",  full: "F sus2",  category: "sus2", fingers: [[1,3,1],[2,3,1],[3,1,1],[4,3,1]], open: [], muted: [], startFret: 1 },
+  { id: "mFssus2", name: "F#sus2", full: "F# sus2", category: "sus2", fingers: [[1,4,1],[2,4,1],[3,2,1],[4,4,1]], open: [], muted: [], startFret: 2 },
+  { id: "mGsus2",  name: "Gsus2",  full: "G sus2",  category: "sus2", fingers: [[1,2,1],[2,2,1]], open: [3,4], muted: [], startFret: 1 },
+  { id: "mAbsus2", name: "Absus2", full: "Ab sus2", category: "sus2", fingers: [[1,1,1],[2,1,1],[3,3,1]], open: [4], muted: [], startFret: 1 },
+  { id: "mAsus2",  name: "Asus2",  full: "A sus2",  category: "sus2", fingers: [[3,2,1],[4,2,1]], open: [1,2], muted: [], startFret: 1 },
+  { id: "mBbsus2", name: "Bbsus2", full: "Bb sus2", category: "sus2", fingers: [[1,1,1],[2,1,1],[3,3,1],[4,3,1]], open: [], muted: [], startFret: 1 },
+  { id: "mBsus2",  name: "Bsus2",  full: "B sus2",  category: "sus2", fingers: [[1,2,1],[2,2,1],[3,4,1],[4,4,1]], open: [], muted: [], startFret: 2 },
+  // Sus4 (mandoline : cordes GDAE)
+  { id: "mCsus4",  name: "Csus4",  full: "C sus4",  category: "sus4", fingers: [[1,1,1],[2,3,1],[3,2,1],[4,1,1]], open: [], muted: [], startFret: 1 },
+  { id: "mDbsus4", name: "Dbsus4", full: "Db sus4", category: "sus4", fingers: [[1,2,1],[2,4,1],[3,3,1],[4,1,1]], open: [], muted: [], startFret: 1 },
+  { id: "mDsus4",  name: "Dsus4",  full: "D sus4",  category: "sus4", fingers: [[2,3,1],[3,3,1]], open: [1,4], muted: [], startFret: 1 },
+  { id: "mEbsus4", name: "Ebsus4", full: "Eb sus4", category: "sus4", fingers: [[1,2,1],[2,1,1],[3,1,1],[4,2,1]], open: [], muted: [], startFret: 1 },
+  { id: "mEsus4",  name: "Esus4",  full: "E sus4",  category: "sus4", fingers: [[1,3,1],[4,3,1]], open: [2,3], muted: [], startFret: 1 },
+  { id: "mFsus4",  name: "Fsus4",  full: "F sus4",  category: "sus4", fingers: [[1,4,1],[2,4,1],[3,2,1],[4,4,1]], open: [], muted: [], startFret: 2 },
+  { id: "mFssus4", name: "F#sus4", full: "F# sus4", category: "sus4", fingers: [[1,1,1],[2,2,1],[3,3,1],[4,2,1]], open: [], muted: [], startFret: 1 },
+  { id: "mGsus4",  name: "Gsus4",  full: "G sus4",  category: "sus4", fingers: [[1,3,1],[2,3,1]], open: [3,4], muted: [], startFret: 1 },
+  { id: "mAbsus4", name: "Absus4", full: "Ab sus4", category: "sus4", fingers: [[1,1,1],[2,1,1],[3,4,1],[4,4,1]], open: [], muted: [], startFret: 1 },
+  { id: "mAsus4",  name: "Asus4",  full: "A sus4",  category: "sus4", fingers: [[3,3,1],[4,3,1]], open: [1,2], muted: [], startFret: 1 },
+  { id: "mBbsus4", name: "Bbsus4", full: "Bb sus4", category: "sus4", fingers: [[1,1,1],[2,2,1],[3,1,1],[4,1,1]], open: [], muted: [], startFret: 1 },
+  { id: "mBsus4",  name: "Bsus4",  full: "B sus4",  category: "sus4", fingers: [[1,2,1],[2,3,1],[3,2,1],[4,2,1]], open: [], muted: [], startFret: 2 },
 ];
 
 // ─── Accords Banjo ──────────────────────────────────────────────────────────
@@ -464,15 +514,50 @@ export const BANJO_CHORDS: StringChord[] = [
   { id: "bBbaug", name: "Bbaug", full: "Bb aug", category: "aug", fingers: [[2,3,1],[3,3,1],[5,3,1]], open: [1,4], muted: [], startFret: 1 },
   { id: "bBaug", name: "Baug", full: "B aug", category: "aug", fingers: [[1,1,1],[4,1,1]], open: [2,3,5], muted: [], startFret: 1 },
   // Sus2 (banjo 5 cordes : gDGBD)
-  { id: "bGsus2", name: "Gsus2", full: "G sus2", category: "sus2", fingers: [[2,3,1],[3,2,1]], open: [1,4,5], muted: [], startFret: 1 },
-  { id: "bDsus2", name: "Dsus2", full: "D sus2", category: "sus2", fingers: [[1,3,1],[3,2,1],[4,3,1]], open: [2,5], muted: [], startFret: 1 },
-  { id: "bAsus2", name: "Asus2", full: "A sus2", category: "sus2", fingers: [[1,2,1],[2,2,1],[4,2,1]], open: [3,5], muted: [], startFret: 1 },
-  { id: "bEsus2", name: "Esus2", full: "E sus2", category: "sus2", fingers: [[1,2,1],[3,1,1],[4,2,1]], open: [2,5], muted: [], startFret: 1 },
-  // Sus4
-  { id: "bGsus4", name: "Gsus4", full: "G sus4", category: "sus4", fingers: [[1,1,1],[2,3,1],[3,2,1]], open: [4,5], muted: [], startFret: 1 },
-  { id: "bDsus4", name: "Dsus4", full: "D sus4", category: "sus4", fingers: [[1,3,1],[2,4,1],[4,3,1]], open: [3,5], muted: [], startFret: 1 },
-  { id: "bAsus4", name: "Asus4", full: "A sus4", category: "sus4", fingers: [[1,2,1],[2,2,1],[3,2,1],[4,2,1]], open: [5], muted: [], startFret: 1 },
-  { id: "bEsus4", name: "Esus4", full: "E sus4", category: "sus4", fingers: [[1,2,1],[2,3,1],[4,2,1]], open: [3,5], muted: [], startFret: 1 },
+  { id: "bCsus2",  name: "Csus2",  full: "C sus2",  category: "sus2", fingers: [[1,1,1],[2,1,1],[3,2,1],[4,1,1]], open: [5], muted: [], startFret: 1 },
+  { id: "bDbsus2", name: "Dbsus2", full: "Db sus2", category: "sus2", fingers: [[1,2,1],[2,2,1],[3,3,1],[4,2,1]], open: [5], muted: [], startFret: 1 },
+  { id: "bDsus2",  name: "Dsus2",  full: "D sus2",  category: "sus2", fingers: [[1,3,1],[3,2,1],[4,3,1]], open: [2,5], muted: [], startFret: 1 },
+  { id: "bEbsus2", name: "Ebsus2", full: "Eb sus2", category: "sus2", fingers: [[1,4,1],[2,1,1],[3,3,1],[4,4,1]], open: [5], muted: [], startFret: 1 },
+  { id: "bEsus2",  name: "Esus2",  full: "E sus2",  category: "sus2", fingers: [[1,2,1],[3,1,1],[4,2,1]], open: [2,5], muted: [], startFret: 1 },
+  { id: "bFsus2",  name: "Fsus2",  full: "F sus2",  category: "sus2", fingers: [[1,3,1],[2,1,1],[3,2,1],[4,3,1]], open: [5], muted: [], startFret: 1 },
+  { id: "bFssus2", name: "F#sus2", full: "F# sus2", category: "sus2", fingers: [[1,4,1],[2,2,1],[3,3,1],[4,4,1]], open: [5], muted: [], startFret: 2 },
+  { id: "bGsus2",  name: "Gsus2",  full: "G sus2",  category: "sus2", fingers: [[2,3,1],[3,2,1]], open: [1,4,5], muted: [], startFret: 1 },
+  { id: "bAbsus2", name: "Absus2", full: "Ab sus2", category: "sus2", fingers: [[1,1,1],[2,1,1],[3,1,1],[4,1,1]], open: [5], muted: [], startFret: 1 },
+  { id: "bAsus2",  name: "Asus2",  full: "A sus2",  category: "sus2", fingers: [[1,2,1],[2,2,1],[4,2,1]], open: [3,5], muted: [], startFret: 1 },
+  { id: "bBbsus2", name: "Bbsus2", full: "Bb sus2", category: "sus2", fingers: [[1,3,1],[2,3,1],[4,3,1]], open: [3,5], muted: [], startFret: 1 },
+  { id: "bBsus2",  name: "Bsus2",  full: "B sus2",  category: "sus2", fingers: [[1,4,1],[2,4,1],[3,1,1],[4,4,1]], open: [5], muted: [], startFret: 1 },
+  // Sus4 (banjo 5 cordes : gDGBD)
+  { id: "bCsus4",  name: "Csus4",  full: "C sus4",  category: "sus4", fingers: [[1,1,1],[2,1,1],[3,3,1],[4,1,1]], open: [5], muted: [], startFret: 1 },
+  { id: "bDbsus4", name: "Dbsus4", full: "Db sus4", category: "sus4", fingers: [[1,2,1],[2,2,1],[3,4,1],[4,2,1]], open: [5], muted: [], startFret: 2 },
+  { id: "bDsus4",  name: "Dsus4",  full: "D sus4",  category: "sus4", fingers: [[1,3,1],[2,4,1],[4,3,1]], open: [3,5], muted: [], startFret: 1 },
+  { id: "bEbsus4", name: "Ebsus4", full: "Eb sus4", category: "sus4", fingers: [[1,4,1],[2,2,1],[3,4,1],[4,4,1]], open: [5], muted: [], startFret: 2 },
+  { id: "bEsus4",  name: "Esus4",  full: "E sus4",  category: "sus4", fingers: [[1,2,1],[2,3,1],[4,2,1]], open: [3,5], muted: [], startFret: 1 },
+  { id: "bFsus4",  name: "Fsus4",  full: "F sus4",  category: "sus4", fingers: [[1,3,1],[2,1,1],[3,3,1],[4,3,1]], open: [5], muted: [], startFret: 1 },
+  { id: "bFssus4", name: "F#sus4", full: "F# sus4", category: "sus4", fingers: [[1,4,1],[2,2,1],[3,4,1],[4,4,1]], open: [5], muted: [], startFret: 2 },
+  { id: "bGsus4",  name: "Gsus4",  full: "G sus4",  category: "sus4", fingers: [[1,1,1],[2,3,1],[3,2,1]], open: [4,5], muted: [], startFret: 1 },
+  { id: "bAbsus4", name: "Absus4", full: "Ab sus4", category: "sus4", fingers: [[1,2,1],[2,1,1],[3,2,1],[4,2,1]], open: [5], muted: [], startFret: 1 },
+  { id: "bAsus4",  name: "Asus4",  full: "A sus4",  category: "sus4", fingers: [[1,2,1],[2,2,1],[3,2,1],[4,2,1]], open: [5], muted: [], startFret: 1 },
+  { id: "bBbsus4", name: "Bbsus4", full: "Bb sus4", category: "sus4", fingers: [[1,3,1],[2,3,1],[3,3,1],[4,3,1]], open: [5], muted: [], startFret: 3 },
+  { id: "bBsus4",  name: "Bsus4",  full: "B sus4",  category: "sus4", fingers: [[1,4,1],[2,4,1],[3,4,1],[4,4,1]], open: [5], muted: [], startFret: 4 },
+];
+
+// ─── Accords Basse ────────────────────────────────────────────────────────────
+// Basse 4 cordes standard : EADG (str4=E1, str3=A1, str2=D2, str1=G2)
+// Chaque accord = juste la fondamentale, les autres cordes muettes.
+
+export const BASS_CHORDS: StringChord[] = [
+  { id: "bassC",  name: "C",  full: "C",  category: "major", fingers: [[3,3,1]], open: [], muted: [1,2,4], startFret: 1 },
+  { id: "bassDb", name: "Db", full: "Db", category: "major", fingers: [[3,4,1]], open: [], muted: [1,2,4], startFret: 1 },
+  { id: "bassD",  name: "D",  full: "D",  category: "major", fingers: [], open: [2], muted: [1,3,4], startFret: 1 },
+  { id: "bassEb", name: "Eb", full: "Eb", category: "major", fingers: [[2,1,1]], open: [], muted: [1,3,4], startFret: 1 },
+  { id: "bassE",  name: "E",  full: "E",  category: "major", fingers: [], open: [4], muted: [1,2,3], startFret: 1 },
+  { id: "bassF",  name: "F",  full: "F",  category: "major", fingers: [[4,1,1]], open: [], muted: [1,2,3], startFret: 1 },
+  { id: "bassFs", name: "F#", full: "F#", category: "major", fingers: [[4,2,1]], open: [], muted: [1,2,3], startFret: 1 },
+  { id: "bassG",  name: "G",  full: "G",  category: "major", fingers: [[4,3,1]], open: [], muted: [1,2,3], startFret: 1 },
+  { id: "bassAb", name: "Ab", full: "Ab", category: "major", fingers: [[4,4,1]], open: [], muted: [1,2,3], startFret: 1 },
+  { id: "bassA",  name: "A",  full: "A",  category: "major", fingers: [], open: [3], muted: [1,2,4], startFret: 1 },
+  { id: "bassBb", name: "Bb", full: "Bb", category: "major", fingers: [[3,1,1]], open: [], muted: [1,2,4], startFret: 1 },
+  { id: "bassB",  name: "B",  full: "B",  category: "major", fingers: [[3,2,1]], open: [], muted: [1,2,4], startFret: 1 },
 ];
 
 // ─── Accords Piano ────────────────────────────────────────────────────────────
@@ -627,6 +712,8 @@ export function getChordsByInstrument(instrumentId: InstrumentId): (StringChord 
     case 'mandolin': return MANDOLIN_CHORDS;
     case 'banjo': return BANJO_CHORDS;
     case 'piano': return PIANO_CHORDS;
+    case 'bass': return BASS_CHORDS;
+    case 'voice': return [];
     default: return GUITAR_CHORDS;
   }
 }
@@ -645,6 +732,7 @@ const INSTRUMENT_TUNINGS: Partial<Record<InstrumentId, number[]>> = {
   ukulele:  [9, 4, 0, 7],          // A4 E4 C4 G4
   mandolin: [4, 9, 2, 7],          // E5 A4 D4 G3
   banjo:    [2, 11, 7, 2, 7],      // D4 B3 G3 D3 G4
+  bass:     [7, 2, 9, 4],          // G2 D2 A1 E1
 };
 
 // Note canonique pour le piano par demi-ton
@@ -839,6 +927,8 @@ const FORMULA_KEY_BY_SUFFIX: Array<[RegExp, string]> = [
   [/^6$/,                        '6'],
   [/^sus2$/,                     'sus2'],
   [/^sus4?$/,                    'sus4'],
+  [/^2$/,                        'sus2'],
+  [/^4$/,                        'sus4'],
 ];
 
 // Parse "Dmmaj7", "G7#9", "Dm7(♯13)" → { root, rootSemi, formulaKey }
@@ -1013,6 +1103,20 @@ export function findChordVariants(
   const visitKey = `${name.trim()}|${instrumentId}`;
   if (_visited.has(visitKey)) return [];
   _visited.add(visitKey);
+
+  // Voix : aucun diagramme
+  if (instrumentId === 'voice') return [];
+
+  // Basse : chercher uniquement la fondamentale (strip suffixe)
+  if (instrumentId === 'bass') {
+    const rootMatch = name.trim().match(/^([A-G][#b]?)/);
+    if (rootMatch) {
+      const root = normalizeEnharmonic(rootMatch[1]);
+      const bassChord = BASS_CHORDS.find(c => c.name.toLowerCase() === root.toLowerCase());
+      if (bassChord) return [bassChord];
+    }
+    return [];
+  }
 
   // 0. Normalisation enharmonique (C# → Db, Gb → F#, Cb → B, etc.)
   const enharmonicName = normalizeEnharmonic(name);
