@@ -442,7 +442,11 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 Diagrammes
               </button>
             )}
-            <InstrumentSelector value={instrumentId} onChange={handleInstrumentChange} />
+            <InstrumentSelector
+              value={instrumentId}
+              onChange={handleInstrumentChange}
+              exclude={sheet.lyrics ? [] : ['voice']}
+            />
           </div>
         </div>
         {instrumentId !== 'voice' && (

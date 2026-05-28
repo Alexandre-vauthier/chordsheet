@@ -6,7 +6,7 @@ import { INSTRUMENT_CONFIG } from '@/lib/chord-data';
 interface InstrumentSelectorProps {
   value: InstrumentId;
   onChange: (instrument: InstrumentId) => void;
-  compact?: boolean;
+  exclude?: InstrumentId[];
 }
 
 const INSTRUMENT_ICONS: Record<InstrumentId, string> = {
@@ -19,8 +19,8 @@ const INSTRUMENT_ICONS: Record<InstrumentId, string> = {
   voice: '🎤',
 };
 
-export function InstrumentSelector({ value, onChange }: InstrumentSelectorProps) {
-  const instruments = Object.values(INSTRUMENT_CONFIG);
+export function InstrumentSelector({ value, onChange, exclude = [] }: InstrumentSelectorProps) {
+  const instruments = Object.values(INSTRUMENT_CONFIG).filter(i => !exclude.includes(i.id));
 
   return (
     <select
