@@ -673,7 +673,8 @@ function ViewerChordCell({
   })();
 
   const playableChord = displayChord;
-  const inlineDiagramChord = showInlineDiagram && span >= 0.5 ? displayChord : null;
+  const minSpanForInline = instrumentId === 'piano' ? 1 : 0.5;
+  const inlineDiagramChord = showInlineDiagram && span >= minSpanForInline ? displayChord : null;
   const numStrings = INSTRUMENT_CONFIG[instrumentId]?.strings ?? 6;
 
   return (
