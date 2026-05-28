@@ -724,14 +724,16 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
         </div>
       </div>
 
-      {/* Titre de la grille */}
-      <div className="flex items-center gap-3 mb-4">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Grille harmonique</h2>
-        <div className="flex-1 h-px bg-[var(--line)]" />
-      </div>
+      {/* Titre de la grille — masqué pour Voix */}
+      {sheet.instrumentId !== 'voice' && (
+        <div className="flex items-center gap-3 mb-4">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Grille harmonique</h2>
+          <div className="flex-1 h-px bg-[var(--line)]" />
+        </div>
+      )}
 
-      {/* Sections */}
-      <div>
+      {/* Sections — masquées pour Voix */}
+      <div className={sheet.instrumentId === 'voice' ? 'hidden' : ''}>
         {sheet.sections.map((section, sectionIndex) => {
           const isDragging = dragSectionId === section.id;
           const draggedIdx = sheet.sections.findIndex(s => s.id === dragSectionId);
@@ -794,29 +796,33 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
         )}
       </div>
 
-      {/* Bouton ajouter section */}
-      <button
-        onClick={addSection}
-        className="w-full mt-2 py-4 border-2 border-dashed border-[var(--line)] rounded-xl
-          text-[var(--ink-faint)] text-sm cursor-pointer transition-all bg-transparent
-          hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)]
-          flex items-center justify-center gap-2"
-      >
-        + Ajouter une section
-      </button>
+      {/* Bouton ajouter section — masqué pour Voix */}
+      {sheet.instrumentId !== 'voice' && (
+        <button
+          onClick={addSection}
+          className="w-full mt-2 py-4 border-2 border-dashed border-[var(--line)] rounded-xl
+            text-[var(--ink-faint)] text-sm cursor-pointer transition-all bg-transparent
+            hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)]
+            flex items-center justify-center gap-2"
+        >
+          + Ajouter une section
+        </button>
+      )}
 
-      {/* Rappel des accords utilisés */}
-      <div className="mt-8">
-        <ChordSummary
-          sections={sheet.sections}
-          instrumentId={sheet.instrumentId || 'guitar'}
-          customChords={sheet.customChords as CustomChordMap}
-          editable
-          onEditChord={handleEditChord}
-          onDeleteCustomChord={handleDeleteCustomChord}
-          onVariantChange={handleVariantSelect}
-        />
-      </div>
+      {/* Rappel des accords utilisés — masqué pour Voix */}
+      {sheet.instrumentId !== 'voice' && (
+        <div className="mt-8">
+          <ChordSummary
+            sections={sheet.sections}
+            instrumentId={sheet.instrumentId || 'guitar'}
+            customChords={sheet.customChords as CustomChordMap}
+            editable
+            onEditChord={handleEditChord}
+            onDeleteCustomChord={handleDeleteCustomChord}
+            onVariantChange={handleVariantSelect}
+          />
+        </div>
+      )}
 
       {/* Paroles */}
       <LyricsEditor
