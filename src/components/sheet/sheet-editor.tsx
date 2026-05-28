@@ -221,8 +221,11 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     if (!sheet.artist.trim()) {
       return 'L\'artiste est obligatoire';
     }
-    if (!hasAtLeastOneChord()) {
+    if (!hasAtLeastOneChord() && sheet.instrumentId !== 'voice') {
       return 'La grille doit contenir au moins un accord';
+    }
+    if (sheet.instrumentId === 'voice' && !hasAtLeastOneChord() && !sheet.lyrics?.trim()) {
+      return 'Ajoute des accords ou des paroles avant de sauvegarder';
     }
     return null;
   };
