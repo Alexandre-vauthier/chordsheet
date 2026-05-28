@@ -639,6 +639,8 @@ function ViewerChordCell({
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Pour le piano, le capo décale la hauteur → chercher l'accord transposé
   const lookupChord = instrumentId === 'piano' && capo > 0 ? transposeChord(chord, capo) : chord;
+  // Pour la basse, afficher uniquement la fondamentale (ex: Cmaj7 → C)
+  const bassRoot = instrumentId === 'bass' ? (lookupChord.match(/^([A-G][#b]?)/)?.[1] ?? lookupChord) : null;
   const custom = resolveCustomChord(lookupChord, instrumentId, customChords);
   const libraryVariants = useChordVariants(lookupChord, instrumentId);
 
@@ -707,7 +709,7 @@ function ViewerChordCell({
 
       <div className="relative z-10 flex flex-col items-center gap-1 py-1">
         <span className={`font-mono font-medium text-[var(--ink)] ${span <= 0.5 ? 'text-sm' : 'text-base'} print:text-sm`}>
-          {translate(lookupChord)}
+          {bassRoot ? translate(bassRoot) : translate(lookupChord)}
         </span>
         {/* Diagramme inline — cliquable pour jouer, avec overlay ▶ au survol */}
         {inlineDiagramChord && (

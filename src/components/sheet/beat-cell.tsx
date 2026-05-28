@@ -108,9 +108,15 @@ export function BeatCell({
   }, [showDiagram]);
 
   // Valeur canonique : normalise les vieilles données stockées en FR+xN, puis traduit
+  // Pour la basse, affiche uniquement la fondamentale (ex: Cmaj7 → C)
   const canonicalDisplay = (() => {
     const { chord } = parseChordInput(cell.chord);
-    return translate(chord) || chord;
+    const translated = translate(chord) || chord;
+    if (instrumentId === 'bass') {
+      const root = chord.match(/^([A-G][#b]?)/)?.[1];
+      return root ? (translate(root) || root) : translated;
+    }
+    return translated;
   })();
 
   const handleClick = () => {
