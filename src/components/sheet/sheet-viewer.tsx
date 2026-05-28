@@ -398,11 +398,9 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
       {/* Barre instrument + diagrammes */}
       <div className="mb-6 print:hidden">
         <div className="flex items-center justify-between mb-3">
-          {instrumentId !== 'voice' && (
-            <h2 className="text-sm font-medium text-[var(--ink-light)]">Accords utilisés</h2>
-          )}
-          <div className={`flex items-center gap-3 ${instrumentId === 'voice' ? 'ml-auto' : ''}`}>
-            {instrumentId !== 'voice' && hasRepeatedSections && (
+          <h2 className="text-sm font-medium text-[var(--ink-light)]">Accords utilisés</h2>
+          <div className="flex items-center gap-3">
+            {hasRepeatedSections && (
               <button
                 onClick={() => {
                   const next = !minimizeRepeated;
@@ -422,47 +420,43 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 Minimiser
               </button>
             )}
-            {instrumentId !== 'voice' && (
-              <button
-                onClick={() => setShowInlineDiagram(v => !v)}
-                title={showInlineDiagram ? 'Masquer les diagrammes dans les cases' : 'Afficher les diagrammes dans les cases'}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs border transition-colors ${
-                  showInlineDiagram
-                    ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
-                    : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)]'
-                }`}
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <rect x="3" y="2" width="18" height="20" rx="2" strokeWidth="1.8"/>
-                  <line x1="7" y1="7" x2="17" y2="7" strokeWidth="1.5"/>
-                  <line x1="7" y1="11" x2="17" y2="11" strokeWidth="1.5"/>
-                  <line x1="7" y1="15" x2="17" y2="15" strokeWidth="1.5"/>
-                  <line x1="7" y1="2" x2="7" y2="22" strokeWidth="1.2"/>
-                  <line x1="12" y1="2" x2="12" y2="22" strokeWidth="1.2"/>
-                  <line x1="17" y1="2" x2="17" y2="22" strokeWidth="1.2"/>
-                </svg>
-                Diagrammes
-              </button>
-            )}
+            <button
+              onClick={() => setShowInlineDiagram(v => !v)}
+              title={showInlineDiagram ? 'Masquer les diagrammes dans les cases' : 'Afficher les diagrammes dans les cases'}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs border transition-colors ${
+                showInlineDiagram
+                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                  : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)]'
+              }`}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="3" y="2" width="18" height="20" rx="2" strokeWidth="1.8"/>
+                <line x1="7" y1="7" x2="17" y2="7" strokeWidth="1.5"/>
+                <line x1="7" y1="11" x2="17" y2="11" strokeWidth="1.5"/>
+                <line x1="7" y1="15" x2="17" y2="15" strokeWidth="1.5"/>
+                <line x1="7" y1="2" x2="7" y2="22" strokeWidth="1.2"/>
+                <line x1="12" y1="2" x2="12" y2="22" strokeWidth="1.2"/>
+                <line x1="17" y1="2" x2="17" y2="22" strokeWidth="1.2"/>
+              </svg>
+              Diagrammes
+            </button>
             <InstrumentSelector value={instrumentId} onChange={handleInstrumentChange} />
           </div>
         </div>
-        {instrumentId !== 'voice' && (
-          <ChordSummary
-            sections={displaySections}
-            instrumentId={instrumentId}
-            customChords={sheet.customChords as CustomChordMap}
-            capo={sheet.capo ?? 0}
-            compact
-            onVariantChange={(chordName, chord) =>
-              setSelectedChords(prev => ({ ...prev, [chordName]: chord }))
-            }
-          />
-        )}
+        <ChordSummary
+          sections={displaySections}
+          instrumentId={instrumentId}
+          customChords={sheet.customChords as CustomChordMap}
+          capo={sheet.capo ?? 0}
+          compact
+          onVariantChange={(chordName, chord) =>
+            setSelectedChords(prev => ({ ...prev, [chordName]: chord }))
+          }
+        />
       </div>
 
-      {/* Sections — masquées pour Voix */}
-      <div className={`space-y-8 print:space-y-6 ${instrumentId === 'voice' ? 'hidden' : ''}`}>
+      {/* Sections */}
+      <div className="space-y-8 print:space-y-6">
         {(() => {
           const seenSignatures = new Map<string, string>(); // signature → label de la première occurrence
           return displaySections.map((section) => {
@@ -575,9 +569,9 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
         ))}
       </div>
 
-      {/* Paroles — uniquement quand instrument actif = Voix */}
-      {instrumentId === 'voice' && sheet.lyrics && (
-        <div className="mt-6 print:mt-8">
+      {/* Paroles */}
+      {sheet.lyrics && (
+        <div className="mt-10 print:mt-8">
           <div className="flex items-center gap-3 mb-4">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Paroles</h2>
             <div className="flex-1 h-px bg-[var(--line)]" />
@@ -585,12 +579,6 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
           <pre className="whitespace-pre-wrap font-sans text-[0.95rem] text-[var(--ink)] leading-loose bg-[var(--cell-bg)] rounded-lg border border-[var(--line)] p-6">
             {sheet.lyrics}
           </pre>
-        </div>
-      )}
-      {instrumentId === 'voice' && !sheet.lyrics && (
-        <div className="mt-6 flex flex-col items-center justify-center py-16 text-[var(--ink-faint)]">
-          <span className="text-4xl mb-3">🎤</span>
-          <p className="text-sm">Aucune parole enregistrée pour cette grille.</p>
         </div>
       )}
 

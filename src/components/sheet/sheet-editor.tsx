@@ -221,11 +221,8 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     if (!sheet.artist.trim()) {
       return 'L\'artiste est obligatoire';
     }
-    if (!hasAtLeastOneChord() && sheet.instrumentId !== 'voice') {
-      return 'La grille doit contenir au moins un accord';
-    }
-    if (sheet.instrumentId === 'voice' && !hasAtLeastOneChord() && !sheet.lyrics?.trim()) {
-      return 'Ajoute des accords ou des paroles avant de sauvegarder';
+    if (!hasAtLeastOneChord() && !sheet.lyrics?.trim()) {
+      return 'La grille doit contenir au moins un accord ou des paroles';
     }
     return null;
   };
@@ -821,15 +818,13 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
         />
       </div>
 
-      {/* Paroles — uniquement pour l'instrument Voix */}
-      {(sheet.instrumentId === 'voice') && (
-        <LyricsEditor
-          lyrics={sheet.lyrics || ''}
-          artist={sheet.artist}
-          title={sheet.title}
-          onChange={(lyrics) => updateSheet({ lyrics })}
-        />
-      )}
+      {/* Paroles */}
+      <LyricsEditor
+        lyrics={sheet.lyrics || ''}
+        artist={sheet.artist}
+        title={sheet.title}
+        onChange={(lyrics) => updateSheet({ lyrics })}
+      />
 
       {/* Modal d'édition d'accord */}
       <ChordEditorModal
