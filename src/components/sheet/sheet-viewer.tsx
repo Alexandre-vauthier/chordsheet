@@ -737,7 +737,7 @@ function ViewerChordCell({
       )}
 
       {/* Popup diagramme au survol — seulement si l'option inline est désactivée */}
-      {hovered && !showInlineDiagram && displayChord && (
+      {hovered && (!showInlineDiagram || span < 1) && displayChord && (
         <div
           className="print:hidden absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50"
           onMouseEnter={handleMouseEnter}
