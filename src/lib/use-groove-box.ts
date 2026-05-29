@@ -3,7 +3,43 @@
 import { useEffect, useRef, useMemo } from 'react';
 import type { Section, InstrumentId } from '@/types';
 
-// ─── Synthèse audio ───────────────────────────────────────────────────────────
+// ─── Samples audio (Tone.js CDN) ─────────────────────────────────────────────
+
+const SAMPLE_URLS = {
+  kick:  'https://tonejs.github.io/audio/drum-machine/kick.mp3',
+  snare: 'https://tonejs.github.io/audio/drum-machine/snare.mp3',
+  hihat: 'https://tonejs.github.io/audio/drum-machine/hihat.mp3',
+};
+
+// Cache module-level — partagé entre toutes les instances du hook
+const sampleCache = new Map<string, AudioBuffer>();
+
+async function loadSample(ctx: AudioContext, url: string): Promise<AudioBuffer | null> {
+  if (sampleCache.has(url)) return sampleCache.get(url)!;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const arr = await res.arrayBuffer();
+    const buf = await ctx.decodeAudioData(arr);
+    sampleCache.set(url, buf);
+    return buf;
+  } catch {
+    return null;
+  }
+}
+
+function playSample(ctx: AudioContext, buf: AudioBuffer, t: number, vol = 1, rate = 1) {
+  const src = ctx.createBufferSource();
+  src.buffer = buf;
+  src.playbackRate.value = rate;
+  const gain = ctx.createGain();
+  gain.gain.value = vol;
+  src.connect(gain);
+  gain.connect(ctx.destination);
+  src.start(t);
+}
+
+// ─── Synthèse de secours (si samples non encore chargés) ─────────────────────
 
 function synthKick(ctx: AudioContext, t: number) {
   const osc = ctx.createOscillator();
@@ -44,6 +80,8 @@ function synthHihat(ctx: AudioContext, t: number, vol = 0.2) {
   src.start(t); src.stop(t + 0.025);
 }
 
+// ─── Basse synthétisée ────────────────────────────────────────────────────────
+
 const ROOT_FREQS: Record<string, number> = {
   C: 65.41, 'C#': 69.30, Db: 69.30,
   D: 73.42, 'D#': 77.78, Eb: 77.78,
@@ -77,7 +115,6 @@ function pat(k: string, s: string, h: string, b: string): Pattern {
   return { k: f(k), s: f(s), h: f(h), b: f(b) };
 }
 
-// Chaque chaîne = exactement 16 caractères
 const PATTERNS: Record<string, Pattern> = {
   rock:    pat('X.......X.......', '....X.......X...', 'X.X.X.X.X.X.X.X.', 'X.......X.......'),
   pop:     pat('X...X...X...X...', '....X.......X...', 'X.X.X.X.X.X.X.X.', 'X...............'),
@@ -108,7 +145,7 @@ function pickPattern(genres: string[]): Pattern {
   return PATTERNS.rock;
 }
 
-// ─── Séquence d'accords aplatie (une entrée par 16ème de note) ────────────────
+// ─── Séquence d'accords aplatie ───────────────────────────────────────────────
 
 function buildBeats(sections: Section[]): string[] {
   const out: string[] = [];
@@ -126,6 +163,12 @@ function buildBeats(sections: Section[]): string[] {
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
+
+type Samples = {
+  kick: AudioBuffer | null;
+  snare: AudioBuffer | null;
+  hihat: AudioBuffer | null;
+};
 
 export function useGrooveBox({
   enabled,
@@ -146,10 +189,10 @@ export function useGrooveBox({
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stepRef = useRef(0);
   const nextTimeRef = useRef(0);
+  const samplesRef = useRef<Samples | null>(null);
 
   const beats = useMemo(() => buildBeats(sections), [sections]);
 
-  // Refs pour mise à jour sans redémarrer le scheduler
   const bpmRef = useRef(bpm);
   const bpmPerMeasureRef = useRef(beatsPerMeasure);
   const patternRef = useRef(pickPattern(genres));
@@ -167,6 +210,7 @@ export function useGrooveBox({
       if (timerRef.current) clearInterval(timerRef.current);
       ctxRef.current?.close().catch(() => {});
       ctxRef.current = null;
+      samplesRef.current = null;
       return;
     }
 
@@ -175,21 +219,40 @@ export function useGrooveBox({
     stepRef.current = 0;
     nextTimeRef.current = ctx.currentTime + 0.05;
 
+    // Charger les samples en arrière-plan — le scheduler démarre immédiatement
+    // avec la synthèse de secours, puis bascule sur les samples dès qu'ils sont prêts
+    Promise.all([
+      loadSample(ctx, SAMPLE_URLS.kick),
+      loadSample(ctx, SAMPLE_URLS.snare),
+      loadSample(ctx, SAMPLE_URLS.hihat),
+    ]).then(([kick, snare, hihat]) => {
+      if (ctxRef.current === ctx) {
+        samplesRef.current = { kick, snare, hihat };
+      }
+    });
+
     const tick = () => {
       const c = ctxRef.current;
       if (!c) return;
-      const s16 = 15 / bpmRef.current; // secondes par 16ème note = (60/bpm)/4
+      const s16 = 15 / bpmRef.current;
       const stepsPerMeasure = bpmPerMeasureRef.current * 4;
       const pattern = patternRef.current;
       const seq = beatsRef.current;
+      const samples = samplesRef.current;
 
       while (nextTimeRef.current < c.currentTime + 0.1) {
         const t = nextTimeRef.current;
         const m = stepRef.current % stepsPerMeasure;
 
-        if (pattern.k[m]) synthKick(c, t);
-        if (pattern.s[m]) synthSnare(c, t);
-        if (pattern.h[m]) synthHihat(c, t);
+        if (pattern.k[m]) {
+          samples?.kick ? playSample(c, samples.kick, t, 1.0) : synthKick(c, t);
+        }
+        if (pattern.s[m]) {
+          samples?.snare ? playSample(c, samples.snare, t, 0.8) : synthSnare(c, t);
+        }
+        if (pattern.h[m]) {
+          samples?.hihat ? playSample(c, samples.hihat, t, 0.35) : synthHihat(c, t);
+        }
         if (pattern.b[m] && instrumentRef.current !== 'bass') {
           const chord = seq[stepRef.current % seq.length];
           if (chord) synthBass(c, t, chord);
@@ -206,6 +269,7 @@ export function useGrooveBox({
       if (timerRef.current) clearInterval(timerRef.current);
       ctx.close().catch(() => {});
       ctxRef.current = null;
+      samplesRef.current = null;
     };
-  }, [enabled]); // les autres params se mettent à jour via les refs
+  }, [enabled]);
 }
