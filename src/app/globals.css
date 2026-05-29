@@ -151,17 +151,22 @@ body {
     border-left: none !important;
   }
 
-  /* Récapitulatif accords → grille serrée */
+  /* Récapitulatif accords → grille serrée, diagrammes réduits */
   .chord-print-grid {
     display: flex !important;
     flex-wrap: wrap !important;
-    gap: 2px !important;
+    gap: 6px 10px !important;
   }
 
   .chord-print-grid > div {
     padding: 0 !important;
     margin: 0 !important;
-    gap: 1px !important;
+    gap: 2px !important;
+  }
+
+  .chord-print-grid svg {
+    width: 52px !important;
+    height: auto !important;
   }
 
   /* Chord names → serif typography */
