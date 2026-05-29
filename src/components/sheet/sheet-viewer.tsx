@@ -123,7 +123,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   const bpm = parseTempo(sheet.tempo);
 
   useGrooveBox({
-    enabled: grooveEnabled,
+    enabled: grooveEnabled && isPlaying,
     bpm: parseTempo(localTempo),
     beatsPerMeasure: sheet.beatsPerMeasure ?? 4,
     genres: sheet.genres ?? [],
