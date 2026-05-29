@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
@@ -17,18 +17,10 @@ export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
   const { user } = useAuth();
   const router = useRouter();
   const [text, setText] = useState('');
-  const [title, setTitle] = useState('');
-  const [artist, setArtist] = useState('');
   const [isImporting, setIsImporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const parsed = text.trim() ? parseChordSheetText(text) : null;
-
-  // Auto-remplir titre et artiste si détectés et champs vides
-  useEffect(() => {
-    if (parsed?.title) setTitle(prev => prev || parsed.title);
-    if (parsed?.artist) setArtist(prev => prev || parsed.artist);
-  }, [parsed?.title, parsed?.artist]);
   const totalChords =
     parsed?.sections.reduce(
       (acc, s) => acc + s.rows.reduce((a, r) => a + r.filter(c => c.chord).length, 0),
@@ -42,8 +34,8 @@ export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
     try {
       const db = getDb();
       const sheet: NewSheet = {
-        title: title.trim() || 'Sans titre',
-        artist: artist.trim() || '',
+        title: parsed.title || 'Sans titre',
+        artist: parsed.artist || '',
         key: parsed.key || '',
         tempo: '',
         ownerId: user.id,
@@ -93,32 +85,12 @@ export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
             </button>
           </div>
 
-          {/* Titre / Artiste */}
-          <div className="flex gap-3 mb-3">
-            <input
-              type="text"
-              placeholder="Titre de la chanson"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              className="flex-1 px-3 py-2 text-sm border border-[var(--line)] rounded-lg bg-[var(--cell-bg)]
-                focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-            />
-            <input
-              type="text"
-              placeholder="Artiste"
-              value={artist}
-              onChange={e => setArtist(e.target.value)}
-              className="flex-1 px-3 py-2 text-sm border border-[var(--line)] rounded-lg bg-[var(--cell-bg)]
-                focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-            />
-          </div>
-
           {/* Zone de collage */}
           <textarea
             value={text}
             onChange={e => setText(e.target.value)}
             placeholder={`Coller ici la grille d'accords…\n\n[Intro]\nC  Am  F  G\n\n[Verse 1]\n   C              Am\nI heard there was a secret chord`}
-            className="w-full h-56 px-3 py-2 text-xs font-mono border border-[var(--line)] rounded-lg
+            className="w-full h-64 px-3 py-2 text-xs font-mono border border-[var(--line)] rounded-lg
               bg-[var(--cell-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] resize-none"
           />
 
@@ -127,6 +99,11 @@ export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
             <div className="mt-3 p-3 bg-[var(--cell-bg)] rounded-lg border border-[var(--line)]">
               <p className="text-xs font-semibold text-[var(--ink-light)] mb-2">Aperçu détecté</p>
               <div className="flex flex-wrap gap-1.5 mb-2">
+                {(parsed.title || parsed.artist) && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--line)] text-[var(--ink)]">
+                    {[parsed.title, parsed.artist].filter(Boolean).join(' · ')}
+                  </span>
+                )}
                 {parsed.capo !== null && (
                   <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--accent-soft)] text-[var(--accent)]">
                     Capo {parsed.capo}
