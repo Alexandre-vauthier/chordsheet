@@ -124,7 +124,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
 
   useGrooveBox({
     enabled: grooveEnabled && isPlaying,
-    bpm: parseTempo(localTempo),
+    bpm: (() => { const b = parseTempo(localTempo); return b > 100 ? Math.round(b / 2) : b; })(),
     beatsPerMeasure: sheet.beatsPerMeasure ?? 4,
     genres: sheet.genres ?? [],
   });
