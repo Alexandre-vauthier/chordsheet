@@ -1,12 +1,13 @@
 import type { Section, Cell } from '@/types';
 
 // Chord token regex: root + optional quality/extension + optional bass note
-// Handles: Am, F#m7, Cmaj7, E7, Gsus4, Cadd9, G/B, Dm7, Cdim7, etc.
+// Handles: Am, F#m7, Cmaj7, E7, Gsus4, Cadd9, G/B, Dm7, Cdim7, Am/G, Am/F#, etc.
 const CHORD_RE =
   /^[A-G][#b]?(?:m(?:aj)?(?:[0-9]+)?|min(?:[0-9]+)?|dim(?:[0-9]+)?|aug(?:[0-9]+)?|sus[24]?|[0-9]+)?(?:add[0-9]+)?(?:\/[A-G][#b]?)?$/;
 
 function isChord(token: string): boolean {
-  return CHORD_RE.test(token);
+  // Strip parentheses e.g. "(C)" → "C"
+  return CHORD_RE.test(token.replace(/[()]/g, ''));
 }
 
 // A line is a chord line if ≥ 80 % of its tokens are valid chords and there's at least one
@@ -18,13 +19,19 @@ function isChordLine(line: string): boolean {
 }
 
 function extractChords(line: string): string[] {
-  return line.trim().split(/\s+/).filter(isChord);
+  return line
+    .trim()
+    .split(/\s+/)
+    .map(t => t.replace(/[()]/g, ''))
+    .filter(isChord);
 }
 
 const SECTION_LABELS: Record<string, string> = {
   intro: 'Intro',
   verse: 'Couplet',
+  couplet: 'Couplet',
   chorus: 'Refrain',
+  refrain: 'Refrain',
   'pre-chorus': 'Pré-refrain',
   bridge: 'Bridge',
   outro: 'Outro',
@@ -37,9 +44,9 @@ const SECTION_LABELS: Record<string, string> = {
 function translateLabel(raw: string): string {
   const content = raw.replace(/^\[|\]$/g, '').trim();
   const lower = content.toLowerCase();
-  for (const [en, fr] of Object.entries(SECTION_LABELS)) {
-    if (lower === en || lower.startsWith(en + ' ')) {
-      const rest = content.slice(en.length).trim();
+  for (const [key, fr] of Object.entries(SECTION_LABELS)) {
+    if (lower === key || lower.startsWith(key + ' ')) {
+      const rest = content.slice(key.length).trim();
       return rest ? `${fr} ${rest}` : fr;
     }
   }
@@ -50,7 +57,6 @@ type ValidSpan = 0.5 | 1 | 2 | 3 | 4;
 
 function chordsToRows(chords: string[]): Cell[][] {
   const rows: Cell[][] = [];
-  // Chunk into groups of max 4
   for (let i = 0; i < chords.length; i += 4) {
     const chunk = chords.slice(i, i + 4);
     let span: ValidSpan = 1;
@@ -59,6 +65,24 @@ function chordsToRows(chords: string[]): Cell[][] {
     rows.push(chunk.map(chord => ({ chord, span })));
   }
   return rows;
+}
+
+// Lines to discard regardless of position
+function isNoiseLine(line: string): boolean {
+  const t = line.trim();
+  if (!t) return true;
+  if (/^Page \d+\/\d+/.test(t)) return true;
+  if (/^https?:\/\//.test(t)) return true;
+  // Guitar tab lines: e|---, B|---, G|---, D|---, A|---, E|---
+  if (/^[eEBGDAd]\|/.test(t)) return true;
+  // French metadata headers
+  if (/^(Difficulté|Accordage|Accord\s*s?|Schéma de Strumming|Whole Song)\s*:?/i.test(t)) return true;
+  // Strumming beat markers: lines made of digits, "&", spaces only
+  if (/^[\d& ]+$/.test(t)) return true;
+  // Capodastre / Capo standalone annotation lines (no section content)
+  if (/^[Cc]apodastre\s*:?\s*\d/i.test(t) && t.length < 60) return true;
+  if (/^[Cc]apo\s+\d/i.test(t) && t.length < 60) return true;
+  return false;
 }
 
 export interface ImportedSheet {
@@ -72,33 +96,55 @@ export interface ImportedSheet {
 
 const YT_RE = /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?[^\s]*v=|youtu\.be\/)[\w-]+(?:[^\s]*)?/;
 
+function extractTitleArtist(lines: string[]): { title: string; artist: string } {
+  // Look only at the first non-empty, non-URL line
+  const firstLine = lines.find(l => {
+    const t = l.trim();
+    return t && !t.startsWith('http');
+  })?.trim() ?? '';
+
+  // "Le Sud Accords par Nino Ferrer" / "Hallelujah Chords by Leonard Cohen"
+  const acMatch = firstLine.match(/^(.+?)\s+[Aa]ccords?\s+(?:par|by)\s+(.+)$/i);
+  if (acMatch) return { title: acMatch[1].trim(), artist: acMatch[2].trim() };
+
+  // "Title - Artist" or "Title – Artist"
+  const dashMatch = firstLine.match(/^(.+?)\s+[-–]\s+(.+)$/);
+  if (dashMatch) return { title: dashMatch[1].trim(), artist: dashMatch[2].trim() };
+
+  return { title: '', artist: '' };
+}
+
+function extractCapo(text: string): number | null {
+  // French: "Capodastre: 4e frette" / "Capodastre 4"
+  const frMatch = text.match(/[Cc]apodastre\s*:?\s*(\d+)/);
+  if (frMatch) return parseInt(frMatch[1], 10);
+  // English: "Capo 1" / "capo: 2"
+  const enMatch = text.match(/\b[Cc]apo\s*:?\s*(\d+)/);
+  if (enMatch) return parseInt(enMatch[1], 10);
+  return null;
+}
+
 export function parseChordSheetText(text: string): ImportedSheet {
   const lines = text.split('\n');
 
-  // Capo + YouTube URL : préférer la ligne qui contient les deux
-  let capo: number | null = null;
-  let referenceUrl: string | undefined;
+  const { title, artist } = extractTitleArtist(lines);
 
-  const capoWithUrl = text.match(/Capo\s+(\d+)[^\n]*(https?:\/\/\S+)/i);
-  if (capoWithUrl) {
-    capo = parseInt(capoWithUrl[1], 10);
-    referenceUrl = capoWithUrl[2];
-  } else {
-    const capoOnly = text.match(/\bCapo\s+(\d+)\b/i);
-    if (capoOnly) capo = parseInt(capoOnly[1], 10);
-    const ytOnly = text.match(YT_RE);
-    if (ytOnly) referenceUrl = ytOnly[0];
+  // Capo
+  const capo = extractCapo(text);
+
+  // YouTube URL: prefer line that also has the detected capo number
+  let referenceUrl: string | undefined;
+  if (capo !== null) {
+    const capoLine = lines.find(l => new RegExp(`[Cc]apo(?:dastre)?\\s*:?\\s*${capo}`).test(l));
+    const ytInCapoLine = capoLine?.match(YT_RE);
+    if (ytInCapoLine) referenceUrl = ytInCapoLine[0];
+  }
+  if (!referenceUrl) {
+    const ytAny = text.match(YT_RE);
+    if (ytAny) referenceUrl = ytAny[0];
   }
 
-  // Filter noise lines (page markers, URLs, standalone capo annotations)
-  const useful = lines.filter(l => {
-    const t = l.trim();
-    if (!t) return false;
-    if (/^Page \d+\/\d+/.test(t)) return false;
-    if (/^https?:\/\//.test(t)) return false;
-    return true;
-  });
-
+  // Parse sections
   const sections: Section[] = [];
   let sectionIdx = 0;
   let currentLabel: string | null = null;
@@ -117,7 +163,9 @@ export function parseChordSheetText(text: string): ImportedSheet {
     currentChords = [];
   };
 
-  for (const line of useful) {
+  for (const line of lines) {
+    if (isNoiseLine(line)) continue;
+
     const trimmed = line.trim();
 
     if (/^\[.+\]$/.test(trimmed)) {
@@ -134,10 +182,7 @@ export function parseChordSheetText(text: string): ImportedSheet {
   }
   flushSection();
 
-  // Guess key from first chord of first section
-  let key = '';
-  const firstChord = sections[0]?.rows[0]?.[0]?.chord;
-  if (firstChord) key = firstChord;
+  const key = sections[0]?.rows[0]?.[0]?.chord ?? '';
 
-  return { title: '', artist: '', key, capo, referenceUrl, sections };
+  return { title, artist, key, capo, referenceUrl, sections };
 }

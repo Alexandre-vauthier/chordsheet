@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
@@ -23,6 +23,12 @@ export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
   const [error, setError] = useState<string | null>(null);
 
   const parsed = text.trim() ? parseChordSheetText(text) : null;
+
+  // Auto-remplir titre et artiste si détectés et champs vides
+  useEffect(() => {
+    if (parsed?.title) setTitle(prev => prev || parsed.title);
+    if (parsed?.artist) setArtist(prev => prev || parsed.artist);
+  }, [parsed?.title, parsed?.artist]);
   const totalChords =
     parsed?.sections.reduce(
       (acc, s) => acc + s.rows.reduce((a, r) => a + r.filter(c => c.chord).length, 0),
