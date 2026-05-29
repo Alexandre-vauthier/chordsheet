@@ -75,8 +75,10 @@ function isNoiseLine(line: string): boolean {
   if (/^https?:\/\//.test(t)) return true;
   // Guitar tab lines: e|---, B|---, G|---, D|---, A|---, E|---
   if (/^[eEBGDAd]\|/.test(t)) return true;
-  // French metadata headers
-  if (/^(Difficulté|Accordage|Accord\s*s?|Schéma de Strumming|Whole Song)\s*:?/i.test(t)) return true;
+  // French/English metadata headers
+  if (/^(Difficulté|Accordage|Tonalité|Accord\s*s?|Schéma de Strumming|Whole Song|Tuning|Key|Difficulty)\s*:?/i.test(t)) return true;
+  // BPM lines: "112 bpm", "Whole Song 91 bpm"
+  if (/\bbpm\b/i.test(t)) return true;
   // Strumming beat markers: lines made of digits, "&", spaces only
   if (/^[\d& ]+$/.test(t)) return true;
   // Capodastre / Capo standalone annotation lines (no section content)
@@ -182,7 +184,9 @@ export function parseChordSheetText(text: string): ImportedSheet {
   }
   flushSection();
 
-  const key = sections[0]?.rows[0]?.[0]?.chord ?? '';
+  // Clé : "Tonalité: Cm" ou "Key: Am" en priorité, sinon premier accord
+  const keyMeta = text.match(/(?:Tonalité|Key)\s*:?\s*([A-G][#b]?m?)/i);
+  const key = keyMeta ? keyMeta[1] : (sections[0]?.rows[0]?.[0]?.chord ?? '');
 
   return { title, artist, key, capo, referenceUrl, sections };
 }
