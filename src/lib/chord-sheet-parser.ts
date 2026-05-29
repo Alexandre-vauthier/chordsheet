@@ -66,16 +66,29 @@ export interface ImportedSheet {
   artist: string;
   key: string;
   capo: number | null;
+  referenceUrl?: string;
   sections: Section[];
 }
+
+const YT_RE = /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?[^\s]*v=|youtu\.be\/)[\w-]+(?:[^\s]*)?/;
 
 export function parseChordSheetText(text: string): ImportedSheet {
   const lines = text.split('\n');
 
-  // Capo: first "Capo N" occurrence
+  // Capo + YouTube URL : préférer la ligne qui contient les deux
   let capo: number | null = null;
-  const capoMatch = text.match(/\bCapo\s+(\d+)\b/i);
-  if (capoMatch) capo = parseInt(capoMatch[1], 10);
+  let referenceUrl: string | undefined;
+
+  const capoWithUrl = text.match(/Capo\s+(\d+)[^\n]*(https?:\/\/\S+)/i);
+  if (capoWithUrl) {
+    capo = parseInt(capoWithUrl[1], 10);
+    referenceUrl = capoWithUrl[2];
+  } else {
+    const capoOnly = text.match(/\bCapo\s+(\d+)\b/i);
+    if (capoOnly) capo = parseInt(capoOnly[1], 10);
+    const ytOnly = text.match(YT_RE);
+    if (ytOnly) referenceUrl = ytOnly[0];
+  }
 
   // Filter noise lines (page markers, URLs, standalone capo annotations)
   const useful = lines.filter(l => {
@@ -126,5 +139,5 @@ export function parseChordSheetText(text: string): ImportedSheet {
   const firstChord = sections[0]?.rows[0]?.[0]?.chord;
   if (firstChord) key = firstChord;
 
-  return { title: '', artist: '', key, capo, sections };
+  return { title: '', artist: '', key, capo, referenceUrl, sections };
 }

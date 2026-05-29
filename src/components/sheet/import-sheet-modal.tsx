@@ -48,6 +48,7 @@ export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
         genres: [],
         difficulty: null,
         capo: parsed.capo,
+        referenceUrl: parsed.referenceUrl,
       };
       const docRef = await addDoc(collection(db, 'sheets'), {
         ...toFirestore(sheet),
@@ -136,6 +137,16 @@ export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
                 <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--line)] text-[var(--ink-light)]">
                   {totalChords} accord{totalChords > 1 ? 's' : ''}
                 </span>
+                {parsed.referenceUrl && (
+                  <a
+                    href={parsed.referenceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                  >
+                    ▶ YouTube détecté
+                  </a>
+                )}
               </div>
               <div className="flex flex-wrap gap-1">
                 {parsed.sections.map(s => (
