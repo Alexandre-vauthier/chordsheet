@@ -141,22 +141,22 @@ function synthBass(ctx: AudioContext, dest: AudioNode, t: number, chord: string)
 
 // ─── Patterns ─────────────────────────────────────────────────────────────────
 
-type Pattern = { k: boolean[]; s: boolean[]; h: boolean[]; b: boolean[] };
+type Pattern = { k: boolean[]; s: boolean[]; h: boolean[] };
 
-function pat(k: string, s: string, h: string, b: string): Pattern {
+function pat(k: string, s: string, h: string): Pattern {
   const f = (str: string) => [...str].map(c => c === 'X');
-  return { k: f(k), s: f(s), h: f(h), b: f(b) };
+  return { k: f(k), s: f(s), h: f(h) };
 }
 
 const PATTERNS: Record<string, Pattern> = {
-  rock:    pat('X.......X.......', '....X.......X...', 'X.X.X.X.X.X.X.X.', 'X.......X.......'),
-  pop:     pat('X...X...X...X...', '....X.......X...', 'X.X.X.X.X.X.X.X.', 'X...............'),
-  jazz:    pat('X...............', '....X...X.......', 'X...X.X.X...X.X.', 'X.......X.......'),
-  blues:   pat('X.......X.......', '....X.......X...', 'X..X..X.X..X..X.', 'X.......X.......'),
-  reggae:  pat('........X.......', '....X.......X...', '.X.X.X.X.X.X.X.X', 'X...............'),
-  funk:    pat('X..X....X..X....', '....X..X....X...', 'XXXXXXXXXXXXXXXX', 'X.......X.......'),
-  bossa:   pat('X..X....X..X....', '....X.......X...', 'X.X.X.X.X.X.X.X.', 'X.......X.......'),
-  country: pat('X.......X.......', '....X.......X...', 'X.X.X.X.X.X.X.X.', 'X.......X.......'),
+  rock:    pat('X.......X.......', '....X.......X...', 'X.X.X.X.X.X.X.X.'),
+  pop:     pat('X...X...X...X...', '....X.......X...', 'X.X.X.X.X.X.X.X.'),
+  jazz:    pat('X...............', '....X...X.......', 'X...X.X.X...X.X.'),
+  blues:   pat('X.......X.......', '....X.......X...', 'X..X..X.X..X..X.'),
+  reggae:  pat('........X.......', '....X.......X...', '.X.X.X.X.X.X.X.X'),
+  funk:    pat('X..X....X..X....', '....X..X....X...', 'XXXXXXXXXXXXXXXX'),
+  bossa:   pat('X..X....X..X....', '....X.......X...', 'X.X.X.X.X.X.X.X.'),
+  country: pat('X.......X.......', '....X.......X...', 'X.X.X.X.X.X.X.X.'),
 };
 
 const GENRE_MAP: Record<string, string> = {
@@ -293,9 +293,16 @@ export function useGrooveBox({
         if (pattern.h[m]) {
           samples?.hihat ? playSample(c, samples.hihat, d, t, 0.4) : synthHihat(c, d, t);
         }
-        if (pattern.b[m] && instrumentRef.current !== 'bass') {
-          const chord = seq[stepRef.current % seq.length];
-          if (chord) synthBass(c, d, t, chord);
+
+        // Basse : joue la fondamentale à chaque changement d'accord
+        if (instrumentRef.current !== 'bass') {
+          const seqLen = seq.length || 1;
+          const cur = stepRef.current % seqLen;
+          const prev = (stepRef.current - 1 + seqLen) % seqLen;
+          const chord = seq[cur];
+          if (chord && chord !== seq[prev]) {
+            synthBass(c, d, t, chord);
+          }
         }
 
         nextTimeRef.current += s16;
