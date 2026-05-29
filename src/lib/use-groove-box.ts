@@ -6,12 +6,12 @@ import type { Section, InstrumentId } from '@/types';
 // ─── Samples audio (Tone.js CDN — kit CR78) ──────────────────────────────────
 
 const SAMPLE_URLS = {
+  kick:  'https://tonejs.github.io/audio/drum-samples/CR78/kick.mp3',
   snare: 'https://tonejs.github.io/audio/drum-samples/CR78/snare.mp3',
   hihat: 'https://tonejs.github.io/audio/drum-samples/CR78/hihat.mp3',
 };
 
 // Cache des bytes bruts — indépendant du contexte audio
-// (AudioBuffer est lié à un AudioContext spécifique, ArrayBuffer non)
 const rawCache = new Map<string, ArrayBuffer>();
 
 async function loadSample(ctx: AudioContext, url: string): Promise<AudioBuffer | null> {
@@ -30,19 +30,19 @@ async function loadSample(ctx: AudioContext, url: string): Promise<AudioBuffer |
   }
 }
 
-function playSample(ctx: AudioContext, buf: AudioBuffer, t: number, vol = 1) {
+function playSample(ctx: AudioContext, buf: AudioBuffer, dest: AudioNode, t: number, vol = 1) {
   const src = ctx.createBufferSource();
   src.buffer = buf;
   const gain = ctx.createGain();
   gain.gain.value = vol;
   src.connect(gain);
-  gain.connect(ctx.destination);
+  gain.connect(dest);
   src.start(t);
 }
 
 // ─── Synthèse de secours / kick 808 ──────────────────────────────────────────
 
-function synthKick(ctx: AudioContext, t: number) {
+function synthKick(ctx: AudioContext, dest: AudioNode, t: number) {
   const osc = ctx.createOscillator();
   osc.type = 'sine';
   osc.frequency.setValueAtTime(150, t);
@@ -59,7 +59,7 @@ function synthKick(ctx: AudioContext, t: number) {
     curve[i] = (Math.PI + 120) * x / (Math.PI + 120 * Math.abs(x));
   }
   dist.curve = curve;
-  osc.connect(env); env.connect(dist); dist.connect(ctx.destination);
+  osc.connect(env); env.connect(dist); dist.connect(dest);
   osc.start(t); osc.stop(t + 0.4);
 
   // Click d'attaque
@@ -71,18 +71,18 @@ function synthKick(ctx: AudioContext, t: number) {
   const cEnv = ctx.createGain();
   cEnv.gain.setValueAtTime(0.4, t);
   cEnv.gain.exponentialRampToValueAtTime(0.001, t + 0.006);
-  cSrc.connect(cEnv); cEnv.connect(ctx.destination);
+  cSrc.connect(cEnv); cEnv.connect(dest);
   cSrc.start(t);
 }
 
-function synthSnare(ctx: AudioContext, t: number) {
+function synthSnare(ctx: AudioContext, dest: AudioNode, t: number) {
   const osc = ctx.createOscillator();
   osc.type = 'triangle';
   osc.frequency.setValueAtTime(185, t);
   const oscEnv = ctx.createGain();
   oscEnv.gain.setValueAtTime(0.7, t);
   oscEnv.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
-  osc.connect(oscEnv); oscEnv.connect(ctx.destination);
+  osc.connect(oscEnv); oscEnv.connect(dest);
   osc.start(t); osc.stop(t + 0.1);
 
   const nLen = Math.floor(ctx.sampleRate * 0.18);
@@ -94,18 +94,18 @@ function synthSnare(ctx: AudioContext, t: number) {
   const nEnv = ctx.createGain();
   nEnv.gain.setValueAtTime(0.85, t);
   nEnv.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-  nSrc.connect(bp); bp.connect(nEnv); nEnv.connect(ctx.destination);
+  nSrc.connect(bp); bp.connect(nEnv); nEnv.connect(dest);
   nSrc.start(t); nSrc.stop(t + 0.18);
 }
 
 const HIHAT_FREQS = [205.3, 269.2, 327.0, 420.8, 495.0, 605.8];
 
-function synthHihat(ctx: AudioContext, t: number, vol = 0.28) {
+function synthHihat(ctx: AudioContext, dest: AudioNode, t: number, vol = 0.28) {
   const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 7000;
   const env = ctx.createGain();
   env.gain.setValueAtTime(vol, t);
   env.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
-  hp.connect(env); env.connect(ctx.destination);
+  hp.connect(env); env.connect(dest);
   for (const freq of HIHAT_FREQS) {
     const osc = ctx.createOscillator();
     osc.type = 'square'; osc.frequency.value = freq;
@@ -125,7 +125,7 @@ const ROOT_FREQS: Record<string, number> = {
   B: 123.47,
 };
 
-function synthBass(ctx: AudioContext, t: number, chord: string) {
+function synthBass(ctx: AudioContext, dest: AudioNode, t: number, chord: string) {
   const root = chord.match(/^([A-G][#b]?)/)?.[1];
   if (!root || !ROOT_FREQS[root]) return;
   const osc = ctx.createOscillator();
@@ -133,7 +133,7 @@ function synthBass(ctx: AudioContext, t: number, chord: string) {
   const env = ctx.createGain();
   osc.type = 'sawtooth';
   osc.frequency.setValueAtTime(ROOT_FREQS[root], t);
-  osc.connect(lp); lp.connect(env); env.connect(ctx.destination);
+  osc.connect(lp); lp.connect(env); env.connect(dest);
   env.gain.setValueAtTime(0.38, t);
   env.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
   osc.start(t); osc.stop(t + 0.3);
@@ -197,7 +197,7 @@ function buildBeats(sections: Section[]): string[] {
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
-type Samples = { snare: AudioBuffer | null; hihat: AudioBuffer | null };
+type Samples = { kick: AudioBuffer | null; snare: AudioBuffer | null; hihat: AudioBuffer | null };
 
 export function useGrooveBox({
   enabled,
@@ -215,6 +215,7 @@ export function useGrooveBox({
   sections: Section[];
 }) {
   const ctxRef = useRef<AudioContext | null>(null);
+  const destRef = useRef<AudioNode | null>(null); // compresseur → destination
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stepRef = useRef(0);
   const nextTimeRef = useRef(0);
@@ -239,27 +240,40 @@ export function useGrooveBox({
       if (timerRef.current) clearInterval(timerRef.current);
       ctxRef.current?.close().catch(() => {});
       ctxRef.current = null;
+      destRef.current = null;
       samplesRef.current = null;
       return;
     }
 
     const ctx = new AudioContext();
+
+    // Compresseur master — évite le clipping quand plusieurs sons jouent en même temps
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -18;
+    comp.knee.value = 10;
+    comp.ratio.value = 6;
+    comp.attack.value = 0.003;
+    comp.release.value = 0.12;
+    comp.connect(ctx.destination);
+
     ctxRef.current = ctx;
+    destRef.current = comp;
     stepRef.current = 0;
     nextTimeRef.current = ctx.currentTime + 0.05;
 
-    // Charger snare + hihat en arrière-plan ; le scheduler tourne immédiatement
-    // avec la synthèse de secours, puis bascule sur les samples dès qu'ils sont prêts
+    // Charger les samples en arrière-plan ; la synthèse joue immédiatement en secours
     Promise.all([
+      loadSample(ctx, SAMPLE_URLS.kick),
       loadSample(ctx, SAMPLE_URLS.snare),
       loadSample(ctx, SAMPLE_URLS.hihat),
-    ]).then(([snare, hihat]) => {
-      if (ctxRef.current === ctx) samplesRef.current = { snare, hihat };
+    ]).then(([kick, snare, hihat]) => {
+      if (ctxRef.current === ctx) samplesRef.current = { kick, snare, hihat };
     });
 
     const tick = () => {
       const c = ctxRef.current;
-      if (!c) return;
+      const d = destRef.current;
+      if (!c || !d) return;
       const s16 = 15 / bpmRef.current;
       const stepsPerMeasure = bpmPerMeasureRef.current * 4;
       const pattern = patternRef.current;
@@ -270,16 +284,18 @@ export function useGrooveBox({
         const t = nextTimeRef.current;
         const m = stepRef.current % stepsPerMeasure;
 
-        if (pattern.k[m]) synthKick(c, t);
+        if (pattern.k[m]) {
+          samples?.kick ? playSample(c, samples.kick, d, t, 1.0) : synthKick(c, d, t);
+        }
         if (pattern.s[m]) {
-          samples?.snare ? playSample(c, samples.snare, t, 0.9) : synthSnare(c, t);
+          samples?.snare ? playSample(c, samples.snare, d, t, 0.9) : synthSnare(c, d, t);
         }
         if (pattern.h[m]) {
-          samples?.hihat ? playSample(c, samples.hihat, t, 0.4) : synthHihat(c, t);
+          samples?.hihat ? playSample(c, samples.hihat, d, t, 0.4) : synthHihat(c, d, t);
         }
         if (pattern.b[m] && instrumentRef.current !== 'bass') {
           const chord = seq[stepRef.current % seq.length];
-          if (chord) synthBass(c, t, chord);
+          if (chord) synthBass(c, d, t, chord);
         }
 
         nextTimeRef.current += s16;
@@ -293,6 +309,7 @@ export function useGrooveBox({
       if (timerRef.current) clearInterval(timerRef.current);
       ctx.close().catch(() => {});
       ctxRef.current = null;
+      destRef.current = null;
       samplesRef.current = null;
     };
   }, [enabled]);
