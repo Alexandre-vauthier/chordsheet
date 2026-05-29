@@ -75,7 +75,7 @@ export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
             <div>
               <h2 className="text-xl font-bold text-[var(--ink)]">Importer depuis texte</h2>
               <p className="text-xs text-[var(--ink-faint)] mt-0.5">
-                Format Ultimate Guitar · chordpro · texte avec accords au-dessus des paroles
+                Texte avec accords au-dessus des paroles, sections entre crochets
               </p>
             </div>
             <button
