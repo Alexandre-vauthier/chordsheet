@@ -93,13 +93,13 @@ export function ChordSummary({
   };
 
   return (
-    <div className="bg-[var(--cell-bg)] rounded-lg border border-[var(--line)] p-4">
+    <div className="bg-[var(--cell-bg)] rounded-lg border border-[var(--line)] p-4 print:bg-transparent print:border-none print:p-0 print:rounded-none">
       {!editable && !compact && (
         <h3 className="text-sm font-medium text-[var(--ink-light)] mb-3">
           Accords utilisés ({uniqueChords.length})
         </h3>
       )}
-      <div className={`${isMobileGrid ? 'grid grid-cols-3 gap-x-1 gap-y-3 sm:flex sm:flex-wrap sm:gap-2' : compact ? 'flex flex-wrap gap-2' : 'flex flex-wrap gap-4'}`}>
+      <div className={`print:flex print:flex-wrap print:gap-x-3 print:gap-y-2 ${isMobileGrid ? 'grid grid-cols-3 gap-x-1 gap-y-3 sm:flex sm:flex-wrap sm:gap-2' : compact ? 'flex flex-wrap gap-2' : 'flex flex-wrap gap-4'}`}>
         {uniqueChords.map((chordName) => {
           // Pour le piano, le capo décale la hauteur → chercher l'accord transposé
           const lookupName = instrumentId === 'piano' && capo > 0
@@ -202,7 +202,7 @@ export function ChordSummary({
           return (
             <div key={chordName} className="flex flex-col items-center">
               {/* Navigation variantes — toujours rendu pour uniformiser la hauteur */}
-              <div className={`flex items-center gap-2 mb-1 ${hasMultipleVariants ? '' : 'invisible'}`}>
+              <div className={`print:hidden flex items-center gap-2 mb-1 ${hasMultipleVariants ? '' : 'invisible'}`}>
                 <button
                   onClick={() => prevVariant(chordName, allVariants)}
                   className="cursor-pointer w-5 h-5 flex items-center justify-center text-xs text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--line)] rounded"
