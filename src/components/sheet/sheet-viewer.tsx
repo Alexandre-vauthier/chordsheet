@@ -12,6 +12,7 @@ import { useChordNotation } from '@/lib/use-chord-notation';
 import { useChordColor } from '@/lib/use-chord-color';
 import { transposeChord } from '@/lib/transpose';
 import { usePlayback, parseTempo } from '@/lib/use-playback';
+import { useGrooveBox } from '@/lib/use-groove-box';
 import type { PlayStep } from '@/lib/use-playback';
 import { useArtwork } from '@/lib/use-artwork';
 import { useAuth } from '@/lib/auth-context';
@@ -86,6 +87,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   };
 
   const [metronomeEnabled, setMetronomeEnabled] = useState(false);
+  const [grooveEnabled, setGrooveEnabled] = useState(false);
   const [transpose, setTranspose] = useState(0);
   const [selectedChords, setSelectedChords] = useState<Record<string, StringChord | PianoChord>>({});
   const [localTempo, setLocalTempo] = useState<string>(sheet.tempo || '90');
@@ -119,6 +121,16 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   });
 
   const bpm = parseTempo(sheet.tempo);
+
+  useGrooveBox({
+    enabled: grooveEnabled,
+    bpm: parseTempo(localTempo),
+    beatsPerMeasure: sheet.beatsPerMeasure ?? 4,
+    genres: sheet.genres ?? [],
+    instrumentId,
+    sections: displaySections,
+  });
+
   const { artworkUrl, previewUrl } = useArtwork(sheet.artist, sheet.title);
   const previewRef = useRef<HTMLAudioElement | null>(null);
   const [previewPlaying, setPreviewPlaying] = useState(false);
@@ -247,6 +259,26 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   <path d="M8.5 14.5l7-4" strokeLinecap="round"/>
                   <ellipse cx="12" cy="21" rx="3" ry="1.5"/>
                   <line x1="9.5" y1="3" x2="14.5" y2="3" strokeLinecap="round"/>
+                </svg>
+              </button>
+
+              {/* Toggle boite à rythme */}
+              <button
+                onClick={() => setGrooveEnabled(v => !v)}
+                title={grooveEnabled ? 'Désactiver la boite à rythme' : 'Activer la boite à rythme'}
+                className={`
+                  flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
+                  ${grooveEnabled
+                    ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                    : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                  }
+                `}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+                  <ellipse cx="12" cy="9" rx="7" ry="2.5"/>
+                  <line x1="5" y1="9" x2="5" y2="16" strokeLinecap="round"/>
+                  <line x1="19" y1="9" x2="19" y2="16" strokeLinecap="round"/>
+                  <path d="M5 16c0 1.38 3.13 2.5 7 2.5s7-1.12 7-2.5" strokeLinecap="round"/>
                 </svg>
               </button>
 
