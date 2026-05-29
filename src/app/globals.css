@@ -118,4 +118,33 @@ body {
     margin: 1.5cm;
     size: A4;
   }
+
+  /* ── Partition-style layout ──────────────────────────────────────── */
+
+  /* Measure rows → vertical bar lines */
+  .measure-row {
+    border-left: 2px solid #1a1410 !important;
+    border-right: 2px solid #1a1410 !important;
+    gap: 0 !important;
+    padding: 4px 6px !important;
+  }
+
+  /* Chord cells → remove all box decoration */
+  .chord-cell {
+    background: transparent !important;
+    border: none !important;
+    border-left-width: 0 !important;
+    border-radius: 0 !important;
+    min-height: 0 !important;
+    padding: 2px 0 !important;
+    box-shadow: none !important;
+  }
+
+  /* Chord names → serif typography */
+  .chord-name {
+    font-family: Georgia, 'Times New Roman', serif !important;
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.01em !important;
+  }
 }

@@ -25,6 +25,7 @@ export default function ProfilePage() {
   const [inlineDiagram, setInlineDiagram] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [minimizeRepeated, setMinimizeRepeated] = useState(false);
+  const [printChordDiagrams, setPrintChordDiagrams] = useState(false);
   const [preferredInstrument, setPreferredInstrument] = useState<InstrumentId | undefined>(undefined);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteZone, setShowDeleteZone] = useState(false);
@@ -44,6 +45,7 @@ export default function ProfilePage() {
       setDarkMode(user.darkMode ?? false);
       setPreferredInstrument(user.preferredInstrument);
       setMinimizeRepeated(user.minimizeRepeatedSections ?? false);
+      setPrintChordDiagrams(user.printChordDiagrams ?? false);
     }
   }, [user]);
 
@@ -370,6 +372,30 @@ export default function ProfilePage() {
             }`}
           >
             <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${minimizeRepeated ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Diagrammes à l'impression */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Diagrammes à l&apos;impression</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              Afficher les accords utilisés avec leurs diagrammes en haut de la page imprimée
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !printChordDiagrams;
+              setPrintChordDiagrams(newVal);
+              try { await updateUser({ printChordDiagrams: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              printChordDiagrams ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${printChordDiagrams ? 'translate-x-5' : ''}`} />
           </button>
         </div>
       </div>

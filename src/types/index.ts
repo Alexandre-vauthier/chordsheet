@@ -211,6 +211,7 @@ export interface User {
   showInlineDiagram?: boolean;
   darkMode?: boolean;
   minimizeRepeatedSections?: boolean;
+  printChordDiagrams?: boolean;
 }
 
 // Vérifier si un email est admin

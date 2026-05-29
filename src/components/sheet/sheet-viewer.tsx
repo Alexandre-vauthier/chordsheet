@@ -493,6 +493,25 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
         )}
       </div>
 
+      {/* Résumé accords — uniquement à l'impression, si option activée */}
+      {user?.printChordDiagrams && instrumentId !== 'voice' && (
+        <div className="hidden print:block mb-8">
+          <div className="flex items-center gap-3 mb-4">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Accords utilisés</h2>
+            <div className="flex-1 h-px bg-[var(--line)]" />
+          </div>
+          <ChordSummary
+            sections={displaySections}
+            instrumentId={instrumentId}
+            customChords={sheet.customChords as CustomChordMap}
+            capo={sheet.capo ?? 0}
+            onVariantChange={(chordName, chord) =>
+              setSelectedChords(prev => ({ ...prev, [chordName]: chord }))
+            }
+          />
+        </div>
+      )}
+
       {/* Sections — masquées pour Voix */}
       <div className={`space-y-8 print:space-y-6 ${instrumentId === 'voice' ? 'hidden' : ''}`}>
         {(() => {
@@ -558,7 +577,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 return (
                   <div key={rowIndex} className="relative">
                     <div
-                      className="grid gap-1 w-full"
+                      className="grid gap-1 w-full measure-row"
                       style={{ gridTemplateColumns: `repeat(16, minmax(0, 1fr))` }}
                     >
                       {row.map((cell, cellIndex) => {
@@ -717,7 +736,7 @@ function ViewerChordCell({
         ...(isActive && !color ? { borderColor: 'var(--accent)' } : {}),
       }}
       className={`
-        relative rounded-lg border-[1.5px] min-h-12 flex items-center justify-center
+        chord-cell relative rounded-lg border-[1.5px] min-h-12 flex items-center justify-center
         bg-[var(--cell-bg)] border-[#8a7a6a]
         ${span <= 0.5 ? 'bg-[#f7f3ec] border-[var(--ink-faint)]' : ''}
         ${isActive && !color ? 'border-[var(--accent)]' : ''}
@@ -738,7 +757,7 @@ function ViewerChordCell({
       )}
 
       <div className="relative z-10 flex flex-col items-center gap-1 py-1">
-        <span className={`font-mono font-medium text-[var(--ink)] ${span <= 0.5 ? 'text-sm' : 'text-base'} print:text-sm`}>
+        <span className={`chord-name font-mono font-medium text-[var(--ink)] ${span <= 0.5 ? 'text-sm' : 'text-base'} print:text-sm`}>
           {bassRoot ? translate(bassRoot) : translate(lookupChord)}
         </span>
         {/* Diagramme inline — cliquable pour jouer, avec overlay ▶ au survol */}
