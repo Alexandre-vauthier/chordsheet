@@ -75,7 +75,7 @@ export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
             <div>
               <h2 className="text-xl font-bold text-[var(--ink)]">Importer depuis texte</h2>
               <p className="text-xs text-[var(--ink-faint)] mt-0.5">
-                Texte avec accords au-dessus des paroles, sections entre crochets
+                Collez votre grille depuis n'importe quelle source
               </p>
             </div>
             <button
