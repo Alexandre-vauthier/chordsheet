@@ -406,22 +406,24 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               )}
             </div>
           </div>
-        </div>
 
-        {/* Métadonnées print uniquement */}
-        <div className="hidden print:flex flex-wrap items-center gap-3 mt-3">
-          {sheet.key && (
-            <span className="flex items-center gap-1.5 px-2 py-1 bg-[var(--cell-bg)] text-[var(--ink)] rounded text-sm border border-[var(--line)]">
-              <span className="text-sm">♯♭</span>
-              {displayKey}
+          {/* Métadonnées print uniquement — colonne droite */}
+          <div className="hidden print:flex flex-col items-end justify-center gap-1 shrink-0 text-right">
+            {sheet.key && (
+              <span className="text-sm font-semibold text-[var(--ink)]">
+                ♯♭ {displayKey}
+              </span>
+            )}
+            <span className="text-sm text-[var(--ink)]">
+              {localTempoUnit === 'eighth' ? '♪' : '♩'} {localTempo} BPM
             </span>
-          )}
-          <span className="flex items-center gap-1.5 px-2 py-1 text-[var(--ink)] text-sm">
-            <span className="text-base leading-none">
-              {localTempoUnit === 'eighth' ? '♪' : '♩'}
-            </span>
-            {localTempo} BPM
-          </span>
+            {sheet.capo ? (
+              <span className="text-sm text-[var(--ink-light)]">Capo {sheet.capo}</span>
+            ) : null}
+            {sheet.beatsPerMeasure === 3 && (
+              <span className="text-sm text-[var(--ink-light)]">Ternaire</span>
+            )}
+          </div>
         </div>
       </div>
 
