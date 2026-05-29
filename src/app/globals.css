@@ -154,7 +154,7 @@ body {
   /* Chord names → serif typography */
   .chord-name {
     font-family: Georgia, 'Times New Roman', serif !important;
-    font-size: 0.95rem !important;
+    font-size: 0.8rem !important;
     font-weight: 700 !important;
     letter-spacing: 0.01em !important;
   }
