@@ -99,7 +99,7 @@ export function ChordSummary({
           Accords utilisés ({uniqueChords.length})
         </h3>
       )}
-      <div className={`print:flex print:flex-wrap print:gap-x-1 print:gap-y-1 ${isMobileGrid ? 'grid grid-cols-3 gap-x-1 gap-y-3 sm:flex sm:flex-wrap sm:gap-2' : compact ? 'flex flex-wrap gap-2' : 'flex flex-wrap gap-4'}`}>
+      <div className={`chord-print-grid ${isMobileGrid ? 'grid grid-cols-3 gap-x-1 gap-y-3 sm:flex sm:flex-wrap sm:gap-2' : compact ? 'flex flex-wrap gap-2' : 'flex flex-wrap gap-4'}`}>
         {uniqueChords.map((chordName) => {
           // Pour le piano, le capo décale la hauteur → chercher l'accord transposé
           const lookupName = instrumentId === 'piano' && capo > 0

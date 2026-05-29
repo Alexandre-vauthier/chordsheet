@@ -151,6 +151,19 @@ body {
     border-left: none !important;
   }
 
+  /* Récapitulatif accords → grille serrée */
+  .chord-print-grid {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 2px !important;
+  }
+
+  .chord-print-grid > div {
+    padding: 0 !important;
+    margin: 0 !important;
+    gap: 1px !important;
+  }
+
   /* Chord names → serif typography */
   .chord-name {
     font-family: Georgia, 'Times New Roman', serif !important;
