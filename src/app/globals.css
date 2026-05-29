@@ -121,27 +121,32 @@ body {
 
   /* ── Partition-style layout ──────────────────────────────────────── */
 
-  /* Measure rows → top/bottom borders in light grey */
+  /* Measure rows — barre épaisse à gauche, fine à droite, gris léger haut/bas
+     padding:0 pour que les barres verticales internes touchent les horizontales */
   .measure-row {
-    border: none !important;
     border-top: 1px solid #c4b89a !important;
     border-bottom: 1px solid #c4b89a !important;
+    border-left: 2.5px solid #1a1410 !important;
+    border-right: 1px solid #1a1410 !important;
     gap: 0 !important;
-    padding: 5px 2px !important;
+    padding: 0 !important;
+    align-items: stretch !important;
   }
 
-  /* Chord cells → no box, thin grey left separator between chords */
+  /* Chord cells — transparent, séparateur gris gauche, padding vertical seulement */
   .chord-cell {
     background: transparent !important;
     border: none !important;
     border-left: 1px solid #c4b89a !important;
     border-radius: 0 !important;
     min-height: 0 !important;
-    padding: 2px 8px !important;
+    padding: 4px 8px !important;
     box-shadow: none !important;
+    display: flex !important;
+    align-items: center !important;
   }
 
-  /* Pas de séparateur avant le premier accord de la mesure */
+  /* Pas de séparateur avant le premier accord */
   .measure-row > div:first-child {
     border-left: none !important;
   }
@@ -149,7 +154,7 @@ body {
   /* Chord names → serif typography */
   .chord-name {
     font-family: Georgia, 'Times New Roman', serif !important;
-    font-size: 1rem !important;
+    font-size: 0.95rem !important;
     font-weight: 700 !important;
     letter-spacing: 0.01em !important;
   }
