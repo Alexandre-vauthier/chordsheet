@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useMemo } from 'react';
-import type { Section, InstrumentId } from '@/types';
+import { useEffect, useRef } from 'react';
 
 // ─── Samples audio (Tone.js CDN — kit CR78) ──────────────────────────────────
 
@@ -11,7 +10,6 @@ const SAMPLE_URLS = {
   hihat: 'https://tonejs.github.io/audio/drum-samples/CR78/hihat.mp3',
 };
 
-// Cache des bytes bruts — indépendant du contexte audio
 const rawCache = new Map<string, ArrayBuffer>();
 
 async function loadSample(ctx: AudioContext, url: string): Promise<AudioBuffer | null> {
@@ -23,7 +21,6 @@ async function loadSample(ctx: AudioContext, url: string): Promise<AudioBuffer |
       raw = await res.arrayBuffer();
       rawCache.set(url, raw);
     }
-    // slice() obligatoire : decodeAudioData peut transférer (détacher) le buffer
     return await ctx.decodeAudioData(raw.slice(0));
   } catch {
     return null;
@@ -40,18 +37,16 @@ function playSample(ctx: AudioContext, buf: AudioBuffer, dest: AudioNode, t: num
   src.start(t);
 }
 
-// ─── Synthèse de secours / kick 808 ──────────────────────────────────────────
+// ─── Synthèse de secours ──────────────────────────────────────────────────────
 
 function synthKick(ctx: AudioContext, dest: AudioNode, t: number) {
   const osc = ctx.createOscillator();
   osc.type = 'sine';
   osc.frequency.setValueAtTime(150, t);
   osc.frequency.exponentialRampToValueAtTime(50, t + 0.07);
-
   const env = ctx.createGain();
   env.gain.setValueAtTime(1.0, t);
   env.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
-
   const dist = ctx.createWaveShaper();
   const curve = new Float32Array(256);
   for (let i = 0; i < 256; i++) {
@@ -61,8 +56,6 @@ function synthKick(ctx: AudioContext, dest: AudioNode, t: number) {
   dist.curve = curve;
   osc.connect(env); env.connect(dist); dist.connect(dest);
   osc.start(t); osc.stop(t + 0.4);
-
-  // Click d'attaque
   const cLen = Math.floor(ctx.sampleRate * 0.006);
   const cBuf = ctx.createBuffer(1, cLen, ctx.sampleRate);
   const cCh = cBuf.getChannelData(0);
@@ -84,7 +77,6 @@ function synthSnare(ctx: AudioContext, dest: AudioNode, t: number) {
   oscEnv.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
   osc.connect(oscEnv); oscEnv.connect(dest);
   osc.start(t); osc.stop(t + 0.1);
-
   const nLen = Math.floor(ctx.sampleRate * 0.18);
   const nBuf = ctx.createBuffer(1, nLen, ctx.sampleRate);
   const nCh = nBuf.getChannelData(0);
@@ -113,33 +105,7 @@ function synthHihat(ctx: AudioContext, dest: AudioNode, t: number, vol = 0.28) {
   }
 }
 
-// ─── Basse ────────────────────────────────────────────────────────────────────
-
-const ROOT_FREQS: Record<string, number> = {
-  C: 65.41, 'C#': 69.30, Db: 69.30,
-  D: 73.42, 'D#': 77.78, Eb: 77.78,
-  E: 82.41, F: 87.31,
-  'F#': 92.50, Gb: 92.50,
-  G: 98.00, 'G#': 103.83, Ab: 103.83,
-  A: 110.00, 'A#': 116.54, Bb: 116.54,
-  B: 123.47,
-};
-
-function synthBass(ctx: AudioContext, dest: AudioNode, t: number, chord: string) {
-  const root = chord.match(/^([A-G][#b]?)/)?.[1];
-  if (!root || !ROOT_FREQS[root]) return;
-  const osc = ctx.createOscillator();
-  const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 500;
-  const env = ctx.createGain();
-  osc.type = 'sawtooth';
-  osc.frequency.setValueAtTime(ROOT_FREQS[root], t);
-  osc.connect(lp); lp.connect(env); env.connect(dest);
-  env.gain.setValueAtTime(0.38, t);
-  env.gain.exponentialRampToValueAtTime(0.001, t + 0.28);
-  osc.start(t); osc.stop(t + 0.3);
-}
-
-// ─── Patterns ─────────────────────────────────────────────────────────────────
+// ─── Patterns (16 steps = une mesure 4/4) ────────────────────────────────────
 
 type Pattern = { k: boolean[]; s: boolean[]; h: boolean[] };
 
@@ -178,23 +144,6 @@ function pickPattern(genres: string[]): Pattern {
   return PATTERNS.rock;
 }
 
-// ─── Séquence d'accords ───────────────────────────────────────────────────────
-
-function buildBeats(sections: Section[]): string[] {
-  const out: string[] = [];
-  for (const sec of sections) {
-    for (let r = 0; r < (sec.repeat ?? 1); r++) {
-      for (const row of sec.rows) {
-        for (const cell of row) {
-          const n = Math.round(cell.span * 4);
-          for (let i = 0; i < n; i++) out.push(cell.chord ?? '');
-        }
-      }
-    }
-  }
-  return out.length ? out : [''];
-}
-
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 type Samples = { kick: AudioBuffer | null; snare: AudioBuffer | null; hihat: AudioBuffer | null };
@@ -204,36 +153,26 @@ export function useGrooveBox({
   bpm,
   beatsPerMeasure,
   genres,
-  instrumentId,
-  sections,
 }: {
   enabled: boolean;
   bpm: number;
   beatsPerMeasure: number;
   genres: string[];
-  instrumentId: InstrumentId;
-  sections: Section[];
 }) {
   const ctxRef = useRef<AudioContext | null>(null);
-  const destRef = useRef<AudioNode | null>(null); // compresseur → destination
+  const destRef = useRef<AudioNode | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stepRef = useRef(0);
   const nextTimeRef = useRef(0);
   const samplesRef = useRef<Samples | null>(null);
 
-  const beats = useMemo(() => buildBeats(sections), [sections]);
-
   const bpmRef = useRef(bpm);
   const bpmPerMeasureRef = useRef(beatsPerMeasure);
   const patternRef = useRef(pickPattern(genres));
-  const instrumentRef = useRef(instrumentId);
-  const beatsRef = useRef(beats);
 
   useEffect(() => { bpmRef.current = bpm; }, [bpm]);
   useEffect(() => { bpmPerMeasureRef.current = beatsPerMeasure; }, [beatsPerMeasure]);
   useEffect(() => { patternRef.current = pickPattern(genres); }, [genres]);
-  useEffect(() => { instrumentRef.current = instrumentId; }, [instrumentId]);
-  useEffect(() => { beatsRef.current = beats; }, [beats]);
 
   useEffect(() => {
     if (!enabled) {
@@ -246,8 +185,6 @@ export function useGrooveBox({
     }
 
     const ctx = new AudioContext();
-
-    // Compresseur master — évite le clipping quand plusieurs sons jouent en même temps
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -18;
     comp.knee.value = 10;
@@ -261,7 +198,6 @@ export function useGrooveBox({
     stepRef.current = 0;
     nextTimeRef.current = ctx.currentTime + 0.05;
 
-    // Charger les samples en arrière-plan ; la synthèse joue immédiatement en secours
     Promise.all([
       loadSample(ctx, SAMPLE_URLS.kick),
       loadSample(ctx, SAMPLE_URLS.snare),
@@ -277,7 +213,6 @@ export function useGrooveBox({
       const s16 = 15 / bpmRef.current;
       const stepsPerMeasure = bpmPerMeasureRef.current * 4;
       const pattern = patternRef.current;
-      const seq = beatsRef.current;
       const samples = samplesRef.current;
 
       while (nextTimeRef.current < c.currentTime + 0.1) {
@@ -294,19 +229,8 @@ export function useGrooveBox({
           samples?.hihat ? playSample(c, samples.hihat, d, t, 0.4) : synthHihat(c, d, t);
         }
 
-        // Basse : joue la fondamentale à chaque changement d'accord
-        if (instrumentRef.current !== 'bass') {
-          const seqLen = seq.length || 1;
-          const cur = stepRef.current % seqLen;
-          const prev = (stepRef.current - 1 + seqLen) % seqLen;
-          const chord = seq[cur];
-          if (chord && chord !== seq[prev]) {
-            synthBass(c, d, t, chord);
-          }
-        }
-
         nextTimeRef.current += s16;
-        stepRef.current = (stepRef.current + 1) % (seq.length || 1);
+        stepRef.current = (stepRef.current + 1) % stepsPerMeasure;
       }
     };
 

@@ -162,8 +162,6 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     bpm,
     beatsPerMeasure: sheet.beatsPerMeasure ?? 4,
     genres: sheet.genres ?? [],
-    instrumentId: sheet.instrumentId || 'guitar',
-    sections: sheet.sections,
   });
 
   // Pool d'accords indexé par instrument pour le chord finder

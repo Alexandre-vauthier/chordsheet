@@ -127,8 +127,6 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
     bpm: parseTempo(localTempo),
     beatsPerMeasure: sheet.beatsPerMeasure ?? 4,
     genres: sheet.genres ?? [],
-    instrumentId,
-    sections: displaySections,
   });
 
   const { artworkUrl, previewUrl } = useArtwork(sheet.artist, sheet.title);
