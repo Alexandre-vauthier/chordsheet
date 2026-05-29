@@ -497,8 +497,8 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
 
       {/* Résumé accords — uniquement à l'impression, si option activée */}
       {user?.printChordDiagrams && instrumentId !== 'voice' && (
-        <div className="hidden print:block mb-8">
-          <div className="flex items-center gap-3 mb-4">
+        <div className="hidden print:block mb-8 print-chord-summary">
+          <div className="flex items-center gap-3 mb-3">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Accords utilisés</h2>
             <div className="flex-1 h-px bg-[var(--line)]" />
           </div>
@@ -507,6 +507,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             instrumentId={instrumentId}
             customChords={sheet.customChords as CustomChordMap}
             capo={sheet.capo ?? 0}
+            compact
             onVariantChange={(chordName, chord) =>
               setSelectedChords(prev => ({ ...prev, [chordName]: chord }))
             }

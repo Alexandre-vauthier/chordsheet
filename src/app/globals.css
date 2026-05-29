@@ -151,6 +151,18 @@ body {
     border-left: none !important;
   }
 
+  /* Récapitulatif accords → compact, sans fond, sans nav variantes */
+  .print-chord-summary > div {
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+  }
+
+  .print-chord-summary [class*="invisible"],
+  .print-chord-summary button {
+    display: none !important;
+  }
+
   /* Chord names → serif typography */
   .chord-name {
     font-family: Georgia, 'Times New Roman', serif !important;
