@@ -537,6 +537,11 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   ×{section.repeat}
                 </span>
               )}
+              {isDuplicate && firstLabel && (
+                <span className="hidden print:inline text-xs text-[var(--ink-faint)] italic">
+                  = {firstLabel}
+                </span>
+              )}
               <button
                 onClick={() => {
                   if (isPlaying && activeStep?.sectionId === section.id) stop();
