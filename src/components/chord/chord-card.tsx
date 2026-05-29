@@ -35,7 +35,7 @@ export function ChordCard({
 
   return (
     <div
-      className={`flex flex-col items-center gap-1 ${size === 'xs' ? 'p-1.5' : 'p-3 gap-2'} rounded-xl border transition-all ${
+      className={`flex flex-col items-center gap-1 ${size === 'xs' ? 'p-1.5' : 'p-3 gap-2'} rounded-xl border transition-all print:border-none print:bg-transparent print:p-0 print:rounded-none ${
         selected
           ? 'border-[var(--accent)] bg-[var(--accent)]/5'
           : 'border-[var(--line)] bg-[var(--cell-bg)] hover:border-[var(--ink-faint)]'
