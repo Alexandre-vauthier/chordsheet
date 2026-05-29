@@ -9,6 +9,7 @@ import { fromFirestore } from '@/lib/firestore-helpers';
 import { useBookmarks } from '@/lib/use-bookmarks';
 import { Button } from '@/components/ui/button';
 import { SheetCard } from '@/components/explore/sheet-card';
+import { ImportSheetModal } from '@/components/sheet/import-sheet-modal';
 import type { Sheet } from '@/types';
 
 type Tab = 'all' | 'mine' | 'book';
@@ -19,6 +20,7 @@ export default function DashboardPage() {
   const [sheets, setSheets] = useState<Sheet[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('all');
+  const [showImport, setShowImport] = useState(false);
 
   useEffect(() => {
     async function loadSheets() {
@@ -76,6 +78,7 @@ export default function DashboardPage() {
   ];
 
   return (
+    <>
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
@@ -102,6 +105,14 @@ export default function DashboardPage() {
           <Link href="/explore" className="hidden sm:block">
             <Button variant="ghost">Explorer</Button>
           </Link>
+          <button
+            onClick={() => setShowImport(true)}
+            className="hidden sm:block px-3 py-2 text-sm font-medium border border-[var(--line)] rounded-lg
+              text-[var(--ink-light)] hover:border-[var(--ink-faint)] hover:text-[var(--ink)]
+              bg-[var(--cell-bg)] transition-colors"
+          >
+            Importer
+          </button>
           <Link href="/sheet/new" className="hidden sm:block">
             <Button>+ Nouvelle grille</Button>
           </Link>
@@ -256,5 +267,8 @@ export default function DashboardPage() {
         )
       )}
     </div>
+
+      {showImport && <ImportSheetModal onClose={() => setShowImport(false)} />}
+    </>
   );
 }
