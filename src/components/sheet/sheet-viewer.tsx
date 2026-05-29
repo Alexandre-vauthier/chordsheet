@@ -538,7 +538,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 </span>
               )}
               {isDuplicate && firstLabel && (
-                <span className="hidden print:inline text-xs text-[var(--ink-faint)] italic">
+                <span className="hidden print:inline text-sm text-[var(--ink-light)] italic">
                   = {firstLabel}
                 </span>
               )}
