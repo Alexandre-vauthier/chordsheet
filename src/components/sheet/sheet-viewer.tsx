@@ -763,7 +763,7 @@ function ViewerChordCell({
         {/* Diagramme inline — cliquable pour jouer, avec overlay ▶ au survol */}
         {inlineDiagramChord && (
           <div
-            className={`group/play relative cursor-pointer ${showInlineDiagram ? '' : 'print:hidden'}`}
+            className="group/play relative cursor-pointer print:hidden"
             onClick={(e) => {
               e.stopPropagation();
               if (playableChord) playChord(playableChord, instrumentId, capo);
