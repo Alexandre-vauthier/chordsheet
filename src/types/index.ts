@@ -211,6 +211,7 @@ export interface User {
   showInlineDiagram?: boolean;
   darkMode?: boolean;
   minimizeRepeatedSections?: boolean;
+  printMinimizeRepeatedSections?: boolean;
   printChordDiagrams?: boolean;
 }
 

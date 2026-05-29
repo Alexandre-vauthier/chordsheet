@@ -522,10 +522,11 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             const sig = sectionSignature(section);
             const firstLabel = seenSignatures.get(sig);
             const isDuplicate = minimizeRepeated && !!firstLabel;
+            const isDuplicateForPrint = (user?.printMinimizeRepeatedSections ?? false) && !!firstLabel;
             if (!seenSignatures.has(sig)) seenSignatures.set(sig, section.label);
-            return { section, isDuplicate, firstLabel: firstLabel ?? null };
+            return { section, isDuplicate, isDuplicateForPrint, firstLabel: firstLabel ?? null };
           });
-        })().map(({ section, isDuplicate, firstLabel }) => (
+        })().map(({ section, isDuplicate, isDuplicateForPrint, firstLabel }) => (
           <div key={section.id} className="print:break-inside-avoid">
             {/* Header de section */}
             <div className="flex items-center gap-3 mb-3">
@@ -537,7 +538,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   ×{section.repeat}
                 </span>
               )}
-              {isDuplicate && firstLabel && (
+              {(isDuplicate || isDuplicateForPrint) && firstLabel && (
                 <span className="hidden print:inline text-sm text-[var(--ink-light)] italic">
                   = {firstLabel}
                 </span>
@@ -562,16 +563,16 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               </button>
             </div>
 
-            {/* Grille — masquée si doublon en mode minimisé */}
-            {isDuplicate ? (
+            {/* Grille — masquée à l'écran si doublon en mode minimisé, masquée à l'impression si option profil */}
+            {isDuplicate && (
               <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-[var(--line)] text-xs text-[var(--ink-faint)] print:hidden">
                 <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
                   <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2M10 20h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
                 Identique à <span className="font-medium text-[var(--ink-light)] uppercase tracking-wide ml-0.5">{firstLabel}</span>
               </div>
-            ) : (
-            <div className="space-y-2">
+            )}
+            <div className={`space-y-2 ${isDuplicate ? 'hidden print:block' : ''} ${isDuplicateForPrint ? 'print:hidden' : ''}`}>
               {section.rows.map((row, rowIndex) => {
                 if (row.every(c => !c.chord)) return null;
 
@@ -628,7 +629,6 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 );
               })}
             </div>
-            )}
           </div>
         ))}
       </div>
