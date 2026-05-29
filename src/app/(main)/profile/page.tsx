@@ -247,8 +247,14 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* ── Général ────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 mt-8 mb-3">
+        <span className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Général</span>
+        <div className="flex-1 h-px bg-[var(--line)]" />
+      </div>
+
       {/* Préférence de notation */}
-      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)]">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-semibold text-[var(--ink)]">Notation des accords</h2>
           {isSavingNotation && (
@@ -283,8 +289,70 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* Mode sombre */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Mode sombre</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              Thème sombre pour réduire la fatigue visuelle
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !darkMode;
+              setDarkMode(newVal);
+              try { await updateUser({ darkMode: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              darkMode ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${darkMode ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Consultation ───────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 mt-8 mb-3">
+        <span className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Consultation</span>
+        <div className="flex-1 h-px bg-[var(--line)]" />
+      </div>
+
+      {/* Instrument de prédilection */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)]">
+        <h2 className="text-base font-semibold text-[var(--ink)] mb-1">Instrument par défaut</h2>
+        <p className="text-xs text-[var(--ink-faint)] mb-4">
+          Instrument affiché par défaut en consultation, sur tous vos appareils
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {([
+            { id: 'guitar',   label: 'Guitare' },
+            { id: 'ukulele',  label: 'Ukulélé' },
+            { id: 'piano',    label: 'Piano' },
+            { id: 'mandolin', label: 'Mandoline' },
+            { id: 'banjo',    label: 'Banjo' },
+          ] as { id: InstrumentId; label: string }[]).map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={async () => {
+                setPreferredInstrument(id);
+                try { await updateUser({ preferredInstrument: id }); } catch { /* silent */ }
+              }}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                preferredInstrument === id
+                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                  : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)]'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Code couleur des accords */}
-      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-semibold text-[var(--ink)]">Code couleur des accords</h2>
@@ -321,17 +389,13 @@ export default function ProfilePage() {
               colorCoding ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
             }`}
           >
-            <span
-              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
-                colorCoding ? 'translate-x-5' : ''
-              }`}
-            />
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${colorCoding ? 'translate-x-5' : ''}`} />
           </button>
         </div>
       </div>
 
       {/* Diagramme inline */}
-      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-semibold text-[var(--ink)]">Diagramme dans la case</h2>
@@ -355,7 +419,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Minimiser les sections répétées */}
-      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-base font-semibold text-[var(--ink)]">Minimiser les sections identiques</h2>
@@ -378,11 +442,17 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* ── Impression ─────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 mt-8 mb-3">
+        <span className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Impression</span>
+        <div className="flex-1 h-px bg-[var(--line)]" />
+      </div>
+
       {/* Minimiser les sections à l'impression */}
-      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)]">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-[var(--ink)]">Minimiser les répétitions à l&apos;impression</h2>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Minimiser les répétitions</h2>
             <p className="text-xs text-[var(--ink-faint)] mt-1">
               N&apos;imprime pas les accords des sections identiques à une précédente
             </p>
@@ -403,10 +473,10 @@ export default function ProfilePage() {
       </div>
 
       {/* Diagrammes à l'impression */}
-      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-[var(--ink)]">Diagrammes à l&apos;impression</h2>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Diagrammes des accords</h2>
             <p className="text-xs text-[var(--ink-faint)] mt-1">
               Afficher les accords utilisés avec leurs diagrammes en haut de la page imprimée
             </p>
@@ -422,62 +492,6 @@ export default function ProfilePage() {
             }`}
           >
             <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${printChordDiagrams ? 'translate-x-5' : ''}`} />
-          </button>
-        </div>
-      </div>
-
-      {/* Instrument de prédilection */}
-      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
-        <h2 className="text-base font-semibold text-[var(--ink)] mb-1">Instrument par défaut</h2>
-        <p className="text-xs text-[var(--ink-faint)] mb-4">
-          Instrument affiché par défaut en consultation, sur tous vos appareils
-        </p>
-        <div className="flex flex-wrap gap-2">
-          {([
-            { id: 'guitar',   label: 'Guitare' },
-            { id: 'ukulele',  label: 'Ukulélé' },
-            { id: 'piano',    label: 'Piano' },
-            { id: 'mandolin', label: 'Mandoline' },
-            { id: 'banjo',    label: 'Banjo' },
-          ] as { id: InstrumentId; label: string }[]).map(({ id, label }) => (
-            <button
-              key={id}
-              onClick={async () => {
-                setPreferredInstrument(id);
-                try { await updateUser({ preferredInstrument: id }); } catch { /* silent */ }
-              }}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
-                preferredInstrument === id
-                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
-                  : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)]'
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Mode sombre */}
-      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-semibold text-[var(--ink)]">Mode sombre</h2>
-            <p className="text-xs text-[var(--ink-faint)] mt-1">
-              Thème sombre pour réduire la fatigue visuelle
-            </p>
-          </div>
-          <button
-            onClick={async () => {
-              const newVal = !darkMode;
-              setDarkMode(newVal);
-              try { await updateUser({ darkMode: newVal }); } catch { /* silent */ }
-            }}
-            className={`relative w-11 h-6 rounded-full transition-colors ${
-              darkMode ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
-            }`}
-          >
-            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${darkMode ? 'translate-x-5' : ''}`} />
           </button>
         </div>
       </div>
