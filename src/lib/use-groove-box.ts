@@ -10,18 +10,21 @@ const SAMPLE_URLS = {
   hihat: 'https://tonejs.github.io/audio/drum-samples/CR78/hihat.mp3',
 };
 
-// Cache module-level — chargé une seule fois pour toute l'app
-const sampleCache = new Map<string, AudioBuffer>();
+// Cache des bytes bruts — indépendant du contexte audio
+// (AudioBuffer est lié à un AudioContext spécifique, ArrayBuffer non)
+const rawCache = new Map<string, ArrayBuffer>();
 
 async function loadSample(ctx: AudioContext, url: string): Promise<AudioBuffer | null> {
-  if (sampleCache.has(url)) return sampleCache.get(url)!;
   try {
-    const res = await fetch(url);
-    if (!res.ok) return null;
-    const arr = await res.arrayBuffer();
-    const buf = await ctx.decodeAudioData(arr);
-    sampleCache.set(url, buf);
-    return buf;
+    let raw = rawCache.get(url);
+    if (!raw) {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      raw = await res.arrayBuffer();
+      rawCache.set(url, raw);
+    }
+    // slice() obligatoire : decodeAudioData peut transférer (détacher) le buffer
+    return await ctx.decodeAudioData(raw.slice(0));
   } catch {
     return null;
   }
