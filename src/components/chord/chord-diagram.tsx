@@ -55,7 +55,7 @@ export function ChordDiagram({
       const X2  = W_P - X1;
       const Y1  = xs ? 6  : sm ? 9   : 13;
       const Y2  = H_P - (xs ? 6 : sm ? 9 : 13);
-      const BAR_STEP = (X2 - X1) / 4;
+      const BAR_STEP = (X2 - X1) / 3;
       return (
         <svg
           width={W_P}
@@ -65,7 +65,7 @@ export function ChordDiagram({
           style={{ display: 'block', cursor: onClick ? 'pointer' : 'inherit' }}
           onClick={onClick}
         >
-          {Array.from({ length: 5 }).map((_, i) => (
+          {Array.from({ length: 4 }).map((_, i) => (
             <line
               key={i}
               x1={X1 + i * BAR_STEP} y1={Y1}
