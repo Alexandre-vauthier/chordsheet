@@ -75,8 +75,7 @@ export function useConcertSession(
   const startAutoScroll = useCallback(async (sheetIndex: number, bpm: number) => {
     if (!setId || !groupId || !user) return;
     const db = getDb();
-    // Délai pour compenser la latence Firestore (~100ms en pratique)
-    const startTimeMs = Date.now() + 120;
+    const startTimeMs = Date.now();
     await setDoc(doc(db, 'concertSessions', setId), {
       groupId,
       setId,
