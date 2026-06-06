@@ -105,8 +105,8 @@ service cloud.firestore {
 
     // Groupes de musique
     match /groups/{groupId} {
-      allow read: if request.auth != null &&
-                     (request.auth.uid in resource.data.memberIds || isAdmin());
+      // Lecture ouverte aux utilisateurs authentifiés (nécessaire pour le flux d'invitation)
+      allow read: if request.auth != null;
       allow list: if isAdmin();
       allow create: if request.auth != null &&
                        request.resource.data.ownerId == request.auth.uid &&
