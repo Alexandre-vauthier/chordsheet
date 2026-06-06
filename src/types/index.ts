@@ -67,7 +67,7 @@ export type Genre = typeof GENRES[number];
 // ─── Types pour les diagrammes d'accords ────────────────────────────────────
 
 // Instruments supportés
-export const INSTRUMENTS = ['guitar', 'mandolin', 'banjo', 'ukulele', 'piano', 'bass', 'voice'] as const;
+export const INSTRUMENTS = ['guitar', 'mandolin', 'banjo', 'ukulele', 'piano', 'bass', 'voice', 'percussion'] as const;
 export type InstrumentId = typeof INSTRUMENTS[number];
 
 export interface Instrument {

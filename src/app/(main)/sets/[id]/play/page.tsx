@@ -1,45 +1,162 @@
 'use client';
 
-import { useState, useEffect, use, useCallback } from 'react';
+import { useState, useEffect, use, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/lib/auth-context';
 import { useSet } from '@/lib/use-sets';
 import { useConcertSession } from '@/lib/use-concert-session';
 import { useGroups } from '@/lib/use-groups';
+import { parseTempo } from '@/lib/use-playback';
 import { SheetViewer } from '@/components/sheet/sheet-viewer';
 import { Button } from '@/components/ui/button';
+import type { Section } from '@/types';
 
 interface SetPlayPageProps {
   params: Promise<{ id: string }>;
 }
 
+// Calcule quelle cellule doit être mise en évidence à l'instant T
+function calculateConcertCell(
+  sections: Section[],
+  startTimeMs: number,
+  bpm: number
+): { sectionIdx: number; rowIdx: number; cellIdx: number } | null {
+  const elapsed = Date.now() - startTimeMs;
+  if (elapsed < 0) return null;
+
+  const msPerBeat = 60000 / bpm;
+  let accumulated = 0;
+  let lastChord: { sectionIdx: number; rowIdx: number; cellIdx: number } | null = null;
+
+  for (let si = 0; si < sections.length; si++) {
+    for (let ri = 0; ri < sections[si].rows.length; ri++) {
+      for (let ci = 0; ci < sections[si].rows[ri].length; ci++) {
+        const cell = sections[si].rows[ri][ci];
+        const dur = cell.span * msPerBeat;
+        if (elapsed < accumulated + dur) {
+          return cell.chord ? { sectionIdx: si, rowIdx: ri, cellIdx: ci } : lastChord;
+        }
+        accumulated += dur;
+        if (cell.chord) lastChord = { sectionIdx: si, rowIdx: ri, cellIdx: ci };
+      }
+    }
+  }
+  return null;
+}
+
 export default function SetPlayPage({ params }: SetPlayPageProps) {
   const { id } = use(params);
   const router = useRouter();
+  const { user } = useAuth();
   const { set, sheets, isLoading, error } = useSet(id);
 
   const isGroupSet = !!set?.groupId;
-  const { groups, endConcert } = useGroups();
-  const activeConcert = groups.find(g => g.id === set?.groupId)?.activeConcert;
+  const isDrummer = user?.preferredInstrument === 'percussion';
 
-  // Mode synchro (set de groupe) vs mode local (set personnel)
-  const { currentIndex: syncedIndex, isSynced, goToSheet } = useConcertSession(
+  const { currentIndex: syncedIndex, isSynced, goToSheet, autoScroll, startAutoScroll, stopAutoScroll } = useConcertSession(
     isGroupSet ? id : undefined,
     isGroupSet ? set?.groupId : undefined
   );
-  const [localIndex, setLocalIndex] = useState(0);
+  const { groups, endConcert } = useGroups();
+  const activeConcert = groups.find(g => g.id === set?.groupId)?.activeConcert;
 
+  const [localIndex, setLocalIndex] = useState(0);
   const currentIndex = isGroupSet ? syncedIndex : localIndex;
 
   const setIndex = useCallback((index: number) => {
-    if (isGroupSet) {
-      goToSheet(index);
-    } else {
-      setLocalIndex(index);
-    }
+    if (isGroupSet) goToSheet(index);
+    else setLocalIndex(index);
   }, [isGroupSet, goToSheet]);
 
   const currentSheet = sheets[currentIndex];
+
+  // ── Batteur : count-in ──────────────────────────────────────────────────────
+  const [countBeat, setCountBeat] = useState(0); // 0 = inactif, 1-8 = décompte
+  const countTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const cancelCountIn = useCallback(() => {
+    countTimersRef.current.forEach(clearTimeout);
+    countTimersRef.current = [];
+    setCountBeat(0);
+    audioCtxRef.current?.close().catch(() => {});
+    audioCtxRef.current = null;
+  }, []);
+
+  const startCountIn = useCallback(() => {
+    if (!currentSheet || !isGroupSet || !isDrummer) return;
+    cancelCountIn();
+
+    const bpm = parseTempo(currentSheet.tempo || '90');
+    const msPerBeat = 60000 / bpm;
+
+    // Clicks Web Audio
+    try {
+      const AudioCtxCtor = (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext ?? AudioContext;
+      const audioCtx = new AudioCtxCtor();
+      audioCtxRef.current = audioCtx;
+
+      for (let i = 0; i < 8; i++) {
+        const time = audioCtx.currentTime + (i * msPerBeat / 1000);
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        // Accent sur les beats 1 et 5 (début de chaque groupe de 4)
+        osc.frequency.value = i % 4 === 0 ? 1200 : 900;
+        gain.gain.setValueAtTime(0, audioCtx.currentTime);
+        gain.gain.setValueAtTime(i % 4 === 0 ? 0.9 : 0.6, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
+        osc.start(time);
+        osc.stop(time + 0.1);
+      }
+    } catch { /* AudioContext non supporté */ }
+
+    // Compteur visuel
+    for (let beat = 1; beat <= 8; beat++) {
+      const t = setTimeout(() => setCountBeat(beat), (beat - 1) * msPerBeat);
+      countTimersRef.current.push(t);
+    }
+
+    // Après 8 temps : lancer l'auto-scroll pour tous
+    const endT = setTimeout(() => {
+      setCountBeat(0);
+      const finalBpm = parseTempo(currentSheet.tempo || '90');
+      startAutoScroll(currentIndex, finalBpm);
+    }, 8 * msPerBeat);
+    countTimersRef.current.push(endT);
+  }, [currentSheet, isGroupSet, isDrummer, currentIndex, startAutoScroll, cancelCountIn]);
+
+  // Cleanup au démontage
+  useEffect(() => () => cancelCountIn(), [cancelCountIn]);
+
+  // ── Auto-scroll : boucle RAF ────────────────────────────────────────────────
+  const [concertCellPath, setConcertCellPath] = useState<{ sectionIdx: number; rowIdx: number; cellIdx: number } | null>(null);
+  const rafRef = useRef<number>(0);
+
+  useEffect(() => {
+    if (!autoScroll || autoScroll.sheetIndex !== currentIndex || !currentSheet) {
+      setConcertCellPath(null);
+      cancelAnimationFrame(rafRef.current);
+      return;
+    }
+
+    const tick = () => {
+      const path = calculateConcertCell(currentSheet.sections, autoScroll.startTimeMs, autoScroll.bpm);
+      setConcertCellPath(path);
+      if (path !== null) {
+        rafRef.current = requestAnimationFrame(tick);
+      } else {
+        setConcertCellPath(null);
+      }
+    };
+
+    rafRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafRef.current);
+  }, [autoScroll, currentIndex, currentSheet]);
+
+  // ── Navigation clavier ──────────────────────────────────────────────────────
   const hasPrevious = currentIndex > 0;
   const hasNext = currentIndex < sheets.length - 1;
 
@@ -62,6 +179,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
+  // ── Rendu ───────────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -80,6 +198,8 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
       </div>
     );
   }
+
+  const isAutoScrollActive = !!autoScroll && autoScroll.sheetIndex === currentIndex;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -113,7 +233,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
                 className="flex items-center gap-1.5 px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-medium transition-colors"
                 title="Terminer le concert pour tous"
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                <span className="w-1.5 h-1.5 rounded bg-white" />
                 Terminer
               </button>
             )}
@@ -147,8 +267,63 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
 
       {/* Grille courante */}
       <div className="flex-1">
-        {currentSheet && <SheetViewer sheet={currentSheet} />}
+        {currentSheet && (
+          <SheetViewer
+            sheet={currentSheet}
+            concertCellPath={concertCellPath ?? undefined}
+          />
+        )}
       </div>
+
+      {/* Contrôles batteur — uniquement pour le percussionniste en set de groupe */}
+      {isGroupSet && isDrummer && (
+        <div className="bg-[var(--cell-bg)] border-t border-[var(--line)] py-2 px-4 print:hidden">
+          <div className="max-w-4xl mx-auto flex items-center justify-center gap-4">
+            {countBeat > 0 ? (
+              <>
+                <div className="flex gap-1.5">
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map(b => (
+                    <div
+                      key={b}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-100 ${
+                        b === countBeat
+                          ? 'bg-red-500 text-white scale-125'
+                          : b < countBeat
+                            ? 'bg-red-200 text-red-600'
+                            : 'bg-[var(--line)] text-[var(--ink-faint)]'
+                      }`}
+                    >
+                      {b}
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={startCountIn}
+                  className="px-3 py-1.5 text-xs rounded-lg border border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)] transition-colors"
+                >
+                  ↺ Recommencer
+                </button>
+              </>
+            ) : isAutoScrollActive ? (
+              <button
+                onClick={() => stopAutoScroll().catch(() => {})}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                <span className="w-2.5 h-2.5 rounded bg-white" />
+                Arrêter
+              </button>
+            ) : (
+              <button
+                onClick={startCountIn}
+                className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)] hover:opacity-90 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                <span className="text-base leading-none">▶</span>
+                Play
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Barre de navigation bas */}
       <div className="bg-[var(--cell-bg)] border-t border-[var(--line)] py-4 px-6 print:hidden sticky bottom-0">

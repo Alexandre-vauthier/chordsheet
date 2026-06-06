@@ -17,6 +17,7 @@ const INSTRUMENT_ICONS: Record<InstrumentId, string> = {
   piano: '🎹',
   bass: '🎸',
   voice: '🎤',
+  percussion: '🥁',
 };
 
 export function InstrumentSelector({ value, onChange, exclude = [] }: InstrumentSelectorProps) {

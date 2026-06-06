@@ -7,7 +7,7 @@ import { selectionToPitchClasses, pianoPitchClasses, findMatchingChords, type Ch
 import { ChordDiagram } from './chord-diagram';
 import { PianoKeyboard } from './piano-keyboard';
 
-const INSTRUMENT_CONFIG: Record<Exclude<InstrumentId, 'piano' | 'voice'>, { strings: number; frets: number }> = {
+const INSTRUMENT_CONFIG: Record<Exclude<InstrumentId, 'piano' | 'voice' | 'percussion'>, { strings: number; frets: number }> = {
   guitar:   { strings: 6, frets: 5 },
   ukulele:  { strings: 4, frets: 5 },
   mandolin: { strings: 4, frets: 5 },
@@ -40,7 +40,7 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, 
   const [instrumentId, setInstrumentId] = useState<InstrumentId>(initialInstrument);
   const isPiano = instrumentId === 'piano';
   const isVoice = instrumentId === 'voice';
-  const config = (!isPiano && !isVoice) ? INSTRUMENT_CONFIG[instrumentId as Exclude<InstrumentId, 'piano' | 'voice'>] : null;
+  const config = (!isPiano && !isVoice) ? INSTRUMENT_CONFIG[instrumentId as Exclude<InstrumentId, 'piano' | 'voice' | 'percussion'>] : null;
 
   // État cordes
   const [fingers, setFingers] = useState<FingerPosition[]>([]);
@@ -61,7 +61,7 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, 
     setMutedStrings([]);
     setStartFret(1);
     if (id !== 'piano' && id !== 'voice') {
-      const c = INSTRUMENT_CONFIG[id as Exclude<InstrumentId, 'piano' | 'voice'>];
+      const c = INSTRUMENT_CONFIG[id as Exclude<InstrumentId, 'piano' | 'voice' | 'percussion'>];
       setOpenStrings(Array.from({ length: c.strings }, (_, i) => i + 1));
     } else {
       setOpenStrings([]);

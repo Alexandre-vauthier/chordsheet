@@ -6,7 +6,7 @@ import { INSTRUMENTS } from '@/types';
 import { playChord, playNote, OPEN_FREQS, noteNameToFreq } from '@/lib/chord-audio';
 
 // Configuration par instrument
-const INSTRUMENT_CONFIG: Record<Exclude<InstrumentId, 'piano' | 'voice'>, { strings: number; frets: number; label: string }> = {
+const INSTRUMENT_CONFIG: Record<Exclude<InstrumentId, 'piano' | 'voice' | 'percussion'>, { strings: number; frets: number; label: string }> = {
   guitar: { strings: 6, frets: 5, label: 'Guitare' },
   ukulele: { strings: 4, frets: 5, label: 'Ukulélé' },
   mandolin: { strings: 4, frets: 5, label: 'Mandoline' },
@@ -37,7 +37,7 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
   const [barre, setBarre] = useState<ChordBarre | null>(null);
   const [openStrings, setOpenStrings] = useState<number[]>(() => {
     if (initialInstrument === 'piano' || initialInstrument === 'voice') return [];
-    const c = INSTRUMENT_CONFIG[initialInstrument as Exclude<InstrumentId, 'piano' | 'voice'>];
+    const c = INSTRUMENT_CONFIG[initialInstrument as Exclude<InstrumentId, 'piano' | 'voice' | 'percussion'>];
     return Array.from({ length: c.strings }, (_, i) => i + 1);
   });
   const [mutedStrings, setMutedStrings] = useState<number[]>([]);
@@ -48,7 +48,7 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
 
   const isPiano = instrumentId === 'piano';
   const isVoice = instrumentId === 'voice';
-  const config = (!isPiano && !isVoice) ? INSTRUMENT_CONFIG[instrumentId as Exclude<InstrumentId, 'piano' | 'voice'>] : null;
+  const config = (!isPiano && !isVoice) ? INSTRUMENT_CONFIG[instrumentId as Exclude<InstrumentId, 'piano' | 'voice' | 'percussion'>] : null;
 
   // Réinitialiser quand on change d'instrument
   const handleInstrumentChange = (newInstrument: InstrumentId) => {
@@ -58,7 +58,7 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
     if (newInstrument === 'piano' || newInstrument === 'voice') {
       setOpenStrings([]);
     } else {
-      const c = INSTRUMENT_CONFIG[newInstrument as Exclude<InstrumentId, 'piano' | 'voice'>];
+      const c = INSTRUMENT_CONFIG[newInstrument as Exclude<InstrumentId, 'piano' | 'voice' | 'percussion'>];
       setOpenStrings(Array.from({ length: c.strings }, (_, i) => i + 1));
     }
     setMutedStrings([]);

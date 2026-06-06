@@ -31,7 +31,7 @@ interface ChordEditorModalProps {
 }
 
 // Configuration par instrument
-const INSTRUMENT_CONFIG: Record<Exclude<InstrumentId, 'piano' | 'voice'>, { strings: number; frets: number }> = {
+const INSTRUMENT_CONFIG: Record<Exclude<InstrumentId, 'piano' | 'voice' | 'percussion'>, { strings: number; frets: number }> = {
   guitar: { strings: 6, frets: 5 },
   ukulele: { strings: 4, frets: 5 },
   mandolin: { strings: 4, frets: 5 },
@@ -59,7 +59,7 @@ export function ChordEditorModal({
 }: ChordEditorModalProps) {
   const isPiano = instrumentId === 'piano';
   const isVoice = instrumentId === 'voice';
-  const config = (!isPiano && !isVoice) ? INSTRUMENT_CONFIG[instrumentId as Exclude<InstrumentId, 'piano' | 'voice'>] : null;
+  const config = (!isPiano && !isVoice) ? INSTRUMENT_CONFIG[instrumentId as Exclude<InstrumentId, 'piano' | 'voice' | 'percussion'>] : null;
 
   // Nom éditable (pour les nouveaux accords admin sans nom prédéfini)
   const [editableName, setEditableName] = useState(chordName);

@@ -40,6 +40,7 @@ interface SheetViewerProps {
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
   isTogglingBookmark?: boolean;
+  concertCellPath?: { sectionIdx: number; rowIdx: number; cellIdx: number };
 }
 
 function getRefLabel(url: string): string {
@@ -62,7 +63,7 @@ function sectionSignature(section: { rows: { chord: string; span: number }[][] }
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingBookmark }: SheetViewerProps) {
+export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingBookmark, concertCellPath }: SheetViewerProps) {
   const translate = useChordNotation();
   const getColor = useChordColor();
   const { user, updateUser } = useAuth();
@@ -125,6 +126,14 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   });
 
   const bpm = parseTempo(sheet.tempo);
+
+  // Auto-scroll vers la cellule active en mode concert
+  useEffect(() => {
+    if (!concertCellPath) return;
+    const el = document.querySelector('[data-concert-active]') as HTMLElement | null;
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [concertCellPath?.sectionIdx, concertCellPath?.rowIdx, concertCellPath?.cellIdx]);
 
   useGrooveBox({
     enabled: grooveEnabled && isPlaying,
@@ -531,7 +540,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             if (!seenSignatures.has(sig)) seenSignatures.set(sig, section.label);
             return { section, isDuplicate, isDuplicateForPrint, firstLabel: firstLabel ?? null };
           });
-        })().map(({ section, isDuplicate, isDuplicateForPrint, firstLabel }) => (
+        })().map(({ section, isDuplicate, isDuplicateForPrint, firstLabel }, sectionIdx) => (
           <div key={section.id} className="print:break-inside-avoid">
             {/* Header de section */}
             <div className="flex items-center gap-3 mb-3">
@@ -605,12 +614,18 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                           );
                         }
 
+                        const isConcertActive = !!concertCellPath &&
+                          concertCellPath.sectionIdx === sectionIdx &&
+                          concertCellPath.rowIdx === rowIndex &&
+                          concertCellPath.cellIdx === cellIndex;
+
                         return (
                           <ViewerChordCell
                             key={cellIndex}
                             chord={cell.chord}
                             span={cell.span}
                             isActive={isActive}
+                            isConcertActive={isConcertActive}
                             activeStep={activeStep}
                             instrumentId={instrumentId}
                             customChords={sheet.customChords as Record<string, CustomChord> | undefined}
@@ -675,6 +690,7 @@ function ViewerChordCell({
   chord,
   span,
   isActive,
+  isConcertActive,
   activeStep,
   instrumentId,
   customChords,
@@ -687,6 +703,7 @@ function ViewerChordCell({
   chord: string;
   span: CellSpan;
   isActive: boolean;
+  isConcertActive?: boolean;
   activeStep: PlayStep | null;
   instrumentId: InstrumentId;
   customChords?: Record<string, CustomChord>;
@@ -742,10 +759,12 @@ function ViewerChordCell({
 
   return (
     <div
+      {...(isConcertActive ? { 'data-concert-active': '' } : {})}
       style={{
         gridColumn: `span ${spanToGridCols(span)}`,
         ...(color ? { borderColor: color.border, borderLeftWidth: '5px' } : {}),
         ...(isActive && !color ? { borderColor: 'var(--accent)' } : {}),
+        ...(isConcertActive ? { backgroundColor: '#dcfce7', borderColor: '#16a34a', borderWidth: '2px' } : {}),
       }}
       className={`
         chord-cell relative rounded-lg border-[1.5px] min-h-12 flex items-center justify-center
