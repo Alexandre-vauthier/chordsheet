@@ -355,31 +355,75 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                 <div className="w-8 h-8 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-sm font-bold">
                   {member.displayName.charAt(0).toUpperCase()}
                 </div>
-                <div>
-                  <div className="text-sm font-medium text-[var(--ink)]">{member.displayName}</div>
-                  {member.email && member.email !== member.displayName && (
-                    <div className="text-xs text-[var(--ink-faint)]">{member.email}</div>
-                  )}
-                </div>
+                <div className="text-sm font-medium text-[var(--ink)]">{member.displayName}</div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className={`text-xs px-2 py-0.5 rounded-full border ${
-                  member.role === 'leader'
-                    ? 'bg-[var(--accent-soft)] text-[var(--accent)] border-[var(--accent)]/20'
-                    : 'bg-[var(--paper)] text-[var(--ink-faint)] border-[var(--line)]'
-                }`}>
-                  {member.role === 'leader' ? 'Leader' : 'Membre'}
-                </span>
-                {isLeader && member.id !== user?.id && (
-                  <button onClick={() => handleRemoveMember(member.id, member.displayName)}
-                    className="text-xs text-[var(--ink-faint)] hover:text-red-500 transition-colors px-1.5 py-0.5 rounded">
-                    Retirer
-                  </button>
-                )}
-              </div>
+              {isLeader && member.id !== user?.id && (
+                <button onClick={() => handleRemoveMember(member.id, member.displayName)}
+                  className="text-xs text-[var(--ink-faint)] hover:text-red-500 transition-colors px-1.5 py-0.5 rounded">
+                  Retirer
+                </button>
+              )}
             </div>
           ))}
         </div>
+      </section>
+
+      {/* Sets */}
+      <section>
+        <h2 className="text-sm font-semibold text-[var(--ink-light)] uppercase tracking-wide mb-3">
+          Sets ({groupSets.length})
+        </h2>
+
+        {isMember && (
+          <div className="flex gap-2 mb-3">
+            <input
+              type="text"
+              value={newSetName}
+              onChange={e => setNewSetName(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleCreateSet()}
+              placeholder="Nom du set (ex: Concert du 15 juin)…"
+              className="flex-1 px-3 py-2 text-sm border border-[var(--line)] rounded-lg bg-[var(--cell-bg)] text-[var(--ink)] placeholder:text-[var(--ink-faint)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+            />
+            <button
+              onClick={handleCreateSet}
+              disabled={!newSetName.trim() || isCreatingSet}
+              className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50">
+              {isCreatingSet ? '…' : '+ Créer'}
+            </button>
+          </div>
+        )}
+
+        {groupSets.length === 0 ? (
+          <p className="text-sm text-[var(--ink-faint)] py-3 text-center">Aucun set pour l&apos;instant.</p>
+        ) : (
+          <div className="space-y-2">
+            {groupSets.map(set => (
+              <div key={set.id} className="flex items-center justify-between px-4 py-3 bg-[var(--cell-bg)] border border-[var(--line)] rounded-lg">
+                <Link href={`/sets/${set.id}`} className="flex-1 min-w-0 hover:opacity-75 transition-opacity">
+                  <div className="text-sm font-medium text-[var(--ink)] truncate">{set.name}</div>
+                  <div className="text-xs text-[var(--ink-faint)]">
+                    {set.sheetIds.length} grille{set.sheetIds.length !== 1 ? 's' : ''}
+                    {set.isPublic && <span className="ml-2 text-green-600">· public</span>}
+                  </div>
+                </Link>
+                <div className="flex items-center gap-3 ml-3 shrink-0">
+                  {set.sheetIds.length > 0 && (
+                    <Link href={`/sets/${set.id}/play`}
+                      className="text-xs text-[var(--ink-faint)] hover:text-[var(--accent)] transition-colors">
+                      Lancer
+                    </Link>
+                  )}
+                  {(isLeader || set.ownerId === user?.id) && (
+                    <button onClick={() => handleDeleteSet(set.id!, set.name)}
+                      className="text-xs text-[var(--ink-faint)] hover:text-red-500 transition-colors">
+                      Supprimer
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Grilles */}
@@ -489,66 +533,8 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
         )}
       </section>
 
-      {/* Sets du groupe */}
-      <section>
-        <h2 className="text-sm font-semibold text-[var(--ink-light)] uppercase tracking-wide mb-3">
-          Sets ({groupSets.length})
-        </h2>
-
-        {isMember && (
-          <div className="flex gap-2 mb-3">
-            <input
-              type="text"
-              value={newSetName}
-              onChange={e => setNewSetName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleCreateSet()}
-              placeholder="Nom du set (ex: Concert du 15 juin)…"
-              className="flex-1 px-3 py-2 text-sm border border-[var(--line)] rounded-lg bg-[var(--cell-bg)] text-[var(--ink)] placeholder:text-[var(--ink-faint)] focus:outline-none focus:border-[var(--accent)] transition-colors"
-            />
-            <button
-              onClick={handleCreateSet}
-              disabled={!newSetName.trim() || isCreatingSet}
-              className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50">
-              {isCreatingSet ? '…' : '+ Créer'}
-            </button>
-          </div>
-        )}
-
-        {groupSets.length === 0 ? (
-          <p className="text-sm text-[var(--ink-faint)] py-3 text-center">Aucun set pour l&apos;instant.</p>
-        ) : (
-          <div className="space-y-2">
-            {groupSets.map(set => (
-              <div key={set.id} className="flex items-center justify-between px-4 py-3 bg-[var(--cell-bg)] border border-[var(--line)] rounded-lg">
-                <Link href={`/sets/${set.id}`} className="flex-1 min-w-0 hover:opacity-75 transition-opacity">
-                  <div className="text-sm font-medium text-[var(--ink)] truncate">{set.name}</div>
-                  <div className="text-xs text-[var(--ink-faint)]">
-                    {set.sheetIds.length} grille{set.sheetIds.length !== 1 ? 's' : ''}
-                    {set.isPublic && <span className="ml-2 text-green-600">· public</span>}
-                  </div>
-                </Link>
-                <div className="flex items-center gap-3 ml-3 shrink-0">
-                  {set.sheetIds.length > 0 && (
-                    <Link href={`/sets/${set.id}/play`}
-                      className="text-xs text-[var(--ink-faint)] hover:text-[var(--accent)] transition-colors">
-                      Lancer
-                    </Link>
-                  )}
-                  {(isLeader || set.ownerId === user?.id) && (
-                    <button onClick={() => handleDeleteSet(set.id!, set.name)}
-                      className="text-xs text-[var(--ink-faint)] hover:text-red-500 transition-colors">
-                      Supprimer
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Invitation */}
-      {isLeader && (
+      {/* Invitation — accessible à tous les membres */}
+      {isMember && (
         <section>
           <h2 className="text-sm font-semibold text-[var(--ink-light)] uppercase tracking-wide mb-3">
             Inviter des membres
@@ -560,15 +546,15 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
             {inviteLink ? (
               <div className="flex gap-2">
                 <input readOnly value={inviteLink}
-                  className="flex-1 px-3 py-2 text-sm border border-[var(--line)] rounded-lg bg-[var(--paper)] text-[var(--ink)] focus:outline-none" />
+                  className="flex-1 px-3 py-2 text-sm border border-[var(--line)] rounded-lg bg-[var(--cell-bg)] text-[var(--ink)] focus:outline-none" />
                 <button onClick={handleCopyInvite}
-                  className="px-3 py-2 text-sm border border-[var(--line)] rounded-lg bg-[var(--paper)] hover:border-[var(--accent)] transition-colors text-[var(--ink)]">
+                  className="px-3 py-2 text-sm border border-[var(--line)] rounded-lg bg-[var(--cell-bg)] hover:border-[var(--accent)] transition-colors text-[var(--ink)]">
                   {inviteCopied ? '✓ Copié' : 'Copier'}
                 </button>
               </div>
             ) : (
               <button onClick={handleGenerateInvite} disabled={inviteLoading}
-                className="px-4 py-2 text-sm bg-[var(--ink)] text-white rounded-lg hover:bg-[var(--ink-light)] transition-colors disabled:opacity-50">
+                className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50">
                 {inviteLoading ? 'Génération…' : 'Générer un lien'}
               </button>
             )}
