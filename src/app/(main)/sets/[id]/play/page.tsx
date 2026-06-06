@@ -327,7 +327,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
       </div>
 
       {/* Barre de navigation bas (sticky) — inclut les contrôles batteur */}
-      <div className="bg-[var(--cell-bg)] border-t border-[var(--line)] print:hidden sticky bottom-0">
+      <div className="bg-[var(--cell-bg)] border-t border-[var(--line)] print:hidden sticky bottom-0 z-40">
         {/* Rangée batteur */}
         {isGroupSet && isDrummer && (
           <div className="border-b border-[var(--line)] py-2 px-4 flex items-center justify-center gap-4">
