@@ -162,10 +162,12 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
       setCountBeat(0);
       const finalBpm = parseTempo(currentSheet.tempo || '90');
       startAutoScroll(currentIndex, finalBpm);
-      // Métronome continu pour le batteur
+      // Métronome continu pour le batteur — beat 1 immédiatement pour
+      // combler le gap entre le 8ème clic du décompte et le premier tick de l'intervalle
       const beatsPerMeasure = currentSheet.sections[0]?.beatsPerMeasure || 4;
-      let beat = 0;
       stopMetronome();
+      playMetronomeTick(true); // downbeat (beat 1 de la mesure 1)
+      let beat = 1;
       metronomeRef.current = setInterval(() => {
         playMetronomeTick(beat === 0);
         beat = (beat + 1) % beatsPerMeasure;
