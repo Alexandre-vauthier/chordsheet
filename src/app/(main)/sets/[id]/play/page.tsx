@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSet } from '@/lib/use-sets';
 import { useConcertSession } from '@/lib/use-concert-session';
+import { useGroups } from '@/lib/use-groups';
 import { SheetViewer } from '@/components/sheet/sheet-viewer';
 import { Button } from '@/components/ui/button';
 
@@ -18,6 +19,8 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
   const { set, sheets, isLoading, error } = useSet(id);
 
   const isGroupSet = !!set?.groupId;
+  const { groups, endConcert } = useGroups();
+  const activeConcert = groups.find(g => g.id === set?.groupId)?.activeConcert;
 
   // Mode synchro (set de groupe) vs mode local (set personnel)
   const { currentIndex: syncedIndex, isSynced, goToSheet } = useConcertSession(
@@ -103,6 +106,16 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
                   {isSynced ? 'Synchro' : 'Connexion…'}
                 </span>
               </div>
+            )}
+            {isGroupSet && activeConcert && (
+              <button
+                onClick={() => endConcert(set!.groupId!).catch(() => {})}
+                className="flex items-center gap-1.5 px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-medium transition-colors"
+                title="Terminer le concert pour tous"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-white" />
+                Terminer
+              </button>
             )}
             <span className="text-sm text-[var(--nav-text)]/70">
               {currentIndex + 1} / {sheets.length}

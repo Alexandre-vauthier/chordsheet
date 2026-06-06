@@ -11,6 +11,7 @@ import { useSet } from '@/lib/use-sets';
 import { useSets } from '@/lib/use-sets';
 import { useBookmarks } from '@/lib/use-bookmarks';
 import { useSetBookmarks } from '@/lib/use-set-bookmarks';
+import { useGroups } from '@/lib/use-groups';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { Sheet } from '@/types';
@@ -25,6 +26,7 @@ export default function SetPage({ params }: SetPageProps) {
   const { user } = useAuth();
   const { set, sheets, isLoading, error } = useSet(id);
   const { updateSet, updateSetVisibility, reorderSheets, removeSheetFromSet, addSheetToSet } = useSets(user?.id);
+  const { launchConcert } = useGroups();
   const { bookmarkedSheets } = useBookmarks(user?.id);
   const { isBookmarked: isSetBookmarked, toggleBookmark: toggleSetBookmark } = useSetBookmarks(user?.id);
 
@@ -242,6 +244,18 @@ export default function SetPage({ params }: SetPageProps) {
             <Link href={`/sets/${id}/play`}>
               <Button>▶ Lancer le set</Button>
             </Link>
+            {set.groupId && isGroupMember && (
+              <button
+                onClick={async () => {
+                  await launchConcert(set.groupId!, id, set.name);
+                  router.push(`/sets/${id}/play`);
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                Lancer le concert
+              </button>
+            )}
           </div>
         )}
 
@@ -288,9 +302,23 @@ export default function SetPage({ params }: SetPageProps) {
           {set.groupId ? '← Retour au groupe' : '← Retour aux sets'}
         </Button>
         {sheets.length > 0 && (
-          <Link href={`/sets/${id}/play`}>
-            <Button>▶ Lancer le set</Button>
-          </Link>
+          <div className="flex gap-3">
+            <Link href={`/sets/${id}/play`}>
+              <Button>▶ Lancer le set</Button>
+            </Link>
+            {set.groupId && isGroupMember && (
+              <button
+                onClick={async () => {
+                  await launchConcert(set.groupId!, id, set.name);
+                  router.push(`/sets/${id}/play`);
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                Lancer le concert
+              </button>
+            )}
+          </div>
         )}
       </div>
 

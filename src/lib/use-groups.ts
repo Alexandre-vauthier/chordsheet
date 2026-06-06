@@ -15,12 +15,14 @@ import {
   serverTimestamp,
   arrayUnion,
   arrayRemove,
+  deleteField,
 } from 'firebase/firestore';
 import { getDb } from './firebase';
 import { useAuth } from './auth-context';
-import type { Group, GroupInvite, GroupRole, NewGroup } from '@/types';
+import type { ActiveConcert, Group, GroupInvite, GroupRole, NewGroup } from '@/types';
 
 function groupFromDoc(id: string, data: Record<string, unknown>): Group {
+  const ac = data.activeConcert as Record<string, string> | undefined;
   return {
     id,
     name: (data.name as string) || '',
@@ -29,6 +31,7 @@ function groupFromDoc(id: string, data: Record<string, unknown>): Group {
     memberIds: (data.memberIds as string[]) || [],
     roles: (data.roles as Record<string, GroupRole>) || {},
     linkedSheetIds: (data.linkedSheetIds as string[]) || [],
+    activeConcert: ac ? { setId: ac.setId, setName: ac.setName, startedBy: ac.startedBy, startedByName: ac.startedByName } : undefined,
     createdAt: (data.createdAt as { toDate: () => Date })?.toDate?.() || new Date(),
     updatedAt: (data.updatedAt as { toDate: () => Date })?.toDate?.() || new Date(),
   };
@@ -199,5 +202,24 @@ export function useGroups() {
     });
   }, [user]);
 
-  return { groups, loading, createGroup, generateInviteToken, joinGroup, leaveGroup, removeMember, deleteGroup, linkSheet, unlinkSheet };
+  const launchConcert = useCallback(async (groupId: string, setId: string, setName: string) => {
+    if (!user) throw new Error('Non connecté');
+    const db = getDb();
+    const concert: ActiveConcert = { setId, setName, startedBy: user.id, startedByName: user.displayName };
+    await updateDoc(doc(db, 'groups', groupId), {
+      activeConcert: concert,
+      updatedAt: serverTimestamp(),
+    });
+  }, [user]);
+
+  const endConcert = useCallback(async (groupId: string) => {
+    if (!user) throw new Error('Non connecté');
+    const db = getDb();
+    await updateDoc(doc(db, 'groups', groupId), {
+      activeConcert: deleteField(),
+      updatedAt: serverTimestamp(),
+    });
+  }, [user]);
+
+  return { groups, loading, createGroup, generateInviteToken, joinGroup, leaveGroup, removeMember, deleteGroup, linkSheet, unlinkSheet, launchConcert, endConcert };
 }

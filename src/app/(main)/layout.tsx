@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
+import { ConcertBanner } from '@/components/layout/concert-banner';
 
 export default function MainLayout({
   children,
@@ -35,6 +36,7 @@ export default function MainLayout({
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
+      <ConcertBanner />
       <main className="flex-1">{children}</main>
       <Footer />
     </div>

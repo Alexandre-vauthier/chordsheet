@@ -262,6 +262,13 @@ export interface Rating {
 
 export type GroupRole = 'leader' | 'member';
 
+export interface ActiveConcert {
+  setId: string;
+  setName: string;
+  startedBy: string;
+  startedByName: string;
+}
+
 export interface Group {
   id?: string;
   name: string;
@@ -270,6 +277,7 @@ export interface Group {
   memberIds: string[];
   roles: Record<string, GroupRole>;
   linkedSheetIds: string[];   // grilles publiques référencées (lecture seule)
+  activeConcert?: ActiveConcert;
   createdAt: Date;
   updatedAt: Date;
 }
