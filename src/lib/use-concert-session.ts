@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { doc, onSnapshot, setDoc, updateDoc, serverTimestamp, deleteField, Timestamp } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc, updateDoc, serverTimestamp, deleteField } from 'firebase/firestore';
 import { getDb } from './firebase';
 import { useAuth } from './auth-context';
 
@@ -38,13 +38,13 @@ export function useConcertSession(
 
     const unsub = onSnapshot(sessionRef, (snap) => {
       if (snap.exists()) {
-        const data = snap.data({ serverTimestamps: 'estimate' });
+        const data = snap.data();
         if (!pendingRef.current) {
           setCurrentIndex(data.currentSheetIndex as number);
         }
-        const as = data.autoScroll as { startTime: Timestamp; sheetIndex: number; bpm: number } | undefined;
-        if (as?.startTime) {
-          setAutoScroll({ startTimeMs: as.startTime.toMillis(), sheetIndex: as.sheetIndex, bpm: as.bpm });
+        const as = data.autoScroll as { startTimeMs: number; sheetIndex: number; bpm: number } | undefined;
+        if (as?.startTimeMs) {
+          setAutoScroll({ startTimeMs: as.startTimeMs, sheetIndex: as.sheetIndex, bpm: as.bpm });
         } else {
           setAutoScroll(null);
         }
@@ -79,7 +79,7 @@ export function useConcertSession(
       groupId,
       setId,
       currentSheetIndex: sheetIndex,
-      autoScroll: { startTime: serverTimestamp(), sheetIndex, bpm },
+      autoScroll: { startTimeMs: Date.now(), sheetIndex, bpm },
       updatedBy: user.id,
       updatedAt: serverTimestamp(),
     }, { merge: true });
