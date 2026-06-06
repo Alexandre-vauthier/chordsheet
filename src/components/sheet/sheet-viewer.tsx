@@ -67,17 +67,21 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   const getColor = useChordColor();
   const { user, updateUser } = useAuth();
   const [showInlineDiagram, setShowInlineDiagram] = useState(() => user?.showInlineDiagram ?? false);
-  const [instrumentId, setInstrumentId] = useState<InstrumentId>(
-    () => getSavedInstrument(sheet.instrumentId || 'guitar')
-  );
+  const [instrumentId, setInstrumentId] = useState<InstrumentId>(() => {
+    // Priorité 1 : instrument explicite de la grille
+    if (sheet.instrumentId) return sheet.instrumentId;
+    // Priorité 2 : dernier choix local (localStorage) — user pas encore dispo au montage
+    return getSavedInstrument('guitar');
+  });
 
-  // Appliquer la préférence du profil si aucun choix local (premier appareil / nouveau navigateur)
+  // Priorité 2 bis : préférence profil, une fois le user chargé
+  // (remplace le localStorage uniquement si la grille n'a pas d'instrument propre)
   useEffect(() => {
-    if (user?.preferredInstrument && !hasLocalInstrument()) {
+    if (!sheet.instrumentId && user?.preferredInstrument) {
       setInstrumentId(user.preferredInstrument);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.preferredInstrument]);
+  }, [user?.preferredInstrument, sheet.instrumentId]);
 
   const handleInstrumentChange = (id: InstrumentId) => {
     setInstrumentId(id);
