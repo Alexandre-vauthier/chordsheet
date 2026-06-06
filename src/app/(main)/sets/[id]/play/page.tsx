@@ -24,9 +24,21 @@ function calculateConcertCell(
   startTimeMs: number,
   bpm: number,
   tempoUnit?: 'quarter' | 'eighth'
-): { sectionIdx: number; rowIdx: number; cellIdx: number; remainingMs: number } | null {
+): { sectionIdx: number; rowIdx: number; cellIdx: number; remainingMs: number; preLaunch?: boolean } | null {
   const elapsed = Date.now() - startTimeMs;
-  if (elapsed < 0) return null;
+
+  // Pré-lancement : trouver la première cellule pour la mettre en évidence statiquement
+  if (elapsed < 0) {
+    for (let si = 0; si < sections.length; si++) {
+      for (let ri = 0; ri < sections[si].rows.length; ri++) {
+        for (let ci = 0; ci < sections[si].rows[ri].length; ci++) {
+          if (sections[si].rows[ri][ci].chord)
+            return { sectionIdx: si, rowIdx: ri, cellIdx: ci, remainingMs: 0, preLaunch: true };
+        }
+      }
+    }
+    return null;
+  }
 
   const factor = tempoUnit === 'eighth' ? 0.5 : 1;
   const beatMs = (60000 / bpm) * factor;
@@ -171,11 +183,13 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
   } | null>(null);
   const rafRef = useRef<number>(0);
   const prevConcertPathRef = useRef<{ sectionIdx: number; rowIdx: number; cellIdx: number } | null>(null);
+  const prevPreLaunchRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (!autoScroll || autoScroll.sheetIndex !== currentIndex || !currentSheet) {
       setConcertCellPath(null);
       prevConcertPathRef.current = null;
+      prevPreLaunchRef.current = false;
       cancelAnimationFrame(rafRef.current);
       return;
     }
@@ -192,11 +206,14 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
         prevConcertPathRef.current = null;
         return;
       }
-      const { remainingMs, ...path } = result;
+      const { remainingMs, preLaunch, ...path } = result;
       const prev = prevConcertPathRef.current;
-      if (!prev || prev.sectionIdx !== path.sectionIdx || prev.rowIdx !== path.rowIdx || prev.cellIdx !== path.cellIdx) {
+      const pathChanged = !prev || prev.sectionIdx !== path.sectionIdx || prev.rowIdx !== path.rowIdx || prev.cellIdx !== path.cellIdx;
+      const launchStateChanged = (preLaunch ?? false) !== prevPreLaunchRef.current;
+      if (pathChanged || launchStateChanged) {
         setConcertCellPath({ ...path, durationMs: remainingMs });
         prevConcertPathRef.current = path;
+        prevPreLaunchRef.current = preLaunch ?? false;
       }
       rafRef.current = requestAnimationFrame(tick);
     };
