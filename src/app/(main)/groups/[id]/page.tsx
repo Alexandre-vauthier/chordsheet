@@ -154,8 +154,8 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
         getDocs(query(collection(db, 'sheets'), where('ownerId', '==', user.id), orderBy('updatedAt', 'desc'))).catch(() =>
           getDocs(query(collection(db, 'sheets'), where('ownerId', '==', user.id)))
         ),
-        getDocs(query(collection(db, 'sheets'), where('isPublic', '==', true), orderBy('updatedAt', 'desc'), limit(50))).catch(() =>
-          getDocs(query(collection(db, 'sheets'), where('isPublic', '==', true), limit(50)))
+        getDocs(query(collection(db, 'sheets'), where('isPublic', '==', true), orderBy('updatedAt', 'desc'), limit(300))).catch(() =>
+          getDocs(query(collection(db, 'sheets'), where('isPublic', '==', true), limit(300)))
         ),
       ]);
 
