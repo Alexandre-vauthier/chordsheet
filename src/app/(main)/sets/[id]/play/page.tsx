@@ -8,6 +8,7 @@ import { useSet } from '@/lib/use-sets';
 import { useConcertSession } from '@/lib/use-concert-session';
 import { useGroups } from '@/lib/use-groups';
 import { parseTempo } from '@/lib/use-playback';
+import { playMetronomeTick } from '@/lib/chord-audio';
 import { SheetViewer } from '@/components/sheet/sheet-viewer';
 import { Button } from '@/components/ui/button';
 import type { Section } from '@/types';
@@ -87,10 +88,18 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
 
   const currentSheet = sheets[currentIndex];
 
-  // ── Batteur : count-in ──────────────────────────────────────────────────────
+  // ── Batteur : count-in + métronome ─────────────────────────────────────────
   const [countBeat, setCountBeat] = useState(0); // 0 = inactif, 1-8 = décompte
   const countTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const metronomeRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopMetronome = useCallback(() => {
+    if (metronomeRef.current) {
+      clearInterval(metronomeRef.current);
+      metronomeRef.current = null;
+    }
+  }, []);
 
   const cancelCountIn = useCallback(() => {
     countTimersRef.current.forEach(clearTimeout);
@@ -98,7 +107,8 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
     setCountBeat(0);
     audioCtxRef.current?.close().catch(() => {});
     audioCtxRef.current = null;
-  }, []);
+    stopMetronome();
+  }, [stopMetronome]);
 
   const startCountIn = useCallback(() => {
     if (!currentSheet || !isGroupSet || !isDrummer) return;
@@ -135,14 +145,22 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
       countTimersRef.current.push(t);
     }
 
-    // Après 8 temps : lancer l'auto-scroll pour tous
+    // Après 8 temps : lancer l'auto-scroll + démarrer le métronome continu
     const endT = setTimeout(() => {
       setCountBeat(0);
       const finalBpm = parseTempo(currentSheet.tempo || '90');
       startAutoScroll(currentIndex, finalBpm);
+      // Métronome continu pour le batteur
+      const beatsPerMeasure = currentSheet.sections[0]?.beatsPerMeasure || 4;
+      let beat = 0;
+      stopMetronome();
+      metronomeRef.current = setInterval(() => {
+        playMetronomeTick(beat === 0);
+        beat = (beat + 1) % beatsPerMeasure;
+      }, msPerBeat);
     }, 8 * msPerBeat);
     countTimersRef.current.push(endT);
-  }, [currentSheet, isGroupSet, isDrummer, currentIndex, startAutoScroll, cancelCountIn]);
+  }, [currentSheet, isGroupSet, isDrummer, currentIndex, startAutoScroll, cancelCountIn, stopMetronome]);
 
   // Cleanup au démontage
   useEffect(() => () => cancelCountIn(), [cancelCountIn]);
@@ -338,7 +356,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
               </>
             ) : isAutoScrollActive ? (
               <button
-                onClick={() => stopAutoScroll().catch(() => {})}
+                onClick={() => { stopMetronome(); stopAutoScroll().catch(() => {}); }}
                 className="flex items-center gap-2 px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
               >
                 <span className="w-2 h-2 rounded bg-white" />
