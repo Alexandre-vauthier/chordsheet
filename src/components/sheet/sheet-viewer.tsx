@@ -759,6 +759,7 @@ function ViewerChordCell({
   const minSpanForInline = instrumentId === 'piano' ? 1 : 0.5;
   const inlineDiagramChord = showInlineDiagram && span >= minSpanForInline ? displayChord : null;
   const numStrings = INSTRUMENT_CONFIG[instrumentId]?.strings ?? 6;
+  const diagramHorizontal = instrumentId === 'percussion';
 
   return (
     <div
@@ -814,7 +815,7 @@ function ViewerChordCell({
             title="Cliquer pour écouter"
           >
             {!isPianoChord(inlineDiagramChord) ? (
-              <ChordDiagram chord={inlineDiagramChord} size="xs" numStrings={numStrings} />
+              <ChordDiagram chord={inlineDiagramChord} size="xs" numStrings={numStrings} horizontal={diagramHorizontal} />
             ) : (
               <PianoKeyboard chord={inlineDiagramChord} />
             )}
@@ -845,7 +846,7 @@ function ViewerChordCell({
               title="Cliquer pour écouter"
             >
               {!isPianoChord(displayChord) ? (
-                <ChordDiagram chord={displayChord} size="sm" numStrings={numStrings} />
+                <ChordDiagram chord={displayChord} size="sm" numStrings={numStrings} horizontal={diagramHorizontal} />
               ) : (
                 <PianoKeyboard chord={displayChord} />
               )}
