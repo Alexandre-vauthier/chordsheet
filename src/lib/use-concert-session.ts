@@ -75,9 +75,8 @@ export function useConcertSession(
   const startAutoScroll = useCallback(async (sheetIndex: number, bpm: number) => {
     if (!setId || !groupId || !user) return;
     const db = getDb();
-    // Délai de 350ms pour que tous les clients reçoivent la notification Firestore
-    // avant que le défilement commence (latence typique : 50-200ms)
-    const startTimeMs = Date.now() + 350;
+    // Délai pour compenser la latence Firestore (~100ms en pratique)
+    const startTimeMs = Date.now() + 150;
     await setDoc(doc(db, 'concertSessions', setId), {
       groupId,
       setId,
