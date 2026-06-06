@@ -47,7 +47,7 @@ export function ChordDiagram({
 
   // ── Rendu horizontal (paysage) : cordes = lignes horizontales, frettes = lignes verticales ─
   if (horizontal) {
-    // Cas percussion (numStrings=0) : afficher les barres de frettes en paysage
+    // Cas percussion (numStrings=0) : 5 barres verticales en paysage (|||||)
     if (numStrings === 0) {
       const W_P = xs ? 80 : sm ? 120 : 170;
       const H_P = xs ? 36 : sm ? 54  : 76;
@@ -55,7 +55,7 @@ export function ChordDiagram({
       const X2  = W_P - X1;
       const Y1  = xs ? 6  : sm ? 9   : 13;
       const Y2  = H_P - (xs ? 6 : sm ? 9 : 13);
-      const BAR_STEP = (Y2 - Y1) / 4;
+      const BAR_STEP = (X2 - X1) / 4;
       return (
         <svg
           width={W_P}
@@ -68,8 +68,8 @@ export function ChordDiagram({
           {Array.from({ length: 5 }).map((_, i) => (
             <line
               key={i}
-              x1={X1} y1={Y1 + i * BAR_STEP}
-              x2={X2} y2={Y1 + i * BAR_STEP}
+              x1={X1 + i * BAR_STEP} y1={Y1}
+              x2={X1 + i * BAR_STEP} y2={Y2}
               stroke="#aaa" strokeWidth={sm ? 1 : 1.2}
             />
           ))}
