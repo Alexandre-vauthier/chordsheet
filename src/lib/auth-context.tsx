@@ -73,6 +73,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             createdAt: userData.createdAt?.toDate() || new Date(),
             updatedAt: userData.updatedAt?.toDate() || new Date(),
           });
+          // Enregistrer la date de dernière visite (silencieux)
+          setDoc(doc(db, 'users', fbUser.uid), { lastVisitAt: serverTimestamp() }, { merge: true }).catch(() => {});
           // Appliquer le thème dès le chargement
           document.documentElement.setAttribute('data-theme', (userData.darkMode ?? false) ? 'dark' : 'light');
         } else {

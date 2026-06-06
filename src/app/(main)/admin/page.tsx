@@ -21,6 +21,8 @@ interface UserWithStats extends Omit<User, 'createdAt' | 'updatedAt'> {
   createdAt: Date;
   updatedAt: Date;
   sheetsCount: number;
+  setsCount: number;
+  lastVisitAt: Date | null;
 }
 
 interface SheetWithOwner extends Sheet {
@@ -76,7 +78,14 @@ export default function AdminPage() {
           sheetsByUser[ownerId] = (sheetsByUser[ownerId] || 0) + 1;
         });
 
-        // Liste des utilisateurs avec leur nombre de grilles
+        // Compter les sets par utilisateur
+        const setsByUser: Record<string, number> = {};
+        setsSnap.docs.forEach(doc => {
+          const ownerId = doc.data().ownerId;
+          setsByUser[ownerId] = (setsByUser[ownerId] || 0) + 1;
+        });
+
+        // Liste des utilisateurs avec leurs stats
         const usersData: UserWithStats[] = usersSnap.docs.map(doc => {
           const data = doc.data();
           return {
@@ -88,6 +97,8 @@ export default function AdminPage() {
             createdAt: data.createdAt?.toDate() || new Date(),
             updatedAt: data.updatedAt?.toDate() || new Date(),
             sheetsCount: sheetsByUser[doc.id] || 0,
+            setsCount: setsByUser[doc.id] || 0,
+            lastVisitAt: data.lastVisitAt?.toDate() || null,
           };
         });
 
@@ -193,7 +204,9 @@ export default function AdminPage() {
                 <th className="text-left py-2 px-3 font-medium text-[var(--ink-light)]">Email</th>
                 <th className="text-center py-2 px-3 font-medium text-[var(--ink-light)]">Rôle</th>
                 <th className="text-center py-2 px-3 font-medium text-[var(--ink-light)]">Grilles</th>
+                <th className="text-center py-2 px-3 font-medium text-[var(--ink-light)]">Sets</th>
                 <th className="text-left py-2 px-3 font-medium text-[var(--ink-light)]">Inscrit le</th>
+                <th className="text-left py-2 px-3 font-medium text-[var(--ink-light)]">Dernière visite</th>
               </tr>
             </thead>
             <tbody>
@@ -220,8 +233,12 @@ export default function AdminPage() {
                     )}
                   </td>
                   <td className="py-3 px-3 text-center font-mono">{u.sheetsCount}</td>
+                  <td className="py-3 px-3 text-center font-mono">{u.setsCount}</td>
                   <td className="py-3 px-3 text-[var(--ink-light)]">
                     {u.createdAt.toLocaleDateString('fr-FR')}
+                  </td>
+                  <td className="py-3 px-3 text-[var(--ink-light)]">
+                    {u.lastVisitAt ? u.lastVisitAt.toLocaleDateString('fr-FR') : <span className="text-[var(--ink-faint)]">—</span>}
                   </td>
                 </tr>
               ))}
