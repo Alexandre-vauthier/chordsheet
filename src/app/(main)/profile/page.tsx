@@ -332,6 +332,8 @@ export default function ProfilePage() {
             { id: 'piano',    label: 'Piano' },
             { id: 'mandolin', label: 'Mandoline' },
             { id: 'banjo',    label: 'Banjo' },
+            { id: 'bass',     label: 'Basse' },
+            { id: 'voice',    label: 'Voix' },
           ] as { id: InstrumentId; label: string }[]).map(({ id, label }) => (
             <button
               key={id}
