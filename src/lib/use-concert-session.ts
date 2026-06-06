@@ -38,7 +38,7 @@ export function useConcertSession(
 
     const unsub = onSnapshot(sessionRef, (snap) => {
       if (snap.exists()) {
-        const data = snap.data();
+        const data = snap.data({ serverTimestamps: 'estimate' });
         if (!pendingRef.current) {
           setCurrentIndex(data.currentSheetIndex as number);
         }
