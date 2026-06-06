@@ -21,6 +21,8 @@ export default function NewSheetPage() {
     if (!user) return;
 
     const forkFrom = searchParams.get('forkFrom');
+    const groupId = searchParams.get('groupId') || undefined;
+
     if (forkFrom) {
       // Charger la grille source
       const db = getDb();
@@ -34,15 +36,16 @@ export default function NewSheetPage() {
             ownerName: user.displayName,
             isPublic: false,
             forkedFrom: source.id,
+            groupId,
           });
         } else {
-          setInitialSheet(createEmptySheet(user.id, user.displayName));
+          setInitialSheet({ ...createEmptySheet(user.id, user.displayName), groupId });
         }
       }).catch(() => {
-        setInitialSheet(createEmptySheet(user.id, user.displayName));
+        setInitialSheet({ ...createEmptySheet(user.id, user.displayName), groupId });
       });
     } else {
-      setInitialSheet(createEmptySheet(user.id, user.displayName));
+      setInitialSheet({ ...createEmptySheet(user.id, user.displayName), groupId });
     }
   }, [user, searchParams]);
 

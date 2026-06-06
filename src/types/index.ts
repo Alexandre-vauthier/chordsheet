@@ -184,6 +184,8 @@ export interface Sheet {
   unlistedBySetIds?: string[]; // IDs des sets publics qui ont rendu cette grille non répertoriée
   // V9 - Paroles (instrument Voix)
   lyrics?: string;
+  // V10 - Groupe de musique
+  groupId?: string;
 }
 
 // Type pour la création d'une nouvelle grille

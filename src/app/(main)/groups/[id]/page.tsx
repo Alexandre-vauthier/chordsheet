@@ -3,11 +3,12 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
+import { fromFirestore } from '@/lib/firestore-helpers';
 import { useAuth } from '@/lib/auth-context';
 import { useGroups } from '@/lib/use-groups';
-import type { Group, GroupRole } from '@/types';
+import type { Group, GroupRole, Sheet } from '@/types';
 
 interface MemberInfo {
   id: string;
@@ -37,6 +38,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
 
   const [group, setGroup] = useState<Group | null>(null);
   const [members, setMembers] = useState<MemberInfo[]>([]);
+  const [sheets, setSheets] = useState<Sheet[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteLink, setInviteLink] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
@@ -68,6 +70,21 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
         })
       );
       setMembers(memberProfiles);
+
+      // Charger les grilles du groupe
+      try {
+        const sheetsSnap = await getDocs(
+          query(collection(db, 'sheets'), where('groupId', '==', snap.id), orderBy('updatedAt', 'desc'))
+        );
+        setSheets(sheetsSnap.docs.map(d => fromFirestore(d.id, d.data() as Record<string, unknown>)));
+      } catch {
+        // Index manquant : fallback sans tri
+        const sheetsSnap = await getDocs(
+          query(collection(db, 'sheets'), where('groupId', '==', snap.id))
+        );
+        setSheets(sheetsSnap.docs.map(d => fromFirestore(d.id, d.data() as Record<string, unknown>)));
+      }
+
       setLoading(false);
     });
   }, [groupId]);
@@ -203,6 +220,46 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
             </div>
           ))}
         </div>
+      </section>
+
+      {/* Grilles du groupe */}
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-[var(--ink-light)] uppercase tracking-wide">
+            Grilles ({sheets.length})
+          </h2>
+          <Link
+            href={`/sheet/new?groupId=${groupId}`}
+            className="text-xs px-3 py-1.5 bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors"
+          >
+            + Nouvelle grille
+          </Link>
+        </div>
+        {sheets.length === 0 ? (
+          <p className="text-sm text-[var(--ink-faint)] py-4 text-center">
+            Aucune grille pour l&apos;instant. Créez la première grille du groupe !
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {sheets.map(sheet => (
+              <Link
+                key={sheet.id}
+                href={`/sheet/${sheet.id}`}
+                className="flex items-center justify-between px-4 py-3 bg-[var(--cell-bg)] border border-[var(--line)] rounded-lg hover:border-[var(--accent)] transition-colors"
+              >
+                <div className="min-w-0">
+                  <div className="text-sm font-medium text-[var(--ink)] truncate">{sheet.title}</div>
+                  <div className="text-xs text-[var(--ink-faint)] truncate">{sheet.artist}</div>
+                </div>
+                {sheet.key && (
+                  <span className="shrink-0 text-xs text-[var(--ink-faint)] bg-[var(--paper)] border border-[var(--line)] px-2 py-0.5 rounded-full ml-3">
+                    {sheet.key}
+                  </span>
+                )}
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Invitation */}

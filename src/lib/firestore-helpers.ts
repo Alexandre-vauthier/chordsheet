@@ -161,6 +161,9 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
   if (sheet.lyrics) {
     (base as unknown as Record<string, unknown>).lyrics = sheet.lyrics;
   }
+  if (sheet.groupId) {
+    (base as unknown as Record<string, unknown>).groupId = sheet.groupId;
+  }
 
   return base;
 }
@@ -209,6 +212,8 @@ export function fromFirestore(
     unlistedBySetIds: (data.unlistedBySetIds as string[]) || undefined,
     // V9 - Paroles
     lyrics: (data.lyrics as string) || undefined,
+    // V10 - Groupe
+    groupId: (data.groupId as string) || undefined,
     // V3+ - Diagrammes d'accords & référence
     referenceUrl: (data.referenceUrl as string) || undefined,
     instrumentId: (data.instrumentId as InstrumentId) || undefined,
