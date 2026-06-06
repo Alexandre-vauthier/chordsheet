@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useSets } from '@/lib/use-sets';
 import { useSetBookmarks } from '@/lib/use-set-bookmarks';
+import { useGroups } from '@/lib/use-groups';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createEmptySet } from '@/types';
@@ -15,6 +16,8 @@ export default function SetsPage() {
   const { user } = useAuth();
   const { sets, isLoading, createSet, deleteSet } = useSets(user?.id);
   const { bookmarkedSets, removeBookmark: removeSetBookmark } = useSetBookmarks(user?.id);
+  const { groups } = useGroups();
+  const groupNameById = Object.fromEntries(groups.map(g => [g.id, g.name]));
   const [isCreating, setIsCreating] = useState(false);
   const [newSetName, setNewSetName] = useState('');
 
@@ -106,8 +109,8 @@ export default function SetsPage() {
                   <div className="flex items-center gap-1.5 ml-2 shrink-0">
                     {set.groupId && (
                       <Link href={`/groups/${set.groupId}`}
-                        className="px-1.5 py-0.5 bg-[var(--accent-soft)] text-[var(--accent)] rounded text-[10px] uppercase tracking-wider hover:bg-[var(--accent)] hover:text-white transition-colors">
-                        Groupe
+                        className="px-1.5 py-0.5 bg-[var(--accent-soft)] text-[var(--accent)] rounded text-[10px] tracking-wider hover:bg-[var(--accent)] hover:text-white transition-colors">
+                        {groupNameById[set.groupId] ?? 'Groupe'}
                       </Link>
                     )}
                     {set.isPublic && (
