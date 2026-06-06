@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { collection, query, where, orderBy, getDocs, getDoc, doc } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
@@ -26,7 +26,7 @@ export default function SetPage({ params }: SetPageProps) {
   const { user } = useAuth();
   const { set, sheets, isLoading, error } = useSet(id);
   const { updateSet, updateSetVisibility, reorderSheets, removeSheetFromSet, addSheetToSet } = useSets(user?.id);
-  const { launchConcert } = useGroups();
+  const { launchConcert, groups } = useGroups();
   const { bookmarkedSheets } = useBookmarks(user?.id);
   const { isBookmarked: isSetBookmarked, toggleBookmark: toggleSetBookmark } = useSetBookmarks(user?.id);
 
@@ -166,21 +166,9 @@ export default function SetPage({ params }: SetPageProps) {
     return true;
   });
 
-  // Vérifier si l'utilisateur est le propriétaire ou membre du groupe
+  // useGroups() est déjà abonné en temps réel — pas besoin de getDoc séparé
   const isOwner = user?.id === set?.ownerId;
-  const [isGroupMember, setIsGroupMember] = useState(false);
-
-  useEffect(() => {
-    if (!set?.groupId || !user) return;
-    const db = getDb();
-    getDoc(doc(db, 'groups', set.groupId)).then(snap => {
-      if (snap.exists()) {
-        const memberIds = (snap.data().memberIds as string[]) || [];
-        setIsGroupMember(memberIds.includes(user.id));
-      }
-    }).catch(() => {});
-  }, [set?.groupId, user]);
-
+  const isGroupMember = groups.some(g => g.id === set?.groupId);
   const canEdit = isOwner || isGroupMember;
 
   if (isLoading) {
@@ -247,8 +235,12 @@ export default function SetPage({ params }: SetPageProps) {
             {set.groupId && isGroupMember && (
               <button
                 onClick={async () => {
-                  await launchConcert(set.groupId!, id, set.name);
-                  router.push(`/sets/${id}/play`);
+                  try {
+                    await launchConcert(set.groupId!, id, set.name);
+                    router.push(`/sets/${id}/play`);
+                  } catch (err) {
+                    alert('Erreur : ' + (err instanceof Error ? err.message : String(err)));
+                  }
                 }}
                 className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
               >
@@ -309,8 +301,12 @@ export default function SetPage({ params }: SetPageProps) {
             {set.groupId && isGroupMember && (
               <button
                 onClick={async () => {
-                  await launchConcert(set.groupId!, id, set.name);
-                  router.push(`/sets/${id}/play`);
+                  try {
+                    await launchConcert(set.groupId!, id, set.name);
+                    router.push(`/sets/${id}/play`);
+                  } catch (err) {
+                    alert('Erreur : ' + (err instanceof Error ? err.message : String(err)));
+                  }
                 }}
                 className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
               >
