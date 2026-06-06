@@ -275,22 +275,18 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
         )}
       </div>
 
-      {/* Debug temporaire */}
-      <div className="text-[10px] text-red-500 px-4 py-1 print:hidden bg-red-50">
-        isGroupSet:{String(isGroupSet)} | isDrummer:{String(isDrummer)} | instrument:{user?.preferredInstrument ?? 'none'} | groupId:{set?.groupId ?? 'none'}
-      </div>
-
-      {/* Contrôles batteur — uniquement pour le percussionniste en set de groupe */}
-      {isGroupSet && isDrummer && (
-        <div className="bg-[var(--cell-bg)] border-t border-[var(--line)] py-2 px-4 print:hidden">
-          <div className="max-w-4xl mx-auto flex items-center justify-center gap-4">
+      {/* Barre de navigation bas (sticky) — inclut les contrôles batteur */}
+      <div className="bg-[var(--cell-bg)] border-t border-[var(--line)] print:hidden sticky bottom-0">
+        {/* Rangée batteur */}
+        {isGroupSet && isDrummer && (
+          <div className="border-b border-[var(--line)] py-2 px-4 flex items-center justify-center gap-4">
             {countBeat > 0 ? (
               <>
                 <div className="flex gap-1.5">
                   {[1, 2, 3, 4, 5, 6, 7, 8].map(b => (
                     <div
                       key={b}
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all duration-100 ${
+                      className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-100 ${
                         b === countBeat
                           ? 'bg-red-500 text-white scale-125'
                           : b < countBeat
@@ -304,7 +300,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
                 </div>
                 <button
                   onClick={startCountIn}
-                  className="px-3 py-1.5 text-xs rounded-lg border border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)] transition-colors"
+                  className="px-3 py-1 text-xs rounded-lg border border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)] transition-colors"
                 >
                   ↺ Recommencer
                 </button>
@@ -312,27 +308,25 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
             ) : isAutoScrollActive ? (
               <button
                 onClick={() => stopAutoScroll().catch(() => {})}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
               >
-                <span className="w-2.5 h-2.5 rounded bg-white" />
+                <span className="w-2 h-2 rounded bg-white" />
                 Arrêter
               </button>
             ) : (
               <button
                 onClick={startCountIn}
-                className="flex items-center gap-2 px-4 py-2 bg-[var(--accent)] hover:opacity-90 text-white rounded-lg text-sm font-medium transition-colors"
+                className="flex items-center gap-2 px-4 py-1.5 bg-[var(--accent)] hover:opacity-90 text-white rounded-lg text-sm font-medium transition-colors"
               >
-                <span className="text-base leading-none">▶</span>
+                <span className="text-sm leading-none">▶</span>
                 Play
               </button>
             )}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Barre de navigation bas */}
-      <div className="bg-[var(--cell-bg)] border-t border-[var(--line)] py-4 px-6 print:hidden sticky bottom-0">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
+        {/* Rangée navigation */}
+        <div className="py-4 px-6 max-w-4xl mx-auto flex items-center justify-between">
           <Button
             variant="ghost"
             onClick={() => setIndex(currentIndex - 1)}
@@ -360,7 +354,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
             Suivant →
           </Button>
         </div>
-      </div>
+      </div> {/* fin sticky bottom */}
 
       <div className="fixed bottom-20 right-4 text-xs text-[var(--ink-faint)] print:hidden">
         <kbd className="px-1.5 py-0.5 bg-[var(--line)] rounded">←</kbd> / <kbd className="px-1.5 py-0.5 bg-[var(--line)] rounded">→</kbd> pour naviguer
