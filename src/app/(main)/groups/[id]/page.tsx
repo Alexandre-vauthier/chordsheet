@@ -3,7 +3,9 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { doc, getDoc, collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import {
+  doc, getDoc, collection, query, where, getDocs, orderBy, updateDoc, deleteField, serverTimestamp,
+} from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
 import { useAuth } from '@/lib/auth-context';
@@ -40,14 +42,26 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
   const [members, setMembers] = useState<MemberInfo[]>([]);
   const [sheets, setSheets] = useState<Sheet[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Invitation
   const [inviteLink, setInviteLink] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
+
+  // Rattachement de grille existante
+  const [showAttach, setShowAttach] = useState(false);
+  const [attachSearch, setAttachSearch] = useState('');
+  const [mySheets, setMySheets] = useState<Sheet[]>([]);
+  const [mySheetLoading, setMySheetLoading] = useState(false);
+  const [attachLoading, setAttachLoading] = useState<string | null>(null);
+
   const [actionError, setActionError] = useState('');
 
   const isLeader = user && group ? group.roles[user.id] === 'leader' : false;
   const isOwner = user && group ? group.ownerId === user.id : false;
+  const isMember = user && group ? group.memberIds.includes(user.id) : false;
 
+  // Chargement initial
   useEffect(() => {
     if (!groupId) return;
     const db = getDb();
@@ -56,7 +70,6 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
       const g = groupFromDoc(snap.id, snap.data() as Record<string, unknown>);
       setGroup(g);
 
-      // Charger les infos des membres
       const memberProfiles = await Promise.all(
         g.memberIds.map(async (uid) => {
           const userSnap = await getDoc(doc(db, 'users', uid));
@@ -71,14 +84,12 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
       );
       setMembers(memberProfiles);
 
-      // Charger les grilles du groupe
       try {
         const sheetsSnap = await getDocs(
           query(collection(db, 'sheets'), where('groupId', '==', snap.id), orderBy('updatedAt', 'desc'))
         );
         setSheets(sheetsSnap.docs.map(d => fromFirestore(d.id, d.data() as Record<string, unknown>)));
       } catch {
-        // Index manquant : fallback sans tri
         const sheetsSnap = await getDocs(
           query(collection(db, 'sheets'), where('groupId', '==', snap.id))
         );
@@ -89,13 +100,75 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
     });
   }, [groupId]);
 
+  // Charger les grilles de l'utilisateur (pour le panneau de rattachement)
+  const loadMySheets = async () => {
+    if (!user) return;
+    setMySheetLoading(true);
+    const db = getDb();
+    try {
+      const snap = await getDocs(
+        query(collection(db, 'sheets'), where('ownerId', '==', user.id), orderBy('updatedAt', 'desc'))
+      );
+      const all = snap.docs.map(d => fromFirestore(d.id, d.data() as Record<string, unknown>));
+      // Exclure celles déjà dans ce groupe
+      setMySheets(all.filter(s => s.groupId !== groupId));
+    } catch {
+      const snap = await getDocs(
+        query(collection(db, 'sheets'), where('ownerId', '==', user.id))
+      );
+      const all = snap.docs.map(d => fromFirestore(d.id, d.data() as Record<string, unknown>));
+      setMySheets(all.filter(s => s.groupId !== groupId));
+    } finally {
+      setMySheetLoading(false);
+    }
+  };
+
+  const handleOpenAttach = () => {
+    setShowAttach(true);
+    setAttachSearch('');
+    loadMySheets();
+  };
+
+  const handleAttach = async (sheet: Sheet) => {
+    if (!sheet.id) return;
+    setAttachLoading(sheet.id);
+    try {
+      const db = getDb();
+      await updateDoc(doc(db, 'sheets', sheet.id), {
+        groupId,
+        updatedAt: serverTimestamp(),
+      });
+      const updated = { ...sheet, groupId };
+      setSheets(prev => [updated, ...prev]);
+      setMySheets(prev => prev.filter(s => s.id !== sheet.id));
+    } catch {
+      setActionError('Erreur lors du rattachement.');
+    } finally {
+      setAttachLoading(null);
+    }
+  };
+
+  const handleDetach = async (sheet: Sheet) => {
+    if (!sheet.id) return;
+    if (!confirm(`Retirer "${sheet.title}" du groupe ?`)) return;
+    try {
+      const db = getDb();
+      await updateDoc(doc(db, 'sheets', sheet.id), {
+        groupId: deleteField(),
+        updatedAt: serverTimestamp(),
+      });
+      setSheets(prev => prev.filter(s => s.id !== sheet.id));
+    } catch {
+      setActionError('Erreur lors du retrait.');
+    }
+  };
+
   const handleGenerateInvite = async () => {
     if (!group) return;
     setInviteLoading(true);
     try {
       const token = await generateInviteToken(group.id!, group.name);
-      const link = `${window.location.origin}/join/${token}`;
-      setInviteLink(link);
+      setInviteLink(`${window.location.origin}/join/${token}`);
     } catch {
       setActionError('Erreur lors de la génération du lien.');
     } finally {
@@ -139,6 +212,10 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
     }
   };
 
+  const filteredMySheets = mySheets.filter(s =>
+    !attachSearch || `${s.title} ${s.artist}`.toLowerCase().includes(attachSearch.toLowerCase())
+  );
+
   if (loading) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
@@ -164,13 +241,11 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
         <Link href="/groups" className="text-sm text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors">
           ← Mes groupes
         </Link>
-        <div className="mt-2 flex items-start justify-between gap-4">
-          <div>
-            <h1 className="font-playfair text-2xl font-bold text-[var(--ink)]">{group.name}</h1>
-            {group.description && (
-              <p className="text-[var(--ink-light)] mt-1">{group.description}</p>
-            )}
-          </div>
+        <div className="mt-2">
+          <h1 className="font-playfair text-2xl font-bold text-[var(--ink)]">{group.name}</h1>
+          {group.description && (
+            <p className="text-[var(--ink-light)] mt-1">{group.description}</p>
+          )}
         </div>
       </div>
 
@@ -228,35 +303,100 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
           <h2 className="text-sm font-semibold text-[var(--ink-light)] uppercase tracking-wide">
             Grilles ({sheets.length})
           </h2>
-          <Link
-            href={`/sheet/new?groupId=${groupId}`}
-            className="text-xs px-3 py-1.5 bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors"
-          >
-            + Nouvelle grille
-          </Link>
+          <div className="flex gap-2">
+            {isMember && (
+              <button
+                onClick={handleOpenAttach}
+                className="text-xs px-3 py-1.5 border border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] rounded-lg transition-colors"
+              >
+                Rattacher une grille
+              </button>
+            )}
+            <Link
+              href={`/sheet/new?groupId=${groupId}`}
+              className="text-xs px-3 py-1.5 bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors"
+            >
+              + Nouvelle grille
+            </Link>
+          </div>
         </div>
+
+        {/* Panneau de rattachement */}
+        {showAttach && (
+          <div className="mb-4 p-4 bg-[var(--paper)] border border-[var(--accent)]/30 rounded-xl space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-[var(--ink)]">Rattacher une de tes grilles</p>
+              <button onClick={() => setShowAttach(false)} className="text-[var(--ink-faint)] hover:text-[var(--ink)] text-lg leading-none">×</button>
+            </div>
+            <input
+              type="text"
+              value={attachSearch}
+              onChange={e => setAttachSearch(e.target.value)}
+              placeholder="Rechercher par titre ou artiste…"
+              className="w-full px-3 py-2 text-sm border border-[var(--line)] rounded-lg bg-[var(--cell-bg)] text-[var(--ink)] placeholder:text-[var(--ink-faint)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+            />
+            {mySheetLoading ? (
+              <div className="text-sm text-[var(--ink-faint)] text-center py-3">Chargement…</div>
+            ) : filteredMySheets.length === 0 ? (
+              <p className="text-sm text-[var(--ink-faint)] text-center py-3">
+                {mySheets.length === 0 ? 'Toutes tes grilles sont déjà dans ce groupe.' : 'Aucun résultat.'}
+              </p>
+            ) : (
+              <div className="space-y-1.5 max-h-64 overflow-y-auto">
+                {filteredMySheets.map(sheet => (
+                  <div
+                    key={sheet.id}
+                    className="flex items-center justify-between px-3 py-2.5 bg-[var(--cell-bg)] border border-[var(--line)] rounded-lg"
+                  >
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-[var(--ink)] truncate">{sheet.title}</div>
+                      <div className="text-xs text-[var(--ink-faint)] truncate">{sheet.artist}</div>
+                    </div>
+                    <button
+                      onClick={() => handleAttach(sheet)}
+                      disabled={attachLoading === sheet.id}
+                      className="shrink-0 ml-3 text-xs px-3 py-1 bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50"
+                    >
+                      {attachLoading === sheet.id ? '…' : 'Rattacher'}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {sheets.length === 0 ? (
           <p className="text-sm text-[var(--ink-faint)] py-4 text-center">
-            Aucune grille pour l&apos;instant. Créez la première grille du groupe !
+            Aucune grille pour l&apos;instant.
           </p>
         ) : (
           <div className="space-y-2">
             {sheets.map(sheet => (
-              <Link
+              <div
                 key={sheet.id}
-                href={`/sheet/${sheet.id}`}
-                className="flex items-center justify-between px-4 py-3 bg-[var(--cell-bg)] border border-[var(--line)] rounded-lg hover:border-[var(--accent)] transition-colors"
+                className="flex items-center justify-between px-4 py-3 bg-[var(--cell-bg)] border border-[var(--line)] rounded-lg"
               >
-                <div className="min-w-0">
+                <Link href={`/sheet/${sheet.id}`} className="flex-1 min-w-0 hover:opacity-75 transition-opacity">
                   <div className="text-sm font-medium text-[var(--ink)] truncate">{sheet.title}</div>
                   <div className="text-xs text-[var(--ink-faint)] truncate">{sheet.artist}</div>
+                </Link>
+                <div className="flex items-center gap-2 ml-3 shrink-0">
+                  {sheet.key && (
+                    <span className="text-xs text-[var(--ink-faint)] bg-[var(--paper)] border border-[var(--line)] px-2 py-0.5 rounded-full">
+                      {sheet.key}
+                    </span>
+                  )}
+                  {(isLeader || sheet.ownerId === user?.id) && (
+                    <button
+                      onClick={() => handleDetach(sheet)}
+                      className="text-xs text-[var(--ink-faint)] hover:text-red-500 transition-colors"
+                    >
+                      Retirer
+                    </button>
+                  )}
                 </div>
-                {sheet.key && (
-                  <span className="shrink-0 text-xs text-[var(--ink-faint)] bg-[var(--paper)] border border-[var(--line)] px-2 py-0.5 rounded-full ml-3">
-                    {sheet.key}
-                  </span>
-                )}
-              </Link>
+              </div>
             ))}
           </div>
         )}
