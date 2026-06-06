@@ -4,6 +4,7 @@ import { useState, useEffect, use, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSet } from '@/lib/use-sets';
+import { useConcertSession } from '@/lib/use-concert-session';
 import { SheetViewer } from '@/components/sheet/sheet-viewer';
 import { Button } from '@/components/ui/button';
 
@@ -15,25 +16,42 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
   const { id } = use(params);
   const router = useRouter();
   const { set, sheets, isLoading, error } = useSet(id);
-  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const isGroupSet = !!set?.groupId;
+
+  // Mode synchro (set de groupe) vs mode local (set personnel)
+  const { currentIndex: syncedIndex, isSynced, goToSheet } = useConcertSession(
+    isGroupSet ? id : undefined,
+    isGroupSet ? set?.groupId : undefined
+  );
+  const [localIndex, setLocalIndex] = useState(0);
+
+  const currentIndex = isGroupSet ? syncedIndex : localIndex;
+
+  const setIndex = useCallback((index: number) => {
+    if (isGroupSet) {
+      goToSheet(index);
+    } else {
+      setLocalIndex(index);
+    }
+  }, [isGroupSet, goToSheet]);
 
   const currentSheet = sheets[currentIndex];
   const hasPrevious = currentIndex > 0;
   const hasNext = currentIndex < sheets.length - 1;
 
-  // Navigation au clavier
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        if (hasPrevious) setCurrentIndex((i) => i - 1);
+        if (hasPrevious) setIndex(currentIndex - 1);
       } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
         e.preventDefault();
-        if (hasNext) setCurrentIndex((i) => i + 1);
+        if (hasNext) setIndex(currentIndex + 1);
       } else if (e.key === 'Escape') {
         router.push(`/sets/${id}`);
       }
     },
-    [hasPrevious, hasNext, router, id]
+    [hasPrevious, hasNext, currentIndex, setIndex, router, id]
   );
 
   useEffect(() => {
@@ -53,10 +71,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
     return (
       <div className="max-w-md mx-auto mt-20 text-center">
         <p className="text-red-600 mb-4">{error || 'Set vide ou non trouvé'}</p>
-        <button
-          onClick={() => router.push('/sets')}
-          className="text-[var(--accent)] hover:underline"
-        >
+        <button onClick={() => router.push('/sets')} className="text-[var(--accent)] hover:underline">
           Retour aux sets
         </button>
       </div>
@@ -65,7 +80,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Barre de navigation du set */}
+      {/* Barre de navigation */}
       <div className="bg-[var(--nav-bg)] text-[var(--nav-text)] py-2 px-4 print:hidden sticky top-0 z-50">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -79,7 +94,16 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
             <span className="text-sm font-medium">{set.name}</span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {/* Indicateur de synchro */}
+            {isGroupSet && (
+              <div className="flex items-center gap-1.5">
+                <span className={`w-2 h-2 rounded-full ${isSynced ? 'bg-green-400' : 'bg-yellow-400 animate-pulse'}`} />
+                <span className="text-xs text-[var(--nav-text)]/70">
+                  {isSynced ? 'Synchro' : 'Connexion…'}
+                </span>
+              </div>
+            )}
             <span className="text-sm text-[var(--nav-text)]/70">
               {currentIndex + 1} / {sheets.length}
             </span>
@@ -94,7 +118,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
             {sheets.map((sheet, index) => (
               <button
                 key={sheet.id}
-                onClick={() => setCurrentIndex(index)}
+                onClick={() => setIndex(index)}
                 className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs transition-all
                   ${index === currentIndex
                     ? 'bg-[var(--accent)] text-white'
@@ -108,7 +132,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
         </div>
       </div>
 
-      {/* Contenu de la grille actuelle */}
+      {/* Grille courante */}
       <div className="flex-1">
         {currentSheet && <SheetViewer sheet={currentSheet} />}
       </div>
@@ -118,7 +142,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <Button
             variant="ghost"
-            onClick={() => setCurrentIndex((i) => i - 1)}
+            onClick={() => setIndex(currentIndex - 1)}
             disabled={!hasPrevious}
             className="min-w-[120px]"
           >
@@ -136,7 +160,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
 
           <Button
             variant={hasNext ? 'primary' : 'ghost'}
-            onClick={() => setCurrentIndex((i) => i + 1)}
+            onClick={() => setIndex(currentIndex + 1)}
             disabled={!hasNext}
             className="min-w-[120px]"
           >
@@ -145,7 +169,6 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
         </div>
       </div>
 
-      {/* Indicateur de navigation clavier */}
       <div className="fixed bottom-20 right-4 text-xs text-[var(--ink-faint)] print:hidden">
         <kbd className="px-1.5 py-0.5 bg-[var(--line)] rounded">←</kbd> / <kbd className="px-1.5 py-0.5 bg-[var(--line)] rounded">→</kbd> pour naviguer
       </div>

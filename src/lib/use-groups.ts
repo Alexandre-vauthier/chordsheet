@@ -28,6 +28,7 @@ function groupFromDoc(id: string, data: Record<string, unknown>): Group {
     ownerId: (data.ownerId as string) || '',
     memberIds: (data.memberIds as string[]) || [],
     roles: (data.roles as Record<string, GroupRole>) || {},
+    linkedSheetIds: (data.linkedSheetIds as string[]) || [],
     createdAt: (data.createdAt as { toDate: () => Date })?.toDate?.() || new Date(),
     updatedAt: (data.updatedAt as { toDate: () => Date })?.toDate?.() || new Date(),
   };
@@ -70,6 +71,7 @@ export function useGroups() {
       ownerId: user.id,
       memberIds: [user.id],
       roles: { [user.id]: 'leader' },
+      linkedSheetIds: [],
     };
     const ref = await addDoc(collection(db, 'groups'), {
       ...newGroup,
@@ -179,5 +181,23 @@ export function useGroups() {
     await deleteDoc(doc(db, 'groups', groupId));
   }, [user]);
 
-  return { groups, loading, createGroup, generateInviteToken, joinGroup, leaveGroup, removeMember, deleteGroup };
+  const linkSheet = useCallback(async (groupId: string, sheetId: string) => {
+    if (!user) throw new Error('Non connecté');
+    const db = getDb();
+    await updateDoc(doc(db, 'groups', groupId), {
+      linkedSheetIds: arrayUnion(sheetId),
+      updatedAt: serverTimestamp(),
+    });
+  }, [user]);
+
+  const unlinkSheet = useCallback(async (groupId: string, sheetId: string) => {
+    if (!user) throw new Error('Non connecté');
+    const db = getDb();
+    await updateDoc(doc(db, 'groups', groupId), {
+      linkedSheetIds: arrayRemove(sheetId),
+      updatedAt: serverTimestamp(),
+    });
+  }, [user]);
+
+  return { groups, loading, createGroup, generateInviteToken, joinGroup, leaveGroup, removeMember, deleteGroup, linkSheet, unlinkSheet };
 }

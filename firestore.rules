@@ -116,12 +116,23 @@ service cloud.firestore {
         // Leaders peuvent tout modifier
         (request.auth.uid in resource.data.memberIds &&
          resource.data.roles[request.auth.uid] == 'leader') ||
+        // Membres peuvent modifier linkedSheetIds uniquement
+        (request.auth.uid in resource.data.memberIds &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['linkedSheetIds', 'updatedAt'])) ||
         // Auto-join : utilisateur non membre, modifie seulement memberIds/roles/updatedAt
         (!(request.auth.uid in resource.data.memberIds) &&
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'roles', 'updatedAt']))
       );
       allow delete: if request.auth != null &&
                        (request.auth.uid == resource.data.ownerId || isAdmin());
+    }
+
+    // Sessions de concert synchronisé (document ID = setId)
+    match /concertSessions/{sessionId} {
+      allow read, update, delete: if request.auth != null &&
+                                     isGroupMember(resource.data.groupId);
+      allow create: if request.auth != null &&
+                      isGroupMember(request.resource.data.groupId);
     }
 
     // Invitations de groupe

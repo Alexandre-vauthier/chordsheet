@@ -43,6 +43,7 @@ function setFromFirestore(id: string, data: Record<string, unknown>): Set {
     isPublic: (data.isPublic as boolean) || false,
     createdAt: (data.createdAt as { toDate: () => Date })?.toDate?.() || new Date(),
     updatedAt: (data.updatedAt as { toDate: () => Date })?.toDate?.() || new Date(),
+    groupId: (data.groupId as string) || undefined,
   };
 }
 

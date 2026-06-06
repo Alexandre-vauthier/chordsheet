@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { collection, query, where, orderBy, getDocs, getDoc, doc } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
@@ -164,8 +164,22 @@ export default function SetPage({ params }: SetPageProps) {
     return true;
   });
 
-  // Vérifier si l'utilisateur est le propriétaire
+  // Vérifier si l'utilisateur est le propriétaire ou membre du groupe
   const isOwner = user?.id === set?.ownerId;
+  const [isGroupMember, setIsGroupMember] = useState(false);
+
+  useEffect(() => {
+    if (!set?.groupId || !user) return;
+    const db = getDb();
+    getDoc(doc(db, 'groups', set.groupId)).then(snap => {
+      if (snap.exists()) {
+        const memberIds = (snap.data().memberIds as string[]) || [];
+        setIsGroupMember(memberIds.includes(user.id));
+      }
+    }).catch(() => {});
+  }, [set?.groupId, user]);
+
+  const canEdit = isOwner || isGroupMember;
 
   if (isLoading) {
     return (
@@ -193,7 +207,7 @@ export default function SetPage({ params }: SetPageProps) {
   const hiddenSheetsCount = set ? set.sheetIds.length - sheets.length : 0;
 
   // Vue lecture seule pour les visiteurs
-  if (!isOwner) {
+  if (!canEdit) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-8">
@@ -265,13 +279,13 @@ export default function SetPage({ params }: SetPageProps) {
     );
   }
 
-  // Vue édition pour le propriétaire
+  // Vue édition pour le propriétaire ou membre du groupe
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <Button variant="ghost" onClick={() => router.push('/sets')}>
-          ← Retour aux sets
+        <Button variant="ghost" onClick={() => router.push(set.groupId ? `/groups/${set.groupId}` : '/sets')}>
+          {set.groupId ? '← Retour au groupe' : '← Retour aux sets'}
         </Button>
         {sheets.length > 0 && (
           <Link href={`/sets/${id}/play`}>

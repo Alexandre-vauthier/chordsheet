@@ -233,6 +233,8 @@ export interface Set {
   isPublic: boolean;
   createdAt: Date;
   updatedAt: Date;
+  // V11 - Groupe de musique
+  groupId?: string;
 }
 
 // Type pour la création d'un nouveau set
@@ -267,11 +269,21 @@ export interface Group {
   ownerId: string;
   memberIds: string[];
   roles: Record<string, GroupRole>;
+  linkedSheetIds: string[];   // grilles publiques référencées (lecture seule)
   createdAt: Date;
   updatedAt: Date;
 }
 
 export type NewGroup = Omit<Group, 'id' | 'createdAt' | 'updatedAt'>;
+
+export interface ConcertSession {
+  id?: string;         // = setId
+  groupId: string;
+  setId: string;
+  currentSheetIndex: number;
+  updatedBy: string;
+  updatedAt: Date;
+}
 
 export interface GroupInvite {
   id?: string;         // token = document ID dans Firestore
