@@ -40,7 +40,7 @@ interface SheetViewerProps {
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
   isTogglingBookmark?: boolean;
-  concertCellPath?: { sectionIdx: number; rowIdx: number; cellIdx: number };
+  concertCellPath?: { sectionIdx: number; rowIdx: number; cellIdx: number; durationMs?: number };
 }
 
 function getRefLabel(url: string): string {
@@ -626,6 +626,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                             span={cell.span}
                             isActive={isActive}
                             isConcertActive={isConcertActive}
+                            concertCellDurationMs={isConcertActive ? concertCellPath?.durationMs : undefined}
                             activeStep={activeStep}
                             instrumentId={instrumentId}
                             customChords={sheet.customChords as Record<string, CustomChord> | undefined}
@@ -691,6 +692,7 @@ function ViewerChordCell({
   span,
   isActive,
   isConcertActive,
+  concertCellDurationMs,
   activeStep,
   instrumentId,
   customChords,
@@ -704,6 +706,7 @@ function ViewerChordCell({
   span: CellSpan;
   isActive: boolean;
   isConcertActive?: boolean;
+  concertCellDurationMs?: number;
   activeStep: PlayStep | null;
   instrumentId: InstrumentId;
   customChords?: Record<string, CustomChord>;
@@ -763,8 +766,7 @@ function ViewerChordCell({
       style={{
         gridColumn: `span ${spanToGridCols(span)}`,
         ...(color ? { borderColor: color.border, borderLeftWidth: '5px' } : {}),
-        ...(isActive && !color ? { borderColor: 'var(--accent)' } : {}),
-        ...(isConcertActive ? { backgroundColor: '#dcfce7', borderColor: '#16a34a', borderWidth: '2px' } : {}),
+        ...((isActive || isConcertActive) && !color ? { borderColor: 'var(--accent)' } : {}),
       }}
       className={`
         chord-cell relative rounded-lg border-[1.5px] min-h-12 flex items-center justify-center
@@ -776,13 +778,23 @@ function ViewerChordCell({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Sweep animation */}
+      {/* Sweep animation — lecture normale */}
       {isActive && activeStep && (
         <div
           className="absolute inset-0 origin-left pointer-events-none"
           style={{
             background: color ? color.border.substring(0, 7) + '21' : 'rgba(200,75,47,0.13)',
             animation: `beatSweep ${activeStep.durationMs}ms linear forwards`,
+          }}
+        />
+      )}
+      {/* Sweep animation — mode concert batteur (même rendu que le play natif) */}
+      {isConcertActive && (concertCellDurationMs ?? 0) > 0 && (
+        <div
+          className="absolute inset-0 origin-left pointer-events-none"
+          style={{
+            background: color ? color.border.substring(0, 7) + '21' : 'rgba(200,75,47,0.13)',
+            animation: `beatSweep ${concertCellDurationMs}ms linear forwards`,
           }}
         />
       )}

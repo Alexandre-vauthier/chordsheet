@@ -17,28 +17,44 @@ interface SetPlayPageProps {
 }
 
 // Calcule quelle cellule doit être mise en évidence à l'instant T
+// Même logique que buildSequence dans use-playback.ts
 function calculateConcertCell(
   sections: Section[],
   startTimeMs: number,
-  bpm: number
-): { sectionIdx: number; rowIdx: number; cellIdx: number } | null {
+  bpm: number,
+  tempoUnit?: 'quarter' | 'eighth'
+): { sectionIdx: number; rowIdx: number; cellIdx: number; remainingMs: number } | null {
   const elapsed = Date.now() - startTimeMs;
   if (elapsed < 0) return null;
 
-  const msPerBeat = 60000 / bpm;
+  const factor = tempoUnit === 'eighth' ? 0.5 : 1;
+  const beatMs = (60000 / bpm) * factor;
   let accumulated = 0;
-  let lastChord: { sectionIdx: number; rowIdx: number; cellIdx: number } | null = null;
+  let lastChord: { sectionIdx: number; rowIdx: number; cellIdx: number; remainingMs: number } | null = null;
 
   for (let si = 0; si < sections.length; si++) {
-    for (let ri = 0; ri < sections[si].rows.length; ri++) {
-      for (let ci = 0; ci < sections[si].rows[ri].length; ci++) {
-        const cell = sections[si].rows[ri][ci];
-        const dur = cell.span * msPerBeat;
-        if (elapsed < accumulated + dur) {
-          return cell.chord ? { sectionIdx: si, rowIdx: ri, cellIdx: ci } : lastChord;
+    const section = sections[si];
+    const beatsPerMeasure = section.beatsPerMeasure || 4;
+    for (let rep = 0; rep < (section.repeat || 1); rep++) {
+      for (let ri = 0; ri < section.rows.length; ri++) {
+        const rowRepeat = section.rowRepeats?.[ri] ?? 1;
+        for (let rr = 0; rr < rowRepeat; rr++) {
+          const row = section.rows[ri];
+          let lastNonEmpty = row.length - 1;
+          while (lastNonEmpty > 0 && !row[lastNonEmpty].chord.trim()) lastNonEmpty--;
+          for (let ci = 0; ci <= lastNonEmpty; ci++) {
+            const cell = row[ci];
+            const dur = cell.span * beatsPerMeasure * beatMs;
+            if (elapsed < accumulated + dur) {
+              const remainingMs = accumulated + dur - elapsed;
+              return cell.chord
+                ? { sectionIdx: si, rowIdx: ri, cellIdx: ci, remainingMs }
+                : lastChord;
+            }
+            accumulated += dur;
+            if (cell.chord) lastChord = { sectionIdx: si, rowIdx: ri, cellIdx: ci, remainingMs: 0 };
+          }
         }
-        accumulated += dur;
-        if (cell.chord) lastChord = { sectionIdx: si, rowIdx: ri, cellIdx: ci };
       }
     }
   }
@@ -132,24 +148,39 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
   useEffect(() => () => cancelCountIn(), [cancelCountIn]);
 
   // ── Auto-scroll : boucle RAF ────────────────────────────────────────────────
-  const [concertCellPath, setConcertCellPath] = useState<{ sectionIdx: number; rowIdx: number; cellIdx: number } | null>(null);
+  const [concertCellPath, setConcertCellPath] = useState<{
+    sectionIdx: number; rowIdx: number; cellIdx: number; durationMs: number;
+  } | null>(null);
   const rafRef = useRef<number>(0);
+  const prevConcertPathRef = useRef<{ sectionIdx: number; rowIdx: number; cellIdx: number } | null>(null);
 
   useEffect(() => {
     if (!autoScroll || autoScroll.sheetIndex !== currentIndex || !currentSheet) {
       setConcertCellPath(null);
+      prevConcertPathRef.current = null;
       cancelAnimationFrame(rafRef.current);
       return;
     }
 
     const tick = () => {
-      const path = calculateConcertCell(currentSheet.sections, autoScroll.startTimeMs, autoScroll.bpm);
-      setConcertCellPath(path);
-      if (path !== null) {
-        rafRef.current = requestAnimationFrame(tick);
-      } else {
+      const result = calculateConcertCell(
+        currentSheet.sections,
+        autoScroll.startTimeMs,
+        autoScroll.bpm,
+        currentSheet.tempoUnit
+      );
+      if (!result) {
         setConcertCellPath(null);
+        prevConcertPathRef.current = null;
+        return;
       }
+      const { remainingMs, ...path } = result;
+      const prev = prevConcertPathRef.current;
+      if (!prev || prev.sectionIdx !== path.sectionIdx || prev.rowIdx !== path.rowIdx || prev.cellIdx !== path.cellIdx) {
+        setConcertCellPath({ ...path, durationMs: remainingMs });
+        prevConcertPathRef.current = path;
+      }
+      rafRef.current = requestAnimationFrame(tick);
     };
 
     rafRef.current = requestAnimationFrame(tick);
