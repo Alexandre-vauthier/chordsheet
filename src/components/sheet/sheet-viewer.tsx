@@ -494,7 +494,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             />
           </div>
         </div>
-        {instrumentId !== 'voice' && (
+        {instrumentId !== 'voice' && instrumentId !== 'percussion' && (
           <ChordSummary
             sections={displaySections}
             instrumentId={instrumentId}
@@ -509,7 +509,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
       </div>
 
       {/* Résumé accords — uniquement à l'impression, si option activée */}
-      {user?.printChordDiagrams && instrumentId !== 'voice' && (
+      {user?.printChordDiagrams && instrumentId !== 'voice' && instrumentId !== 'percussion' && (
         <div className="hidden print:block mb-8 print-chord-summary">
           <div className="flex items-center gap-3 mb-3">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Accords utilisés</h2>
