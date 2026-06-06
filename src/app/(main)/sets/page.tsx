@@ -103,11 +103,19 @@ export default function SetsPage() {
                       {set.name || 'Sans nom'}
                     </h3>
                   </Link>
-                  {set.isPublic && (
-                    <span className="px-1.5 py-0.5 bg-green-50 text-green-700 rounded text-[10px] uppercase tracking-wider ml-2">
-                      Public
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1.5 ml-2 shrink-0">
+                    {set.groupId && (
+                      <Link href={`/groups/${set.groupId}`}
+                        className="px-1.5 py-0.5 bg-[var(--accent-soft)] text-[var(--accent)] rounded text-[10px] uppercase tracking-wider hover:bg-[var(--accent)] hover:text-white transition-colors">
+                        Groupe
+                      </Link>
+                    )}
+                    {set.isPublic && (
+                      <span className="px-1.5 py-0.5 bg-green-50 text-green-700 rounded text-[10px] uppercase tracking-wider">
+                        Public
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {set.description && (
