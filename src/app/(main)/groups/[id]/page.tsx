@@ -11,13 +11,15 @@ import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
 import { useAuth } from '@/lib/auth-context';
 import { useGroups } from '@/lib/use-groups';
-import type { Group, GroupRole, Sheet, Set } from '@/types';
+import { INSTRUMENT_CONFIG } from '@/lib/chord-data';
+import type { Group, GroupRole, Sheet, Set, InstrumentId } from '@/types';
 
 interface MemberInfo {
   id: string;
   displayName: string;
   email: string;
   role: GroupRole;
+  preferredInstrument?: InstrumentId;
 }
 
 function groupFromDoc(id: string, data: Record<string, unknown>): Group {
@@ -86,6 +88,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
             displayName: (data?.displayName as string) || (data?.email as string) || uid,
             email: (data?.email as string) || '',
             role: g.roles[uid] || 'member',
+            preferredInstrument: (data?.preferredInstrument as InstrumentId) || undefined,
           };
         })
       );
@@ -343,31 +346,6 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
         <p className="text-sm text-red-500 bg-red-50 border border-red-100 px-3 py-2 rounded-lg">{actionError}</p>
       )}
 
-      {/* Membres */}
-      <section>
-        <h2 className="text-sm font-semibold text-[var(--ink-light)] uppercase tracking-wide mb-3">
-          Membres ({members.length})
-        </h2>
-        <div className="space-y-2">
-          {members.map(member => (
-            <div key={member.id} className="flex items-center justify-between px-4 py-3 bg-[var(--cell-bg)] border border-[var(--line)] rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-sm font-bold">
-                  {member.displayName.charAt(0).toUpperCase()}
-                </div>
-                <div className="text-sm font-medium text-[var(--ink)]">{member.displayName}</div>
-              </div>
-              {isLeader && member.id !== user?.id && (
-                <button onClick={() => handleRemoveMember(member.id, member.displayName)}
-                  className="text-xs text-[var(--ink-faint)] hover:text-red-500 transition-colors px-1.5 py-0.5 rounded">
-                  Retirer
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Sets */}
       <section>
         <h2 className="text-sm font-semibold text-[var(--ink-light)] uppercase tracking-wide mb-3">
@@ -531,6 +509,38 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
             ))}
           </div>
         )}
+      </section>
+
+      {/* Membres */}
+      <section>
+        <h2 className="text-sm font-semibold text-[var(--ink-light)] uppercase tracking-wide mb-3">
+          Membres ({members.length})
+        </h2>
+        <div className="space-y-2">
+          {members.map(member => (
+            <div key={member.id} className="flex items-center justify-between px-4 py-3 bg-[var(--cell-bg)] border border-[var(--line)] rounded-lg">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-sm font-bold">
+                  {member.displayName.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-[var(--ink)]">{member.displayName}</div>
+                  {member.preferredInstrument && (
+                    <div className="text-xs text-[var(--ink-faint)]">
+                      {INSTRUMENT_CONFIG[member.preferredInstrument]?.label ?? member.preferredInstrument}
+                    </div>
+                  )}
+                </div>
+              </div>
+              {isLeader && member.id !== user?.id && (
+                <button onClick={() => handleRemoveMember(member.id, member.displayName)}
+                  className="text-xs text-[var(--ink-faint)] hover:text-red-500 transition-colors px-1.5 py-0.5 rounded">
+                  Retirer
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* Invitation — accessible à tous les membres */}
