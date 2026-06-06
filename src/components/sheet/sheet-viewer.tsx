@@ -68,20 +68,20 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   const { user, updateUser } = useAuth();
   const [showInlineDiagram, setShowInlineDiagram] = useState(() => user?.showInlineDiagram ?? false);
   const [instrumentId, setInstrumentId] = useState<InstrumentId>(() => {
-    // Priorité 1 : instrument explicite de la grille
+    // Priorité 1 : dernier choix explicite (localStorage)
+    if (hasLocalInstrument()) return getSavedInstrument('guitar');
+    // Priorité 2 : instrument de la grille si pas de choix utilisateur
     if (sheet.instrumentId) return sheet.instrumentId;
-    // Priorité 2 : dernier choix local (localStorage) — user pas encore dispo au montage
-    return getSavedInstrument('guitar');
+    return 'guitar';
   });
 
-  // Priorité 2 bis : préférence profil, une fois le user chargé
-  // (remplace le localStorage uniquement si la grille n'a pas d'instrument propre)
+  // Priorité 2 bis : préférence profil une fois le user chargé, si pas de localStorage
   useEffect(() => {
-    if (!sheet.instrumentId && user?.preferredInstrument) {
+    if (!hasLocalInstrument() && user?.preferredInstrument) {
       setInstrumentId(user.preferredInstrument);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.preferredInstrument, sheet.instrumentId]);
+  }, [user?.preferredInstrument]);
 
   const handleInstrumentChange = (id: InstrumentId) => {
     setInstrumentId(id);
@@ -520,7 +520,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
       )}
 
       {/* Sections — masquées pour Voix */}
-      <div className={`space-y-8 print:space-y-6 ${instrumentId === 'voice' ? 'hidden' : ''}`}>
+      <div className={`space-y-8 print:space-y-6 ${instrumentId === 'voice' && sheet.lyrics ? 'hidden' : ''}`}>
         {(() => {
           const seenSignatures = new Map<string, string>(); // signature → label de la première occurrence
           return displaySections.map((section) => {
