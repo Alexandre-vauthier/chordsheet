@@ -275,6 +275,11 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
         )}
       </div>
 
+      {/* Debug temporaire */}
+      <div className="text-[10px] text-red-500 px-4 py-1 print:hidden bg-red-50">
+        isGroupSet:{String(isGroupSet)} | isDrummer:{String(isDrummer)} | instrument:{user?.preferredInstrument ?? 'none'} | groupId:{set?.groupId ?? 'none'}
+      </div>
+
       {/* Contrôles batteur — uniquement pour le percussionniste en set de groupe */}
       {isGroupSet && isDrummer && (
         <div className="bg-[var(--cell-bg)] border-t border-[var(--line)] py-2 px-4 print:hidden">
