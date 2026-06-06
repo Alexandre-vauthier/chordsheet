@@ -119,6 +119,10 @@ service cloud.firestore {
         // Membres peuvent modifier linkedSheetIds uniquement
         (request.auth.uid in resource.data.memberIds &&
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['linkedSheetIds', 'updatedAt'])) ||
+        // Auto-leave : membre qui se retire lui-même
+        (request.auth.uid in resource.data.memberIds &&
+         !(request.auth.uid in request.resource.data.memberIds) &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'roles', 'updatedAt'])) ||
         // Auto-join : utilisateur non membre, modifie seulement memberIds/roles/updatedAt
         (!(request.auth.uid in resource.data.memberIds) &&
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'roles', 'updatedAt']))
