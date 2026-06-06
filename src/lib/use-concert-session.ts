@@ -76,7 +76,7 @@ export function useConcertSession(
     if (!setId || !groupId || !user) return;
     const db = getDb();
     // Délai pour compenser la latence Firestore (~100ms en pratique)
-    const startTimeMs = Date.now() + 150;
+    const startTimeMs = Date.now() + 120;
     await setDoc(doc(db, 'concertSessions', setId), {
       groupId,
       setId,
