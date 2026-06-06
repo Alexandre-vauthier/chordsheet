@@ -254,6 +254,33 @@ export interface Rating {
   updatedAt: Date;
 }
 
+// ─── Types pour les groupes de musique ───────────────────────────────────────
+
+export type GroupRole = 'leader' | 'member';
+
+export interface Group {
+  id?: string;
+  name: string;
+  description?: string;
+  ownerId: string;
+  memberIds: string[];
+  roles: Record<string, GroupRole>;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type NewGroup = Omit<Group, 'id' | 'createdAt' | 'updatedAt'>;
+
+export interface GroupInvite {
+  id?: string;         // token = document ID dans Firestore
+  groupId: string;
+  groupName: string;
+  createdBy: string;
+  expiresAt: Date;
+  maxUses: number | null;
+  useCount: number;
+}
+
 // ─── Helpers pour créer des objets par défaut ────────────────────────────────
 
 export const createEmptyCell = (span: CellSpan = 1): Cell => ({

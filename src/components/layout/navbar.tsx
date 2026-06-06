@@ -43,6 +43,7 @@ export function Navbar() {
               <>
                 {[
                   { href: '/dashboard', label: 'Mon book' },
+                  { href: '/groups', label: 'Groupes' },
                   { href: '/sets', label: 'Mes sets' },
                   { href: '/explore', label: 'Explorer' },
                   { href: '/chords', label: 'Accords' },
@@ -165,9 +166,9 @@ export function Navbar() {
             </form>
             {[
               { href: '/dashboard', label: 'Mon book' },
+              { href: '/groups', label: 'Groupes' },
               { href: '/sets', label: 'Mes sets' },
               { href: '/explore', label: 'Explorer' },
-              // { href: '/chords', label: 'Accords' },
             ].map(({ href, label }) => (
               <Link
                 key={href}

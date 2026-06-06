@@ -6,7 +6,7 @@
 
 | Aspect | Valeur |
 |--------|--------|
-| **Stack** | Next.js 14 (App Router) + Firebase + Tailwind |
+| **Stack** | Next.js 15 (App Router) + React 19 + Firebase + Tailwind CSS 4 |
 | **Langue UI** | Français |
 | **Langue code** | Anglais (noms de variables, types) |
 | **Repo** | github.com/Alexandre-vauthier/chordsheet |
@@ -23,11 +23,16 @@ src/
 │   │   ├── dashboard/      # Mes grilles
 │   │   ├── book/           # Mon book (favoris)
 │   │   ├── explore/        # Grilles publiques
-│   │   ├── sets/           # Setlists
+│   │   ├── sets/           # Setlists + mode concert (sets/[id]/play)
 │   │   ├── sheet/          # CRUD grilles
 │   │   │   ├── new/        # Création
 │   │   │   └── [id]/       # Consultation + édition
-│   │   └── chords/         # Bibliothèque d'accords
+│   │   ├── chords/         # Bibliothèque d'accords
+│   │   ├── artist/[name]/  # Grilles d'un artiste
+│   │   ├── user/[id]/      # Profil public utilisateur
+│   │   ├── profile/        # Mon profil (préférences)
+│   │   ├── admin/          # Administration (admins uniquement)
+│   │   └── legal/          # Pages légales (CGU, CGV...)
 │   └── layout.tsx          # Layout racine
 │
 ├── components/
@@ -35,6 +40,8 @@ src/
 │   │   ├── chord-diagram.tsx      # SVG manche guitare
 │   │   ├── chord-editor.tsx       # Éditeur positions doigts
 │   │   ├── chord-editor-modal.tsx # Modal édition
+│   │   ├── chord-card.tsx         # Carte d'accord (bibliothèque)
+│   │   ├── chord-finder.tsx       # Recherche dans la bibliothèque
 │   │   ├── chord-summary.tsx      # Résumé accords grille
 │   │   ├── chord-suggestions.tsx  # Suggestions variantes
 │   │   ├── piano-keyboard.tsx     # SVG clavier piano
@@ -42,16 +49,21 @@ src/
 │   │
 │   ├── sheet/              # Grille d'accords
 │   │   ├── sheet-editor.tsx       # Éditeur complet
-│   │   ├── sheet-viewer.tsx       # Mode consultation
+│   │   ├── sheet-viewer.tsx       # Mode consultation (+ transposition)
 │   │   ├── section-block.tsx      # Section (Intro, Refrain...)
 │   │   ├── grid-row.tsx           # Ligne de mesure
-│   │   └── beat-cell.tsx          # Cellule (1 temps)
+│   │   ├── beat-cell.tsx          # Cellule (1 temps)
+│   │   ├── import-sheet-modal.tsx # Import depuis texte (UG format)
+│   │   ├── coach-mark.tsx         # Hints tutoriels
+│   │   └── rating-stars.tsx       # Étoiles de notation
 │   │
 │   ├── explore/            # Composants liste
-│   │   └── sheet-card.tsx         # Carte aperçu grille
+│   │   ├── sheet-card.tsx         # Carte aperçu grille
+│   │   └── welcome-banner.tsx     # Hero section
 │   │
 │   ├── layout/             # Layout
-│   │   └── navbar.tsx
+│   │   ├── navbar.tsx
+│   │   └── footer.tsx
 │   │
 │   └── ui/                 # Composants génériques
 │       ├── button.tsx
@@ -61,11 +73,22 @@ src/
 │   ├── firebase.ts              # Config Firebase
 │   ├── firestore-helpers.ts     # CRUD Firestore
 │   ├── auth-context.tsx         # Context auth
-│   ├── chord-data.ts            # Bibliothèque accords
-│   ├── chord-audio.ts           # Lecture audio (Web Audio)
+│   ├── library-chords-context.tsx  # Context bibliothèque accords (overrides admin)
+│   ├── chord-data.ts            # Bibliothèque accords (7 instruments)
+│   ├── chord-audio.ts           # Synthèse audio Web Audio API
+│   ├── chord-finder.ts          # Logique recherche accords
+│   ├── chord-sheet-parser.ts    # Parser import texte (Ultimate Guitar)
+│   ├── transpose.ts             # Transposition des accords
+│   ├── compute-difficulty.ts    # Calcul automatique difficulté
+│   ├── use-playback.ts          # Hook lecture audio grille complète
+│   ├── use-groove-box.ts        # Hook boîte à rythmes (patterns par genre)
 │   ├── use-bookmarks.ts         # Hook favoris
 │   ├── use-ratings.ts           # Hook notes
-│   └── use-sets.ts              # Hook setlists
+│   ├── use-sets.ts              # Hook setlists
+│   ├── use-artwork.ts           # Hook artwork album (fetch externe)
+│   ├── use-chord-color.ts       # Hook couleur des accords
+│   ├── use-chord-notation.ts    # Hook conversion notation américain/français
+│   └── use-chord-variants.ts    # Hook variantes de doigtés
 │
 └── types/
     └── index.ts            # Tous les types TypeScript
@@ -84,15 +107,21 @@ interface Sheet {
   artist: string;
   key: string;              // Tonalité (ex: "Am", "G")
   tempo: string;            // Tempo (ex: "120 BPM")
+  tempoUnit?: 'quarter' | 'eighth';  // Unité de tempo (noire ou croche)
   ownerId: string;
   ownerName: string;
   isPublic: boolean;
+  isUnlisted?: boolean;     // Accessible via lien, non listé dans Explore
   sections: Section[];      // Intro, Couplet, Refrain...
+  tags: string[];
   genres: string[];         // Rock, Pop, Jazz...
-  difficulty: 1|2|3|4|5 | null;
+  difficulty: 1|2|3 | null;
   capo: number | null;
   instrumentId?: InstrumentId;
   customChords?: Record<string, CustomChord>;  // Accords personnalisés
+  referenceUrl?: string;    // Lien YouTube/Spotify
+  forkedFrom?: string;      // id de la grille source si fork
+  lyrics?: string;          // Paroles (instrument Voix)
   // Métriques
   viewCount: number;
   averageRating: number | null;
@@ -109,20 +138,45 @@ interface Section {
   repeat: number;           // x2, x3...
   beatsPerMeasure: 3 | 4;   // 3/4 ou 4/4
   rows: Row[];              // Mesures
+  rowRepeats?: number[];    // Répétitions par mesure (index = rowIndex)
 }
 
 type Row = Cell[];          // Une mesure
 
+// CellSpan = tout multiple de 0.25 de 0.25 à 4
+// Chaque 0.25 = 1 colonne dans une grille de 16 colonnes
+type CellSpan = 0.25 | 0.5 | 0.75 | 1 | 1.25 | ... | 4;
+
 interface Cell {
   chord: string;            // "Am", "G7", ""
-  span: 0.5 | 1 | 2 | 3 | 4;  // Durée en temps
+  span: CellSpan;           // Durée en temps
+}
+```
+
+### User (Utilisateur)
+
+```typescript
+interface User {
+  id: string;
+  displayName: string;
+  email: string;
+  photoURL: string | null;
+  role: 'user' | 'admin';
+  preferredInstrument?: InstrumentId;
+  notationPreference?: 'american' | 'french';
+  chordColorCoding?: boolean;
+  showInlineDiagram?: boolean;
+  darkMode?: boolean;
+  minimizeRepeatedSections?: boolean;
+  printMinimizeRepeatedSections?: boolean;
+  printChordDiagrams?: boolean;
 }
 ```
 
 ### Accords
 
 ```typescript
-// Accord à cordes (guitare, ukulele, mandoline, banjo)
+// Accord à cordes (guitare, ukulele, mandoline, banjo, basse)
 interface StringChord {
   id: string;
   name: string;             // "Am"
@@ -191,10 +245,13 @@ Voir `firestore-helpers.ts` :
 |----------------|----------|
 | Édition grille | `sheet-editor.tsx`, `section-block.tsx`, `grid-row.tsx`, `beat-cell.tsx` |
 | Consultation | `sheet-viewer.tsx` |
+| Import texte | `import-sheet-modal.tsx`, `chord-sheet-parser.ts` — voir `docs/IMPORT.md` |
 | Diagrammes accords | `chord-diagram.tsx`, `piano-keyboard.tsx` |
 | Édition accord custom | `chord-editor.tsx`, `chord-editor-modal.tsx` |
+| Transposition | `transpose.ts`, contrôles dans `sheet-viewer.tsx` |
 | Persistance | `firestore-helpers.ts` |
-| Audio | `chord-audio.ts` |
+| Audio / lecture | `chord-audio.ts`, `use-playback.ts` |
+| Boîte à rythmes | `use-groove-box.ts` |
 | Authentification | `auth-context.tsx`, `firebase.ts` |
 | Types | `types/index.ts` |
 | Données accords | `chord-data.ts` |
@@ -230,14 +287,13 @@ npm run lint     # ESLint
 | ukulele | Ukulélé | 4 |
 | mandolin | Mandoline | 4 |
 | banjo | Banjo | 5 |
+| bass | Basse | 4 |
 | piano | Piano | - |
+| voice | Voix | - |
 
 ---
 
 ## Documentation Détaillée
 
-Voir `docs/ARCHITECTURE.md` pour :
-- Flux de données complet
-- Hiérarchie des composants
-- Règles Firestore détaillées
-- Historique des décisions
+- `docs/ARCHITECTURE.md` : hiérarchie composants, flux données, règles Firestore, audio
+- `docs/IMPORT.md` : parser d'import texte (Ultimate Guitar), logique d'inférence des durées

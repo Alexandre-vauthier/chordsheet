@@ -13,56 +13,49 @@
 
 ---
 
-## V3 - En cours
+## V3 - Complété
 
-### Bugs à corriger
+### Bugs corrigés
 
-- [ ] **Sets disparaissent** : Problème d'index Firestore composite ?
-- [ ] **Admin stats à 0** : Vérifier le chargement des données
+- [x] **Sets disparaissent** : Fallback client-side si index Firestore composite manquant
+- [x] **Admin stats à 0** : Chargement des données corrigé via Promise.all
 
-### Gestion des accords (diagrammes)
+### Gestion des accords
 
-- [ ] **Diagrammes SVG** : Positions d'accords guitare et piano
-  - Format : `Am-guitare-1.svg`, `Am-guitare-2.svg`, `Am-piano-1.svg`...
-  - Plusieurs variantes par accord (positions différentes)
-- [ ] **Switch guitare/piano** : Dans la consultation de grille
-- [ ] **Préférence notation** : Américain (Am, C, G) ou Français (La m, Do, Sol)
-  - Tableau de correspondance dans le profil utilisateur
-  - Affichage adapté selon la préférence
+- [x] **Diagrammes SVG** : Positions d'accords guitare et piano (chord-diagram.tsx, piano-keyboard.tsx)
+- [x] **Switch guitare/piano** : Sélecteur d'instrument dans la consultation de grille
+- [x] **Préférence notation** : Américain (Am, C, G) ou Français (La m, Do, Sol) dans le profil
 
-### Page Explorer améliorée
+### Import de grilles
+
+- [x] **Import depuis texte** : Extraction titre, artiste, tonalité, capo, URL YouTube, durée des accords inférée depuis la position
+
+### Page Explorer
 
 - [x] **Système de notation** : Étoiles/notes sur les grilles publiques
-- [x] **Filtres avancés** :
-  - Par genre musical
-  - Par difficulté (1-5 étoiles)
-  - Mieux notés
-  - Plus récents
-  - Plus consultés (viewCount)
+- [x] **Filtres avancés** : Genre, difficulté, mieux notés, plus récents, plus consultés
 
-### Détection des doublons
+### Reste à faire
 
-- [ ] Alerter si une grille existe déjà (même titre + même artiste)
-- [ ] Suggérer les grilles similaires lors de la création
+- [ ] **Détection des doublons** : Alerter si une grille existe déjà (même titre + même artiste), suggérer les grilles similaires lors de la création
 
 ---
 
-## V4 - Futur
+## V4 - En cours
 
-### Pages artistes
+### Complété
 
-- [ ] Collection `artists` : `{ name, genres[], imageUrl, bio }`
-- [ ] Page `/artists` : Liste des artistes
-- [ ] Page `/artists/[slug]` : Toutes les grilles d'un artiste
-- [ ] Auto-complétion artiste dans l'éditeur
+- [x] **Pages artistes** : Page `/artist/[name]` avec toutes les grilles et artwork
+- [x] **Transposition automatique** : Contrôles de transposition dans le mode consultation
+- [x] **Mode sombre** : Toggle dans le profil, variables CSS complètes
 
-### Autres idées
+### À faire
 
-- [ ] Transposition automatique des accords
-- [ ] Mode sombre
-- [ ] PWA (offline)
-- [ ] Export PDF amélioré
-- [ ] Partage par QR code
+- [ ] **Auto-complétion artiste** : Dans l'éditeur (champ artiste actuellement en saisie libre)
+- [ ] **Page `/artists`** : Liste de tous les artistes + collection `artists` `{ name, genres[], imageUrl, bio }`
+- [ ] **Export PDF amélioré** : Génération programmatique (actuellement : impression navigateur uniquement)
+- [ ] **PWA (offline)** : manifest.json + service worker
+- [ ] **Partage par QR code**
 
 ---
 
