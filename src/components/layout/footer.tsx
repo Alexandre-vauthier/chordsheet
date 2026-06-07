@@ -9,6 +9,9 @@ export function Footer() {
             © {new Date().getFullYear()} ChordSheet — Alexandre Vauthier
           </p>
           <nav className="flex flex-wrap justify-center gap-x-5 gap-y-1">
+            <Link href="/about" className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-light)] transition-colors">
+              Qui sommes-nous ?
+            </Link>
             <Link href="/faq" className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-light)] transition-colors">
               FAQ
             </Link>
