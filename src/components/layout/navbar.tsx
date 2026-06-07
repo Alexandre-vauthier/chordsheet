@@ -46,6 +46,7 @@ export function Navbar() {
                   { href: '/groups', label: 'Groupes' },
                   { href: '/sets', label: 'Mes sets' },
                   { href: '/explore', label: 'Explorer' },
+                  { href: '/artists', label: 'Artistes' },
                   { href: '/chords', label: 'Accords' },
                 ].map(({ href, label }) => (
                   <Link
@@ -169,6 +170,7 @@ export function Navbar() {
               { href: '/groups', label: 'Groupes' },
               { href: '/sets', label: 'Mes sets' },
               { href: '/explore', label: 'Explorer' },
+              { href: '/artists', label: 'Artistes' },
             ].map(({ href, label }) => (
               <Link
                 key={href}
