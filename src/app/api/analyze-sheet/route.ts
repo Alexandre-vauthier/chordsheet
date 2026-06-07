@@ -3,25 +3,26 @@ import Anthropic from '@anthropic-ai/sdk';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const PROMPT = `Tu es un musicien expérimenté qui déchiffre une partition. Les images fournies sont les pages successives d'un même morceau, dans l'ordre.
-
-Analyse l'intégralité de la partition et reconstitue la structure complète du morceau telle qu'elle doit être jouée.
+const PROMPT = `Tu es un musicien expérimenté et rigoureux qui déchiffre une partition. Les images fournies sont les pages successives d'un même morceau, dans l'ordre. Prends le temps d'analyser chaque mesure attentivement avant de répondre.
 
 RÈGLES DE DÉCHIFFRAGE :
 
 1. SECTIONS : Identifie et nomme chaque section dans la langue de la partition (Intro, Verse/Couplet, Pre-Chorus, Chorus/Refrain, Bridge/Pont, Solo, Outro, Coda…). Si aucun nom n'est indiqué, numérote (Section 1, Section 2…).
 
-2. REPRISES (||: :||) : Ne duplique pas les mesures. Utilise le champ "repeat" pour indiquer le nombre de fois que la section est jouée (repeat: 2 pour une reprise simple, repeat: 3 si jouée 3 fois).
+2. REPRISES (||: :||) : Ne duplique pas les mesures. Utilise "repeat" pour le nombre de fois joué (repeat: 2 pour une reprise simple).
 
-3. PREMIÈRE ET DEUXIÈME FOIS (volta brackets 1. 2.) : Crée deux sections distinctes — une pour la 1ère fois (avec son propre "repeat": 1), une pour la 2ème fois.
+3. PREMIÈRE ET DEUXIÈME FOIS (volta brackets 1. 2.) : Crée deux sections distinctes.
 
-4. DA CAPO AL FINE (D.C. al Fine) : Reconstitue l'ordre de lecture final dans les sections, sans dupliquer. Mets "repeat": 1 sur la section répétée et arrête à Fine.
+4. DA CAPO AL FINE / DAL SEGNO AL CODA : Reconstitue l'ordre de lecture réel sans dupliquer.
 
-5. DAL SEGNO AL CODA (D.S. al Coda) : Repère le signe § et la coda ⊕, reconstitue l'ordre réel de lecture.
+5. ACCORDS PAR MESURE : Chaque élément du tableau "chords" = un accord pour UNE mesure entière. Si un accord dure 2 mesures, répète-le 2 fois. Mesure vide = "".
 
-6. ACCORDS PAR MESURE : Chaque élément du tableau "chords" = un accord pour UNE mesure entière. Si un accord dure 2 mesures consécutives, répète-le 2 fois dans le tableau. Si 2 accords se partagent une mesure (ex: 2 temps chacun en 4/4), mets-les quand même comme 2 mesures séparées.
-
-7. MESURES VIDES / SILENCES : Utilise une chaîne vide "" pour une mesure sans accord.
+6. FORMAT DES ACCORDS — RÈGLE ABSOLUE :
+   - Chaque accord DOIT commencer par une note racine : A, B, C, D, E, F ou G (majuscule), éventuellement suivie de # ou b.
+   - Exemples VALIDES : C, Am, G7, Fmaj7, Bb, F#m, Dm7, Cmaj7, E7, Abmaj7, Bm7b5
+   - Exemples INVALIDES (interdits) : m7, maj7, m, 7, dim, sus4 — ces formes sans racine sont des erreurs.
+   - En cas de doute sur la qualité (maj/min), déduis-la du contexte harmonique et de l'armure.
+   - Si tu ne peux pas identifier la racine d'un accord, mets "" (mesure vide) plutôt qu'un accord incomplet.
 
 Réponds UNIQUEMENT avec un objet JSON valide, sans markdown, sans texte autour :
 {
@@ -73,8 +74,8 @@ export async function POST(req: NextRequest) {
     }));
 
     const message = await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 2048,
+      model: 'claude-sonnet-4-6',
+      max_tokens: 4096,
       messages: [{
         role: 'user',
         content: [
@@ -87,6 +88,18 @@ export async function POST(req: NextRequest) {
     const text = message.content[0].type === 'text' ? message.content[0].text : '';
     const cleaned = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
     const parsed = JSON.parse(cleaned);
+
+    // Filtrer les accords sans note racine valide (ex: "m7", "maj7" sans lettre devant)
+    const validRoot = /^[A-G][#b]?/;
+    if (Array.isArray(parsed.sections)) {
+      for (const section of parsed.sections) {
+        if (Array.isArray(section.chords)) {
+          section.chords = section.chords.map((c: string) =>
+            (c === '' || validRoot.test(c)) ? c : ''
+          );
+        }
+      }
+    }
 
     return NextResponse.json(parsed);
   } catch (e) {
