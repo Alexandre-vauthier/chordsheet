@@ -12,7 +12,7 @@ const TTL_MS = 30 * 24 * 60 * 60 * 1000;
 // File d'attente pour limiter les requêtes iTunes simultanées
 const QUEUE: Array<() => Promise<void>> = [];
 let activeCount = 0;
-const MAX_CONCURRENT = 3;
+const MAX_CONCURRENT = 8;
 
 function enqueue(task: () => Promise<void>) {
   QUEUE.push(task);
