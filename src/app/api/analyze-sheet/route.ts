@@ -3,60 +3,50 @@ import Anthropic from '@anthropic-ai/sdk';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-const PROMPT = `Tu es un musicien expérimenté et rigoureux qui déchiffre une partition. Les images fournies sont les pages successives d'un même morceau, dans l'ordre. Prends le temps d'analyser chaque mesure attentivement avant de répondre.
+const PROMPT = `Tu es un musicien expérimenté qui déchiffre une partition. Les images sont les pages successives d'un même morceau dans l'ordre.
 
-RÈGLES DE DÉCHIFFRAGE :
+══ ÉTAPE 1 — TRANSCRIPTION LIBRE (obligatoire) ══
+Avant tout JSON, transcris chaque section mesure par mesure dans ce format :
+  [Nom de section] (x fois si reprise)
+  M1: Am(4) | M2: G(2) C(2) | M3: F(4) | M4: E7(4)
 
-1. SECTIONS : Identifie et nomme chaque section dans la langue de la partition (Intro, Verse/Couplet, Pre-Chorus, Chorus/Refrain, Bridge/Pont, Solo, Outro, Coda…). Si aucun nom n'est indiqué, numérote (Section 1, Section 2…).
+Règles de transcription :
+- Chaque Mx = une mesure
+- accord(N) = accord pendant N temps
+- En 4/4 : total par mesure = 4 temps. En 3/4 : total = 3 temps.
+- Accord sur toute la mesure : Am(4). Deux accords égaux : G(2) C(2). Quatre accords : G(1) Am(1) C(1) F(1).
+- Accord tenu sur plusieurs mesures : répète-le (Am(4) | Am(4))
+- Mesure vide : -(4)
+- Reprises ||: :|| : note "x2" ou "x3" après le nom de section
+- 1ère/2ème fois : transcris les deux variantes séparément
 
-2. REPRISES (||: :||) : Ne duplique pas les mesures. Utilise "repeat" pour le nombre de fois joué (repeat: 2 pour une reprise simple).
-
-3. PREMIÈRE ET DEUXIÈME FOIS (volta brackets 1. 2.) : Crée deux sections distinctes.
-
-4. DA CAPO AL FINE / DAL SEGNO AL CODA : Reconstitue l'ordre de lecture réel sans dupliquer.
-
-5. DURÉES DES ACCORDS :
-   Chaque accord est un objet {"chord": "...", "beats": N} où beats = nombre de TEMPS que dure l'accord.
-   - En 4/4 : une mesure = 4 temps. Accord sur toute la mesure → beats:4. Deux accords par mesure à parts égales → beats:2 chacun. Quatre accords → beats:1 chacun.
-   - En 3/4 : une mesure = 3 temps. Accord sur toute la mesure → beats:3. Deux accords → beats:2 puis beats:1 (ou autre répartition réelle).
-   - Si un accord dure plusieurs mesures, exprime la durée totale en temps (ex: 2 mesures de 4/4 = beats:8).
-   - Mesure vide ou silence : {"chord": "", "beats": 4} (ou le nombre de temps réel).
-
-6. FORMAT DES ACCORDS — RÈGLE ABSOLUE :
-   - Chaque accord DOIT commencer par une note racine : A, B, C, D, E, F ou G (majuscule), éventuellement suivie de # ou b.
-   - Exemples VALIDES : C, Am, G7, Fmaj7, Bb, F#m, Dm7, Cmaj7, E7, Abmaj7, Bm7b5
-   - Exemples INVALIDES (interdits) : m7, maj7, m, 7, dim, sus4 — ces formes sans racine sont des erreurs.
-   - Si tu ne peux pas identifier la racine, utilise {"chord": "", "beats": N}.
-
-Réponds UNIQUEMENT avec un objet JSON valide, sans markdown, sans texte autour :
+══ ÉTAPE 2 — JSON ══
+Après la transcription, produis le JSON suivant (sans markdown autour) :
 {
-  "title": "titre si visible sinon chaîne vide",
-  "artist": "artiste si visible sinon chaîne vide",
-  "key": "tonalité (ex: Am, G, Bb) si déductible sinon chaîne vide",
-  "timeSignature": "4/4 ou 3/4 ou autre si visible, sinon 4/4",
-  "tempo": "valeur numérique BPM si visible sinon chaîne vide",
+  "title": "",
+  "artist": "",
+  "key": "",
+  "timeSignature": "4/4",
+  "tempo": "",
   "sections": [
     {
       "label": "Intro",
       "repeat": 1,
       "chords": [
         {"chord": "Am", "beats": 4},
-        {"chord": "G", "beats": 4}
-      ]
-    },
-    {
-      "label": "Verse",
-      "repeat": 2,
-      "chords": [
-        {"chord": "Am", "beats": 2},
         {"chord": "G", "beats": 2},
-        {"chord": "C", "beats": 4},
-        {"chord": "F", "beats": 2},
-        {"chord": "E7", "beats": 2}
+        {"chord": "C", "beats": 2}
       ]
     }
   ]
-}`;
+}
+
+Règles JSON :
+- Base-toi UNIQUEMENT sur ta transcription de l'étape 1 pour remplir le JSON
+- Tout accord DOIT commencer par A B C D E F ou G (majuscule) suivi optionnellement de # ou b
+- Exemples valides : C, Am, G7, Fmaj7, Bb, F#m, Bm7b5. Invalides : m7, maj7, dim (sans racine)
+- Mesure vide → {"chord": "", "beats": N}
+- repeat = nombre de fois que la section est jouée (2 pour une reprise simple)`;
 
 export async function POST(req: NextRequest) {
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -99,7 +89,10 @@ export async function POST(req: NextRequest) {
     });
 
     const text = message.content[0].type === 'text' ? message.content[0].text : '';
-    const cleaned = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
+    // Extraire le JSON depuis la réponse (après la transcription libre de l'étape 1)
+    const jsonMatch = text.match(/\{[\s\S]*\}(?=[^}]*$)/);
+    if (!jsonMatch) throw new SyntaxError('Aucun JSON trouvé dans la réponse');
+    const cleaned = jsonMatch[0].trim();
     const parsed = JSON.parse(cleaned);
 
     // Normaliser et filtrer les accords
