@@ -206,7 +206,7 @@ export function AnalyzeSheetModal({ onClose }: Props) {
               </p>
               <p className="text-xs text-[var(--ink-faint)]">JPG, PNG, WebP — plusieurs fichiers acceptés</p>
             </div>
-            <div className="border-t border-[var(--line)] px-4 py-2 flex justify-center">
+            <div className="md:hidden border-t border-[var(--line)] px-4 py-2 flex justify-center">
               <button
                 type="button"
                 onClick={() => cameraRef.current?.click()}
@@ -339,18 +339,17 @@ export function AnalyzeSheetModal({ onClose }: Props) {
 
         {/* Pied */}
         <div className="px-6 py-4 border-t border-[var(--line)] flex justify-between items-center">
-          <button
-            onClick={handleAnalyze}
-            disabled={!pages.length || status === 'loading'}
-            className="px-4 py-2 text-sm border border-[var(--line)] rounded-lg text-[var(--ink-light)]
-              hover:border-[var(--ink-faint)] hover:text-[var(--ink)] bg-[var(--cell-bg)]
-              transition-colors disabled:opacity-40 cursor-pointer"
-          >
-            {status === 'loading' ? 'Analyse…' : status === 'done' ? 'Ré-analyser' : 'Analyser'}
+          <button onClick={onClose} className="px-4 py-2 text-sm text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors cursor-pointer">
+            Annuler
           </button>
           <div className="flex gap-3">
-            <button onClick={onClose} className="px-4 py-2 text-sm text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors cursor-pointer">
-              Annuler
+            <button
+              onClick={handleAnalyze}
+              disabled={!pages.length || status === 'loading'}
+              className="px-5 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg
+                transition-colors disabled:opacity-40 cursor-pointer"
+            >
+              {status === 'loading' ? 'Analyse…' : status === 'done' ? 'Ré-analyser' : 'Analyser'}
             </button>
             {status === 'done' && (
               <button
