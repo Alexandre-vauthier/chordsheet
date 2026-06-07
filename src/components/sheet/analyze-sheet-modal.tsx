@@ -83,9 +83,20 @@ export function AnalyzeSheetModal({ onClose }: Props) {
     setStatus('loading');
     setError('');
     try {
-      const fd = new FormData();
-      pages.forEach(p => fd.append('files[]', p.file));
-      const res = await fetch('/api/analyze-sheet', { method: 'POST', body: fd });
+      const fileData = await Promise.all(pages.map(p => new Promise<{ data: string; type: string }>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve({ data: result.split(',')[1], type: p.file.type });
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(p.file);
+      })));
+      const res = await fetch('/api/analyze-sheet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ files: fileData }),
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Erreur inconnue');
       setResult(data as SheetResult);

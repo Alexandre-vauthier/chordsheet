@@ -50,8 +50,8 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const formData = await req.formData();
-    const files = formData.getAll('files[]') as File[];
+    const body = await req.json().catch(() => null);
+    const files: { data: string; type: string }[] = body?.files ?? [];
     if (!files.length) {
       return NextResponse.json({ error: 'Aucun fichier fourni.' }, { status: 400 });
     }
@@ -59,22 +59,17 @@ export async function POST(req: NextRequest) {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     for (const file of files) {
       if (!allowedTypes.includes(file.type)) {
-        return NextResponse.json({ error: `Format non supporté : ${file.name}. Utilise JPG, PNG ou WebP.` }, { status: 400 });
+        return NextResponse.json({ error: `Format non supporté : ${file.type}. Utilise JPG, PNG ou WebP.` }, { status: 400 });
       }
     }
 
-    // Construire le contenu multi-images
-    const imageContents = await Promise.all(files.map(async (file) => {
-      const bytes = await file.arrayBuffer();
-      const base64 = Buffer.from(bytes).toString('base64');
-      return {
-        type: 'image' as const,
-        source: {
-          type: 'base64' as const,
-          media_type: file.type as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
-          data: base64,
-        },
-      };
+    const imageContents = files.map((file) => ({
+      type: 'image' as const,
+      source: {
+        type: 'base64' as const,
+        media_type: file.type as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+        data: file.data,
+      },
     }));
 
     const message = await client.messages.create({
