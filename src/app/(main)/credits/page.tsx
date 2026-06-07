@@ -26,7 +26,7 @@ export default function CreditsPage() {
             Ceux avec qui tout a vraiment commencé — les premières répétitions dans des garages, les premiers concerts, les premiers riffs appris ensemble et aussitôt oubliés. C&apos;est un peu pour eux, et à cause d&apos;eux, que ChordSheet existe.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
-            {['Nico', 'Gus', 'Ced', 'Flo', 'Jo', 'Yokss'].map((name) => (
+            {['Nico', 'Gus', 'Ced', 'Flo', 'Jo'].map((name) => (
               <span
                 key={name}
                 className="px-4 py-1.5 rounded-full border border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink)] text-sm font-medium"
