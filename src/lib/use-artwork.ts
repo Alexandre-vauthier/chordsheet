@@ -6,7 +6,7 @@ import { useState, useEffect } from 'react';
 const MEM_CACHE = new Map<string, { artworkUrl: string | null; previewUrl: string | null }>();
 
 // Cache localStorage (persiste entre sessions, TTL 30 jours)
-const LS_PREFIX = 'itunes4_'; // préfixe v4 : titre avant artiste dans la requête
+const LS_PREFIX = 'itunes5_'; // préfixe v5 : toujours entity=song pour artwork
 const TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 function lsGet(key: string): { artworkUrl: string | null; previewUrl: string | null } | undefined {
