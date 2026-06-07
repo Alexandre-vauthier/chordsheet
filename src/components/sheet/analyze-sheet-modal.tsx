@@ -80,6 +80,7 @@ export function AnalyzeSheetModal({ onClose }: Props) {
   const { user } = useAuth();
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
 
   const [pages, setPages] = useState<PageFile[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
@@ -193,20 +194,40 @@ export function AnalyzeSheetModal({ onClose }: Props) {
           <div
             onDrop={handleDrop}
             onDragOver={e => e.preventDefault()}
-            onClick={() => inputRef.current?.click()}
-            className="border-2 border-dashed border-[var(--line)] hover:border-[var(--accent)] rounded-xl
-              cursor-pointer transition-colors py-6 text-center space-y-1"
+            className="border-2 border-dashed border-[var(--line)] rounded-xl overflow-hidden"
           >
-            <div className="text-2xl">🎼</div>
-            <p className="text-sm text-[var(--ink-light)]">
-              {pages.length > 0 ? 'Ajouter d\'autres pages' : 'Clique ou dépose les pages de ta partition'}
-            </p>
-            <p className="text-xs text-[var(--ink-faint)]">JPG, PNG, WebP — plusieurs fichiers acceptés</p>
+            <div
+              onClick={() => inputRef.current?.click()}
+              className="hover:bg-[var(--cell-bg)] cursor-pointer transition-colors py-5 text-center space-y-1"
+            >
+              <div className="text-2xl">🎼</div>
+              <p className="text-sm text-[var(--ink-light)]">
+                {pages.length > 0 ? 'Ajouter d\'autres pages' : 'Clique ou dépose les pages de ta partition'}
+              </p>
+              <p className="text-xs text-[var(--ink-faint)]">JPG, PNG, WebP — plusieurs fichiers acceptés</p>
+            </div>
+            <div className="border-t border-[var(--line)] px-4 py-2 flex justify-center">
+              <button
+                type="button"
+                onClick={() => cameraRef.current?.click()}
+                className="flex items-center gap-1.5 text-xs text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors cursor-pointer"
+              >
+                <span>📷</span> Prendre une photo
+              </button>
+            </div>
             <input
               ref={inputRef}
               type="file"
               accept="image/jpeg,image/png,image/webp"
               multiple
+              className="hidden"
+              onChange={e => { if (e.target.files?.length) addFiles(e.target.files); e.target.value = ''; }}
+            />
+            <input
+              ref={cameraRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
               className="hidden"
               onChange={e => { if (e.target.files?.length) addFiles(e.target.files); e.target.value = ''; }}
             />
