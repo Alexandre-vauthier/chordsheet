@@ -23,7 +23,7 @@ export default function CreditsPage() {
         <section>
           <h2 className="font-playfair text-xl font-bold text-[var(--ink)] mb-4">Le groupe</h2>
           <p>
-            Ceux avec qui tout a vraiment commencé — les premières répétitions dans des garages, les premiers concerts, les premiers riffs appris ensemble. C&apos;est un peu pour eux, et à cause d&apos;eux, que ChordSheet existe.
+            Ceux avec qui tout a vraiment commencé — les premières répétitions dans des garages et à la MJC, les premiers concerts, les premiers riffs appris ensemble. C&apos;est un peu pour eux, et à cause d&apos;eux, que ChordSheet existe.
           </p>
           <div className="mt-5 flex flex-wrap gap-3">
             {['Nico', 'Gus', 'Ced', 'Flo', 'Jo'].map((name) => (
