@@ -52,7 +52,9 @@ export default function CreditsPage() {
             </div>
 
             <div>
-              <div className="font-semibold text-[var(--ink)]">Bastien</div>
+              <div className="font-semibold text-[var(--ink)]">
+                Bastien <span className="text-[var(--ink-faint)] font-normal text-xs ml-1">alias Bataba</span>
+              </div>
               <p className="mt-1">
                 Guitariste et développeur — la combinaison rêvée pour ce projet. Bastien comprend les deux côtés de la chose : ce qu&apos;un musicien attend d&apos;un outil, et comment le construire proprement. Son aide compte beaucoup.
               </p>
