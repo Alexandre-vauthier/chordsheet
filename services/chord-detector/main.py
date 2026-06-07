@@ -32,6 +32,9 @@ class AnalyzeRequest(BaseModel):
 
 def _download_audio(url: str, tmpdir: str) -> tuple[str, str, str]:
     """Télécharge l'audio et renvoie (chemin_fichier, titre, artiste)."""
+    cookies_path = "/secrets/youtube-cookies"
+    logger.info("Cookies présents : %s", os.path.exists(cookies_path))
+
     ydl_opts = {
         "format": "bestaudio/best",
         "postprocessors": [{
@@ -42,15 +45,26 @@ def _download_audio(url: str, tmpdir: str) -> tuple[str, str, str]:
         "outtmpl": os.path.join(tmpdir, "audio.%(ext)s"),
         "quiet": True,
         "no_warnings": True,
+        "noplaylist": True,
+        "extractor_args": {"youtube": {"player_client": ["tv_embedded", "android", "web"]}},
+        **({"cookiefile": cookies_path} if os.path.exists(cookies_path) else {}),
     }
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+
+    # Utiliser yt-dlp sans context manager pour gérer le cookie save en lecture seule
+    ydl = yt_dlp.YoutubeDL(ydl_opts)
+    try:
         info = ydl.extract_info(url, download=True)
-        title: str = info.get("title", "") or ""
-        # Tenter d'extraire l'artiste : champ 'artist' ou avant le " - " dans le titre
-        artist: str = info.get("artist", "") or ""
-        if not artist and " - " in title:
-            parts = title.split(" - ", 1)
-            artist, title = parts[0].strip(), parts[1].strip()
+    finally:
+        try:
+            ydl.close()
+        except OSError:
+            pass  # le secret Cloud Run est en lecture seule, on ignore l'erreur de sauvegarde
+
+    title: str = info.get("title", "") or ""
+    artist: str = info.get("artist", "") or ""
+    if not artist and " - " in title:
+        parts = title.split(" - ", 1)
+        artist, title = parts[0].strip(), parts[1].strip()
 
     audio_path = os.path.join(tmpdir, "audio.mp3")
     if not os.path.exists(audio_path):
