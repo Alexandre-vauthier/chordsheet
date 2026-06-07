@@ -139,11 +139,9 @@ export function useArtwork(artist: string | undefined, title: string | undefined
     let cancelled = false;
     setLoading(true);
 
-    const artistOnly = !title && !!artist;
-
     (async () => {
-      // 3. iTunes (JSONP) — passe le titre attendu pour valider le preview
-      const result = await fetchItunes(query, artistOnly ? 'musicArtist' : 'song', title || undefined);
+      // 3. iTunes (JSONP) — toujours entity=song pour obtenir un artwork d'album
+      const result = await fetchItunes(query, 'song', title || undefined);
 
       // 4. Fallback MusicBrainz pour l'artwork si iTunes échoue
       if (!result.artworkUrl && artist && title) {
