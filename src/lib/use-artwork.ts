@@ -9,6 +9,28 @@ const MEM_CACHE = new Map<string, { artworkUrl: string | null; previewUrl: strin
 const LS_PREFIX = 'itunes5_'; // préfixe v5 : toujours entity=song pour artwork
 const TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
+// File d'attente pour limiter les requêtes iTunes simultanées
+const QUEUE: Array<() => Promise<void>> = [];
+let activeCount = 0;
+const MAX_CONCURRENT = 3;
+
+function enqueue(task: () => Promise<void>) {
+  QUEUE.push(task);
+  drainQueue();
+}
+
+async function drainQueue() {
+  if (activeCount >= MAX_CONCURRENT || QUEUE.length === 0) return;
+  activeCount++;
+  const task = QUEUE.shift()!;
+  try {
+    await task();
+  } finally {
+    activeCount--;
+    drainQueue();
+  }
+}
+
 function lsGetRaw(prefix: string, key: string): { artworkUrl: string | null; previewUrl: string | null } | undefined {
   try {
     const raw = localStorage.getItem(prefix + key);
@@ -23,10 +45,9 @@ function lsGetRaw(prefix: string, key: string): { artworkUrl: string | null; pre
 }
 
 function lsGet(key: string): { artworkUrl: string | null; previewUrl: string | null } | undefined {
-  // Préfixe courant en priorité
   const current = lsGetRaw(LS_PREFIX, key);
   if (current !== undefined) return current;
-  // Fallback v4 : récupère les entrées valides (non-null) sans les réécrire
+  // Fallback v4 : entrées valides (non-null) conservées
   const prev = lsGetRaw('itunes4_', key);
   if (prev !== undefined && prev.artworkUrl !== null) return prev;
   return undefined;
@@ -49,8 +70,7 @@ function titleMatches(expected: string, returned: string): boolean {
 // iTunes Search API (JSONP pour éviter CORS)
 function fetchItunes(
   query: string,
-  entity: 'song' | 'musicArtist' = 'song',
-  expectedTitle?: string, // si fourni, le previewUrl n'est utilisé que si le titre correspond
+  expectedTitle?: string,
 ): Promise<{ artworkUrl: string | null; previewUrl: string | null }> {
   return new Promise((resolve) => {
     const cb = `_itunes_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -67,7 +87,6 @@ function fetchItunes(
       cleanup();
       const result = data.results?.[0];
       const art = result?.artworkUrl100;
-      // Le preview n'est retourné que si le titre iTunes correspond au titre attendu
       const previewOk = !expectedTitle || !result?.trackName || titleMatches(expectedTitle, result.trackName);
       resolve({
         artworkUrl: art ? art.replace('100x100', '600x600') : null,
@@ -75,11 +94,11 @@ function fetchItunes(
       });
     };
 
-    script.src = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=${entity}&limit=1&callback=${cb}`;
+    script.src = `https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=1&callback=${cb}`;
     script.onerror = () => { cleanup(); resolve({ artworkUrl: null, previewUrl: null }); };
 
-    // Timeout 5s
-    setTimeout(() => { cleanup(); resolve({ artworkUrl: null, previewUrl: null }); }, 5000);
+    // Timeout 8s (plus généreux pour les requêtes en file)
+    setTimeout(() => { cleanup(); resolve({ artworkUrl: null, previewUrl: null }); }, 8000);
 
     document.head.appendChild(script);
   });
@@ -109,6 +128,9 @@ async function fetchMusicBrainz(artist: string, title: string): Promise<string |
     return null;
   }
 }
+
+// Callbacks enregistrés pour éviter les doublons de requêtes en vol
+const IN_FLIGHT = new Map<string, Array<(result: { artworkUrl: string | null; previewUrl: string | null }) => void>>();
 
 export function useArtwork(artist: string | undefined, title: string | undefined) {
   const [artworkUrl, setArtworkUrl] = useState<string | null>(null);
@@ -149,23 +171,43 @@ export function useArtwork(artist: string | undefined, title: string | undefined
     let cancelled = false;
     setLoading(true);
 
-    (async () => {
-      // 3. iTunes (JSONP) — toujours entity=song pour obtenir un artwork d'album
-      const result = await fetchItunes(query, 'song', title || undefined);
+    // 3. Si une requête est déjà en vol pour cette clé, on s'y accroche
+    if (IN_FLIGHT.has(query)) {
+      IN_FLIGHT.get(query)!.push((result) => {
+        if (!cancelled) {
+          setArtworkUrl(result.artworkUrl);
+          setPreviewUrl(result.previewUrl);
+          setLoading(false);
+        }
+      });
+      return () => { cancelled = true; };
+    }
 
-      // 4. Fallback MusicBrainz pour l'artwork si iTunes échoue
+    // 4. Nouvelle requête — passe par la file d'attente
+    IN_FLIGHT.set(query, []);
+
+    enqueue(async () => {
+      const result = await fetchItunes(query, title || undefined);
+
+      // Fallback MusicBrainz si iTunes échoue et qu'on a artiste + titre
       if (!result.artworkUrl && artist && title) {
         result.artworkUrl = await fetchMusicBrainz(artist, title);
       }
 
+      MEM_CACHE.set(query, result);
+      lsSet(query, result);
+
+      // Notifie tous les composants qui attendaient ce résultat
+      const waiters = IN_FLIGHT.get(query) ?? [];
+      IN_FLIGHT.delete(query);
+      for (const cb of waiters) cb(result);
+
       if (!cancelled) {
-        MEM_CACHE.set(query, result);
-        lsSet(query, result);
         setArtworkUrl(result.artworkUrl);
         setPreviewUrl(result.previewUrl);
         setLoading(false);
       }
-    })();
+    });
 
     return () => { cancelled = true; };
   }, [artist, title]);
