@@ -195,7 +195,8 @@ export function useArtwork(artist: string | undefined, title: string | undefined
       }
 
       MEM_CACHE.set(query, result);
-      lsSet(query, result);
+      // Ne persiste que les résultats avec un vrai artwork — les null seront retentés à la prochaine session
+      if (result.artworkUrl) lsSet(query, result);
 
       // Notifie tous les composants qui attendaient ce résultat
       const waiters = IN_FLIGHT.get(query) ?? [];
