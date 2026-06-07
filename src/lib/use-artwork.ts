@@ -9,17 +9,27 @@ const MEM_CACHE = new Map<string, { artworkUrl: string | null; previewUrl: strin
 const LS_PREFIX = 'itunes5_'; // préfixe v5 : toujours entity=song pour artwork
 const TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
-function lsGet(key: string): { artworkUrl: string | null; previewUrl: string | null } | undefined {
+function lsGetRaw(prefix: string, key: string): { artworkUrl: string | null; previewUrl: string | null } | undefined {
   try {
-    const raw = localStorage.getItem(LS_PREFIX + key);
+    const raw = localStorage.getItem(prefix + key);
     if (!raw) return undefined;
     const { data, expires } = JSON.parse(raw) as {
       data: { artworkUrl: string | null; previewUrl: string | null };
       expires: number;
     };
-    if (Date.now() > expires) { localStorage.removeItem(LS_PREFIX + key); return undefined; }
+    if (Date.now() > expires) { localStorage.removeItem(prefix + key); return undefined; }
     return data;
   } catch { return undefined; }
+}
+
+function lsGet(key: string): { artworkUrl: string | null; previewUrl: string | null } | undefined {
+  // Préfixe courant en priorité
+  const current = lsGetRaw(LS_PREFIX, key);
+  if (current !== undefined) return current;
+  // Fallback v4 : récupère les entrées valides (non-null) sans les réécrire
+  const prev = lsGetRaw('itunes4_', key);
+  if (prev !== undefined && prev.artworkUrl !== null) return prev;
+  return undefined;
 }
 
 function lsSet(key: string, data: { artworkUrl: string | null; previewUrl: string | null }) {
