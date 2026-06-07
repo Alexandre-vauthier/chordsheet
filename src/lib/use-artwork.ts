@@ -40,16 +40,8 @@ function lsSet(key: string, data: { artworkUrl: string | null; previewUrl: strin
   } catch { /* quota dépassé */ }
 }
 
-function titleMatches(expected: string, returned: string): boolean {
-  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const a = norm(expected);
-  const b = norm(returned);
-  return a === b || a.includes(b) || b.includes(a);
-}
-
 function fetchItunes(
   query: string,
-  expectedTitle?: string,
 ): Promise<{ artworkUrl: string | null; previewUrl: string | null }> {
   return new Promise((resolve) => {
     const cb = `_itunes_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -66,10 +58,9 @@ function fetchItunes(
       cleanup();
       const result = data.results?.[0];
       const art = result?.artworkUrl100;
-      const previewOk = !expectedTitle || !result?.trackName || titleMatches(expectedTitle, result.trackName);
       resolve({
         artworkUrl: art ? art.replace('100x100', '600x600') : null,
-        previewUrl: previewOk ? (result?.previewUrl ?? null) : null,
+        previewUrl: result?.previewUrl ?? null,
       });
     };
 
@@ -144,7 +135,7 @@ export function useArtwork(artist: string | undefined, title: string | undefined
     IN_FLIGHT.set(query, []);
 
     (async () => {
-      const result = await fetchItunes(query, title || undefined);
+      const result = await fetchItunes(query);
 
       if (!result.artworkUrl && artist && title) {
         result.artworkUrl = await fetchMusicBrainz(artist, title);
