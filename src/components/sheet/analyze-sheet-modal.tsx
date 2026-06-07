@@ -8,23 +8,55 @@ import { toFirestore } from '@/lib/firestore-helpers';
 import { useAuth } from '@/lib/auth-context';
 import type { Section, Cell, CellSpan, NewSheet } from '@/types';
 
+interface ChordEntry { chord: string; beats: number }
+
 interface SheetResult {
   title: string;
   artist: string;
   key: string;
   timeSignature: string;
   tempo: string;
-  sections: { label: string; repeat: number; chords: string[] }[];
+  sections: { label: string; repeat: number; chords: ChordEntry[] }[];
+}
+
+function snapSpan(measures: number): CellSpan {
+  const snapped = Math.round(measures / 0.25) * 0.25;
+  return Math.max(0.25, Math.min(4, snapped)) as CellSpan;
 }
 
 function resultToSections(data: SheetResult): Section[] {
   const beatsPerMeasure: 3 | 4 = data.timeSignature?.startsWith('3') ? 3 : 4;
 
   return data.sections.map((s, i) => {
-    const cells: Cell[] = s.chords.map(chord => ({ chord: chord ?? '', span: 1 as CellSpan }));
+    // Convertir beats → span (en mesures)
+    const cells: Cell[] = s.chords.map(c => ({
+      chord: c.chord ?? '',
+      span: snapSpan(c.beats / beatsPerMeasure),
+    }));
+
+    // Regrouper en mesures (chaque mesure = span total de 1.0)
+    const measures: Cell[][] = [];
+    let measure: Cell[] = [];
+    let measureTotal = 0;
+
+    for (const cell of cells) {
+      measure.push(cell);
+      measureTotal += cell.span;
+      if (measureTotal >= 0.99) {
+        measures.push(measure);
+        measure = [];
+        measureTotal = 0;
+      }
+    }
+    if (measure.length > 0) measures.push(measure);
+
+    // Regrouper les mesures en lignes de 4
     const rows: Cell[][] = [];
-    for (let j = 0; j < cells.length; j += 4) rows.push(cells.slice(j, j + 4));
+    for (let j = 0; j < measures.length; j += 4) {
+      rows.push(measures.slice(j, j + 4).flat());
+    }
     if (rows.length === 0) rows.push([]);
+
     return {
       id: crypto.randomUUID(),
       label: s.label || `Section ${i + 1}`,
@@ -268,7 +300,10 @@ export function AnalyzeSheetModal({ onClose }: Props) {
                       <span className="text-[var(--ink-faint)]">· {s.chords.length} mesures</span>
                     </div>
                     <div className="font-mono text-[var(--ink-light)] leading-relaxed">
-                      {s.chords.map((c, j) => c || '—').join(' · ')}
+                      {s.chords.map((c) => {
+                        const full = result!.timeSignature?.startsWith('3') ? 3 : 4;
+                        return c.beats !== full ? `${c.chord || '—'}(${c.beats})` : (c.chord || '—');
+                      }).join(' · ')}
                     </div>
                   </div>
                 ))}

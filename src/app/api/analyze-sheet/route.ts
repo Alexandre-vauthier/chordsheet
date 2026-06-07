@@ -15,14 +15,18 @@ RÈGLES DE DÉCHIFFRAGE :
 
 4. DA CAPO AL FINE / DAL SEGNO AL CODA : Reconstitue l'ordre de lecture réel sans dupliquer.
 
-5. ACCORDS PAR MESURE : Chaque élément du tableau "chords" = un accord pour UNE mesure entière. Si un accord dure 2 mesures, répète-le 2 fois. Mesure vide = "".
+5. DURÉES DES ACCORDS :
+   Chaque accord est un objet {"chord": "...", "beats": N} où beats = nombre de TEMPS que dure l'accord.
+   - En 4/4 : une mesure = 4 temps. Accord sur toute la mesure → beats:4. Deux accords par mesure à parts égales → beats:2 chacun. Quatre accords → beats:1 chacun.
+   - En 3/4 : une mesure = 3 temps. Accord sur toute la mesure → beats:3. Deux accords → beats:2 puis beats:1 (ou autre répartition réelle).
+   - Si un accord dure plusieurs mesures, exprime la durée totale en temps (ex: 2 mesures de 4/4 = beats:8).
+   - Mesure vide ou silence : {"chord": "", "beats": 4} (ou le nombre de temps réel).
 
 6. FORMAT DES ACCORDS — RÈGLE ABSOLUE :
    - Chaque accord DOIT commencer par une note racine : A, B, C, D, E, F ou G (majuscule), éventuellement suivie de # ou b.
    - Exemples VALIDES : C, Am, G7, Fmaj7, Bb, F#m, Dm7, Cmaj7, E7, Abmaj7, Bm7b5
    - Exemples INVALIDES (interdits) : m7, maj7, m, 7, dim, sus4 — ces formes sans racine sont des erreurs.
-   - En cas de doute sur la qualité (maj/min), déduis-la du contexte harmonique et de l'armure.
-   - Si tu ne peux pas identifier la racine d'un accord, mets "" (mesure vide) plutôt qu'un accord incomplet.
+   - Si tu ne peux pas identifier la racine, utilise {"chord": "", "beats": N}.
 
 Réponds UNIQUEMENT avec un objet JSON valide, sans markdown, sans texte autour :
 {
@@ -35,12 +39,21 @@ Réponds UNIQUEMENT avec un objet JSON valide, sans markdown, sans texte autour 
     {
       "label": "Intro",
       "repeat": 1,
-      "chords": ["Am", "G", "C", "G"]
+      "chords": [
+        {"chord": "Am", "beats": 4},
+        {"chord": "G", "beats": 4}
+      ]
     },
     {
       "label": "Verse",
       "repeat": 2,
-      "chords": ["Am", "G", "C", "G", "Am", "F", "C", "E7"]
+      "chords": [
+        {"chord": "Am", "beats": 2},
+        {"chord": "G", "beats": 2},
+        {"chord": "C", "beats": 4},
+        {"chord": "F", "beats": 2},
+        {"chord": "E7", "beats": 2}
+      ]
     }
   ]
 }`;
@@ -89,14 +102,19 @@ export async function POST(req: NextRequest) {
     const cleaned = text.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/\s*```$/i, '').trim();
     const parsed = JSON.parse(cleaned);
 
-    // Filtrer les accords sans note racine valide (ex: "m7", "maj7" sans lettre devant)
+    // Normaliser et filtrer les accords
     const validRoot = /^[A-G][#b]?/;
     if (Array.isArray(parsed.sections)) {
       for (const section of parsed.sections) {
         if (Array.isArray(section.chords)) {
-          section.chords = section.chords.map((c: string) =>
-            (c === '' || validRoot.test(c)) ? c : ''
-          );
+          section.chords = section.chords.map((c: unknown) => {
+            // Compatibilité si Claude renvoie encore des strings
+            if (typeof c === 'string') return { chord: validRoot.test(c) ? c : '', beats: parsed.timeSignature?.startsWith('3') ? 3 : 4 };
+            const obj = c as { chord?: string; beats?: number };
+            const chord = typeof obj.chord === 'string' && (obj.chord === '' || validRoot.test(obj.chord)) ? obj.chord : '';
+            const beats = typeof obj.beats === 'number' && obj.beats > 0 ? obj.beats : (parsed.timeSignature?.startsWith('3') ? 3 : 4);
+            return { chord, beats };
+          });
         }
       }
     }
