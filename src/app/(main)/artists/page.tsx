@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
+import { useArtwork } from '@/lib/use-artwork';
 import { Input } from '@/components/ui/input';
 import type { Sheet } from '@/types';
 
@@ -70,7 +71,6 @@ export default function ArtistsPage() {
     return result;
   }, [artists, searchQuery, activeLetter]);
 
-  // Lettres qui ont des résultats (parmi tous les artistes, pas les filtrés)
   const availableLetters = useMemo(
     () => new Set(artists.map(a => letterOf(a.name))),
     [artists]
@@ -111,6 +111,18 @@ export default function ArtistsPage() {
       {/* Navigation A–Z */}
       {!searchQuery.trim() && (
         <div className="flex flex-wrap gap-1 mb-8">
+          {/* Voir tout */}
+          <button
+            onClick={() => setActiveLetter('')}
+            className={`h-8 px-3 rounded text-sm font-medium transition-colors
+              ${activeLetter === ''
+                ? 'bg-[var(--accent)] text-white'
+                : 'bg-[var(--cell-bg)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] border border-[var(--line)]'
+              }`}
+          >
+            Voir tout
+          </button>
+
           {ALPHABET.map(l => {
             const hasArtists = availableLetters.has(l);
             const isActive = activeLetter === l;
@@ -142,7 +154,6 @@ export default function ArtistsPage() {
           ))}
         </div>
       ) : (searchQuery.trim() || activeLetter) ? (
-        /* Vue filtrée — grille plate */
         filtered.length > 0 ? (
           <>
             <p className="text-sm text-[var(--ink-light)] mb-4">
@@ -158,7 +169,6 @@ export default function ArtistsPage() {
           <p className="text-[var(--ink-faint)] py-8 text-center">Aucun artiste trouvé pour «&nbsp;{searchQuery}&nbsp;»</p>
         )
       ) : grouped ? (
-        /* Vue groupée par lettre */
         <div className="space-y-10">
           {Array.from(grouped.entries()).map(([letter, group]) => (
             <div key={letter}>
@@ -177,6 +187,8 @@ export default function ArtistsPage() {
 }
 
 function ArtistCard({ artist }: { artist: ArtistEntry }) {
+  const { artworkUrl } = useArtwork(artist.name, undefined);
+
   const initials = artist.name
     .split(/\s+/)
     .slice(0, 2)
@@ -189,9 +201,14 @@ function ArtistCard({ artist }: { artist: ArtistEntry }) {
       className="group flex items-center gap-3 px-3 py-3 rounded-xl border border-[var(--line)]
         bg-[var(--cell-bg)] hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] transition-all"
     >
-      <div className="flex-shrink-0 w-9 h-9 rounded-full bg-[var(--line)] flex items-center justify-center
-        text-xs font-bold text-[var(--ink-light)] group-hover:bg-[var(--accent)] group-hover:text-white transition-colors">
-        {initials}
+      <div className="flex-shrink-0 w-9 h-9 rounded-full overflow-hidden bg-[var(--line)]">
+        {artworkUrl ? (
+          <img src={artworkUrl} alt={artist.name} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-xs font-bold text-[var(--ink-light)] group-hover:bg-[var(--accent)] group-hover:text-white transition-colors">
+            {initials}
+          </div>
+        )}
       </div>
       <div className="min-w-0">
         <div className="text-sm font-medium text-[var(--ink)] truncate group-hover:text-[var(--accent)] transition-colors">

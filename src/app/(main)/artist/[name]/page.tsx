@@ -128,6 +128,18 @@ export default function ArtistPage({ params }: ArtistPageProps) {
           </Link>
         </div>
       )}
+
+      {/* Créer une grille pour cet artiste */}
+      {!loading && (
+        <div className="mt-12 pt-8 border-t border-[var(--line)] text-center">
+          <p className="text-sm text-[var(--ink-light)] mb-4">
+            Tu connais un morceau de {artistName} qui n&apos;est pas encore là ?
+          </p>
+          <Link href="/sheet/new">
+            <Button variant="primary">+ Créer une grille</Button>
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
