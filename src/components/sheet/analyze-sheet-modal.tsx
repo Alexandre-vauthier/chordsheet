@@ -116,21 +116,38 @@ export function AnalyzeSheetModal({ onClose }: Props) {
     setStatus('loading');
     setError('');
     try {
+      // Compression canvas : max 1600px, JPEG 85% — évite le 413 Vercel (limite 4.5MB)
       const fileData = await Promise.all(pages.map(p => new Promise<{ data: string; type: string }>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          resolve({ data: result.split(',')[1], type: p.file.type });
+        const img = new Image();
+        const url = URL.createObjectURL(p.file);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          const MAX = 1600;
+          const scale = Math.min(1, MAX / Math.max(img.width, img.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          resolve({ data: dataUrl.split(',')[1], type: 'image/jpeg' });
         };
-        reader.onerror = reject;
-        reader.readAsDataURL(p.file);
+        img.onerror = reject;
+        img.src = url;
       })));
+
       const res = await fetch('/api/analyze-sheet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ files: fileData }),
       });
-      const data = await res.json();
+
+      // Protège contre les réponses non-JSON (ex: 413 Request Entity Too Large)
+      const text = await res.text();
+      let data: { error?: string } = {};
+      try { data = JSON.parse(text); } catch {
+        if (res.status === 413) throw new Error('Image trop volumineuse. Réduis la résolution et réessaie.');
+        throw new Error(`Erreur serveur (${res.status})`);
+      }
       if (!res.ok) throw new Error(data.error ?? 'Erreur inconnue');
       setResult(data as SheetResult);
       setStatus('done');
