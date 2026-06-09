@@ -70,7 +70,7 @@ export function useGroups() {
     const db = getDb();
     const newGroup: NewGroup = {
       name: name.trim(),
-      description: description?.trim() || undefined,
+      description: description?.trim() || null,
       ownerId: user.id,
       memberIds: [user.id],
       roles: { [user.id]: 'leader' },
