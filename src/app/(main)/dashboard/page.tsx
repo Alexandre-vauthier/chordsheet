@@ -111,7 +111,7 @@ export default function DashboardPage() {
     { id: 'all', label: 'Tout' },
     { id: 'mine', label: 'Mes grilles', count: sheets.length || undefined },
     { id: 'book', label: 'Favoris', count: bookmarkedSheets.length || undefined },
-    { id: 'sets', label: 'Sets', count: sets.length || undefined },
+    { id: 'sets', label: 'Playlists', count: sets.length || undefined },
   ];
 
   return (
@@ -124,7 +124,7 @@ export default function DashboardPage() {
             {tab === 'all' && (allSheets.length > 0 ? `${allSheets.length} grille${allSheets.length > 1 ? 's' : ''}` : 'Toutes vos grilles')}
             {tab === 'mine' && (sheets.length > 0 ? `${sheets.length} grille${sheets.length > 1 ? 's' : ''} créée${sheets.length > 1 ? 's' : ''}` : 'Gérez vos grilles d\'accords')}
             {tab === 'book' && (bookmarkedSheets.length > 0 ? `${bookmarkedSheets.length} grille${bookmarkedSheets.length > 1 ? 's' : ''} sauvegardée${bookmarkedSheets.length > 1 ? 's' : ''}` : 'Vos grilles favorites')}
-            {tab === 'sets' && (sets.length > 0 ? `${sets.length} set${sets.length > 1 ? 's' : ''}` : 'Vos setlists')}
+            {tab === 'sets' && (sets.length > 0 ? `${sets.length} playlist${sets.length > 1 ? 's' : ''}` : 'Vos playlists')}
           </p>
         </div>
         <div className="flex items-center gap-2">

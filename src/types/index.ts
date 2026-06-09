@@ -230,6 +230,11 @@ export interface User {
   minimizeRepeatedSections?: boolean;
   printMinimizeRepeatedSections?: boolean;
   printChordDiagrams?: boolean;
+  // Préférences de lecture
+  defaultMetronome?: boolean;
+  defaultGrooveBox?: boolean;
+  defaultChordsAudio?: boolean;
+  defaultCountIn?: boolean;
 }
 
 // Vérifier si un email est admin
