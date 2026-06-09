@@ -18,7 +18,7 @@ import { useArtwork } from '@/lib/use-artwork';
 import { useAuth } from '@/lib/auth-context';
 import { INSTRUMENT_CONFIG } from '@/lib/chord-data';
 import { useChordVariants } from '@/lib/use-chord-variants';
-import { playChord } from '@/lib/chord-audio';
+import { playChord, playMetronomeTick } from '@/lib/chord-audio';
 import { transposeSections, transposeKey } from '@/lib/transpose';
 
 const LS_KEY = 'chordsheet_instrument';
@@ -94,6 +94,9 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   const [metronomeEnabled, setMetronomeEnabled] = useState(false);
   const [grooveEnabled, setGrooveEnabled] = useState(false);
   const [chordsEnabled, setChordsEnabled] = useState(true);
+  const [countInEnabled, setCountInEnabled] = useState(false);
+  const [countBeat, setCountBeat] = useState(0); // 0 = inactif, 1-4 = décompte
+  const countTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const [transpose, setTranspose] = useState(0);
   const [selectedChords, setSelectedChords] = useState<Record<string, StringChord | PianoChord>>({});
   const [localTempo, setLocalTempo] = useState<string>(sheet.tempo || '90');
@@ -115,7 +118,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   })();
 
   // Playback
-  const { isPlaying, activeStep, playSection, togglePlay, stop } = usePlayback({
+  const { isPlaying, activeStep, playSection, play, togglePlay, stop } = usePlayback({
     sections: displaySections,
     tempo: localTempo,
     tempoUnit: localTempoUnit,
@@ -128,6 +131,38 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   });
 
   const bpm = parseTempo(sheet.tempo);
+
+  const cancelCountIn = useCallback(() => {
+    countTimersRef.current.forEach(clearTimeout);
+    countTimersRef.current = [];
+    setCountBeat(0);
+  }, []);
+
+  // Cleanup au démontage
+  useEffect(() => () => cancelCountIn(), [cancelCountIn]);
+
+  const handlePlay = useCallback(() => {
+    if (isPlaying) { stop(); return; }
+    if (countBeat > 0) { cancelCountIn(); return; }
+    if (!countInEnabled) { play(); return; }
+
+    const factor = localTempoUnit === 'eighth' ? 0.5 : 1;
+    const msPerBeat = (60000 / parseTempo(localTempo)) * factor;
+
+    for (let b = 1; b <= 4; b++) {
+      const t = setTimeout(() => {
+        setCountBeat(b);
+        playMetronomeTick(b === 1);
+      }, (b - 1) * msPerBeat);
+      countTimersRef.current.push(t);
+    }
+    const startT = setTimeout(() => {
+      setCountBeat(0);
+      countTimersRef.current = [];
+      play();
+    }, 4 * msPerBeat);
+    countTimersRef.current.push(startT);
+  }, [isPlaying, countBeat, countInEnabled, stop, cancelCountIn, play, localTempo, localTempoUnit]);
 
   // Auto-scroll : ligne active en haut de l'écran (solo + concert)
   const scrollToRow = useCallback((rowId: string) => {
@@ -361,20 +396,51 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 <span className="text-xs text-[var(--ink-light)]">BPM</span>
               </div>
 
+              {/* Toggle count-in */}
+              <button
+                onClick={() => setCountInEnabled(v => !v)}
+                title={countInEnabled ? 'Désactiver le décompte' : 'Activer le décompte (4 temps avant play)'}
+                className={`
+                  flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
+                  ${countInEnabled
+                    ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                    : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                  }
+                `}
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                  <rect x="2"  y="16" width="4" height="6" rx="1"/>
+                  <rect x="7"  y="11" width="4" height="11" rx="1"/>
+                  <rect x="12" y="6"  width="4" height="16" rx="1"/>
+                  <rect x="17" y="1"  width="4" height="21" rx="1"/>
+                </svg>
+              </button>
+
               {/* Play / Stop */}
               <button
-                onClick={togglePlay}
-                title={isPlaying ? 'Stop' : `Play — ${bpm} BPM`}
+                onClick={handlePlay}
+                title={isPlaying ? 'Stop' : countBeat > 0 ? 'Annuler le décompte' : `Play — ${bpm} BPM`}
                 className={`
                   flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
                   transition-all duration-150 border-[1.5px]
-                  ${isPlaying
+                  ${isPlaying || countBeat > 0
                     ? 'bg-[var(--accent)] border-[var(--accent)] text-white hover:bg-[#a83d25]'
                     : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
                   }
                 `}
               >
-                {isPlaying ? (
+                {countBeat > 0 ? (
+                  <div className="flex items-center gap-1.5">
+                    {[1, 2, 3, 4].map(b => (
+                      <span
+                        key={b}
+                        className={`w-2 h-2 rounded-full transition-all duration-75 ${
+                          b === countBeat ? 'bg-white scale-150' : b < countBeat ? 'bg-white/50' : 'bg-white/25'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                ) : isPlaying ? (
                   <>
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                       <rect x="4" y="3" width="4" height="14" rx="1" />
