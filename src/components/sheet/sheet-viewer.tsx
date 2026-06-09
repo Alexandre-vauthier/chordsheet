@@ -40,7 +40,7 @@ interface SheetViewerProps {
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
   isTogglingBookmark?: boolean;
-  concertCellPath?: { sectionIdx: number; rowIdx: number; cellIdx: number; durationMs?: number };
+  concertCellPath?: { sectionIdx: number; rowIdx: number; cellIdx: number; durationMs?: number; rowRepeatIndex?: number };
 }
 
 function getRefLabel(url: string): string {
@@ -134,6 +134,14 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [concertCellPath?.sectionIdx, concertCellPath?.rowIdx, concertCellPath?.cellIdx]);
+
+  // Auto-scroll vers la section active pendant la lecture solo
+  useEffect(() => {
+    if (!isPlaying || !activeStep) return;
+    const el = document.querySelector(`[data-section-id="${activeStep.sectionId}"]`) as HTMLElement | null;
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeStep?.sectionId]);
 
   useGrooveBox({
     enabled: grooveEnabled && isPlaying,
@@ -541,7 +549,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             return { section, isDuplicate, isDuplicateForPrint, firstLabel: firstLabel ?? null };
           });
         })().map(({ section, isDuplicate, isDuplicateForPrint, firstLabel }, sectionIdx) => (
-          <div key={section.id} className="print:break-inside-avoid">
+          <div key={section.id} className="print:break-inside-avoid" data-section-id={section.id}>
             {/* Header de section */}
             <div className="flex items-center gap-3 mb-3">
               <span className="text-sm font-semibold uppercase tracking-wider text-[var(--ink)]">
@@ -595,6 +603,18 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   isPlaying &&
                   activeStep?.sectionId === section.id &&
                   activeStep?.rowIndex === rowIndex;
+                const isRowConcertActive = !!concertCellPath &&
+                  concertCellPath.sectionIdx === sectionIdx &&
+                  concertCellPath.rowIdx === rowIndex;
+
+                // Index de répétition courant (solo ou concert)
+                const activeRepeatIdx = isRowActive
+                  ? activeStep!.rowRepeatIndex
+                  : isRowConcertActive
+                    ? (concertCellPath!.rowRepeatIndex ?? 0)
+                    : undefined;
+                const isRepeatBadgeActive = activeRepeatIdx !== undefined;
+                const isLastRepeat = isRepeatBadgeActive && activeRepeatIdx === rowRepeat - 1;
 
                 return (
                   <div key={rowIndex} className="relative">
@@ -639,11 +659,12 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                         );
                       })}
                     </div>
-                    {rowRepeat > 1 && (
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 print:inline
+                    {rowRepeat > 1 && !isLastRepeat && (
+                      <span className={`absolute right-2 top-1/2 -translate-y-1/2 print:inline
                         text-xs font-semibold px-1.5 py-0.5 rounded
-                        bg-[var(--accent)] text-white shadow-sm">
-                        ×{rowRepeat}
+                        bg-[var(--accent)] text-white shadow-sm
+                        ${isRepeatBadgeActive ? 'animate-pulse' : ''}`}>
+                        ×{isRepeatBadgeActive ? rowRepeat - activeRepeatIdx! : rowRepeat}
                       </span>
                     )}
                   </div>

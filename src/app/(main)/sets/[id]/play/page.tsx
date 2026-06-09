@@ -24,14 +24,14 @@ function calculateConcertCell(
   startTimeMs: number,
   bpm: number,
   tempoUnit?: 'quarter' | 'eighth'
-): { sectionIdx: number; rowIdx: number; cellIdx: number; remainingMs: number } | null {
+): { sectionIdx: number; rowIdx: number; cellIdx: number; remainingMs: number; rowRepeatIndex: number } | null {
   const elapsed = Date.now() - startTimeMs;
   if (elapsed < 0) return null;
 
   const factor = tempoUnit === 'eighth' ? 0.5 : 1;
   const beatMs = (60000 / bpm) * factor;
   let accumulated = 0;
-  let lastChord: { sectionIdx: number; rowIdx: number; cellIdx: number; remainingMs: number } | null = null;
+  let lastChord: { sectionIdx: number; rowIdx: number; cellIdx: number; remainingMs: number; rowRepeatIndex: number } | null = null;
 
   for (let si = 0; si < sections.length; si++) {
     const section = sections[si];
@@ -49,11 +49,11 @@ function calculateConcertCell(
             if (elapsed < accumulated + dur) {
               const remainingMs = accumulated + dur - elapsed;
               return cell.chord
-                ? { sectionIdx: si, rowIdx: ri, cellIdx: ci, remainingMs }
+                ? { sectionIdx: si, rowIdx: ri, cellIdx: ci, remainingMs, rowRepeatIndex: rr }
                 : lastChord;
             }
             accumulated += dur;
-            if (cell.chord) lastChord = { sectionIdx: si, rowIdx: ri, cellIdx: ci, remainingMs: 0 };
+            if (cell.chord) lastChord = { sectionIdx: si, rowIdx: ri, cellIdx: ci, remainingMs: 0, rowRepeatIndex: rr };
           }
         }
       }
@@ -169,7 +169,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
 
   // ── Auto-scroll : boucle RAF ────────────────────────────────────────────────
   const [concertCellPath, setConcertCellPath] = useState<{
-    sectionIdx: number; rowIdx: number; cellIdx: number; durationMs: number;
+    sectionIdx: number; rowIdx: number; cellIdx: number; durationMs: number; rowRepeatIndex: number;
   } | null>(null);
   const rafRef = useRef<number>(0);
   const prevConcertPathRef = useRef<{ sectionIdx: number; rowIdx: number; cellIdx: number } | null>(null);
@@ -197,7 +197,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
       const { remainingMs, ...path } = result;
       const prev = prevConcertPathRef.current;
       if (!prev || prev.sectionIdx !== path.sectionIdx || prev.rowIdx !== path.rowIdx || prev.cellIdx !== path.cellIdx) {
-        setConcertCellPath({ ...path, durationMs: remainingMs });
+        setConcertCellPath({ ...path, durationMs: remainingMs, rowRepeatIndex: path.rowRepeatIndex });
         prevConcertPathRef.current = path;
       }
       rafRef.current = requestAnimationFrame(tick);

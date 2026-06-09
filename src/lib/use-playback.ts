@@ -9,6 +9,7 @@ export interface PlayStep {
   rowIndex: number;
   cellIndex: number;
   durationMs: number;
+  rowRepeatIndex: number;
 }
 
 export function parseTempo(tempoStr: string | undefined): number {
@@ -40,6 +41,7 @@ function buildSequence(sections: Section[], beatMs: number): PlayStep[] {
               rowIndex: r,
               cellIndex: c,
               durationMs: row[c].span * bpm * beatMs,
+              rowRepeatIndex: rr,
             });
           }
         }
@@ -199,7 +201,7 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, customCh
       let lastNonEmpty = row.length - 1;
       while (lastNonEmpty > 0 && !row[lastNonEmpty].chord.trim()) lastNonEmpty--;
       for (let c = 0; c <= lastNonEmpty; c++) {
-        steps.push({ sectionId, rowIndex, cellIndex: c, durationMs: row[c].span * bpmeasure * beatMs });
+        steps.push({ sectionId, rowIndex, cellIndex: c, durationMs: row[c].span * bpmeasure * beatMs, rowRepeatIndex: rr });
       }
     }
     runSteps(steps, (step) => section.rows[step.rowIndex]?.[step.cellIndex]);
