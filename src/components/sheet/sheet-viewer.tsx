@@ -666,9 +666,8 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                     </div>
                     {rowRepeat > 1 && !isLastRepeat && (
                       <span className={`absolute right-2 top-1/2 -translate-y-1/2 print:inline
-                        text-xs font-semibold px-1.5 py-0.5 rounded
-                        bg-[var(--accent)] text-white shadow-sm
-                        ${isRepeatBadgeActive ? 'animate-pulse' : ''}`}>
+                        text-xs font-semibold px-1.5 py-0.5 rounded shadow-sm
+                        ${isRepeatBadgeActive ? 'animate-repeat-blink' : 'bg-[var(--accent)] text-white'}`}>
                         ×{isRepeatBadgeActive ? rowRepeat - activeRepeatIdx! : rowRepeat}
                       </span>
                     )}
