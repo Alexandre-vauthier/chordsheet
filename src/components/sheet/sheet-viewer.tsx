@@ -127,13 +127,40 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
 
   const bpm = parseTempo(sheet.tempo);
 
-  // Auto-scroll vers la cellule active en mode concert
+  // Auto-scroll concert groupe : même logique look-ahead que la lecture solo
   useEffect(() => {
     if (!concertCellPath) return;
-    const el = document.querySelector('[data-concert-active]') as HTMLElement | null;
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const navbarHeight = 56;
+
+    const currentSection = displaySections[concertCellPath.sectionIdx];
+    if (!currentSection) return;
+
+    let nextRowEl: HTMLElement | null = null;
+    if (concertCellPath.rowIdx + 1 < currentSection.rows.length) {
+      nextRowEl = document.querySelector(`[data-row-id="${currentSection.id}-${concertCellPath.rowIdx + 1}"]`);
+    } else {
+      const nextSection = displaySections[concertCellPath.sectionIdx + 1];
+      if (nextSection) nextRowEl = document.querySelector(`[data-row-id="${nextSection.id}-0"]`);
+    }
+
+    const currentRowEl = document.querySelector(`[data-row-id="${currentSection.id}-${concertCellPath.rowIdx}"]`) as HTMLElement | null;
+
+    if (nextRowEl) {
+      const nextRect = nextRowEl.getBoundingClientRect();
+      if (nextRect.bottom > window.innerHeight || nextRect.top < navbarHeight) {
+        if (currentRowEl) {
+          const curRect = currentRowEl.getBoundingClientRect();
+          window.scrollTo({ top: window.scrollY + curRect.top - navbarHeight - 12, behavior: 'smooth' });
+        }
+      }
+    } else if (currentRowEl) {
+      const rect = currentRowEl.getBoundingClientRect();
+      if (rect.top < navbarHeight || rect.bottom > window.innerHeight) {
+        window.scrollTo({ top: window.scrollY + rect.top - navbarHeight - 12, behavior: 'smooth' });
+      }
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [concertCellPath?.sectionIdx, concertCellPath?.rowIdx, concertCellPath?.cellIdx]);
+  }, [concertCellPath?.sectionIdx, concertCellPath?.rowIdx]);
 
   // Auto-scroll : anticipe la ligne suivante
   useEffect(() => {
