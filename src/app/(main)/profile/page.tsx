@@ -28,6 +28,10 @@ export default function ProfilePage() {
   const [minimizeRepeated, setMinimizeRepeated] = useState(false);
   const [printMinimizeRepeated, setPrintMinimizeRepeated] = useState(false);
   const [printChordDiagrams, setPrintChordDiagrams] = useState(false);
+  const [defaultMetronome, setDefaultMetronome] = useState(false);
+  const [defaultGrooveBox, setDefaultGrooveBox] = useState(false);
+  const [defaultChordsAudio, setDefaultChordsAudio] = useState(true);
+  const [defaultCountIn, setDefaultCountIn] = useState(false);
   const [preferredInstrument, setPreferredInstrument] = useState<InstrumentId | undefined>(undefined);
   const [isSaving, setIsSaving] = useState(false);
   const [showDeleteZone, setShowDeleteZone] = useState(false);
@@ -49,6 +53,10 @@ export default function ProfilePage() {
       setMinimizeRepeated(user.minimizeRepeatedSections ?? false);
       setPrintMinimizeRepeated(user.printMinimizeRepeatedSections ?? false);
       setPrintChordDiagrams(user.printChordDiagrams ?? false);
+      setDefaultMetronome(user.defaultMetronome ?? false);
+      setDefaultGrooveBox(user.defaultGrooveBox ?? false);
+      setDefaultChordsAudio(user.defaultChordsAudio ?? true);
+      setDefaultCountIn(user.defaultCountIn ?? false);
     }
   }, [user]);
 
@@ -496,6 +504,108 @@ export default function ProfilePage() {
             }`}
           >
             <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${printChordDiagrams ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Lecture ────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 mt-8 mb-3">
+        <span className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Lecture</span>
+        <div className="flex-1 h-px bg-[var(--line)]" />
+      </div>
+
+      {/* Métronome par défaut */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)]">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Métronome activé par défaut</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              Active automatiquement le métronome à l&apos;ouverture d&apos;une grille
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !defaultMetronome;
+              setDefaultMetronome(newVal);
+              try { await updateUser({ defaultMetronome: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              defaultMetronome ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${defaultMetronome ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Boîte à rythmes par défaut */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Boîte à rythmes activée par défaut</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              Active automatiquement l&apos;accompagnement rythmique à l&apos;ouverture d&apos;une grille
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !defaultGrooveBox;
+              setDefaultGrooveBox(newVal);
+              try { await updateUser({ defaultGrooveBox: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              defaultGrooveBox ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${defaultGrooveBox ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Lecture des accords par défaut */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Lecture des accords activée par défaut</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              Joue le son des accords pendant la lecture (désactiver pour une lecture silencieuse)
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !defaultChordsAudio;
+              setDefaultChordsAudio(newVal);
+              try { await updateUser({ defaultChordsAudio: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              defaultChordsAudio ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${defaultChordsAudio ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Décompte avant lecture par défaut */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Décompte avant lecture par défaut</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              Lance un métronome sur 4 temps avant de démarrer la lecture
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !defaultCountIn;
+              setDefaultCountIn(newVal);
+              try { await updateUser({ defaultCountIn: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              defaultCountIn ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${defaultCountIn ? 'translate-x-5' : ''}`} />
           </button>
         </div>
       </div>

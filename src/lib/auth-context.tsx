@@ -24,7 +24,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
-  updateUser: (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean; printMinimizeRepeatedSections?: boolean; printChordDiagrams?: boolean }) => Promise<void>;
+  updateUser: (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean; printMinimizeRepeatedSections?: boolean; printChordDiagrams?: boolean; defaultMetronome?: boolean; defaultGrooveBox?: boolean; defaultChordsAudio?: boolean; defaultCountIn?: boolean }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -199,7 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // Mettre à jour le profil utilisateur
-  const updateUser = async (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean; printMinimizeRepeatedSections?: boolean; printChordDiagrams?: boolean }) => {
+  const updateUser = async (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean; printMinimizeRepeatedSections?: boolean; printChordDiagrams?: boolean; defaultMetronome?: boolean; defaultGrooveBox?: boolean; defaultChordsAudio?: boolean; defaultCountIn?: boolean }) => {
     const auth = getAuth();
     const db = getDb();
     const currentUser = auth.currentUser;
