@@ -2,10 +2,13 @@
 
 import { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { getAuth } from '@/lib/firebase';
 import { getDb } from '@/lib/firebase';
 import { toFirestore } from '@/lib/firestore-helpers';
 import { useAuth } from '@/lib/auth-context';
+import { getRemainingOcr, isPro } from '@/lib/plan-limits';
 import type { Section, Cell, CellSpan, NewSheet } from '@/types';
 
 interface ChordEntry { chord: string; beats: number }
@@ -83,7 +86,7 @@ export function AnalyzeSheetModal({ onClose }: Props) {
   const cameraRef = useRef<HTMLInputElement>(null);
 
   const [pages, setPages] = useState<PageFile[]>([]);
-  const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error' | 'upgrade'>('idle');
   const [error, setError] = useState('');
   const [result, setResult] = useState<SheetResult | null>(null);
   const [isCreating, setIsCreating] = useState(false);
@@ -135,25 +138,32 @@ export function AnalyzeSheetModal({ onClose }: Props) {
         img.src = url;
       })));
 
+      // Envoyer le token Firebase pour la vérification du quota côté serveur
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      const auth = getAuth();
+      const idToken = await auth.currentUser?.getIdToken().catch(() => null);
+      if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
+
       const res = await fetch('/api/analyze-sheet', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ files: fileData }),
       });
 
       // Protège contre les réponses non-JSON (ex: 413 Request Entity Too Large)
       const text = await res.text();
-      let data: { error?: string } = {};
+      let data: { error?: string; upgradeRequired?: boolean } = {};
       try { data = JSON.parse(text); } catch {
         if (res.status === 413) throw new Error('Image trop volumineuse. Réduis la résolution et réessaie.');
         throw new Error(`Erreur serveur (${res.status})`);
       }
+      if (res.status === 429 && data.upgradeRequired) throw Object.assign(new Error(data.error ?? ''), { upgradeRequired: true });
       if (!res.ok) throw new Error(data.error ?? 'Erreur inconnue');
       setResult(data as SheetResult);
       setStatus('done');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur inconnue');
-      setStatus('error');
+      setStatus((e as { upgradeRequired?: boolean }).upgradeRequired ? 'upgrade' : 'error');
     }
   };
 
@@ -191,6 +201,8 @@ export function AnalyzeSheetModal({ onClose }: Props) {
   };
 
   const totalChords = result?.sections.reduce((acc, s) => acc + s.chords.length, 0) ?? 0;
+  const remainingOcr = getRemainingOcr(user?.subscription);
+  const userIsPro = isPro(user?.subscription);
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
@@ -202,7 +214,14 @@ export function AnalyzeSheetModal({ onClose }: Props) {
             <h2 className="font-playfair text-lg font-bold text-[var(--ink)]">Retranscrire une partition</h2>
             <p className="text-xs text-[var(--ink-faint)] mt-0.5">Dépose une ou plusieurs pages — la structure complète est analysée</p>
           </div>
-          <button onClick={onClose} className="text-[var(--ink-faint)] hover:text-[var(--ink)] text-xl leading-none cursor-pointer">×</button>
+          <div className="flex items-center gap-3">
+            {!userIsPro && remainingOcr !== Infinity && (
+              <span className={`text-xs px-2 py-0.5 rounded-full ${remainingOcr > 0 ? 'bg-[var(--cell-bg)] text-[var(--ink-light)]' : 'bg-red-50 text-red-500'}`}>
+                {remainingOcr > 0 ? `${remainingOcr} analyse${remainingOcr > 1 ? 's' : ''} restante${remainingOcr > 1 ? 's' : ''}` : 'Limite atteinte'}
+              </span>
+            )}
+            <button onClick={onClose} className="text-[var(--ink-faint)] hover:text-[var(--ink)] text-xl leading-none cursor-pointer">×</button>
+          </div>
         </div>
 
         <div className="overflow-y-auto flex-1 px-6 py-5 space-y-4">
@@ -289,6 +308,23 @@ export function AnalyzeSheetModal({ onClose }: Props) {
           {/* Erreur */}
           {status === 'error' && (
             <p className="text-sm text-red-600 bg-red-50 border border-red-100 px-3 py-2 rounded-lg">{error}</p>
+          )}
+
+          {/* Limite OCR atteinte */}
+          {status === 'upgrade' && (
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--cell-bg)] p-5 text-center space-y-3">
+              <p className="font-semibold text-[var(--ink)] text-sm">Limite mensuelle atteinte</p>
+              <p className="text-xs text-[var(--ink-light)]">
+                Le plan gratuit inclut 2 analyses par mois. Passe à ChordSheet Pro pour des analyses illimitées.
+              </p>
+              <Link
+                href="/pricing"
+                onClick={onClose}
+                className="inline-block px-5 py-2 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Passer à Pro — 4,90 €/mois
+              </Link>
+            </div>
           )}
 
           {/* Résultat */}

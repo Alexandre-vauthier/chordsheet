@@ -56,12 +56,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setDoc(doc(db, 'users', fbUser.uid), { role: 'admin' }, { merge: true }).catch(() => {});
           }
 
+          // Désérialiser la subscription si présente
+          const rawSub = userData.subscription;
+          const subscription = rawSub ? {
+            plan: rawSub.plan || 'free',
+            status: rawSub.status || 'active',
+            stripeCustomerId: rawSub.stripeCustomerId || undefined,
+            stripeSubscriptionId: rawSub.stripeSubscriptionId || undefined,
+            currentPeriodEnd: rawSub.currentPeriodEnd?.toDate?.() || undefined,
+            ocrUsedThisMonth: rawSub.ocrUsedThisMonth ?? 0,
+            ocrResetAt: rawSub.ocrResetAt?.toDate?.() || undefined,
+          } : undefined;
+
           setUser({
             id: fbUser.uid,
             displayName: userData.displayName || fbUser.displayName || '',
             email,
             photoURL: userData.photoURL || fbUser.photoURL,
             role,
+            subscription,
             notationPreference: userData.notationPreference || 'american',
             chordColorCoding: userData.chordColorCoding ?? false,
             showInlineDiagram: userData.showInlineDiagram ?? false,

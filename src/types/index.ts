@@ -194,6 +194,20 @@ export type NewSheet = Omit<Sheet, 'id' | 'createdAt' | 'updatedAt' | 'viewCount
 // Rôles utilisateur
 export type UserRole = 'user' | 'admin';
 
+// Plans d'abonnement
+export type SubscriptionPlan = 'free' | 'pro';
+export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'canceled';
+
+export interface Subscription {
+  plan: SubscriptionPlan;
+  status: SubscriptionStatus;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  currentPeriodEnd?: Date;
+  ocrUsedThisMonth: number;
+  ocrResetAt?: Date;
+}
+
 // Emails des administrateurs
 export const ADMIN_EMAILS = ['alex.vauthier@gmail.com', 'vauthier.julien@gmail.com', 'gregoire@42stores.com'] as const;
 
@@ -206,6 +220,7 @@ export interface User {
   role: UserRole;
   createdAt: Date;
   updatedAt: Date;
+  subscription?: Subscription;
   // V3 - Préférences d'accords
   preferredInstrument?: InstrumentId;
   notationPreference?: NotationPreference;
@@ -272,7 +287,7 @@ export interface ActiveConcert {
 export interface Group {
   id?: string;
   name: string;
-  description?: string;
+  description?: string | null;
   ownerId: string;
   memberIds: string[];
   roles: Record<string, GroupRole>;

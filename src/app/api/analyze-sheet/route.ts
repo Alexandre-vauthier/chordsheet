@@ -1,7 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+function getAdminDb() {
+  if (!getApps().length) {
+    initializeApp({
+      credential: cert({
+        projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      }),
+    });
+  }
+  return getFirestore();
+}
+
+const FREE_OCR_LIMIT = 2;
 
 const PROMPT = `Tu es un musicien expérimenté qui déchiffre une partition. Les images sont les pages successives d'un même morceau dans l'ordre.
 
@@ -51,6 +69,39 @@ Règles JSON :
 export async function POST(req: NextRequest) {
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ error: 'Clé API Anthropic non configurée.' }, { status: 503 });
+  }
+
+  // Vérification du quota OCR via le token Firebase
+  let userId: string | null = null;
+  const authHeader = req.headers.get('Authorization');
+  if (authHeader?.startsWith('Bearer ') && process.env.FIREBASE_ADMIN_PROJECT_ID) {
+    try {
+      const idToken = authHeader.slice(7);
+      const decoded = await getAdminAuth().verifyIdToken(idToken);
+      userId = decoded.uid;
+
+      const db = getAdminDb();
+      const userDoc = await db.collection('users').doc(userId).get();
+      if (userDoc.exists) {
+        const sub = userDoc.data()?.subscription;
+        const isPro = sub?.plan === 'pro' && (sub?.status === 'active' || sub?.status === 'trialing');
+
+        if (!isPro) {
+          // Vérifier si le reset mensuel est passé
+          const resetAt = sub?.ocrResetAt?.toDate?.();
+          const ocrUsed = resetAt && new Date() > resetAt ? 0 : (sub?.ocrUsedThisMonth ?? 0);
+
+          if (ocrUsed >= FREE_OCR_LIMIT) {
+            return NextResponse.json({
+              error: 'Limite d\'analyses atteinte pour ce mois. Passe à ChordSheet Pro pour des analyses illimitées.',
+              upgradeRequired: true,
+            }, { status: 429 });
+          }
+        }
+      }
+    } catch {
+      // Token invalide → on continue sans blocage (fail open pour ne pas bloquer les admins)
+    }
   }
 
   try {
@@ -110,6 +161,34 @@ export async function POST(req: NextRequest) {
           });
         }
       }
+    }
+
+    // Incrémenter le compteur OCR pour les utilisateurs free
+    if (userId && process.env.FIREBASE_ADMIN_PROJECT_ID) {
+      try {
+        const db = getAdminDb();
+        const userDoc = await db.collection('users').doc(userId).get();
+        const sub = userDoc.data()?.subscription;
+        const isPro = sub?.plan === 'pro' && (sub?.status === 'active' || sub?.status === 'trialing');
+        if (!isPro) {
+          const resetAt = sub?.ocrResetAt?.toDate?.();
+          const nextReset = new Date();
+          nextReset.setMonth(nextReset.getMonth() + 1);
+
+          if (resetAt && new Date() > resetAt) {
+            // Reset du compteur + incrément
+            await db.collection('users').doc(userId).update({
+              'subscription.ocrUsedThisMonth': 1,
+              'subscription.ocrResetAt': nextReset,
+            });
+          } else {
+            await db.collection('users').doc(userId).update({
+              'subscription.ocrUsedThisMonth': FieldValue.increment(1),
+              'subscription.ocrResetAt': resetAt ?? nextReset,
+            });
+          }
+        }
+      } catch { /* silencieux */ }
     }
 
     return NextResponse.json(parsed);
