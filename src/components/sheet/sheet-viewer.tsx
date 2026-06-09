@@ -141,10 +141,25 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   // Cleanup au démontage
   useEffect(() => () => cancelCountIn(), [cancelCountIn]);
 
+  // Auto-scroll : ligne active en haut de l'écran (solo + concert)
+  const scrollToRow = useCallback((rowId: string) => {
+    const el = document.querySelector(`[data-row-id="${rowId}"]`) as HTMLElement | null;
+    if (!el) return;
+    const navbarHeight = 56;
+    window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top - navbarHeight - 12, behavior: 'smooth' });
+  }, []);
+
   const handlePlay = useCallback(() => {
     if (isPlaying) { stop(); return; }
     if (countBeat > 0) { cancelCountIn(); return; }
     if (!countInEnabled) { play(); return; }
+
+    // Scroll vers la première ligne dès le démarrage du décompte
+    const firstSection = displaySections[0];
+    if (firstSection) {
+      const firstRowIndex = firstSection.rows.findIndex(r => r.some(c => c.chord));
+      if (firstRowIndex !== -1) scrollToRow(`${firstSection.id}-${firstRowIndex}`);
+    }
 
     const factor = localTempoUnit === 'eighth' ? 0.5 : 1;
     const msPerBeat = (60000 / parseTempo(localTempo)) * factor;
@@ -162,15 +177,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
       play();
     }, 4 * msPerBeat);
     countTimersRef.current.push(startT);
-  }, [isPlaying, countBeat, countInEnabled, stop, cancelCountIn, play, localTempo, localTempoUnit]);
-
-  // Auto-scroll : ligne active en haut de l'écran (solo + concert)
-  const scrollToRow = useCallback((rowId: string) => {
-    const el = document.querySelector(`[data-row-id="${rowId}"]`) as HTMLElement | null;
-    if (!el) return;
-    const navbarHeight = 56;
-    window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top - navbarHeight - 12, behavior: 'smooth' });
-  }, []);
+  }, [isPlaying, countBeat, countInEnabled, stop, cancelCountIn, play, localTempo, localTempoUnit, displaySections, scrollToRow]);
 
   useEffect(() => {
     if (!isPlaying || !activeStep) return;
