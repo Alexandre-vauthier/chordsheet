@@ -187,19 +187,31 @@ export function useGroups() {
   const linkSheet = useCallback(async (groupId: string, sheetId: string) => {
     if (!user) throw new Error('Non connecté');
     const db = getDb();
-    await updateDoc(doc(db, 'groups', groupId), {
-      linkedSheetIds: arrayUnion(sheetId),
-      updatedAt: serverTimestamp(),
-    });
+    await Promise.all([
+      updateDoc(doc(db, 'groups', groupId), {
+        linkedSheetIds: arrayUnion(sheetId),
+        updatedAt: serverTimestamp(),
+      }),
+      // Écrire groupId sur la grille pour que les membres puissent la lire (règle Firestore)
+      updateDoc(doc(db, 'sheets', sheetId), { groupId }),
+    ]);
   }, [user]);
 
   const unlinkSheet = useCallback(async (groupId: string, sheetId: string) => {
     if (!user) throw new Error('Non connecté');
     const db = getDb();
-    await updateDoc(doc(db, 'groups', groupId), {
-      linkedSheetIds: arrayRemove(sheetId),
-      updatedAt: serverTimestamp(),
-    });
+    const sheetSnap = await getDoc(doc(db, 'sheets', sheetId));
+    const updates: Promise<void>[] = [
+      updateDoc(doc(db, 'groups', groupId), {
+        linkedSheetIds: arrayRemove(sheetId),
+        updatedAt: serverTimestamp(),
+      }),
+    ];
+    // Retirer groupId de la grille seulement si c'est bien ce groupe
+    if (sheetSnap.exists() && sheetSnap.data().groupId === groupId) {
+      updates.push(updateDoc(doc(db, 'sheets', sheetId), { groupId: null }));
+    }
+    await Promise.all(updates);
   }, [user]);
 
   const launchConcert = useCallback(async (groupId: string, setId: string, setName: string) => {
