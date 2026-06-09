@@ -150,11 +150,13 @@ type Samples = { kick: AudioBuffer | null; snare: AudioBuffer | null; hihat: Aud
 
 export function useGrooveBox({
   enabled,
+  muted,
   bpm,
   beatsPerMeasure,
   genres,
 }: {
-  enabled: boolean;
+  enabled: boolean;  // lifecycle : suit isPlaying
+  muted: boolean;    // mute/unmute sans relancer l'AudioContext
   bpm: number;
   beatsPerMeasure: number;
   genres: string[];
@@ -169,10 +171,12 @@ export function useGrooveBox({
   const bpmRef = useRef(bpm);
   const bpmPerMeasureRef = useRef(beatsPerMeasure);
   const patternRef = useRef(pickPattern(genres));
+  const mutedRef = useRef(muted);
 
   useEffect(() => { bpmRef.current = bpm; }, [bpm]);
   useEffect(() => { bpmPerMeasureRef.current = beatsPerMeasure; }, [beatsPerMeasure]);
   useEffect(() => { patternRef.current = pickPattern(genres); }, [genres]);
+  useEffect(() => { mutedRef.current = muted; }, [muted]);
 
   useEffect(() => {
     if (!enabled) {
@@ -219,14 +223,17 @@ export function useGrooveBox({
         const t = nextTimeRef.current;
         const m = stepRef.current % stepsPerMeasure;
 
-        if (pattern.k[m]) {
-          samples?.kick ? playSample(c, samples.kick, d, t, 1.0) : synthKick(c, d, t);
-        }
-        if (pattern.s[m]) {
-          samples?.snare ? playSample(c, samples.snare, d, t, 0.9) : synthSnare(c, d, t);
-        }
-        if (pattern.h[m]) {
-          samples?.hihat ? playSample(c, samples.hihat, d, t, 0.4) : synthHihat(c, d, t);
+        // Avancer le pointeur même si muté pour garder le tempo
+        if (!mutedRef.current) {
+          if (pattern.k[m]) {
+            samples?.kick ? playSample(c, samples.kick, d, t, 1.0) : synthKick(c, d, t);
+          }
+          if (pattern.s[m]) {
+            samples?.snare ? playSample(c, samples.snare, d, t, 0.9) : synthSnare(c, d, t);
+          }
+          if (pattern.h[m]) {
+            samples?.hihat ? playSample(c, samples.hihat, d, t, 0.4) : synthHihat(c, d, t);
+          }
         }
 
         nextTimeRef.current += s16;

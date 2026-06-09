@@ -93,6 +93,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
 
   const [metronomeEnabled, setMetronomeEnabled] = useState(false);
   const [grooveEnabled, setGrooveEnabled] = useState(false);
+  const [chordsEnabled, setChordsEnabled] = useState(true);
   const [transpose, setTranspose] = useState(0);
   const [selectedChords, setSelectedChords] = useState<Record<string, StringChord | PianoChord>>({});
   const [localTempo, setLocalTempo] = useState<string>(sheet.tempo || '90');
@@ -122,6 +123,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
     customChords: sheet.customChords as Record<string, unknown>,
     selectedChords,
     metronomeEnabled,
+    chordsEnabled,
     capo: sheet.capo ?? 0,
   });
 
@@ -149,7 +151,8 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   }, [concertCellPath?.sectionIdx, concertCellPath?.rowIdx]);
 
   useGrooveBox({
-    enabled: grooveEnabled && isPlaying,
+    enabled: isPlaying,
+    muted: !grooveEnabled,
     bpm: (() => { const b = parseTempo(localTempo); return b > 100 ? Math.round(b / 2) : b; })(),
     beatsPerMeasure: sheet.beatsPerMeasure ?? 4,
     genres: sheet.genres ?? [],
@@ -303,6 +306,25 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   <line x1="5" y1="9" x2="5" y2="16" strokeLinecap="round"/>
                   <line x1="19" y1="9" x2="19" y2="16" strokeLinecap="round"/>
                   <path d="M5 16c0 1.38 3.13 2.5 7 2.5s7-1.12 7-2.5" strokeLinecap="round"/>
+                </svg>
+              </button>
+
+              {/* Toggle lecture des accords */}
+              <button
+                onClick={() => setChordsEnabled(v => !v)}
+                title={chordsEnabled ? 'Désactiver la lecture des accords' : 'Activer la lecture des accords'}
+                className={`
+                  flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
+                  ${chordsEnabled
+                    ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                    : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                  }
+                `}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+                  <path d="M9 18V5l12-2v13" strokeLinecap="round" strokeLinejoin="round"/>
+                  <circle cx="6" cy="18" r="3"/>
+                  <circle cx="18" cy="16" r="3"/>
                 </svg>
               </button>
 

@@ -66,10 +66,11 @@ interface UsePlaybackOptions {
   customChords?: Record<string, unknown>;
   selectedChords?: Record<string, StringChord | PianoChord>;
   metronomeEnabled?: boolean;
+  chordsEnabled?: boolean;
   capo?: number;
 }
 
-export function usePlayback({ sections, tempo, tempoUnit, instrumentId, customChords, selectedChords, metronomeEnabled, capo = 0 }: UsePlaybackOptions) {
+export function usePlayback({ sections, tempo, tempoUnit, instrumentId, customChords, selectedChords, metronomeEnabled, chordsEnabled = true, capo = 0 }: UsePlaybackOptions) {
   const { overrides, additions } = useLibraryChords();
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeStep, setActiveStep] = useState<PlayStep | null>(null);
@@ -79,6 +80,7 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, customCh
   const factor = TEMPO_UNIT_FACTOR[tempoUnit ?? 'quarter'];
   const beatMsRef = useRef<number>((60 / parseTempo(tempo)) * 1000 * factor);
   const bpMeasureRef = useRef<number>(sections[0]?.beatsPerMeasure || 4);
+  const chordsEnabledRef = useRef(chordsEnabled);
 
   // Mettre à jour les refs quand tempo/tempoUnit/sections changent
   useEffect(() => {
@@ -88,11 +90,14 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, customCh
     bpMeasureRef.current = sections[0]?.beatsPerMeasure || 4;
   }, [sections]);
 
-  // Ref pour que le tick accède à metronomeEnabled sans redémarrer l'interval
+  // Refs pour que les ticks accèdent aux flags sans redémarrer
   const metronomeEnabledRef = useRef(metronomeEnabled ?? false);
   useEffect(() => {
     metronomeEnabledRef.current = metronomeEnabled ?? false;
   }, [metronomeEnabled]);
+  useEffect(() => {
+    chordsEnabledRef.current = chordsEnabled;
+  }, [chordsEnabled]);
 
   // Le métronome tourne dès que isPlaying — le toggle ne fait que mute/unmute
   useEffect(() => {
@@ -166,7 +171,7 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, customCh
       const step = steps[i];
       setActiveStep(step);
       const cell = getCellFn(step);
-      if (cell?.chord) {
+      if (cell?.chord && chordsEnabledRef.current) {
         const chordData = resolveChord(cell.chord);
         if (chordData) playChord(chordData, instrumentId, capo);
       }

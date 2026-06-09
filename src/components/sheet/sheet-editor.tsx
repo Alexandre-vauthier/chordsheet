@@ -159,7 +159,8 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   const grooveBpm = bpm > 100 ? Math.round(bpm / 2) : bpm;
 
   useGrooveBox({
-    enabled: grooveEnabled && isPlaying,
+    enabled: isPlaying,
+    muted: !grooveEnabled,
     bpm: grooveBpm,
     beatsPerMeasure: sheet.beatsPerMeasure ?? 4,
     genres: sheet.genres ?? [],
