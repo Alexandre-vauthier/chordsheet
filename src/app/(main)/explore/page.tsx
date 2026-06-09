@@ -2,15 +2,16 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { collection, query, where, getDocs, limit, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, limit, deleteDoc, doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
 import { Input } from '@/components/ui/input';
 import { SheetCard, stopPreviewAudio } from '@/components/explore/sheet-card';
 import { WelcomeBanner } from '@/components/explore/welcome-banner';
-import { GENRES, DIFFICULTY_OPTIONS, type Difficulty } from '@/types';
+import { GENRES, DIFFICULTY_OPTIONS, type Difficulty, type CreatorLevel } from '@/types';
 import type { Sheet } from '@/types';
+import { computeScore, computeLevel } from '@/lib/creator-reputation';
 
 type SortOption = 'recent' | 'rated' | 'viewed';
 
@@ -20,6 +21,7 @@ export default function ExplorePage() {
   const searchParams = useSearchParams();
 
   const [sheets, setSheets] = useState<Sheet[]>([]);
+  const [creatorLevels, setCreatorLevels] = useState<Map<string, CreatorLevel>>(new Map());
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') ?? '');
 
@@ -114,6 +116,24 @@ export default function ExplorePage() {
         );
 
         setSheets(loadedSheets);
+
+        // Charger les niveaux des créateurs uniques (depuis reputation en cache)
+        const uniqueOwnerIds = [...new Set(loadedSheets.map(s => s.ownerId).filter(Boolean))];
+        const levels = new Map<string, CreatorLevel>();
+        await Promise.all(uniqueOwnerIds.map(async (ownerId) => {
+          try {
+            const userSnap = await getDoc(doc(db, 'users', ownerId));
+            if (userSnap.exists()) {
+              const data = userSnap.data();
+              if (data.reputation?.level) {
+                levels.set(ownerId, data.reputation.level as CreatorLevel);
+              } else if (data.reputation?.score !== undefined) {
+                levels.set(ownerId, computeLevel(data.reputation.score));
+              }
+            }
+          } catch { /* silencieux */ }
+        }));
+        setCreatorLevels(levels);
       } catch (error) {
         console.error('Error loading public sheets:', error);
       } finally {
@@ -363,9 +383,11 @@ export default function ExplorePage() {
                 key={`${sheet.title}-${sheet.artist}`}
                 sheet={sheet}
                 showRating
+                showOwner
                 hideDifficulty
                 href={href}
                 variantCount={count}
+                creatorLevel={sheet.ownerId ? creatorLevels.get(sheet.ownerId) : undefined}
                 onDelete={isAdmin && sheet.id ? () => handleAdminDelete(sheet.id!) : undefined}
               />
             ))}

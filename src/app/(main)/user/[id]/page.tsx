@@ -1,14 +1,17 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import { collection, query, where, getDocs, getDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, getDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
 import { SheetCard } from '@/components/explore/sheet-card';
+import { LevelBadge } from '@/components/reputation/level-badge';
+import { BadgesDisplay } from '@/components/reputation/badges-display';
 import { useBookmarks } from '@/lib/use-bookmarks';
 import { useAuth } from '@/lib/auth-context';
 import type { Sheet } from '@/types';
 import { DIFFICULTY_LABELS } from '@/types';
+import { computeScore, computeLevel, computeBadges, getLevelProgress } from '@/lib/creator-reputation';
 
 interface PublicUser {
   displayName: string;
@@ -35,7 +38,7 @@ export default function UserPage({ params }: UserPageProps) {
     async function load() {
       const db = getDb();
 
-      // Charger le profil utilisateur (peut être refusé par les règles Firestore)
+      // Charger le profil utilisateur
       try {
         const userDoc = await getDoc(doc(db, 'users', id));
         if (userDoc.exists()) {
@@ -46,10 +49,10 @@ export default function UserPage({ params }: UserPageProps) {
           });
         }
       } catch {
-        // Profil non accessible — on se rabat sur les données des grilles
+        // Profil non accessible — fallback sur les données des grilles
       }
 
-      // Charger les grilles publiques de cet auteur
+      // Charger les grilles publiques
       try {
         const q = query(
           collection(db, 'sheets'),
@@ -60,11 +63,20 @@ export default function UserPage({ params }: UserPageProps) {
         const loaded: Sheet[] = snapshot.docs.map(d => fromFirestore(d.id, d.data()));
         setSheets(loaded);
 
-        // Fallback nom depuis la première grille si le doc utilisateur est inaccessible
         setPublicUser(prev => prev ?? (loaded.length > 0 ? {
           displayName: loaded[0].ownerName || 'Anonyme',
           createdAt: null,
         } : null));
+
+        // Calculer et persister la réputation (cache pour navbar + explore)
+        if (loaded.length > 0) {
+          const score = computeScore(loaded);
+          const level = computeLevel(score);
+          const badges = computeBadges(loaded);
+          setDoc(doc(db, 'users', id), {
+            reputation: { score, level, badges, lastComputedAt: serverTimestamp() },
+          }, { merge: true }).catch(() => {});
+        }
       } catch {
         // ignore
       }
@@ -74,6 +86,16 @@ export default function UserPage({ params }: UserPageProps) {
 
     load();
   }, [id]);
+
+  // Réputation calculée côté client
+  const reputation = (() => {
+    const score = computeScore(sheets);
+    const level = computeLevel(score);
+    const badges = computeBadges(sheets);
+    const progress = getLevelProgress(score);
+    const totalBookmarks = sheets.reduce((acc, s) => acc + (s.bookmarkCount || 0), 0);
+    return { score, level, badges, progress, totalBookmarks };
+  })();
 
   // Stats calculées côté client
   const stats = (() => {
@@ -134,14 +156,40 @@ export default function UserPage({ params }: UserPageProps) {
         <div className="w-16 h-16 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-2xl font-bold shrink-0 shadow-md">
           {initial}
         </div>
-        <div>
-          <h1 className="font-playfair text-2xl font-bold text-[var(--ink)]">
-            {publicUser.displayName}
-          </h1>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="font-playfair text-2xl font-bold text-[var(--ink)]">
+              {publicUser.displayName}
+            </h1>
+            {sheets.length > 0 && <LevelBadge level={reputation.level} size="md" />}
+          </div>
           {publicUser.createdAt && (
             <p className="text-sm text-[var(--ink-faint)] mt-0.5">
               Membre depuis {publicUser.createdAt.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}
             </p>
+          )}
+
+          {/* Badges */}
+          {reputation.badges.length > 0 && (
+            <div className="mt-2">
+              <BadgesDisplay earned={reputation.badges} />
+            </div>
+          )}
+
+          {/* Barre de progression vers le niveau suivant */}
+          {sheets.length > 0 && reputation.progress.next && (
+            <div className="mt-3 max-w-xs">
+              <div className="flex justify-between text-[10px] text-[var(--ink-faint)] mb-1">
+                <span>{reputation.level}</span>
+                <span>{reputation.progress.next} ({reputation.progress.progressPct}%)</span>
+              </div>
+              <div className="h-1.5 bg-[var(--line)] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[var(--accent)] rounded-full transition-all"
+                  style={{ width: `${reputation.progress.progressPct}%` }}
+                />
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -153,8 +201,8 @@ export default function UserPage({ params }: UserPageProps) {
           <div className="text-xs text-[var(--ink-light)] mt-0.5">grille{sheets.length > 1 ? 's' : ''}</div>
         </div>
         <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-4 text-center">
-          <div className="text-2xl font-bold text-[var(--ink)]">{stats.totalViews.toLocaleString('fr-FR')}</div>
-          <div className="text-xs text-[var(--ink-light)] mt-0.5">vues totales</div>
+          <div className="text-2xl font-bold text-[var(--ink)]">{reputation.totalBookmarks.toLocaleString('fr-FR')}</div>
+          <div className="text-xs text-[var(--ink-light)] mt-0.5">favoris reçus</div>
         </div>
         <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-4 text-center">
           <div className="text-2xl font-bold text-[var(--ink)]">

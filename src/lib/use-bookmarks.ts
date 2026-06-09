@@ -12,6 +12,8 @@ import {
   doc,
   serverTimestamp,
   onSnapshot,
+  updateDoc,
+  increment,
 } from 'firebase/firestore';
 import { getDb } from './firebase';
 import { fromFirestore } from './firestore-helpers';
@@ -94,6 +96,7 @@ export function useBookmarks(userId: string | undefined): UseBookmarksReturn {
         sheetId,
         addedAt: serverTimestamp(),
       });
+      await updateDoc(doc(db, 'sheets', sheetId), { bookmarkCount: increment(1) });
     },
     [userId]
   );
@@ -114,6 +117,7 @@ export function useBookmarks(userId: string | undefined): UseBookmarksReturn {
         deleteDoc(doc(db, 'bookmarks', docSnapshot.id))
       );
       await Promise.all(deletePromises);
+      await updateDoc(doc(db, 'sheets', sheetId), { bookmarkCount: increment(-1) });
     },
     [userId]
   );

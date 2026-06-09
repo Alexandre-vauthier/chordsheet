@@ -28,6 +28,12 @@ export function getRemainingOcr(subscription?: Subscription): number {
   const used = subscription?.ocrUsedThisMonth ?? 0;
   const resetAt = subscription?.ocrResetAt;
   // Si la date de reset est passée, le compteur repart à 0
-  if (resetAt && new Date() > resetAt) return limit;
-  return Math.max(0, limit - used);
+  const remaining = (resetAt && new Date() > resetAt) ? limit : Math.max(0, limit - used);
+  // Les crédits gagnés s'ajoutent au quota mensuel restant (non-Pro seulement)
+  const earned = subscription?.earnedOcrCredits ?? 0;
+  return remaining + earned;
+}
+
+export function getEarnedOcrCredits(subscription?: Subscription): number {
+  return subscription?.earnedOcrCredits ?? 0;
 }

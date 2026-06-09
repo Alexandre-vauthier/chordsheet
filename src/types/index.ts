@@ -186,10 +186,12 @@ export interface Sheet {
   lyrics?: string;
   // V10 - Groupe de musique
   groupId?: string;
+  // V11 - Réputation créateur
+  bookmarkCount: number;
 }
 
 // Type pour la création d'une nouvelle grille
-export type NewSheet = Omit<Sheet, 'id' | 'createdAt' | 'updatedAt' | 'viewCount' | 'averageRating' | 'ratingCount'>;
+export type NewSheet = Omit<Sheet, 'id' | 'createdAt' | 'updatedAt' | 'viewCount' | 'averageRating' | 'ratingCount' | 'bookmarkCount'>;
 
 // Rôles utilisateur
 export type UserRole = 'user' | 'admin';
@@ -206,6 +208,36 @@ export interface Subscription {
   currentPeriodEnd?: Date;
   ocrUsedThisMonth: number;
   ocrResetAt?: Date;
+  earnedOcrCredits?: number; // crédits OCR gagnés par les contributions (non réinitialisés)
+}
+
+// ─── Système de réputation créateur ─────────────────────────────────────────
+
+export type CreatorLevel = 'Découvreur' | 'Contributeur' | 'Référence' | 'Maître';
+
+export type BadgeId =
+  | 'first_bookmark'   // 1er favori reçu
+  | 'bookmark_10'      // 10 favoris cumulés
+  | 'bookmark_50'      // 50 favoris cumulés
+  | 'bookmark_200'     // 200 favoris cumulés
+  | 'first_rating'     // 1ère note reçue
+  | 'rating_10'        // 10 notes reçues
+  | 'high_quality'     // moyenne ≥ 4.5 sur 5+ évals
+  | 'prolific'         // 5+ grilles publiques
+  | 'top_rated_sheet'; // une grille ≥ 4.8 sur 3+ évals
+
+export interface BadgeDefinition {
+  id: BadgeId;
+  label: string;
+  description: string;
+  icon: string;
+}
+
+export interface CreatorReputation {
+  score: number;
+  level: CreatorLevel;
+  badges: BadgeId[];
+  lastComputedAt: Date;
 }
 
 // Emails des administrateurs
@@ -235,6 +267,8 @@ export interface User {
   defaultGrooveBox?: boolean;
   defaultChordsAudio?: boolean;
   defaultCountIn?: boolean;
+  // Réputation créateur (cache calculé depuis les grilles publiques)
+  reputation?: CreatorReputation;
 }
 
 // Vérifier si un email est admin

@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import type { Sheet, Difficulty } from '@/types';
+import type { Sheet, Difficulty, CreatorLevel } from '@/types';
 import { DIFFICULTY_LABELS } from '@/types';
 import { useArtwork } from '@/lib/use-artwork';
+import { LevelBadge } from '@/components/reputation/level-badge';
 
 // Singleton audio global — stoppe le précédent quand on en lance un autre
 let _audio: HTMLAudioElement | null = null;
@@ -46,6 +47,8 @@ interface SheetCardProps {
   hideDifficulty?: boolean;
   /** Affiche un badge 'Public' si la grille est publique */
   showPublicBadge?: boolean;
+  /** Niveau de réputation du créateur (optionnel, chargé par la page parente) */
+  creatorLevel?: CreatorLevel;
 }
 
 export function SheetCard({
@@ -60,6 +63,7 @@ export function SheetCard({
   hideArtwork = false,
   hideDifficulty = false,
   showPublicBadge = false,
+  creatorLevel,
 }: SheetCardProps) {
   const { artworkUrl, previewUrl } = useArtwork(hideArtwork ? undefined : sheet.artist, hideArtwork ? undefined : sheet.title);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -168,7 +172,7 @@ export function SheetCard({
 
           <div className="flex items-center gap-2 mt-1">
             {showOwner && sheet.ownerName && (
-              <p className="text-[10px] text-[var(--ink-faint)]">
+              <p className="text-[10px] text-[var(--ink-faint)] flex items-center gap-1.5 flex-wrap">
                 par{' '}
                 {sheet.ownerId && sheet.ownerId !== 'deleted' ? (
                   <Link
@@ -180,6 +184,9 @@ export function SheetCard({
                   </Link>
                 ) : (
                   sheet.ownerName
+                )}
+                {creatorLevel && creatorLevel !== 'Découvreur' && (
+                  <LevelBadge level={creatorLevel} />
                 )}
               </p>
             )}

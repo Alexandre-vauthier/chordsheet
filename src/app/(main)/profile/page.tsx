@@ -7,8 +7,12 @@ import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
-import { isPro, getRemainingOcr } from '@/lib/plan-limits';
-import type { NotationPreference, InstrumentId } from '@/types';
+import { isPro, getRemainingOcr, getEarnedOcrCredits } from '@/lib/plan-limits';
+import { fromFirestore } from '@/lib/firestore-helpers';
+import { LevelBadge } from '@/components/reputation/level-badge';
+import { BadgesDisplay } from '@/components/reputation/badges-display';
+import { computeScore, computeLevel, computeBadges, getLevelProgress } from '@/lib/creator-reputation';
+import type { NotationPreference, InstrumentId, Sheet } from '@/types';
 
 interface UserStats {
   sheetsCount: number;
@@ -40,6 +44,7 @@ export default function ProfilePage() {
   const [isSavingNotation, setIsSavingNotation] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
+  const [publicSheets, setPublicSheets] = useState<Sheet[]>([]);
 
   // Charger le nom initial
   useEffect(() => {
@@ -74,7 +79,9 @@ export default function ProfilePage() {
       );
       const sheetsSnapshot = await getDocs(sheetsQuery);
       const sheetsCount = sheetsSnapshot.size;
-      const publicSheetsCount = sheetsSnapshot.docs.filter(doc => doc.data().isPublic).length;
+      const publicDocs = sheetsSnapshot.docs.filter(doc => doc.data().isPublic);
+      const publicSheetsCount = publicDocs.length;
+      setPublicSheets(publicDocs.map(d => fromFirestore(d.id, d.data())));
 
       // Compter les sets
       const setsQuery = query(
@@ -610,6 +617,49 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* ── Ma réputation ──────────────────────────────────────────── */}
+      {publicSheets.length > 0 && (() => {
+        const score = computeScore(publicSheets);
+        const level = computeLevel(score);
+        const badges = computeBadges(publicSheets);
+        const progress = getLevelProgress(score);
+        return (
+          <>
+            <div className="flex items-center gap-3 mt-8 mb-3">
+              <span className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Ma réputation</span>
+              <div className="flex-1 h-px bg-[var(--line)]" />
+            </div>
+            <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)]">
+              {/* Niveau actuel */}
+              <div className="flex items-center gap-3 mb-4">
+                <LevelBadge level={level} size="md" />
+                <span className="text-sm text-[var(--ink-light)]">Score : <strong className="text-[var(--ink)]">{score}</strong></span>
+              </div>
+              {/* Barre de progression */}
+              {progress.next ? (
+                <div className="mb-4">
+                  <div className="flex justify-between text-xs text-[var(--ink-faint)] mb-1.5">
+                    <span>{level}</span>
+                    <span>{progress.next} — {progress.progressPct}%</span>
+                  </div>
+                  <div className="h-2 bg-[var(--line)] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[var(--accent)] rounded-full transition-all"
+                      style={{ width: `${progress.progressPct}%` }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-[var(--ink-faint)] mb-4">Niveau maximum atteint !</p>
+              )}
+              {/* Badges */}
+              <p className="text-xs font-medium text-[var(--ink-light)] mb-2">Badges</p>
+              <BadgesDisplay earned={badges} showAll />
+            </div>
+          </>
+        );
+      })()}
+
       {/* Déconnexion */}
       <div className="mt-6">
         <button
@@ -760,9 +810,16 @@ function SubscriptionSection({ user }: { user: import('@/types').User | null }) 
             )}
           </div>
           {!userIsPro && (
-            <p className="text-xs text-[var(--ink-light)]">
-              Analyses OCR restantes ce mois : <strong className="text-[var(--ink)]">{remainingOcr}/2</strong>
-            </p>
+            <div className="space-y-0.5">
+              <p className="text-xs text-[var(--ink-light)]">
+                Analyses OCR restantes ce mois : <strong className="text-[var(--ink)]">{remainingOcr}</strong>
+              </p>
+              {getEarnedOcrCredits(user.subscription) > 0 && (
+                <p className="text-xs text-[var(--ink-faint)]">
+                  dont <strong className="text-[var(--ink)]">{getEarnedOcrCredits(user.subscription)}</strong> crédit{getEarnedOcrCredits(user.subscription) > 1 ? 's' : ''} gagné{getEarnedOcrCredits(user.subscription) > 1 ? 's' : ''} par vos contributions
+                </p>
+              )}
+            </div>
           )}
         </div>
 

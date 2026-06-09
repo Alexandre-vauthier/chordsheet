@@ -90,8 +90,9 @@ export async function POST(req: NextRequest) {
           // Vérifier si le reset mensuel est passé
           const resetAt = sub?.ocrResetAt?.toDate?.();
           const ocrUsed = resetAt && new Date() > resetAt ? 0 : (sub?.ocrUsedThisMonth ?? 0);
+          const earnedCredits = sub?.earnedOcrCredits ?? 0;
 
-          if (ocrUsed >= FREE_OCR_LIMIT) {
+          if (ocrUsed >= FREE_OCR_LIMIT && earnedCredits <= 0) {
             return NextResponse.json({
               error: 'Limite d\'analyses atteinte pour ce mois. Passe à ChordSheet Pro pour des analyses illimitées.',
               upgradeRequired: true,
@@ -174,8 +175,15 @@ export async function POST(req: NextRequest) {
           const resetAt = sub?.ocrResetAt?.toDate?.();
           const nextReset = new Date();
           nextReset.setMonth(nextReset.getMonth() + 1);
+          const ocrUsed = resetAt && new Date() > resetAt ? 0 : (sub?.ocrUsedThisMonth ?? 0);
+          const earnedCredits = sub?.earnedOcrCredits ?? 0;
 
-          if (resetAt && new Date() > resetAt) {
+          if (ocrUsed >= FREE_OCR_LIMIT && earnedCredits > 0) {
+            // Consommer un crédit gagné plutôt que le quota mensuel
+            await db.collection('users').doc(userId).update({
+              'subscription.earnedOcrCredits': FieldValue.increment(-1),
+            });
+          } else if (resetAt && new Date() > resetAt) {
             // Reset du compteur + incrément
             await db.collection('users').doc(userId).update({
               'subscription.ocrUsedThisMonth': 1,

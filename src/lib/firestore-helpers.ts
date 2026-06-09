@@ -201,6 +201,7 @@ export function fromFirestore(
     viewCount: (data.viewCount as number) || 0,
     averageRating: (data.averageRating as number) ?? null,
     ratingCount: (data.ratingCount as number) || 0,
+    bookmarkCount: (data.bookmarkCount as number) || 0,
     // V5 - Métrique globale
     beatsPerMeasure: (data.beatsPerMeasure as BeatsPerMeasure) || undefined,
     // V6 - Unité de tempo

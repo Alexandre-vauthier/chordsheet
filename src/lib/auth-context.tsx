@@ -24,7 +24,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
-  updateUser: (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean; printMinimizeRepeatedSections?: boolean; printChordDiagrams?: boolean; defaultMetronome?: boolean; defaultGrooveBox?: boolean; defaultChordsAudio?: boolean; defaultCountIn?: boolean }) => Promise<void>;
+  updateUser: (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean; printMinimizeRepeatedSections?: boolean; printChordDiagrams?: boolean; defaultMetronome?: boolean; defaultGrooveBox?: boolean; defaultChordsAudio?: boolean; defaultCountIn?: boolean; reputation?: import('@/types').CreatorReputation }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -66,6 +66,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             currentPeriodEnd: rawSub.currentPeriodEnd?.toDate?.() || undefined,
             ocrUsedThisMonth: rawSub.ocrUsedThisMonth ?? 0,
             ocrResetAt: rawSub.ocrResetAt?.toDate?.() || undefined,
+            earnedOcrCredits: rawSub.earnedOcrCredits ?? 0,
+          } : undefined;
+
+          const rawRep = userData.reputation;
+          const reputation = rawRep ? {
+            score: rawRep.score ?? 0,
+            level: rawRep.level ?? 'Découvreur',
+            badges: rawRep.badges ?? [],
+            lastComputedAt: rawRep.lastComputedAt?.toDate?.() || new Date(),
           } : undefined;
 
           setUser({
@@ -75,6 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             photoURL: userData.photoURL || fbUser.photoURL,
             role,
             subscription,
+            reputation,
             notationPreference: userData.notationPreference || 'american',
             chordColorCoding: userData.chordColorCoding ?? false,
             showInlineDiagram: userData.showInlineDiagram ?? false,
@@ -83,6 +93,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             minimizeRepeatedSections: userData.minimizeRepeatedSections ?? false,
             printMinimizeRepeatedSections: userData.printMinimizeRepeatedSections ?? false,
             printChordDiagrams: userData.printChordDiagrams ?? false,
+            defaultMetronome: userData.defaultMetronome ?? false,
+            defaultGrooveBox: userData.defaultGrooveBox ?? false,
+            defaultChordsAudio: userData.defaultChordsAudio ?? true,
+            defaultCountIn: userData.defaultCountIn ?? false,
             createdAt: userData.createdAt?.toDate() || new Date(),
             updatedAt: userData.updatedAt?.toDate() || new Date(),
           });
@@ -199,7 +213,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // Mettre à jour le profil utilisateur
-  const updateUser = async (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean; printMinimizeRepeatedSections?: boolean; printChordDiagrams?: boolean; defaultMetronome?: boolean; defaultGrooveBox?: boolean; defaultChordsAudio?: boolean; defaultCountIn?: boolean }) => {
+  const updateUser = async (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean; printMinimizeRepeatedSections?: boolean; printChordDiagrams?: boolean; defaultMetronome?: boolean; defaultGrooveBox?: boolean; defaultChordsAudio?: boolean; defaultCountIn?: boolean; reputation?: import('@/types').CreatorReputation }) => {
     const auth = getAuth();
     const db = getDb();
     const currentUser = auth.currentUser;

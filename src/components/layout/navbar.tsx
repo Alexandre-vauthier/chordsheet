@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
+import { LevelBadge } from '@/components/reputation/level-badge';
 
 export function Navbar() {
   const { user, loading, isAdmin } = useAuth();
@@ -98,6 +99,9 @@ export function Navbar() {
                       {user.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
                     </div>
                     <span>{user.displayName || user.email}</span>
+                    {user.reputation && user.reputation.level !== 'Découvreur' && (
+                      <LevelBadge level={user.reputation.level} />
+                    )}
                   </Link>
                 </div>
               </>
