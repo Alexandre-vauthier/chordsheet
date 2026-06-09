@@ -100,17 +100,17 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, customCh
   }, [chordsEnabled]);
 
   // Le métronome tourne dès que isPlaying — le toggle ne fait que mute/unmute
+  // Beat 0 est joué directement dans advance() pour être synchronisé avec le premier accord
   useEffect(() => {
     if (metronomeRef.current) {
       clearInterval(metronomeRef.current);
       metronomeRef.current = null;
     }
     if (isPlaying) {
-      let beat = 0;
-      if (metronomeEnabledRef.current) playMetronomeTick(true);
+      let beat = 1; // beat 0 déjà joué dans advance()
       metronomeRef.current = setInterval(() => {
-        beat = (beat + 1) % bpMeasureRef.current;
         if (metronomeEnabledRef.current) playMetronomeTick(beat === 0);
+        beat = (beat + 1) % bpMeasureRef.current;
       }, beatMsRef.current);
     }
     return () => {
@@ -170,6 +170,8 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, customCh
       if (i >= steps.length) { setIsPlaying(false); setActiveStep(null); return; }
       const step = steps[i];
       setActiveStep(step);
+      // Premier pas : tick beat 1 synchronisé exactement avec le premier accord
+      if (i === 0 && metronomeEnabledRef.current) playMetronomeTick(true);
       const cell = getCellFn(step);
       if (cell?.chord && chordsEnabledRef.current) {
         const chordData = resolveChord(cell.chord);
