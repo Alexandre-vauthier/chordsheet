@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import type { Sheet, CellSpan, InstrumentId } from '@/types';
 import { INSTRUMENTS } from '@/types';
@@ -127,77 +127,26 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
 
   const bpm = parseTempo(sheet.tempo);
 
-  // Auto-scroll concert groupe : même logique look-ahead que la lecture solo
-  useEffect(() => {
-    if (!concertCellPath) return;
+  // Auto-scroll : ligne active en haut de l'écran (solo + concert)
+  const scrollToRow = useCallback((rowId: string) => {
+    const el = document.querySelector(`[data-row-id="${rowId}"]`) as HTMLElement | null;
+    if (!el) return;
     const navbarHeight = 56;
+    window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top - navbarHeight - 12, behavior: 'smooth' });
+  }, []);
 
-    const currentSection = displaySections[concertCellPath.sectionIdx];
-    if (!currentSection) return;
-
-    let nextRowEl: HTMLElement | null = null;
-    if (concertCellPath.rowIdx + 1 < currentSection.rows.length) {
-      nextRowEl = document.querySelector(`[data-row-id="${currentSection.id}-${concertCellPath.rowIdx + 1}"]`);
-    } else {
-      const nextSection = displaySections[concertCellPath.sectionIdx + 1];
-      if (nextSection) nextRowEl = document.querySelector(`[data-row-id="${nextSection.id}-0"]`);
-    }
-
-    const currentRowEl = document.querySelector(`[data-row-id="${currentSection.id}-${concertCellPath.rowIdx}"]`) as HTMLElement | null;
-
-    if (nextRowEl) {
-      const nextRect = nextRowEl.getBoundingClientRect();
-      if (nextRect.bottom > window.innerHeight || nextRect.top < navbarHeight) {
-        if (currentRowEl) {
-          const curRect = currentRowEl.getBoundingClientRect();
-          window.scrollTo({ top: window.scrollY + curRect.top - navbarHeight - 12, behavior: 'smooth' });
-        }
-      }
-    } else if (currentRowEl) {
-      const rect = currentRowEl.getBoundingClientRect();
-      if (rect.top < navbarHeight || rect.bottom > window.innerHeight) {
-        window.scrollTo({ top: window.scrollY + rect.top - navbarHeight - 12, behavior: 'smooth' });
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [concertCellPath?.sectionIdx, concertCellPath?.rowIdx]);
-
-  // Auto-scroll : anticipe la ligne suivante
   useEffect(() => {
     if (!isPlaying || !activeStep) return;
-    const navbarHeight = 56;
-
-    // Trouver l'élément de la ligne suivante
-    const currentSection = displaySections.find(s => s.id === activeStep.sectionId);
-    let nextRowEl: HTMLElement | null = null;
-    if (currentSection && activeStep.rowIndex + 1 < currentSection.rows.length) {
-      nextRowEl = document.querySelector(`[data-row-id="${activeStep.sectionId}-${activeStep.rowIndex + 1}"]`);
-    } else {
-      const sIdx = displaySections.findIndex(s => s.id === activeStep.sectionId);
-      const nextSection = displaySections[sIdx + 1];
-      if (nextSection) nextRowEl = document.querySelector(`[data-row-id="${nextSection.id}-0"]`);
-    }
-
-    const currentRowEl = document.querySelector(`[data-row-id="${activeStep.sectionId}-${activeStep.rowIndex}"]`) as HTMLElement | null;
-
-    if (nextRowEl) {
-      // Si la ligne suivante n'est pas visible, scroller pour mettre la ligne courante en haut
-      const nextRect = nextRowEl.getBoundingClientRect();
-      if (nextRect.bottom > window.innerHeight || nextRect.top < navbarHeight) {
-        if (currentRowEl) {
-          const curRect = currentRowEl.getBoundingClientRect();
-          window.scrollTo({ top: window.scrollY + curRect.top - navbarHeight - 12, behavior: 'smooth' });
-        }
-      }
-    } else if (currentRowEl) {
-      // Dernière ligne : s'assurer qu'elle est visible
-      const rect = currentRowEl.getBoundingClientRect();
-      if (rect.top < navbarHeight || rect.bottom > window.innerHeight) {
-        window.scrollTo({ top: window.scrollY + rect.top - navbarHeight - 12, behavior: 'smooth' });
-      }
-    }
+    scrollToRow(`${activeStep.sectionId}-${activeStep.rowIndex}`);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeStep?.sectionId, activeStep?.rowIndex]);
+
+  useEffect(() => {
+    if (!concertCellPath) return;
+    const section = displaySections[concertCellPath.sectionIdx];
+    if (section) scrollToRow(`${section.id}-${concertCellPath.rowIdx}`);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [concertCellPath?.sectionIdx, concertCellPath?.rowIdx]);
 
   useGrooveBox({
     enabled: grooveEnabled && isPlaying,
