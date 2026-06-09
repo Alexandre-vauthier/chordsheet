@@ -135,16 +135,39 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [concertCellPath?.sectionIdx, concertCellPath?.rowIdx, concertCellPath?.cellIdx]);
 
-  // Auto-scroll vers la ligne active pendant la lecture solo
+  // Auto-scroll : anticipe la ligne suivante
   useEffect(() => {
     if (!isPlaying || !activeStep) return;
-    const el = document.querySelector(`[data-row-id="${activeStep.sectionId}-${activeStep.rowIndex}"]`) as HTMLElement | null;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const navbarHeight = 56; // h-14 sticky
-    const alreadyVisible = rect.top >= navbarHeight && rect.bottom <= window.innerHeight;
-    if (!alreadyVisible) {
-      window.scrollTo({ top: window.scrollY + rect.top - navbarHeight - 12, behavior: 'smooth' });
+    const navbarHeight = 56;
+
+    // Trouver l'élément de la ligne suivante
+    const currentSection = displaySections.find(s => s.id === activeStep.sectionId);
+    let nextRowEl: HTMLElement | null = null;
+    if (currentSection && activeStep.rowIndex + 1 < currentSection.rows.length) {
+      nextRowEl = document.querySelector(`[data-row-id="${activeStep.sectionId}-${activeStep.rowIndex + 1}"]`);
+    } else {
+      const sIdx = displaySections.findIndex(s => s.id === activeStep.sectionId);
+      const nextSection = displaySections[sIdx + 1];
+      if (nextSection) nextRowEl = document.querySelector(`[data-row-id="${nextSection.id}-0"]`);
+    }
+
+    const currentRowEl = document.querySelector(`[data-row-id="${activeStep.sectionId}-${activeStep.rowIndex}"]`) as HTMLElement | null;
+
+    if (nextRowEl) {
+      // Si la ligne suivante n'est pas visible, scroller pour mettre la ligne courante en haut
+      const nextRect = nextRowEl.getBoundingClientRect();
+      if (nextRect.bottom > window.innerHeight || nextRect.top < navbarHeight) {
+        if (currentRowEl) {
+          const curRect = currentRowEl.getBoundingClientRect();
+          window.scrollTo({ top: window.scrollY + curRect.top - navbarHeight - 12, behavior: 'smooth' });
+        }
+      }
+    } else if (currentRowEl) {
+      // Dernière ligne : s'assurer qu'elle est visible
+      const rect = currentRowEl.getBoundingClientRect();
+      if (rect.top < navbarHeight || rect.bottom > window.innerHeight) {
+        window.scrollTo({ top: window.scrollY + rect.top - navbarHeight - 12, behavior: 'smooth' });
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeStep?.sectionId, activeStep?.rowIndex]);
