@@ -51,10 +51,9 @@ service cloud.firestore {
                        (request.auth.uid == resource.data.ownerId || isAdmin());
     }
 
-    // Sets (setlists)
+    // Sets (setlists) — toujours privés (owner ou membres du groupe uniquement)
     match /sets/{setId} {
-      allow read: if resource.data.isPublic == true ||
-                     (request.auth != null && request.auth.uid == resource.data.ownerId) ||
+      allow read: if (request.auth != null && request.auth.uid == resource.data.ownerId) ||
                      (request.auth != null && resource.data.groupId != null && isGroupMember(resource.data.groupId)) ||
                      isAdmin();
       allow list: if isAdmin();

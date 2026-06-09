@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
+import { isPro, getRemainingOcr } from '@/lib/plan-limits';
 import type { NotationPreference, InstrumentId } from '@/types';
 
 interface UserStats {
@@ -554,6 +555,9 @@ export default function ProfilePage() {
           />
         </div>
       </div>
+      {/* Mon abonnement */}
+      <SubscriptionSection user={user} />
+
       {/* Zone danger — suppression de compte (masquée pour les admins) */}
       {!isAdmin && (
         <div className="mt-8 bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-6">
@@ -602,6 +606,75 @@ export default function ProfilePage() {
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function SubscriptionSection({ user }: { user: import('@/types').User | null }) {
+  const [portalLoading, setPortalLoading] = useState(false);
+  if (!user) return null;
+
+  const userIsPro = isPro(user.subscription);
+  const remainingOcr = getRemainingOcr(user.subscription);
+
+  const openPortal = async () => {
+    if (!user.subscription?.stripeCustomerId) return;
+    setPortalLoading(true);
+    try {
+      const res = await fetch('/api/stripe/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stripeCustomerId: user.subscription.stripeCustomerId }),
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } finally {
+      setPortalLoading(false);
+    }
+  };
+
+  return (
+    <div className="mt-8 bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-6">
+      <h2 className="font-semibold text-[var(--ink)] mb-4">Mon abonnement</h2>
+
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${userIsPro ? 'bg-[var(--accent)] text-white' : 'bg-[var(--line)] text-[var(--ink-light)]'}`}>
+              {userIsPro ? 'Pro' : 'Gratuit'}
+            </span>
+            {userIsPro && user.subscription?.currentPeriodEnd && (
+              <span className="text-xs text-[var(--ink-faint)]">
+                Renouvellement le {user.subscription.currentPeriodEnd.toLocaleDateString('fr-FR')}
+              </span>
+            )}
+          </div>
+          {!userIsPro && (
+            <p className="text-xs text-[var(--ink-light)]">
+              Analyses OCR restantes ce mois : <strong className="text-[var(--ink)]">{remainingOcr}/2</strong>
+            </p>
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          {userIsPro && user.subscription?.stripeCustomerId ? (
+            <button
+              onClick={openPortal}
+              disabled={portalLoading}
+              className="px-4 py-2 text-sm border border-[var(--line)] text-[var(--ink-light)] rounded-lg hover:border-[var(--ink-light)] transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              {portalLoading ? 'Chargement…' : 'Gérer l\'abonnement'}
+            </button>
+          ) : (
+            <Link
+              href="/pricing"
+              className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors font-medium"
+            >
+              Passer à Pro
+            </Link>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

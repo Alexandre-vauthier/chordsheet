@@ -25,14 +25,13 @@ export default function SetPage({ params }: SetPageProps) {
   const router = useRouter();
   const { user } = useAuth();
   const { set, sheets, isLoading, error } = useSet(id);
-  const { updateSet, updateSetVisibility, reorderSheets, removeSheetFromSet, addSheetToSet } = useSets(user?.id);
+  const { updateSet, reorderSheets, removeSheetFromSet, addSheetToSet } = useSets(user?.id);
   const { launchConcert, groups } = useGroups();
   const { bookmarkedSheets } = useBookmarks(user?.id);
   const { isBookmarked: isSetBookmarked, toggleBookmark: toggleSetBookmark } = useSetBookmarks(user?.id);
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [isPublic, setIsPublic] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -50,7 +49,6 @@ export default function SetPage({ params }: SetPageProps) {
     if (set) {
       setName(set.name);
       setDescription(set.description || '');
-      setIsPublic(set.isPublic);
     }
   }, [set]);
 
@@ -98,12 +96,7 @@ export default function SetPage({ params }: SetPageProps) {
 
     setIsSaving(true);
     try {
-      // Mettre à jour les métadonnées du set
       await updateSet(set.id, { name, description });
-      // Propager la visibilité aux grilles si elle a changé
-      if (isPublic !== set.isPublic) {
-        await updateSetVisibility(set.id, isPublic, set.sheetIds);
-      }
       setHasChanges(false);
     } catch (error) {
       console.error('Error saving set:', error);
@@ -350,22 +343,6 @@ export default function SetPage({ params }: SetPageProps) {
             />
           </div>
 
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={isPublic}
-              onChange={(e) => {
-                setIsPublic(e.target.checked);
-                setHasChanges(true);
-              }}
-              className="w-4 h-4 rounded border-[var(--line)] text-[var(--accent)]
-                focus:ring-[var(--accent)] cursor-pointer"
-            />
-            <span className="text-sm text-[var(--ink-light)]">
-              Set public (partageable par lien)
-            </span>
-          </label>
-
           {hasChanges && (
             <Button onClick={handleSave} isLoading={isSaving}>
               Sauvegarder
@@ -373,16 +350,6 @@ export default function SetPage({ params }: SetPageProps) {
           )}
         </div>
 
-        {isPublic && (
-          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-            <p className="text-sm text-blue-700">
-              Lien de partage :{' '}
-              <code className="bg-blue-100 px-1 py-0.5 rounded">
-                {typeof window !== 'undefined' ? `${window.location.origin}/sets/${id}` : ''}
-              </code>
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Liste des grilles */}

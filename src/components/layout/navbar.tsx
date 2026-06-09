@@ -44,7 +44,6 @@ export function Navbar() {
                 {[
                   { href: '/dashboard', label: 'Mon book' },
                   { href: '/groups', label: 'Groupes' },
-                  { href: '/sets', label: 'Mes sets' },
                   { href: '/explore', label: 'Explorer' },
                   { href: '/artists', label: 'Artistes' },
                   { href: '/chords', label: 'Accords' },
@@ -168,7 +167,6 @@ export function Navbar() {
             {[
               { href: '/dashboard', label: 'Mon book' },
               { href: '/groups', label: 'Groupes' },
-              { href: '/sets', label: 'Mes sets' },
               { href: '/explore', label: 'Explorer' },
               { href: '/artists', label: 'Artistes' },
             ].map(({ href, label }) => (
