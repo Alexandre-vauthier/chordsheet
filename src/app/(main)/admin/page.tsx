@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
-import { collection, query, getDocs, orderBy, limit, doc, deleteDoc } from 'firebase/firestore';
+import { collection, query, getDocs, orderBy, limit, doc, deleteDoc, updateDoc, where } from 'firebase/firestore';
 import type { User, Sheet } from '@/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -37,6 +37,8 @@ export default function AdminPage() {
   const [recentSheets, setRecentSheets] = useState<SheetWithOwner[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [deletingSheet, setDeletingSheet] = useState<string | null>(null);
+  const [settingPro, setSettingPro] = useState(false);
+  const [proResult, setProResult] = useState('');
 
   // Rediriger si pas admin
   useEffect(() => {
@@ -151,6 +153,35 @@ export default function AdminPage() {
     }
   };
 
+  const handleSetFoundersPro = async () => {
+    const emails = ['alex.vauthier@gmail.com', 'jerome_busato@hotmail.fr', 'vauthier.julien@gmail.com'];
+    setSettingPro(true);
+    setProResult('');
+    try {
+      const db = getDb();
+      const usersRef = collection(db, 'users');
+      let updated = 0;
+      for (const email of emails) {
+        const snap = await getDocs(query(usersRef, where('email', '==', email)));
+        for (const userDoc of snap.docs) {
+          await updateDoc(doc(db, 'users', userDoc.id), {
+            subscription: {
+              plan: 'pro',
+              status: 'active',
+              ocrUsedThisMonth: 0,
+            },
+          });
+          updated++;
+        }
+      }
+      setProResult(`✓ ${updated} compte${updated > 1 ? 's' : ''} passé${updated > 1 ? 's' : ''} en Pro`);
+    } catch (e) {
+      setProResult(`Erreur : ${e instanceof Error ? e.message : 'inconnue'}`);
+    } finally {
+      setSettingPro(false);
+    }
+  };
+
   if (loading || loadingData) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-8">
@@ -180,6 +211,24 @@ export default function AdminPage() {
         <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-sm font-medium">
           Admin
         </span>
+      </div>
+
+      {/* Comptes fondateurs Pro */}
+      <div className="mb-8 p-4 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <p className="text-sm font-medium text-[var(--ink)]">Comptes fondateurs</p>
+          <p className="text-xs text-[var(--ink-faint)]">alex.vauthier@gmail.com · jerome_busato@hotmail.fr · vauthier.julien@gmail.com</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {proResult && <span className="text-xs text-[var(--ink-light)]">{proResult}</span>}
+          <button
+            onClick={handleSetFoundersPro}
+            disabled={settingPro}
+            className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+          >
+            {settingPro ? 'En cours…' : 'Passer en Pro'}
+          </button>
+        </div>
       </div>
 
       {/* Statistiques globales */}
