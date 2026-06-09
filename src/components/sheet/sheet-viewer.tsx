@@ -135,13 +135,19 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [concertCellPath?.sectionIdx, concertCellPath?.rowIdx, concertCellPath?.cellIdx]);
 
-  // Auto-scroll vers la section active pendant la lecture solo
+  // Auto-scroll vers la ligne active pendant la lecture solo
   useEffect(() => {
     if (!isPlaying || !activeStep) return;
-    const el = document.querySelector(`[data-section-id="${activeStep.sectionId}"]`) as HTMLElement | null;
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    const el = document.querySelector(`[data-row-id="${activeStep.sectionId}-${activeStep.rowIndex}"]`) as HTMLElement | null;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const navbarHeight = 56; // h-14 sticky
+    const alreadyVisible = rect.top >= navbarHeight && rect.bottom <= window.innerHeight;
+    if (!alreadyVisible) {
+      window.scrollTo({ top: window.scrollY + rect.top - navbarHeight - 12, behavior: 'smooth' });
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeStep?.sectionId]);
+  }, [activeStep?.sectionId, activeStep?.rowIndex]);
 
   useGrooveBox({
     enabled: grooveEnabled && isPlaying,
@@ -617,7 +623,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 const isLastRepeat = isRepeatBadgeActive && activeRepeatIdx === rowRepeat - 1;
 
                 return (
-                  <div key={rowIndex} className="relative">
+                  <div key={rowIndex} className="relative" data-row-id={`${section.id}-${rowIndex}`}>
                     <div
                       className="grid gap-1 w-full measure-row"
                       style={{ gridTemplateColumns: `repeat(16, minmax(0, 1fr))` }}
