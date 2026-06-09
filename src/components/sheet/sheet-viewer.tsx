@@ -91,10 +91,10 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
     updateUser({ preferredInstrument: id }).catch(() => {/* silent */});
   };
 
-  const [metronomeEnabled, setMetronomeEnabled] = useState(false);
-  const [grooveEnabled, setGrooveEnabled] = useState(false);
-  const [chordsEnabled, setChordsEnabled] = useState(true);
-  const [countInEnabled, setCountInEnabled] = useState(false);
+  const [metronomeEnabled, setMetronomeEnabled] = useState(() => user?.defaultMetronome ?? false);
+  const [grooveEnabled, setGrooveEnabled] = useState(() => user?.defaultGrooveBox ?? false);
+  const [chordsEnabled, setChordsEnabled] = useState(() => user?.defaultChordsAudio ?? true);
+  const [countInEnabled, setCountInEnabled] = useState(() => user?.defaultCountIn ?? false);
   const [countBeat, setCountBeat] = useState(0); // 0 = inactif, 1-4 = décompte
   const countTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const [transpose, setTranspose] = useState(0);
@@ -753,8 +753,10 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                       })}
                     </div>
                     {rowRepeat > 1 && !isLastRepeat && (
-                      <span className={`absolute right-2 top-1/2 -translate-y-1/2 print:inline
-                        text-xs font-semibold px-1.5 py-0.5 rounded shadow-sm
+                      <span className={`absolute top-1/2 -translate-y-1/2 z-10 print:inline
+                        right-1 md:right-0 md:translate-x-[calc(100%+6px)]
+                        print:right-2 print:translate-x-0
+                        text-xs font-bold px-2 py-0.5 rounded-lg shadow-sm
                         ${isRepeatBadgeActive ? 'animate-repeat-blink' : 'bg-[var(--accent)] text-white'}`}>
                         ×{isRepeatBadgeActive ? rowRepeat - activeRepeatIdx! : rowRepeat}
                       </span>
