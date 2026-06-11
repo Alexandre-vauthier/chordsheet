@@ -130,7 +130,7 @@ export async function POST(req: NextRequest) {
 
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
+      max_tokens: 8192,
       messages: [{
         role: 'user',
         content: [
@@ -141,9 +141,14 @@ export async function POST(req: NextRequest) {
     });
 
     const text = message.content[0].type === 'text' ? message.content[0].text : '';
+
+    if (message.stop_reason === 'max_tokens') {
+      throw new SyntaxError('Réponse tronquée (partition trop longue). Essaie avec moins de pages à la fois.');
+    }
+
     // Extraire le JSON depuis la réponse (après la transcription libre de l'étape 1)
     const jsonMatch = text.match(/\{[\s\S]*\}(?=[^}]*$)/);
-    if (!jsonMatch) throw new SyntaxError('Aucun JSON trouvé dans la réponse');
+    if (!jsonMatch) throw new SyntaxError('Aucun JSON trouvé dans la réponse du modèle.');
     const cleaned = jsonMatch[0].trim();
     const parsed = JSON.parse(cleaned);
 
