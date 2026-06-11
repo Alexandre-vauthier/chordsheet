@@ -112,9 +112,7 @@ export default function ArtistPage({ params }: ArtistPageProps) {
             <SheetCard
               key={`${sheet.title}`}
               sheet={sheet}
-              showRating
               showOwner
-              hideDifficulty
               href={href}
               variantCount={count}
               isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}

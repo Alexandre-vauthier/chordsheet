@@ -282,7 +282,7 @@ function ChordsPageContent() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
       <div className="mb-6 flex items-start justify-between gap-4">
         <div>
           <h1 className="font-playfair text-3xl font-bold text-[var(--ink)]">

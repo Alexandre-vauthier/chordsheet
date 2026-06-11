@@ -364,9 +364,7 @@ export default function ExplorePage() {
               <SheetCard
                 key={`${sheet.title}-${sheet.artist}`}
                 sheet={sheet}
-                showRating
                 showOwner
-                hideDifficulty
                 href={href}
                 variantCount={count}
                 isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}

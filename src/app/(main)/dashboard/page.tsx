@@ -134,6 +134,13 @@ export default function DashboardPage() {
   const hasActiveFilters = !!(searchQuery || selectedGenre || selectedDifficulty || sortBy !== 'recent');
   const clearFilters = () => { setSearchQuery(''); setSelectedGenre(''); setSelectedDifficulty(null); setSortBy('recent'); };
 
+  const handleRandom = useCallback(() => {
+    const pool = tab === 'mine' ? displayedSheets : tab === 'book' ? displayedBookmarks : displayedAll;
+    if (!pool.length) return;
+    const pick = pool[Math.floor(Math.random() * pool.length)];
+    router.push(`/sheet/${pick.id}`);
+  }, [tab, displayedSheets, displayedBookmarks, displayedAll, router]);
+
   const isCurrentlyLoading =
     tab === 'mine' ? loading :
     tab === 'book' ? bookLoading :
@@ -164,6 +171,23 @@ export default function DashboardPage() {
           <Link href="/explore" className="hidden sm:block">
             <Button variant="ghost">Explorer</Button>
           </Link>
+          {tab !== 'sets' && (
+            <button
+              onClick={handleRandom}
+              title="Grille aléatoire"
+              className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--cell-bg)] border border-[var(--line)] transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="2" y="2" width="20" height="20" rx="3" strokeWidth="2"/>
+                <circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none"/>
+                <circle cx="16" cy="8" r="1.2" fill="currentColor" stroke="none"/>
+                <circle cx="8" cy="16" r="1.2" fill="currentColor" stroke="none"/>
+                <circle cx="16" cy="16" r="1.2" fill="currentColor" stroke="none"/>
+                <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/>
+              </svg>
+              Aléatoire
+            </button>
+          )}
           <Link href="/sheet/new" className="hidden sm:block">
             <Button>+ Nouvelle grille</Button>
           </Link>
@@ -289,9 +313,7 @@ export default function DashboardPage() {
                 <SheetCard
                   key={sheet.id}
                   sheet={sheet}
-                  showRating
                   showOwner={!isOwned}
-                  hideDifficulty
                   onDelete={isOwned ? () => handleDelete(sheet.id!) : undefined}
                   isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
                   onToggleBookmark={sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
@@ -316,8 +338,6 @@ export default function DashboardPage() {
               <SheetCard
                 key={sheet.id}
                 sheet={sheet}
-                showRating
-                hideDifficulty
                 showPublicBadge
                 onDelete={() => handleDelete(sheet.id!)}
                 isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
@@ -343,9 +363,7 @@ export default function DashboardPage() {
               <SheetCard
                 key={sheet.id}
                 sheet={sheet}
-                showRating
                 showOwner
-                hideDifficulty
                 isBookmarked
                 onToggleBookmark={() => handleRemoveBookmark(sheet.id!)}
               />

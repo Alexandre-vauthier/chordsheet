@@ -262,7 +262,7 @@ export default function AdminPage() {
               {users.map(u => (
                 <tr key={u.id} className="border-b border-[var(--line)] last:border-0 hover:bg-[var(--cell-hover)]">
                   <td className="py-3 px-3">
-                    <div className="flex items-center gap-2">
+                    <Link href={`/user/${u.id}`} className="flex items-center gap-2 group/user">
                       {u.photoURL ? (
                         <img src={u.photoURL} alt="" className="w-8 h-8 rounded-full object-cover" />
                       ) : (
@@ -270,8 +270,10 @@ export default function AdminPage() {
                           {u.displayName?.charAt(0).toUpperCase() || u.email?.charAt(0).toUpperCase()}
                         </div>
                       )}
-                      <span className="font-medium text-[var(--ink)]">{u.displayName || '-'}</span>
-                    </div>
+                      <span className="font-medium text-[var(--ink)] group-hover/user:text-[var(--accent)] transition-colors">
+                        {u.displayName || '-'}
+                      </span>
+                    </Link>
                   </td>
                   <td className="py-3 px-3 text-[var(--ink-light)]">{u.email}</td>
                   <td className="py-3 px-3 text-center">

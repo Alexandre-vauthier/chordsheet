@@ -2,10 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import type { Sheet, Difficulty, CreatorLevel } from '@/types';
+import type { Sheet, Difficulty } from '@/types';
 import { DIFFICULTY_LABELS } from '@/types';
 import { useArtwork } from '@/lib/use-artwork';
-import { LevelBadge } from '@/components/reputation/level-badge';
 
 // Singleton audio global — stoppe le précédent quand on en lance un autre
 let _audio: HTMLAudioElement | null = null;
@@ -47,23 +46,20 @@ interface SheetCardProps {
   hideDifficulty?: boolean;
   /** Affiche un badge 'Public' si la grille est publique */
   showPublicBadge?: boolean;
-  /** Niveau de réputation du créateur (optionnel, chargé par la page parente) */
-  creatorLevel?: CreatorLevel;
 }
 
 export function SheetCard({
   sheet,
   showOwner = false,
-  showRating = false,
+  showRating = true,
   onDelete,
   isBookmarked,
   onToggleBookmark,
   href,
   variantCount,
   hideArtwork = false,
-  hideDifficulty = false,
+  hideDifficulty = true,
   showPublicBadge = false,
-  creatorLevel,
 }: SheetCardProps) {
   const { artworkUrl, previewUrl } = useArtwork(hideArtwork ? undefined : sheet.artist, hideArtwork ? undefined : sheet.title);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -118,10 +114,10 @@ export function SheetCard({
               e.stopPropagation();
               onToggleBookmark();
             }}
-            className={`cursor-pointer absolute top-2.5 right-2.5 z-10 w-7 h-7 flex items-center justify-center rounded-full transition-all
+            className={`cursor-pointer absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-full transition-all
               ${isBookmarked
-                ? 'bg-amber-100 text-amber-500'
-                : 'bg-white/80 text-gray-400 opacity-0 group-hover:opacity-100 hover:text-amber-500 hover:bg-amber-50'
+                ? 'bg-amber-500/15 text-amber-500'
+                : 'bg-[var(--cell-bg)]/70 text-[var(--ink-faint)] opacity-0 group-hover:opacity-100 hover:text-amber-500 hover:bg-amber-500/10'
               }`}
             title={isBookmarked ? 'Retirer du book' : 'Ajouter au book'}
           >
@@ -185,9 +181,7 @@ export function SheetCard({
                 ) : (
                   sheet.ownerName
                 )}
-                {creatorLevel && creatorLevel !== 'Découvreur' && (
-                  <LevelBadge level={creatorLevel} />
-                )}
+
               </p>
             )}
             {showPublicBadge && sheet.isPublic && (

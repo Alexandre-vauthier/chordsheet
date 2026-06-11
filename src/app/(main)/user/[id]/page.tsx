@@ -286,7 +286,6 @@ export default function UserPage({ params }: UserPageProps) {
             <SheetCard
               key={sheet.id}
               sheet={sheet}
-              showRating
               isBookmarked={isBookmarked(sheet.id!)}
               onToggleBookmark={() => toggleBookmark(sheet.id!)}
             />
