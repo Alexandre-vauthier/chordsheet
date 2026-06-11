@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { collection, query, where, orderBy, getDocs, deleteDoc, doc } from 'firebase/firestore';
@@ -14,9 +14,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SheetCard } from '@/components/explore/sheet-card';
 import type { Sheet } from '@/types';
-import { createEmptySet } from '@/types';
+import { createEmptySet, GENRES, DIFFICULTY_OPTIONS, type Difficulty } from '@/types';
 
 type Tab = 'all' | 'mine' | 'book' | 'sets';
+type SortOption = 'recent' | 'rated' | 'viewed';
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -34,6 +35,12 @@ export default function DashboardPage() {
   const [tab, setTab] = useState<Tab>(initialTab);
   const [newSetName, setNewSetName] = useState('');
   const [isCreatingSet, setIsCreatingSet] = useState(false);
+
+  // Filtres partagés entre onglets
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedGenre, setSelectedGenre] = useState('');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | null>(null);
+  const [sortBy, setSortBy] = useState<SortOption>('recent');
 
   useEffect(() => {
     async function loadSheets() {
@@ -101,6 +108,32 @@ export default function DashboardPage() {
     ...bookmarkedSheets.filter(s => !ownedIds.has(s.id)),
   ];
 
+  const filterAndSort = useCallback((list: Sheet[]) => {
+    let result = [...list];
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(s =>
+        s.title.toLowerCase().includes(q) ||
+        s.artist.toLowerCase().includes(q)
+      );
+    }
+    if (selectedGenre) result = result.filter(s => s.genres?.includes(selectedGenre));
+    if (selectedDifficulty) result = result.filter(s => s.difficulty === selectedDifficulty);
+    switch (sortBy) {
+      case 'rated': result.sort((a, b) => (b.averageRating || 0) - (a.averageRating || 0)); break;
+      case 'viewed': result.sort((a, b) => (b.viewCount || 0) - (a.viewCount || 0)); break;
+      default: result.sort((a, b) => (b.updatedAt?.getTime() || 0) - (a.updatedAt?.getTime() || 0));
+    }
+    return result;
+  }, [searchQuery, selectedGenre, selectedDifficulty, sortBy]);
+
+  const displayedSheets = useMemo(() => filterAndSort(sheets), [sheets, filterAndSort]);
+  const displayedBookmarks = useMemo(() => filterAndSort(bookmarkedSheets), [bookmarkedSheets, filterAndSort]);
+  const displayedAll = useMemo(() => filterAndSort(allSheets), [allSheets, filterAndSort]);
+
+  const hasActiveFilters = !!(searchQuery || selectedGenre || selectedDifficulty || sortBy !== 'recent');
+  const clearFilters = () => { setSearchQuery(''); setSelectedGenre(''); setSelectedDifficulty(null); setSortBy('recent'); };
+
   const isCurrentlyLoading =
     tab === 'mine' ? loading :
     tab === 'book' ? bookLoading :
@@ -161,6 +194,63 @@ export default function DashboardPage() {
         ))}
       </div>
 
+      {/* Filtres — visibles pour tous les onglets sauf Sets */}
+      {tab !== 'sets' && (
+        <div className="space-y-3 mb-6">
+          <div className="flex gap-3">
+            <Input
+              type="search"
+              placeholder="Rechercher par titre, artiste…"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="flex-1"
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Tri */}
+            <div className="flex rounded-lg border border-[var(--line)] overflow-hidden">
+              {(['recent', 'rated', 'viewed'] as SortOption[]).map((opt, i) => (
+                <button
+                  key={opt}
+                  onClick={() => setSortBy(opt)}
+                  className={`px-3 py-1.5 text-sm transition-colors ${i > 0 ? 'border-l border-[var(--line)]' : ''} ${
+                    sortBy === opt
+                      ? 'bg-[var(--accent)] text-white'
+                      : 'bg-[var(--cell-bg)] text-[var(--ink-light)] hover:bg-[var(--cell-hover)]'
+                  }`}
+                >
+                  {opt === 'recent' ? 'Récents' : opt === 'rated' ? 'Mieux notés' : 'Plus consultés'}
+                </button>
+              ))}
+            </div>
+            <div className="hidden sm:block h-6 w-px bg-[var(--line)]" />
+            {/* Genre */}
+            <select
+              value={selectedGenre}
+              onChange={e => setSelectedGenre(e.target.value)}
+              className="px-3 py-1.5 rounded-lg border border-[var(--line)] text-sm bg-[var(--cell-bg)] text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            >
+              <option value="">Tous les genres</option>
+              {GENRES.map(g => <option key={g} value={g}>{g}</option>)}
+            </select>
+            {/* Difficulté */}
+            <select
+              value={selectedDifficulty ?? ''}
+              onChange={e => setSelectedDifficulty(e.target.value ? Number(e.target.value) as Difficulty : null)}
+              className="px-3 py-1.5 rounded-lg border border-[var(--line)] text-sm bg-[var(--cell-bg)] text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            >
+              <option value="">Toutes difficultés</option>
+              {DIFFICULTY_OPTIONS.map(({ value, label }) => <option key={value} value={value}>{label}</option>)}
+            </select>
+            {hasActiveFilters && (
+              <button onClick={clearFilters} className="ml-auto text-sm text-[var(--accent)] hover:underline">
+                Réinitialiser
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Contenu */}
       {isCurrentlyLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -179,25 +269,7 @@ export default function DashboardPage() {
           groupNameById={groupNameById}
         />
       ) : tab === 'all' ? (
-        allSheets.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {allSheets.map(sheet => {
-              const isOwned = ownedIds.has(sheet.id);
-              return (
-                <div key={sheet.id} className="relative group">
-                  <SheetCard
-                    sheet={sheet}
-                    onDelete={isOwned ? () => handleDelete(sheet.id!) : undefined}
-                    isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
-                    onToggleBookmark={sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
-                    showOwner={!isOwned}
-                    showPublicBadge={isOwned}
-                  />
-                </div>
-              );
-            })}
-          </div>
-        ) : (
+        allSheets.length === 0 ? (
           <EmptyState
             icon="music"
             title="Votre book est vide"
@@ -207,11 +279,39 @@ export default function DashboardPage() {
               <Link key="explore" href="/explore"><Button variant="ghost">Explorer</Button></Link>,
             ]}
           />
+        ) : displayedAll.length === 0 ? (
+          <EmptyState icon="music" title="Aucun résultat" description="Essayez de modifier vos filtres." actions={[<button key="r" onClick={clearFilters} className="text-sm text-[var(--accent)] hover:underline">Réinitialiser</button>]} />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {displayedAll.map(sheet => {
+              const isOwned = ownedIds.has(sheet.id);
+              return (
+                <SheetCard
+                  key={sheet.id}
+                  sheet={sheet}
+                  onDelete={isOwned ? () => handleDelete(sheet.id!) : undefined}
+                  isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
+                  onToggleBookmark={sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
+                  showOwner={!isOwned}
+                  showPublicBadge={isOwned}
+                />
+              );
+            })}
+          </div>
         )
       ) : tab === 'mine' ? (
-        sheets.length > 0 ? (
+        sheets.length === 0 ? (
+          <EmptyState
+            icon="music"
+            title="Aucune grille pour le moment"
+            description="Créez votre première grille d'accords !"
+            actions={[<Link key="new" href="/sheet/new"><Button variant="primary">Créer ma première grille</Button></Link>]}
+          />
+        ) : displayedSheets.length === 0 ? (
+          <EmptyState icon="music" title="Aucun résultat" description="Essayez de modifier vos filtres." actions={[<button key="r" onClick={clearFilters} className="text-sm text-[var(--accent)] hover:underline">Réinitialiser</button>]} />
+        ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sheets.map(sheet => (
+            {displayedSheets.map(sheet => (
               <SheetCard
                 key={sheet.id}
                 sheet={sheet}
@@ -222,38 +322,30 @@ export default function DashboardPage() {
               />
             ))}
           </div>
-        ) : (
-          <EmptyState
-            icon="music"
-            title="Aucune grille pour le moment"
-            description="Créez votre première grille d'accords !"
-            actions={[<Link key="new" href="/sheet/new"><Button variant="primary">Créer ma première grille</Button></Link>]}
-          />
         )
       ) : (
         /* Favoris */
-        bookmarkedSheets.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {bookmarkedSheets.map(sheet => (
-              <div key={sheet.id} className="relative group">
-                <SheetCard sheet={sheet} showOwner />
-                <button
-                  onClick={() => handleRemoveBookmark(sheet.id!)}
-                  className="absolute top-2 right-2 p-2 bg-white/90 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity text-amber-500 hover:text-red-500"
-                  title="Retirer du book"
-                >
-                  ★
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : (
+        bookmarkedSheets.length === 0 ? (
           <EmptyState
             icon="bookmark"
             title="Aucun favori pour le moment"
             description="Explorez les grilles et ajoutez vos favorites !"
             actions={[<Link key="explore" href="/explore"><Button variant="primary">Explorer les grilles</Button></Link>]}
           />
+        ) : displayedBookmarks.length === 0 ? (
+          <EmptyState icon="bookmark" title="Aucun résultat" description="Essayez de modifier vos filtres." actions={[<button key="r" onClick={clearFilters} className="text-sm text-[var(--accent)] hover:underline">Réinitialiser</button>]} />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {displayedBookmarks.map(sheet => (
+              <SheetCard
+                key={sheet.id}
+                sheet={sheet}
+                showOwner
+                isBookmarked
+                onToggleBookmark={() => handleRemoveBookmark(sheet.id!)}
+              />
+            ))}
+          </div>
         )
       )}
     </div>
