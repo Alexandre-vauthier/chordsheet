@@ -1,21 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
-import { initializeApp, getApps, cert } from 'firebase-admin/app';
-import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-import { getAuth as getAdminAuth } from 'firebase-admin/auth';
-
-function getAdminDb() {
-  if (!getApps().length) {
-    initializeApp({
-      credential: cert({
-        projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-    });
-  }
-  return getFirestore();
-}
 
 const FREE_OCR_LIMIT = 2;
 
@@ -64,13 +48,41 @@ Règles JSON :
 - Mesure vide → {"chord": "", "beats": N}
 - repeat = nombre de fois que la section est jouée (2 pour une reprise simple)`;
 
+// Initialisation lazy de Firebase Admin pour éviter les crashes d'import dans Next.js
+function getAdminDb() {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { initializeApp, getApps, cert } = require('firebase-admin/app');
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { getFirestore } = require('firebase-admin/firestore');
+  if (!getApps().length) {
+    initializeApp({
+      credential: cert({
+        projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
+        privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+      }),
+    });
+  }
+  return getFirestore();
+}
+
+function getAdminAuth() {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { getAuth } = require('firebase-admin/auth');
+  return getAuth();
+}
+
+function getFieldValue() {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { FieldValue } = require('firebase-admin/firestore');
+  return FieldValue;
+}
+
 export async function POST(req: NextRequest) {
-  // Vérification AVANT toute instanciation du client Anthropic
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ error: 'Clé API Anthropic non configurée.' }, { status: 503 });
   }
 
-  // Client initialisé ici (pas au niveau module) pour éviter un crash si la clé est absente
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   // Vérification du quota OCR via le token Firebase
@@ -102,7 +114,6 @@ export async function POST(req: NextRequest) {
         }
       }
     } catch (authErr) {
-      // Token invalide ou Firebase Admin non configuré → on continue (fail open)
       console.error('[analyze-sheet] Firebase auth error (non-blocking):', authErr);
     }
   }
@@ -151,10 +162,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Extraire le JSON depuis la réponse (après la transcription libre de l'étape 1)
     const jsonMatch = text.match(/\{[\s\S]*\}(?=[^}]*$)/);
     if (!jsonMatch) {
-      console.error('[analyze-sheet] No JSON in model response. Response preview:', text.slice(0, 500));
+      console.error('[analyze-sheet] No JSON in model response. Preview:', text.slice(0, 500));
       return NextResponse.json({ error: 'Le modèle n\'a pas renvoyé de structure JSON valide.' }, { status: 500 });
     }
     const cleaned = jsonMatch[0].trim();
@@ -180,6 +190,7 @@ export async function POST(req: NextRequest) {
     if (userId && process.env.FIREBASE_ADMIN_PROJECT_ID) {
       try {
         const db = getAdminDb();
+        const FieldValue = getFieldValue();
         const userDoc = await db.collection('users').doc(userId).get();
         const sub = userDoc.data()?.subscription;
         const isPro = sub?.plan === 'pro' && (sub?.status === 'active' || sub?.status === 'trialing');
