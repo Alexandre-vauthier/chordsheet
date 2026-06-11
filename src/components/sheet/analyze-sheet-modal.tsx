@@ -155,7 +155,9 @@ export function AnalyzeSheetModal({ onClose }: Props) {
       let data: { error?: string; upgradeRequired?: boolean } = {};
       try { data = JSON.parse(text); } catch {
         if (res.status === 413) throw new Error('Image trop volumineuse. Réduis la résolution et réessaie.');
-        throw new Error(`Erreur serveur (${res.status})`);
+        // Affiche les premiers caractères de la réponse pour aider au diagnostic
+        const preview = text.slice(0, 200).replace(/<[^>]+>/g, '').trim();
+        throw new Error(`Erreur serveur (${res.status})${preview ? ` — ${preview}` : ''}`);
       }
       if (res.status === 429 && data.upgradeRequired) throw Object.assign(new Error(data.error ?? ''), { upgradeRequired: true });
       if (!res.ok) throw new Error(data.error ?? 'Erreur inconnue');

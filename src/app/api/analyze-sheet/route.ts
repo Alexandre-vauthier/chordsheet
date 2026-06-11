@@ -4,8 +4,6 @@ import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
 function getAdminDb() {
   if (!getApps().length) {
     initializeApp({
@@ -67,9 +65,13 @@ Règles JSON :
 - repeat = nombre de fois que la section est jouée (2 pour une reprise simple)`;
 
 export async function POST(req: NextRequest) {
+  // Vérification AVANT toute instanciation du client Anthropic
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ error: 'Clé API Anthropic non configurée.' }, { status: 503 });
   }
+
+  // Client initialisé ici (pas au niveau module) pour éviter un crash si la clé est absente
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   // Vérification du quota OCR via le token Firebase
   let userId: string | null = null;
@@ -87,7 +89,6 @@ export async function POST(req: NextRequest) {
         const isPro = sub?.plan === 'pro' && (sub?.status === 'active' || sub?.status === 'trialing');
 
         if (!isPro) {
-          // Vérifier si le reset mensuel est passé
           const resetAt = sub?.ocrResetAt?.toDate?.();
           const ocrUsed = resetAt && new Date() > resetAt ? 0 : (sub?.ocrUsedThisMonth ?? 0);
           const earnedCredits = sub?.earnedOcrCredits ?? 0;
@@ -100,8 +101,9 @@ export async function POST(req: NextRequest) {
           }
         }
       }
-    } catch {
-      // Token invalide → on continue sans blocage (fail open pour ne pas bloquer les admins)
+    } catch (authErr) {
+      // Token invalide ou Firebase Admin non configuré → on continue (fail open)
+      console.error('[analyze-sheet] Firebase auth error (non-blocking):', authErr);
     }
   }
 
@@ -143,12 +145,18 @@ export async function POST(req: NextRequest) {
     const text = message.content[0].type === 'text' ? message.content[0].text : '';
 
     if (message.stop_reason === 'max_tokens') {
-      throw new SyntaxError('Réponse tronquée (partition trop longue). Essaie avec moins de pages à la fois.');
+      return NextResponse.json(
+        { error: 'Réponse tronquée (partition trop longue). Essaie avec moins de pages à la fois.' },
+        { status: 500 }
+      );
     }
 
     // Extraire le JSON depuis la réponse (après la transcription libre de l'étape 1)
     const jsonMatch = text.match(/\{[\s\S]*\}(?=[^}]*$)/);
-    if (!jsonMatch) throw new SyntaxError('Aucun JSON trouvé dans la réponse du modèle.');
+    if (!jsonMatch) {
+      console.error('[analyze-sheet] No JSON in model response. Response preview:', text.slice(0, 500));
+      return NextResponse.json({ error: 'Le modèle n\'a pas renvoyé de structure JSON valide.' }, { status: 500 });
+    }
     const cleaned = jsonMatch[0].trim();
     const parsed = JSON.parse(cleaned);
 
@@ -158,7 +166,6 @@ export async function POST(req: NextRequest) {
       for (const section of parsed.sections) {
         if (Array.isArray(section.chords)) {
           section.chords = section.chords.map((c: unknown) => {
-            // Compatibilité si Claude renvoie encore des strings
             if (typeof c === 'string') return { chord: validRoot.test(c) ? c : '', beats: parsed.timeSignature?.startsWith('3') ? 3 : 4 };
             const obj = c as { chord?: string; beats?: number };
             const chord = typeof obj.chord === 'string' && (obj.chord === '' || validRoot.test(obj.chord)) ? obj.chord : '';
@@ -184,12 +191,10 @@ export async function POST(req: NextRequest) {
           const earnedCredits = sub?.earnedOcrCredits ?? 0;
 
           if (ocrUsed >= FREE_OCR_LIMIT && earnedCredits > 0) {
-            // Consommer un crédit gagné plutôt que le quota mensuel
             await db.collection('users').doc(userId).update({
               'subscription.earnedOcrCredits': FieldValue.increment(-1),
             });
           } else if (resetAt && new Date() > resetAt) {
-            // Reset du compteur + incrément
             await db.collection('users').doc(userId).update({
               'subscription.ocrUsedThisMonth': 1,
               'subscription.ocrResetAt': nextReset,
@@ -201,14 +206,14 @@ export async function POST(req: NextRequest) {
             });
           }
         }
-      } catch { /* silencieux */ }
+      } catch (counterErr) {
+        console.error('[analyze-sheet] OCR counter update failed:', counterErr);
+      }
     }
 
     return NextResponse.json(parsed);
   } catch (e) {
-    if (e instanceof SyntaxError) {
-      return NextResponse.json({ error: 'Impossible de parser la réponse du modèle.' }, { status: 500 });
-    }
+    console.error('[analyze-sheet] Unhandled error:', e);
     const msg = e instanceof Error ? e.message : 'Erreur inconnue';
     return NextResponse.json({ error: msg }, { status: 500 });
   }
