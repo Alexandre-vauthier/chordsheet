@@ -8,7 +8,7 @@ import { useSet } from '@/lib/use-sets';
 import { useConcertSession } from '@/lib/use-concert-session';
 import { useGroups } from '@/lib/use-groups';
 import { parseTempo } from '@/lib/use-playback';
-import { playMetronomeTick } from '@/lib/chord-audio';
+import { playMetronomeTick, startScheduledMetronome } from '@/lib/chord-audio';
 import { SheetViewer } from '@/components/sheet/sheet-viewer';
 import { Button } from '@/components/ui/button';
 import type { Section } from '@/types';
@@ -17,15 +17,19 @@ interface SetPlayPageProps {
   params: Promise<{ id: string }>;
 }
 
+// Compensation réseau pour les invités : avance leur affichage pour compenser la latence Firestore
+const GUEST_SYNC_COMPENSATION_MS = 300;
+
 // Calcule quelle cellule doit être mise en évidence à l'instant T
-// Même logique que buildSequence dans use-playback.ts
+// compensationMs > 0 avance l'affichage (compense un retard de réception)
 function calculateConcertCell(
   sections: Section[],
   startTimeMs: number,
   bpm: number,
-  tempoUnit?: 'quarter' | 'eighth'
+  tempoUnit?: 'quarter' | 'eighth',
+  compensationMs = 0
 ): { sectionIdx: number; rowIdx: number; cellIdx: number; remainingMs: number; rowRepeatIndex: number } | null {
-  const elapsed = Date.now() - startTimeMs;
+  const elapsed = Date.now() - startTimeMs + compensationMs;
   if (elapsed < 0) return null;
 
   const factor = tempoUnit === 'eighth' ? 0.5 : 1;
@@ -92,11 +96,11 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
   const [countBeat, setCountBeat] = useState(0); // 0 = inactif, 1-8 = décompte
   const countTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const audioCtxRef = useRef<AudioContext | null>(null);
-  const metronomeRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const metronomeRef = useRef<(() => void) | null>(null);
 
   const stopMetronome = useCallback(() => {
     if (metronomeRef.current) {
-      clearInterval(metronomeRef.current);
+      metronomeRef.current();
       metronomeRef.current = null;
     }
   }, []);
@@ -145,21 +149,14 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
       countTimersRef.current.push(t);
     }
 
-    // Après 8 temps : lancer l'auto-scroll + démarrer le métronome continu
+    // Après 8 temps : lancer l'auto-scroll + démarrer le métronome continu sans dérive
     const endT = setTimeout(() => {
       setCountBeat(0);
       const finalBpm = parseTempo(currentSheet.tempo || '90');
       startAutoScroll(currentIndex, finalBpm);
-      // Métronome continu pour le batteur — beat 1 immédiatement pour
-      // combler le gap entre le 8ème clic du décompte et le premier tick de l'intervalle
       const beatsPerMeasure = currentSheet.sections[0]?.beatsPerMeasure || 4;
       stopMetronome();
-      playMetronomeTick(true); // downbeat (beat 1 de la mesure 1)
-      let beat = 1;
-      metronomeRef.current = setInterval(() => {
-        playMetronomeTick(beat === 0);
-        beat = (beat + 1) % beatsPerMeasure;
-      }, msPerBeat);
+      metronomeRef.current = startScheduledMetronome(finalBpm, beatsPerMeasure);
     }, 8 * msPerBeat);
     countTimersRef.current.push(endT);
   }, [currentSheet, isGroupSet, isDrummer, currentIndex, startAutoScroll, cancelCountIn, stopMetronome]);
@@ -187,11 +184,17 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
         currentSheet.sections,
         autoScroll.startTimeMs,
         autoScroll.bpm,
-        currentSheet.tempoUnit
+        currentSheet.tempoUnit,
+        isDrummer ? 0 : GUEST_SYNC_COMPENSATION_MS
       );
       if (!result) {
         setConcertCellPath(null);
         prevConcertPathRef.current = null;
+        // Fin de grille : arrêter le métronome et libérer l'état Firestore
+        if (isDrummer) {
+          stopMetronome();
+          stopAutoScroll().catch(() => {});
+        }
         return;
       }
       const { remainingMs, ...path } = result;
@@ -205,7 +208,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
 
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [autoScroll, currentIndex, currentSheet]);
+  }, [autoScroll, currentIndex, currentSheet, isDrummer, stopMetronome, stopAutoScroll]);
 
   // ── Navigation clavier ──────────────────────────────────────────────────────
   const hasPrevious = currentIndex > 0;

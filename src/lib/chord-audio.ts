@@ -135,8 +135,10 @@ function stopActiveChord() {
 }
 
 // Jouer un tick de métronome (click court et sec)
-export function playMetronomeTick(accent = false): void {
+// atTime : horloge Web Audio (ctx.currentTime) pour scheduling précis, sinon "maintenant"
+export function playMetronomeTick(accent = false, atTime?: number): void {
   const ctx = getAudioContext();
+  const t = atTime ?? ctx.currentTime;
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
 
@@ -144,12 +146,37 @@ export function playMetronomeTick(accent = false): void {
   gain.connect(ctx.destination);
 
   osc.type = 'square';
-  osc.frequency.setValueAtTime(accent ? 1200 : 800, ctx.currentTime);
-  gain.gain.setValueAtTime(accent ? 0.35 : 0.2, ctx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.04);
+  osc.frequency.setValueAtTime(accent ? 1200 : 800, t);
+  gain.gain.setValueAtTime(accent ? 0.35 : 0.2, t);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
 
-  osc.start(ctx.currentTime);
-  osc.stop(ctx.currentTime + 0.05);
+  osc.start(t);
+  osc.stop(t + 0.05);
+}
+
+// Métronome sans dérive : planifie les beats via l'horloge hardware de l'AudioContext
+// Retourne une fonction stop() à appeler pour arrêter.
+export function startScheduledMetronome(bpm: number, beatsPerMeasure: number): () => void {
+  const ctx = getAudioContext();
+  const beatSec = 60 / bpm;
+  const lookAheadSec = 0.1; // planifier 100 ms à l'avance
+  const schedulerMs = 25;   // vérifier toutes les 25 ms
+
+  let nextBeatTime = ctx.currentTime;
+  let beat = 0;
+
+  function schedule() {
+    while (nextBeatTime < ctx.currentTime + lookAheadSec) {
+      playMetronomeTick(beat === 0, nextBeatTime);
+      beat = (beat + 1) % beatsPerMeasure;
+      nextBeatTime += beatSec;
+    }
+  }
+
+  const id = setInterval(schedule, schedulerMs);
+  schedule(); // première passe immédiate
+
+  return () => clearInterval(id);
 }
 
 // Jouer un accord complet

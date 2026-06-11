@@ -138,36 +138,21 @@ body {
     size: A4;
   }
 
-  /* ── Partition-style layout ──────────────────────────────────────── */
+  /* ── Cases colorées comme la vue web ──────────────────────────────── */
 
-  /* Measure rows — barre épaisse à gauche, fine à droite, gris léger haut/bas
-     padding:0 pour que les barres verticales internes touchent les horizontales */
+  /* Measure rows — conserver l'espacement entre cases */
   .measure-row {
-    border-top: 1px solid #c4b89a !important;
-    border-bottom: 1px solid #c4b89a !important;
-    border-left: 2.5px solid #1a1410 !important;
-    border-right: 1px solid #1a1410 !important;
-    gap: 0 !important;
-    padding: 0 !important;
-    align-items: stretch !important;
+    gap: 4px !important;
   }
 
-  /* Chord cells — transparent, séparateur gris gauche, padding vertical seulement */
+  /* Chord cells — fond coloré + coins arrondis comme à l'écran
+     border et border-color inline (chord colors) restent actifs car non !important ici */
   .chord-cell {
-    background: transparent !important;
-    border: none !important;
-    border-left: 1px solid #c4b89a !important;
-    border-radius: 0 !important;
-    min-height: 0 !important;
-    padding: 4px 8px !important;
+    background-color: #faf7f2 !important;
+    border-radius: 6px !important;
+    min-height: 2.5rem !important;
+    padding: 4px 6px !important;
     box-shadow: none !important;
-    display: flex !important;
-    align-items: center !important;
-  }
-
-  /* Pas de séparateur avant le premier accord */
-  .measure-row > div:first-child {
-    border-left: none !important;
   }
 
   /* Récapitulatif accords → grille serrée, diagrammes réduits */

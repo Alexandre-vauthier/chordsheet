@@ -129,15 +129,24 @@ export function useSets(userId: string | undefined): UseSetsReturn {
   const addSheetToSet = useCallback(
     async (setId: string, sheetId: string) => {
       const db = getDb();
-      const setDoc = await getDoc(doc(db, 'sets', setId));
-      if (!setDoc.exists()) return;
+      const setSnap = await getDoc(doc(db, 'sets', setId));
+      if (!setSnap.exists()) return;
 
-      const currentSheetIds = (setDoc.data().sheetIds as string[]) || [];
+      const setData = setSnap.data();
+      const currentSheetIds = (setData.sheetIds as string[]) || [];
       if (!currentSheetIds.includes(sheetId)) {
-        await updateDoc(doc(db, 'sets', setId), {
-          sheetIds: [...currentSheetIds, sheetId],
-          updatedAt: serverTimestamp(),
-        });
+        const updates: Promise<void>[] = [
+          updateDoc(doc(db, 'sets', setId), {
+            sheetIds: [...currentSheetIds, sheetId],
+            updatedAt: serverTimestamp(),
+          }),
+        ];
+        // Si le set appartient à un groupe, marquer la grille avec le groupId
+        // pour que les membres du groupe puissent la lire (règle Firestore ligne sheets/read)
+        if (setData.groupId) {
+          updates.push(updateDoc(doc(db, 'sheets', sheetId), { groupId: setData.groupId }));
+        }
+        await Promise.all(updates);
       }
     },
     []

@@ -30,6 +30,8 @@ export function useConcertSession(
   const [autoScroll, setAutoScroll] = useState<AutoScrollState | null>(null);
   // Évite de réécrire dans Firestore la mise à jour qu'on vient de recevoir
   const pendingRef = useRef(false);
+  // Stabilise la référence autoScroll : ne setState que si les valeurs changent vraiment
+  const autoScrollValuesRef = useRef<AutoScrollState | null>(null);
 
   useEffect(() => {
     if (!setId || !groupId || !user) return;
@@ -44,8 +46,15 @@ export function useConcertSession(
         }
         const as = data.autoScroll as { startTimeMs: number; sheetIndex: number; bpm: number } | undefined;
         if (as?.startTimeMs) {
-          setAutoScroll({ startTimeMs: as.startTimeMs, sheetIndex: as.sheetIndex, bpm: as.bpm });
-        } else {
+          const prev = autoScrollValuesRef.current;
+          // Ne recréer l'objet (et ne déclencher le useEffect RAF) que si les valeurs changent
+          if (!prev || prev.startTimeMs !== as.startTimeMs || prev.sheetIndex !== as.sheetIndex || prev.bpm !== as.bpm) {
+            const next: AutoScrollState = { startTimeMs: as.startTimeMs, sheetIndex: as.sheetIndex, bpm: as.bpm };
+            autoScrollValuesRef.current = next;
+            setAutoScroll(next);
+          }
+        } else if (autoScrollValuesRef.current !== null) {
+          autoScrollValuesRef.current = null;
           setAutoScroll(null);
         }
       }
