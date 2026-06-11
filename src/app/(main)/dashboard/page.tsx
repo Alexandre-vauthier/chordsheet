@@ -289,11 +289,12 @@ export default function DashboardPage() {
                 <SheetCard
                   key={sheet.id}
                   sheet={sheet}
+                  showRating
+                  showOwner={!isOwned}
+                  hideDifficulty
                   onDelete={isOwned ? () => handleDelete(sheet.id!) : undefined}
                   isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
                   onToggleBookmark={sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
-                  showOwner={!isOwned}
-                  showPublicBadge={isOwned}
                 />
               );
             })}
@@ -315,10 +316,12 @@ export default function DashboardPage() {
               <SheetCard
                 key={sheet.id}
                 sheet={sheet}
+                showRating
+                hideDifficulty
+                showPublicBadge
                 onDelete={() => handleDelete(sheet.id!)}
                 isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
                 onToggleBookmark={sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
-                showPublicBadge
               />
             ))}
           </div>
@@ -340,7 +343,9 @@ export default function DashboardPage() {
               <SheetCard
                 key={sheet.id}
                 sheet={sheet}
+                showRating
                 showOwner
+                hideDifficulty
                 isBookmarked
                 onToggleBookmark={() => handleRemoveBookmark(sheet.id!)}
               />
