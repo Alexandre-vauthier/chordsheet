@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { InstrumentId, StringChord, PianoChord, FingerPosition, ChordBarre } from '@/types';
-import { playChord, playNote, OPEN_FREQS, noteNameToFreq } from '@/lib/chord-audio';
+import { playChord, playNote, OPEN_FREQS, noteNameToFreq, ensureAudioContext } from '@/lib/chord-audio';
 
 const CATEGORY_OPTIONS = [
   { value: 'major', label: 'Majeur' },
@@ -165,7 +165,8 @@ export function ChordEditorModal({
   };
 
   // Jouer l'accord
-  const handlePlay = () => {
+  const handlePlay = async () => {
+    await ensureAudioContext();
     const chord = buildChord();
     if (chord) {
       playChord(chord, instrumentId);
@@ -332,7 +333,7 @@ export function ChordEditorModal({
         <div className="p-4 border-t border-[var(--line)] flex gap-2 justify-end">
           <button
             onClick={handlePlay}
-            className="cursor-pointer px-4 py-2 text-sm bg-[var(--line)] hover:bg-gray-200 rounded-lg transition-colors"
+            className="cursor-pointer px-4 py-2 text-sm bg-[var(--line)] hover:bg-[var(--cell-hover)] rounded-lg transition-colors"
           >
             ▶ Écouter
           </button>
@@ -344,7 +345,7 @@ export function ChordEditorModal({
           </button>
           <button
             onClick={handleSave}
-            className="cursor-pointer px-4 py-2 text-sm bg-[var(--accent)] text-white hover:bg-[#b54a2a] rounded-lg transition-colors"
+            className="cursor-pointer px-4 py-2 text-sm bg-[var(--accent)] text-white hover:opacity-90 rounded-lg transition-opacity"
           >
             Enregistrer
           </button>

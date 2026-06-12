@@ -45,6 +45,15 @@ function getAudioContext(): AudioContext {
   return audioContext;
 }
 
+export async function ensureAudioContext(): Promise<void> {
+  if (!audioContext) {
+    audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+  }
+  if (audioContext.state === 'suspended') {
+    await audioContext.resume();
+  }
+}
+
 // Obtenir les fréquences d'un accord pour instrument à cordes
 function getStringChordFrequencies(chord: StringChord, instrumentId: InstrumentId, capo = 0): number[] {
   const tuning = OPEN_FREQS[instrumentId];
