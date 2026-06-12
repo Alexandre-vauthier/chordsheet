@@ -164,10 +164,20 @@ export function ChordEditorModal({
     );
   };
 
-  // Jouer l'accord
+  // Jouer l'accord (sans dépendre du nom pour permettre l'écoute avant de nommer)
   const handlePlay = async () => {
     await ensureAudioContext();
-    const chord = buildChord();
+    let chord: StringChord | PianoChord | null = null;
+    if (isPiano) {
+      if (pianoNotes.length > 0) {
+        chord = { id: 'preview', name: 'preview', full: '', category: 'custom', notes: pianoNotes };
+      }
+    } else {
+      chord = {
+        id: 'preview', name: 'preview', full: '', category: 'custom',
+        fingers, barre: barre || undefined, open: openStrings, muted: mutedStrings, startFret,
+      };
+    }
     if (chord) {
       playChord(chord, instrumentId);
     }

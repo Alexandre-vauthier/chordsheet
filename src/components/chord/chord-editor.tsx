@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import type { InstrumentId, StringChord, PianoChord, FingerPosition, ChordBarre } from '@/types';
 import { INSTRUMENTS } from '@/types';
-import { playChord, playNote, OPEN_FREQS, noteNameToFreq } from '@/lib/chord-audio';
+import { playChord, playNote, OPEN_FREQS, noteNameToFreq, ensureAudioContext } from '@/lib/chord-audio';
 
 // Configuration par instrument
 const INSTRUMENT_CONFIG: Record<Exclude<InstrumentId, 'piano' | 'voice' | 'percussion'>, { strings: number; frets: number; label: string }> = {
@@ -144,7 +144,8 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
   }, [barre, config]);
 
   // Jouer l'accord
-  const handlePlay = useCallback(() => {
+  const handlePlay = useCallback(async () => {
+    await ensureAudioContext();
     if (isPiano) {
       if (pianoNotes.length === 0) return;
       const chord: PianoChord = {
@@ -356,14 +357,14 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
         <button
           onClick={handlePlay}
           className="cursor-pointer flex items-center gap-1.5 px-4 py-2 bg-[var(--accent)] text-white rounded-lg
-            hover:bg-[#b54a2a] transition-colors text-sm font-medium"
+            hover:opacity-90 transition-opacity text-sm font-medium"
         >
           ▶ Jouer
         </button>
         <button
           onClick={handleClear}
           className="cursor-pointer px-4 py-2 bg-[var(--line)] text-[var(--ink-light)] rounded-lg
-            hover:bg-gray-200 transition-colors text-sm"
+            hover:bg-[var(--cell-hover)] transition-colors text-sm"
         >
           Effacer
         </button>
