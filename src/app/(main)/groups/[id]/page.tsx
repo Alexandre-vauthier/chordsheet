@@ -69,11 +69,6 @@ function SheetRow({
 
       {/* Badges + action */}
       <div className="flex items-center gap-2 shrink-0">
-        {type === 'linked' && (
-          <span className="text-xs text-[var(--ink-faint)] bg-[var(--paper)] border border-[var(--line)] px-2 py-0.5 rounded-full">
-            référence
-          </span>
-        )}
         {sheet.key && (
           <span className="text-xs text-[var(--ink-faint)] bg-[var(--paper)] border border-[var(--line)] px-2 py-0.5 rounded-full">
             {sheet.key}
