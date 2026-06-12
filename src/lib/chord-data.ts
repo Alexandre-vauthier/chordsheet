@@ -1189,11 +1189,14 @@ const CHROMATIC_ROOTS_GEN = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A
 /** Génère tous les accords étendus algorithmiques pour un instrument donné */
 export function getAllExtendedChords(instrumentId: InstrumentId): (StringChord | PianoChord)[] {
   const results: (StringChord | PianoChord)[] = [];
+  // Sus déjà couverts par la bibliothèque statique piano
+  const pianoSkip = new Set(['sus2', 'sus4']);
   for (const root of CHROMATIC_ROOTS_GEN) {
     const rootSemi = NOTE_SEMITONES[root];
     for (const [formulaKey, formula] of Object.entries(EXTENDED_FORMULAS)) {
       const suffix = FORMULA_SUFFIX[formulaKey];
       if (!suffix) continue;
+      if (instrumentId === 'piano' && pianoSkip.has(formulaKey)) continue;
       const name = `${root}${suffix}`;
       const full = `${root} ${formula.label}`;
       const safeId = name.replace(/[^a-zA-Z0-9]/g, '_');
