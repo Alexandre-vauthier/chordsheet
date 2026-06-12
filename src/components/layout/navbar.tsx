@@ -44,7 +44,7 @@ export function Navbar() {
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
-    <nav className="bg-[var(--nav-bg)] text-[var(--nav-text)] sticky top-0 z-50">
+    <nav className="bg-[var(--nav-bg)] text-[var(--nav-text)] sticky top-0 z-[60]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
@@ -133,7 +133,7 @@ export function Navbar() {
                     </button>
 
                     {profileMenuOpen && (
-                      <div className="absolute right-0 top-full mt-2 w-56 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl shadow-lg overflow-hidden z-50">
+                      <div className="absolute right-0 top-full mt-2 w-56 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl shadow-lg overflow-hidden z-[60]">
                         {/* En-tête */}
                         <div className="px-4 py-3 border-b border-[var(--line)]">
                           <p className="text-sm font-semibold text-[var(--ink)] truncate">{user.displayName || user.email}</p>
