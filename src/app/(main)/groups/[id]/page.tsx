@@ -11,6 +11,7 @@ import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
 import { useAuth } from '@/lib/auth-context';
 import { useGroups } from '@/lib/use-groups';
+import { useArtwork } from '@/lib/use-artwork';
 import { INSTRUMENT_CONFIG } from '@/lib/chord-data';
 import type { Group, GroupRole, Sheet, Set, InstrumentId } from '@/types';
 
@@ -34,6 +35,61 @@ function groupFromDoc(id: string, data: Record<string, unknown>): Group {
     createdAt: (data.createdAt as { toDate: () => Date })?.toDate?.() || new Date(),
     updatedAt: (data.updatedAt as { toDate: () => Date })?.toDate?.() || new Date(),
   };
+}
+
+function SheetRow({
+  sheet,
+  type,
+  canRemove,
+  onRemove,
+}: {
+  sheet: Sheet;
+  type: 'owned' | 'linked';
+  canRemove: boolean;
+  onRemove: () => void;
+}) {
+  const { artworkUrl } = useArtwork(sheet.artist, sheet.title);
+
+  return (
+    <div className="flex items-center gap-3 px-3 py-2.5 bg-[var(--cell-bg)] border border-[var(--line)] rounded-lg">
+      {/* Thumbnail */}
+      <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-gradient-to-br from-[var(--cell-bg)] to-[var(--line)] flex items-center justify-center text-[var(--ink-faint)]">
+        {artworkUrl ? (
+          <img src={artworkUrl} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <span className="text-base">♫</span>
+        )}
+      </div>
+
+      {/* Titre + artiste */}
+      <Link href={`/sheet/${sheet.id}`} className="flex-1 min-w-0 hover:opacity-75 transition-opacity">
+        <div className="text-sm font-medium text-[var(--ink)] truncate">{sheet.title}</div>
+        <div className="text-xs text-[var(--ink-faint)] truncate">{sheet.artist}</div>
+      </Link>
+
+      {/* Badges + action */}
+      <div className="flex items-center gap-2 shrink-0">
+        {type === 'linked' && (
+          <span className="text-xs text-[var(--ink-faint)] bg-[var(--paper)] border border-[var(--line)] px-2 py-0.5 rounded-full">
+            référence
+          </span>
+        )}
+        {sheet.key && (
+          <span className="text-xs text-[var(--ink-faint)] bg-[var(--paper)] border border-[var(--line)] px-2 py-0.5 rounded-full">
+            {sheet.key}
+          </span>
+        )}
+        {canRemove && (
+          <button
+            onClick={onRemove}
+            className="text-xs text-[var(--ink-faint)] hover:text-red-500 transition-colors"
+          >
+            Retirer
+          </button>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export default function GroupDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -477,36 +533,19 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
         ) : (
           <div className="space-y-2">
             {allSheets.map(({ sheet, type }) => (
-              <div key={sheet.id} className="flex items-center justify-between px-4 py-3 bg-[var(--cell-bg)] border border-[var(--line)] rounded-lg">
-                <Link href={`/sheet/${sheet.id}`} className="flex-1 min-w-0 hover:opacity-75 transition-opacity">
-                  <div className="text-sm font-medium text-[var(--ink)] truncate">{sheet.title}</div>
-                  <div className="text-xs text-[var(--ink-faint)] truncate">{sheet.artist}</div>
-                </Link>
-                <div className="flex items-center gap-2 ml-3 shrink-0">
-                  {type === 'linked' && (
-                    <span className="text-xs text-[var(--ink-faint)] bg-[var(--paper)] border border-[var(--line)] px-2 py-0.5 rounded-full">
-                      référence
-                    </span>
-                  )}
-                  {sheet.key && (
-                    <span className="text-xs text-[var(--ink-faint)] bg-[var(--paper)] border border-[var(--line)] px-2 py-0.5 rounded-full">
-                      {sheet.key}
-                    </span>
-                  )}
-                  {type === 'owned' && (isLeader || sheet.ownerId === user?.id) && (
-                    <button onClick={() => handleDetachOwned(sheet)}
-                      className="text-xs text-[var(--ink-faint)] hover:text-red-500 transition-colors">
-                      Retirer
-                    </button>
-                  )}
-                  {type === 'linked' && isMember && (
-                    <button onClick={() => handleUnlink(sheet)}
-                      className="text-xs text-[var(--ink-faint)] hover:text-red-500 transition-colors">
-                      Retirer
-                    </button>
-                  )}
-                </div>
-              </div>
+              <SheetRow
+                key={sheet.id}
+                sheet={sheet}
+                type={type}
+                canRemove={
+                  type === 'owned'
+                    ? (isLeader || sheet.ownerId === user?.id) ?? false
+                    : isMember ?? false
+                }
+                onRemove={() =>
+                  type === 'owned' ? handleDetachOwned(sheet) : handleUnlink(sheet)
+                }
+              />
             ))}
           </div>
         )}
