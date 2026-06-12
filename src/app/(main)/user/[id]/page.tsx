@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
+import Link from 'next/link';
 import { collection, query, where, getDocs, getDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
@@ -277,9 +278,40 @@ export default function UserPage({ params }: UserPageProps) {
 
       {/* Grilles */}
       {sortedSheets.length === 0 ? (
-        <div className="py-16 text-center text-[var(--ink-faint)]">
-          Aucune grille publiée.
-        </div>
+        user?.id === id ? (
+          <div className="py-12 text-center bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl">
+            <div className="w-14 h-14 rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center mx-auto mb-4">
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="4" y1="13" x2="20" y2="13"/>
+                <line x1="12" y1="8" x2="12" y2="22"/>
+              </svg>
+            </div>
+            <p className="font-medium text-[var(--ink)] mb-1">Aucune grille publiée</p>
+            <p className="text-sm text-[var(--ink-faint)] mb-5 max-w-xs mx-auto">
+              Publie une grille pour qu&apos;elle apparaisse ici et soit visible par la communauté.
+            </p>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <Link
+                href="/sheet/new"
+                className="px-4 py-2 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm font-medium rounded-lg transition-colors"
+              >
+                Créer une grille
+              </Link>
+              <Link
+                href="/dashboard?tab=mine"
+                className="px-4 py-2 border border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] text-sm font-medium rounded-lg transition-colors"
+              >
+                Mes grilles privées
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="py-16 text-center text-[var(--ink-faint)]">
+            Aucune grille publiée.
+          </div>
+        )
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {sortedSheets.map(sheet => (

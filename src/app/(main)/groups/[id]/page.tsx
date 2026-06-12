@@ -307,8 +307,9 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
     ? attachPool.filter(s => `${s.title} ${s.artist}`.toLowerCase().includes(attachSearch.toLowerCase()))
     : attachPool;
 
+  const linkedIds = new Set(linkedSheets.map(s => s.id));
   const allSheets = [
-    ...ownedSheets.map(s => ({ sheet: s, type: 'owned' as const })),
+    ...ownedSheets.filter(s => !linkedIds.has(s.id)).map(s => ({ sheet: s, type: 'owned' as const })),
     ...linkedSheets.map(s => ({ sheet: s, type: 'linked' as const })),
   ];
 
