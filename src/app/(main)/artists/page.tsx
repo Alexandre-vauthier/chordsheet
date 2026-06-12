@@ -13,6 +13,7 @@ interface ArtistEntry {
   name: string;
   titleCount: number;
   sheetCount: number;
+  genres: string[];
 }
 
 function letterOf(name: string): string {
@@ -27,6 +28,7 @@ export default function ArtistsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeLetter, setActiveLetter] = useState('');
+  const [activeGenre, setActiveGenre] = useState('');
 
   useEffect(() => {
     async function load() {
@@ -45,19 +47,26 @@ export default function ArtistsPage() {
   }, []);
 
   const artists = useMemo<ArtistEntry[]>(() => {
-    const map = new Map<string, { titles: Set<string>; total: number }>();
+    const map = new Map<string, { titles: Set<string>; total: number; genres: Set<string> }>();
     for (const sheet of sheets) {
       const name = sheet.artist?.trim();
       if (!name) continue;
-      if (!map.has(name)) map.set(name, { titles: new Set(), total: 0 });
+      if (!map.has(name)) map.set(name, { titles: new Set(), total: 0, genres: new Set() });
       const entry = map.get(name)!;
       entry.titles.add(sheet.title.trim().toLowerCase());
       entry.total++;
+      sheet.genres?.forEach(g => entry.genres.add(g));
     }
     return Array.from(map.entries())
-      .map(([name, { titles, total }]) => ({ name, titleCount: titles.size, sheetCount: total }))
+      .map(([name, { titles, total, genres }]) => ({ name, titleCount: titles.size, sheetCount: total, genres: Array.from(genres) }))
       .sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }));
   }, [sheets]);
+
+  const availableGenres = useMemo(() => {
+    const all = new Set<string>();
+    artists.forEach(a => a.genres.forEach(g => all.add(g)));
+    return Array.from(all).sort((a, b) => a.localeCompare(b, 'fr'));
+  }, [artists]);
 
   const filtered = useMemo(() => {
     let result = artists;
@@ -68,8 +77,11 @@ export default function ArtistsPage() {
     if (activeLetter) {
       result = result.filter(a => letterOf(a.name) === activeLetter);
     }
+    if (activeGenre) {
+      result = result.filter(a => a.genres.includes(activeGenre));
+    }
     return result;
-  }, [artists, searchQuery, activeLetter]);
+  }, [artists, searchQuery, activeLetter, activeGenre]);
 
   const availableLetters = useMemo(
     () => new Set(artists.map(a => letterOf(a.name))),
@@ -77,7 +89,7 @@ export default function ArtistsPage() {
   );
 
   const grouped = useMemo(() => {
-    if (activeLetter || searchQuery.trim()) return null;
+    if (activeLetter || searchQuery.trim() || activeGenre) return null;
     const map = new Map<string, ArtistEntry[]>();
     for (const artist of filtered) {
       const l = letterOf(artist.name);
@@ -98,7 +110,7 @@ export default function ArtistsPage() {
       </div>
 
       {/* Recherche */}
-      <div className="mb-5">
+      <div className="mb-4">
         <Input
           type="search"
           placeholder="Rechercher un artiste…"
@@ -108,8 +120,27 @@ export default function ArtistsPage() {
         />
       </div>
 
+      {/* Filtre genre */}
+      {availableGenres.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-5">
+          {availableGenres.map(genre => (
+            <button
+              key={genre}
+              onClick={() => setActiveGenre(g => g === genre ? '' : genre)}
+              className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                activeGenre === genre
+                  ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
+                  : 'bg-[var(--cell-bg)] text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+              }`}
+            >
+              {genre}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Navigation A–Z */}
-      {!searchQuery.trim() && (
+      {!searchQuery.trim() && !activeGenre && (
         <div className="flex flex-wrap gap-1 mb-8">
           {/* Voir tout */}
           <button
@@ -153,11 +184,12 @@ export default function ArtistsPage() {
             <div key={i} className="h-16 bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] animate-pulse" />
           ))}
         </div>
-      ) : (searchQuery.trim() || activeLetter) ? (
+      ) : (searchQuery.trim() || activeLetter || activeGenre) ? (
         filtered.length > 0 ? (
           <>
             <p className="text-sm text-[var(--ink-light)] mb-4">
               {filtered.length} artiste{filtered.length > 1 ? 's' : ''}
+              {activeGenre && <span className="ml-1 text-[var(--accent)]">· {activeGenre}</span>}
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {filtered.map(artist => (
