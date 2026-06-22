@@ -262,6 +262,7 @@ export interface User {
   minimizeRepeatedSections?: boolean;
   printMinimizeRepeatedSections?: boolean;
   printChordDiagrams?: boolean;
+  showChordSummaryByDefault?: boolean; // desktop : afficher les accords au chargement (défaut true)
   // Préférences de lecture
   defaultMetronome?: boolean;
   defaultGrooveBox?: boolean;

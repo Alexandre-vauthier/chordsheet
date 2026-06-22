@@ -30,6 +30,7 @@ export default function ProfilePage() {
   const [inlineDiagram, setInlineDiagram] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [minimizeRepeated, setMinimizeRepeated] = useState(false);
+  const [showChordSummaryByDefault, setShowChordSummaryByDefault] = useState(true);
   const [printMinimizeRepeated, setPrintMinimizeRepeated] = useState(false);
   const [printChordDiagrams, setPrintChordDiagrams] = useState(false);
   const [defaultMetronome, setDefaultMetronome] = useState(false);
@@ -56,6 +57,7 @@ export default function ProfilePage() {
       setDarkMode(user.darkMode ?? false);
       setPreferredInstrument(user.preferredInstrument);
       setMinimizeRepeated(user.minimizeRepeatedSections ?? false);
+      setShowChordSummaryByDefault(user.showChordSummaryByDefault ?? true);
       setPrintMinimizeRepeated(user.printMinimizeRepeatedSections ?? false);
       setPrintChordDiagrams(user.printChordDiagrams ?? false);
       setDefaultMetronome(user.defaultMetronome ?? false);
@@ -457,6 +459,30 @@ export default function ProfilePage() {
             }`}
           >
             <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${minimizeRepeated ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Afficher les accords au chargement (desktop) */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Afficher les accords au chargement</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              Sur desktop, ouvre automatiquement les diagrammes d&apos;accords à l&apos;ouverture d&apos;une grille. Sur mobile, toujours replié.
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !showChordSummaryByDefault;
+              setShowChordSummaryByDefault(newVal);
+              try { await updateUser({ showChordSummaryByDefault: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              showChordSummaryByDefault ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${showChordSummaryByDefault ? 'translate-x-5' : ''}`} />
           </button>
         </div>
       </div>

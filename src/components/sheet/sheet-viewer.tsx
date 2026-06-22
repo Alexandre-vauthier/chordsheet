@@ -68,6 +68,15 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   const getColor = useChordColor();
   const { user, updateUser } = useAuth();
   const [showInlineDiagram, setShowInlineDiagram] = useState(() => user?.showInlineDiagram ?? false);
+  const [showChordSummary, setShowChordSummary] = useState(false);
+
+  useEffect(() => {
+    if (window.innerWidth >= 640) {
+      setShowChordSummary(user?.showChordSummaryByDefault ?? true);
+    }
+    // Mobile : reste false (replié par défaut)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.showChordSummaryByDefault]);
   const [instrumentId, setInstrumentId] = useState<InstrumentId>(() => {
     // Priorité 1 : dernier choix explicite (localStorage)
     if (hasLocalInstrument()) return getSavedInstrument('guitar');
@@ -551,9 +560,19 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
       {/* Barre instrument + diagrammes */}
       <div className="mb-6 print:hidden">
         <div className="flex items-center justify-between mb-3">
-          {instrumentId !== 'voice' && <h2 className="text-sm font-medium text-[var(--ink-light)]">Accords utilisés</h2>}
+          {instrumentId !== 'voice' && (
+            <button
+              onClick={() => setShowChordSummary(v => !v)}
+              className="flex items-center gap-1.5 text-sm font-medium text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors"
+            >
+              Accords utilisés
+              <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${showChordSummary ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+          )}
           <div className={`flex items-center gap-3 ${instrumentId === 'voice' ? 'ml-auto' : ''}`}>
-            {instrumentId !== 'voice' && hasRepeatedSections && (
+            {showChordSummary && instrumentId !== 'voice' && hasRepeatedSections && (
               <button
                 onClick={() => {
                   const next = !minimizeRepeated;
@@ -573,7 +592,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 Minimiser
               </button>
             )}
-            {instrumentId !== 'voice' && (
+            {showChordSummary && instrumentId !== 'voice' && (
               <button
                 onClick={() => setShowInlineDiagram(v => !v)}
                 title={showInlineDiagram ? 'Masquer les diagrammes dans les cases' : 'Afficher les diagrammes dans les cases'}
@@ -602,7 +621,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             />
           </div>
         </div>
-        {instrumentId !== 'voice' && instrumentId !== 'percussion' && (
+        {showChordSummary && instrumentId !== 'voice' && instrumentId !== 'percussion' && (
           <ChordSummary
             sections={displaySections}
             instrumentId={instrumentId}
