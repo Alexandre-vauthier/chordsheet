@@ -1,25 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import type { Sheet, Difficulty } from '@/types';
 import { DIFFICULTY_LABELS } from '@/types';
 import { useArtwork } from '@/lib/use-artwork';
 
-// Singleton audio global — stoppe le précédent quand on en lance un autre
+// Singleton audio global
 let _audio: HTMLAudioElement | null = null;
 let _stopCb: (() => void) | null = null;
 
 function playPreviewAudio(url: string, onStop: () => void) {
-  // Arrêter l'extrait en cours
-  if (_audio) {
-    _audio.pause();
-    _audio = null;
-    if (_stopCb) { _stopCb(); _stopCb = null; }
-  }
+  if (_audio) { _audio.pause(); _audio = null; if (_stopCb) { _stopCb(); _stopCb = null; } }
   const audio = new Audio(url);
-  _audio = audio;
-  _stopCb = onStop;
+  _audio = audio; _stopCb = onStop;
   audio.play().catch(() => { _audio = null; _stopCb = null; onStop(); });
   audio.onended = () => { _audio = null; _stopCb = null; onStop(); };
 }
@@ -36,16 +30,28 @@ interface SheetCardProps {
   onDelete?: () => void;
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
-  /** Surcharge le lien de destination (par défaut /sheet/[id]) */
   href?: string;
-  /** Nombre de variantes disponibles (affiche un badge si > 1) */
   variantCount?: number;
-  /** Masque la colonne artwork */
   hideArtwork?: boolean;
-  /** Masque le niveau de difficulté */
   hideDifficulty?: boolean;
-  /** Affiche un badge 'Public' si la grille est publique */
   showPublicBadge?: boolean;
+}
+
+const GRADIENTS = [
+  'from-rose-900 via-red-800 to-orange-900',
+  'from-violet-900 via-purple-800 to-fuchsia-900',
+  'from-cyan-900 via-teal-800 to-emerald-900',
+  'from-amber-900 via-orange-800 to-red-900',
+  'from-indigo-900 via-blue-800 to-sky-900',
+  'from-emerald-900 via-green-800 to-teal-900',
+  'from-pink-900 via-rose-800 to-red-900',
+  'from-sky-900 via-blue-800 to-indigo-900',
+];
+
+function hashGradient(s: string) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = s.charCodeAt(i) + ((h << 5) - h);
+  return GRADIENTS[Math.abs(h) % GRADIENTS.length];
 }
 
 export function SheetCard({
@@ -61,196 +67,241 @@ export function SheetCard({
   hideDifficulty = true,
   showPublicBadge = false,
 }: SheetCardProps) {
-  const { artworkUrl, previewUrl } = useArtwork(hideArtwork ? undefined : sheet.artist, hideArtwork ? undefined : sheet.title);
+  const { artworkUrl, previewUrl } = useArtwork(
+    hideArtwork ? undefined : sheet.artist,
+    hideArtwork ? undefined : sheet.title,
+  );
   const [isPlaying, setIsPlaying] = useState(false);
-
-  const formatRating = (rating: number | null) => {
-    if (rating === null) return null;
-    return rating.toFixed(1);
-  };
+  const [menuOpen, setMenuOpen] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
 
   const destination = href ?? `/sheet/${sheet.id}`;
+  const gradient = hashGradient((sheet.title ?? '') + (sheet.artist ?? ''));
+
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      const card = cardRef.current;
+      if (!card) return;
+      const r = card.getBoundingClientRect();
+      const x = e.clientX - r.left;
+      const y = e.clientY - r.top;
+      card.style.setProperty('--rx', `${((y / r.height) - 0.5) * -18}deg`);
+      card.style.setProperty('--ry', `${((x / r.width) - 0.5) * 18}deg`);
+      card.style.setProperty('--sx', `${(x / r.width) * 100}%`);
+      card.style.setProperty('--sy', `${(y / r.height) * 100}%`);
+      card.style.setProperty('--active', '1');
+    });
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    const card = cardRef.current;
+    if (!card) return;
+    card.style.removeProperty('--rx');
+    card.style.removeProperty('--ry');
+    card.style.setProperty('--active', '0');
+    setMenuOpen(false);
+  }, []);
 
   const handlePreview = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!previewUrl) return;
-
-    if (isPlaying) {
-      stopPreviewAudio();
-      setIsPlaying(false);
-    } else {
-      setIsPlaying(true);
-      playPreviewAudio(previewUrl, () => setIsPlaying(false));
-    }
+    if (isPlaying) { stopPreviewAudio(); setIsPlaying(false); }
+    else { setIsPlaying(true); playPreviewAudio(previewUrl, () => setIsPlaying(false)); }
   };
 
   return (
-    <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] overflow-hidden hover:shadow-md transition-shadow group relative flex">
-      {/* Artwork à gauche */}
-      {!hideArtwork && (
-        <Link href={destination} className="flex-shrink-0 w-24 bg-gradient-to-br from-[var(--cell-bg)] to-[var(--line)]">
-          {artworkUrl ? (
-            <img
-              src={artworkUrl}
-              alt={`${sheet.artist} — ${sheet.title}`}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-[var(--ink-faint)] text-2xl">
-              ♫
-            </div>
-          )}
-        </Link>
-      )}
+    <div
+      ref={cardRef}
+      className="sheet-card-wrap group"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className="sheet-card-inner rounded-2xl overflow-hidden bg-[var(--cell-bg)] border border-[var(--line)]">
 
-      {/* Contenu à droite */}
-      <div className="flex-1 min-w-0 flex flex-col">
-        {/* Bouton bookmark */}
-        {onToggleBookmark && (
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggleBookmark();
-            }}
-            className={`cursor-pointer absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-full transition-all
-              ${isBookmarked
-                ? 'bg-amber-500/15 text-amber-500'
-                : 'bg-[var(--cell-bg)]/70 text-[var(--ink-faint)] opacity-0 group-hover:opacity-100 hover:text-amber-500 hover:bg-amber-500/10'
-              }`}
-            title={isBookmarked ? 'Retirer du book' : 'Ajouter au book'}
-          >
-            {isBookmarked ? '★' : '☆'}
-          </button>
-        )}
-
-        {/* Infos */}
-        <div className="p-3 flex-1">
-          <Link href={destination} className="block group-hover:text-[var(--accent)] transition-colors">
-            <h3 className="font-semibold text-[var(--ink)] truncate text-sm flex items-center gap-1.5">
-              {sheet.title || 'Sans titre'}
-              {variantCount && variantCount > 1 && (
-                <span className="flex-shrink-0 text-[10px] px-1.5 py-0.5 bg-[var(--accent-soft)] text-[var(--accent)] rounded-full font-medium">
-                  {variantCount} versions
-                </span>
-              )}
-            </h3>
-          </Link>
-
-          <div className="flex items-center justify-between mt-1">
-            {sheet.artist ? (
-              <Link
-                href={`/artist/${encodeURIComponent(sheet.artist)}`}
-                onClick={(e) => e.stopPropagation()}
-                className="text-xs text-[var(--ink-light)] truncate flex-1 hover:text-[var(--accent)] transition-colors"
-              >
-                {sheet.artist}
-              </Link>
+        {/* ── Artwork carré ─────────────────────────────────── */}
+        <div className="aspect-square relative overflow-hidden">
+          <Link href={destination} className="block w-full h-full">
+            {artworkUrl ? (
+              <img
+                src={artworkUrl}
+                alt={`${sheet.artist} — ${sheet.title}`}
+                className="w-full h-full object-cover"
+              />
             ) : (
-              <span className="text-xs text-[var(--ink-light)] truncate flex-1">Artiste inconnu</span>
-            )}
-
-            {/* Difficulté ou note communautaire */}
-            {showRating && sheet.ratingCount > 0 ? (
-              <div className="flex items-center gap-1 ml-2">
-                <span className="text-amber-500 text-sm">★</span>
-                <span className="text-xs font-medium text-[var(--ink)]">
-                  {formatRating(sheet.averageRating)}
-                </span>
+              <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
+                <span className="text-white/15 text-7xl font-serif select-none">♪</span>
               </div>
-            ) : !hideDifficulty && sheet.difficulty ? (
-              <span className="text-xs text-[var(--ink-faint)] ml-2">
-                {sheet.difficulty} · {DIFFICULTY_LABELS[sheet.difficulty as Difficulty]}
-              </span>
-            ) : null}
-          </div>
-
-          <div className="flex items-center gap-2 mt-1">
-            {showOwner && sheet.ownerName && (
-              <p className="text-[10px] text-[var(--ink-faint)] flex items-center gap-1.5 flex-wrap">
-                par{' '}
-                {sheet.ownerId && sheet.ownerId !== 'deleted' ? (
-                  <Link
-                    href={`/user/${sheet.ownerId}`}
-                    className="hover:text-[var(--accent)] transition-colors"
-                    onClick={e => e.stopPropagation()}
-                  >
-                    {sheet.ownerName}
-                  </Link>
-                ) : (
-                  sheet.ownerName
-                )}
-
-              </p>
             )}
+
+            {/* Dégradé bas pour lisibilité des badges */}
+            <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/70 to-transparent" />
+
+            {/* Tonalité */}
+            {sheet.key && (
+              <span className="absolute bottom-2.5 left-3 text-xs font-bold text-white/95 drop-shadow">
+                {sheet.key}
+              </span>
+            )}
+
+            {/* Variants badge */}
+            {variantCount && variantCount > 1 && (
+              <span className="absolute top-2.5 left-3 text-[10px] px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-sm text-white font-medium">
+                {variantCount} versions
+              </span>
+            )}
+
+            {/* Public badge */}
             {showPublicBadge && sheet.isPublic && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-green-50 text-green-700 font-medium">
+              <span className="absolute top-2.5 left-3 text-[10px] px-2 py-0.5 rounded-full bg-green-500/80 text-white font-medium">
                 Public
               </span>
             )}
-          </div>
-        </div>
+          </Link>
 
-        {/* Actions */}
-        <div className="flex items-center gap-1 pb-3 pt-2 border-t border-[var(--line)] mx-3">
-          {/* Bouton preview iTunes */}
+          {/* Bouton play preview */}
           {previewUrl && (
             <button
               onClick={handlePreview}
-              className={`cursor-pointer p-1.5 rounded transition-colors ${
+              className={`absolute bottom-2.5 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
                 isPlaying
-                  ? 'bg-[var(--accent)] text-white'
-                  : 'text-[var(--ink-light)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]'
+                  ? 'bg-[var(--accent)] text-white scale-100 opacity-100'
+                  : 'bg-black/50 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 hover:bg-[var(--accent)] hover:scale-105'
               }`}
               title={isPlaying ? 'Stop preview' : 'Écouter un extrait'}
             >
               {isPlaying ? (
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                   <rect x="4" y="3" width="4" height="14" rx="1" />
                   <rect x="12" y="3" width="4" height="14" rx="1" />
                 </svg>
               ) : (
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="w-3.5 h-3.5 ml-0.5" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
                 </svg>
               )}
             </button>
           )}
 
-          <Link
-            href={destination}
-            className="p-1.5 rounded hover:bg-[var(--accent-soft)] text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors"
-            title="Consulter"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-          </Link>
-
+          {/* Actions édition (dashboard) — menu 3 points */}
           {onDelete && (
-            <>
-              <Link
-                href={`/sheet/${sheet.id}/edit`}
-                className="p-1.5 rounded hover:bg-[var(--accent-soft)] text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors"
-                title="Modifier"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </Link>
+            <div className="absolute top-2.5 right-2.5">
               <button
-                onClick={onDelete}
-                className="cursor-pointer p-1.5 rounded hover:bg-red-50 text-[var(--ink-light)] hover:text-red-600 transition-colors ml-auto"
-                title="Supprimer"
+                onClick={e => { e.preventDefault(); e.stopPropagation(); setMenuOpen(v => !v); }}
+                className="w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <circle cx="10" cy="4.5" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="10" cy="15.5" r="1.5"/>
                 </svg>
               </button>
-            </>
+              {menuOpen && (
+                <div className="absolute right-0 top-8 z-20 w-36 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl shadow-xl overflow-hidden">
+                  <Link
+                    href={`/sheet/${sheet.id}/edit`}
+                    onClick={e => e.stopPropagation()}
+                    className="flex items-center gap-2 px-3 py-2 text-xs text-[var(--ink)] hover:bg-[var(--cell-hover)] transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    Modifier
+                  </Link>
+                  <button
+                    onClick={e => { e.preventDefault(); e.stopPropagation(); onDelete(); }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 transition-colors"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                    Supprimer
+                  </button>
+                </div>
+              )}
+            </div>
           )}
+
+          {/* Shine + foil holographique */}
+          <div className="card-shine absolute inset-0 pointer-events-none" />
+          <div className="card-foil absolute inset-0 pointer-events-none" />
+        </div>
+
+        {/* ── Contenu ───────────────────────────────────────── */}
+        <div className="px-3 pt-2.5 pb-3 relative">
+
+          {/* Bookmark */}
+          {onToggleBookmark && (
+            <button
+              onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleBookmark(); }}
+              className={`absolute top-2 right-2.5 text-base transition-all ${
+                isBookmarked
+                  ? 'text-amber-400'
+                  : 'text-[var(--ink-faint)] opacity-0 group-hover:opacity-100 hover:text-amber-400'
+              }`}
+              title={isBookmarked ? 'Retirer du book' : 'Ajouter au book'}
+            >
+              {isBookmarked ? '★' : '☆'}
+            </button>
+          )}
+
+          <Link href={destination}>
+            <h3 className="font-semibold text-[var(--ink)] text-sm leading-tight truncate group-hover:text-[var(--accent)] transition-colors pr-6">
+              {sheet.title || 'Sans titre'}
+            </h3>
+          </Link>
+
+          {sheet.artist ? (
+            <Link
+              href={`/artist/${encodeURIComponent(sheet.artist)}`}
+              onClick={e => e.stopPropagation()}
+              className="text-xs text-[var(--ink-light)] truncate block mt-0.5 hover:text-[var(--accent)] transition-colors"
+            >
+              {sheet.artist}
+            </Link>
+          ) : (
+            <span className="text-xs text-[var(--ink-faint)] block mt-0.5">Artiste inconnu</span>
+          )}
+
+          {showOwner && sheet.ownerName && (
+            <p className="text-[10px] text-[var(--ink-faint)] mt-0.5 truncate">
+              par{' '}
+              {sheet.ownerId && sheet.ownerId !== 'deleted' ? (
+                <Link href={`/user/${sheet.ownerId}`} className="hover:text-[var(--accent)] transition-colors" onClick={e => e.stopPropagation()}>
+                  {sheet.ownerName}
+                </Link>
+              ) : sheet.ownerName}
+            </p>
+          )}
+
+          <div className="flex items-center justify-between mt-2 gap-1">
+            <div className="flex items-center gap-1 flex-wrap">
+              {sheet.tempo && (
+                <span className="text-[10px] text-[var(--ink-faint)] bg-[var(--line)]/60 px-1.5 py-0.5 rounded">
+                  {sheet.tempo}
+                </span>
+              )}
+              {sheet.capo ? (
+                <span className="text-[10px] text-[var(--ink-faint)] bg-[var(--line)]/60 px-1.5 py-0.5 rounded">
+                  Capo {sheet.capo}
+                </span>
+              ) : null}
+              {!hideDifficulty && sheet.difficulty && (
+                <span className="text-[10px] text-[var(--ink-faint)] bg-[var(--line)]/60 px-1.5 py-0.5 rounded">
+                  {DIFFICULTY_LABELS[sheet.difficulty as Difficulty]}
+                </span>
+              )}
+            </div>
+            {showRating && sheet.ratingCount > 0 && (
+              <div className="flex items-center gap-0.5 shrink-0">
+                <span className="text-amber-400 text-xs leading-none">★</span>
+                <span className="text-[11px] font-semibold text-[var(--ink)]">
+                  {sheet.averageRating?.toFixed(1)}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

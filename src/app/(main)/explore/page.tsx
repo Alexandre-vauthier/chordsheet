@@ -343,12 +343,15 @@ export default function ExplorePage() {
 
       {/* Résultats */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div
-              key={i}
-              className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] h-48 animate-pulse"
-            />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (
+            <div key={i} className="rounded-2xl overflow-hidden border border-[var(--line)] animate-pulse bg-[var(--cell-bg)]">
+              <div className="aspect-square bg-[var(--line)]/40" />
+              <div className="p-3 space-y-2">
+                <div className="h-3 bg-[var(--line)]/40 rounded w-3/4" />
+                <div className="h-2.5 bg-[var(--line)]/30 rounded w-1/2" />
+              </div>
+            </div>
           ))}
         </div>
       ) : groupedResults.length > 0 ? (
@@ -359,7 +362,7 @@ export default function ExplorePage() {
               {filteredSheets.length > groupedResults.length && ` (${filteredSheets.length} versions)`}
             </p>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {groupedResults.map(({ sheet, count, href }) => (
               <SheetCard
                 key={`${sheet.title}-${sheet.artist}`}

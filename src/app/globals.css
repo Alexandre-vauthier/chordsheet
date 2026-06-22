@@ -105,6 +105,65 @@ body {
   background: rgba(0, 0, 0, 0.72);
 }
 
+/* ── Collection Cards — effet 3D + foil holographique ───────────────────── */
+
+.sheet-card-wrap {
+  perspective: 900px;
+}
+
+.sheet-card-inner {
+  transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(var(--scale, 1));
+  transition: transform 0.12s ease-out, box-shadow 0.12s ease-out;
+  will-change: transform;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.sheet-card-wrap:hover .sheet-card-inner {
+  --scale: 1.02;
+  box-shadow:
+    0 20px 40px -8px rgba(0,0,0,0.35),
+    0 0 0 1px rgba(255,255,255,0.07);
+}
+
+/* Shine blanc radial qui suit le curseur */
+.card-shine {
+  background: radial-gradient(
+    circle at var(--sx, 50%) var(--sy, 50%),
+    rgba(255,255,255,0.28) 0%,
+    rgba(255,255,255,0.06) 45%,
+    transparent 70%
+  );
+  opacity: var(--active, 0);
+  transition: opacity 0.35s ease;
+}
+
+/* Foil holographique rainbow */
+.card-foil {
+  background:
+    radial-gradient(
+      ellipse at var(--sx, 50%) var(--sy, 50%),
+      rgba(255,220,100,0.18) 0%,
+      transparent 55%
+    ),
+    linear-gradient(
+      125deg,
+      rgba(255,50,130,0.12) 0%,
+      rgba(80,210,255,0.12) 22%,
+      rgba(120,255,160,0.12) 44%,
+      rgba(255,200,50,0.12) 66%,
+      rgba(180,80,255,0.12) 88%,
+      rgba(255,50,130,0.12) 100%
+    );
+  mix-blend-mode: screen;
+  opacity: calc(var(--active, 0) * 0.85);
+  transition: opacity 0.35s ease;
+}
+
+[data-theme="dark"] .card-foil {
+  mix-blend-mode: color-dodge;
+  opacity: calc(var(--active, 0) * 0.6);
+}
+
 /* Print styles */
 @media print {
   /* Force light mode variables regardless of theme */

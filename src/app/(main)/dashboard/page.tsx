@@ -275,7 +275,7 @@ export default function DashboardPage() {
 
       {/* Contenu */}
       {isCurrentlyLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {[1, 2, 3].map(i => (
             <div key={i} className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] h-48 animate-pulse" />
           ))}
@@ -304,7 +304,7 @@ export default function DashboardPage() {
         ) : displayedAll.length === 0 ? (
           <EmptyState icon="music" title="Aucun résultat" description="Essayez de modifier vos filtres." actions={[<button key="r" onClick={clearFilters} className="text-sm text-[var(--accent)] hover:underline">Réinitialiser</button>]} />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {displayedAll.map(sheet => {
               const isOwned = ownedIds.has(sheet.id);
               return (
@@ -331,7 +331,7 @@ export default function DashboardPage() {
         ) : displayedSheets.length === 0 ? (
           <EmptyState icon="music" title="Aucun résultat" description="Essayez de modifier vos filtres." actions={[<button key="r" onClick={clearFilters} className="text-sm text-[var(--accent)] hover:underline">Réinitialiser</button>]} />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {displayedSheets.map(sheet => (
               <SheetCard
                 key={sheet.id}
@@ -356,7 +356,7 @@ export default function DashboardPage() {
         ) : displayedBookmarks.length === 0 ? (
           <EmptyState icon="bookmark" title="Aucun résultat" description="Essayez de modifier vos filtres." actions={[<button key="r" onClick={clearFilters} className="text-sm text-[var(--accent)] hover:underline">Réinitialiser</button>]} />
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {displayedBookmarks.map(sheet => (
               <SheetCard
                 key={sheet.id}
@@ -404,7 +404,7 @@ function SetsTab({
       </div>
 
       {sets.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {sets.map(set => (
             <div key={set.id} className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] overflow-hidden hover:shadow-md transition-shadow group">
               <div className="p-5">

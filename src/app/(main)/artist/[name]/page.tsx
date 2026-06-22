@@ -101,13 +101,13 @@ export default function ArtistPage({ params }: ArtistPageProps) {
 
       {/* Grilles */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {[1, 2, 3].map(i => (
             <div key={i} className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] h-48 animate-pulse" />
           ))}
         </div>
       ) : grouped.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {grouped.map(({ sheet, count, href }) => (
             <SheetCard
               key={`${sheet.title}`}
