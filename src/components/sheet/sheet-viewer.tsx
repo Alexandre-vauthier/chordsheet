@@ -370,7 +370,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 onClick={() => setChordsEnabled(v => !v)}
                 title={chordsEnabled ? 'Désactiver la lecture des accords' : 'Activer la lecture des accords'}
                 className={`
-                  flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
+                  hidden sm:flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
                   ${chordsEnabled
                     ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
                     : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
