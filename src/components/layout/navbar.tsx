@@ -49,17 +49,14 @@ export function Navbar() {
     <nav className="bg-[var(--nav-bg)] text-[var(--nav-text)] sticky top-0 z-[60]">
       <div className="w-full px-5 sm:px-8">
         <div className="flex items-center justify-between h-14">
-          {/* Logo */}
-          <Link href={user ? '/explore' : '/'} className="flex items-center shrink-0" onClick={closeMobileMenu}>
-            <Image src="/logo-chordsheet.svg" alt="ChordSheet" height={32} width={140} priority />
-          </Link>
 
-          {/* Navigation Desktop */}
-          <div className="hidden sm:flex items-center gap-4">
-            {loading ? (
-              <div className="h-8 w-24 bg-white/10 rounded animate-pulse" />
-            ) : user ? (
-              <>
+          {/* GAUCHE : Logo + liens de navigation */}
+          <div className="flex items-center gap-6">
+            <Link href={user ? '/explore' : '/'} className="flex items-center shrink-0" onClick={closeMobileMenu}>
+              <Image src="/logo-chordsheet.svg" alt="ChordSheet" height={32} width={140} priority />
+            </Link>
+            {!loading && user && (
+              <div className="hidden sm:flex items-center gap-4">
                 {[
                   { href: '/dashboard', label: 'Mon book' },
                   { href: '/groups', label: 'Groupes' },
@@ -79,8 +76,16 @@ export function Navbar() {
                     {label}
                   </Link>
                 ))}
+              </div>
+            )}
+            {loading && <div className="hidden sm:block h-5 w-32 bg-white/10 rounded animate-pulse" />}
+          </div>
 
-                {/* Barre de recherche desktop — icône uniquement, s'ouvre au clic */}
+          {/* DROITE : actions */}
+          <div className="hidden sm:flex items-center gap-3">
+            {!loading && user ? (
+              <>
+                {/* Recherche — icône uniquement, s'ouvre au clic */}
                 {searchOpen ? (
                   <form onSubmit={e => { handleSearch(e); setSearchOpen(false); }} className="relative">
                     <input
@@ -115,7 +120,7 @@ export function Navbar() {
                 >
                   + Grille
                 </Link>
-                <div className="flex items-center gap-3 ml-2 pl-4 border-l border-white/20">
+                <div className="flex items-center gap-3 pl-3 border-l border-white/20">
                   {isAdmin && (
                     <Link
                       href="/admin"
@@ -124,7 +129,6 @@ export function Navbar() {
                       Admin
                     </Link>
                   )}
-
                   {/* Menu profil */}
                   <div className="relative" ref={profileMenuRef}>
                     <button
@@ -146,17 +150,14 @@ export function Navbar() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
                       </svg>
                     </button>
-
                     {profileMenuOpen && (
                       <div className="absolute right-0 top-full mt-2 w-56 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl shadow-lg overflow-hidden z-[60]">
-                        {/* En-tête */}
                         <div className="px-4 py-3 border-b border-[var(--line)]">
                           <p className="text-sm font-semibold text-[var(--ink)] truncate">{user.displayName || user.email}</p>
                           {user.reputation && user.reputation.level !== 'Découvreur' && (
                             <div className="mt-1"><LevelBadge level={user.reputation.level} /></div>
                           )}
                         </div>
-                        {/* Items */}
                         <div className="py-1">
                           <Link
                             href={`/user/${user.id}`}
@@ -194,7 +195,7 @@ export function Navbar() {
                   </div>
                 </div>
               </>
-            ) : (
+            ) : !loading ? (
               <>
                 <Link href="/login">
                   <Button variant="ghost" size="sm" className="border-white/25 text-[var(--nav-text)]">
@@ -207,7 +208,7 @@ export function Navbar() {
                   </Button>
                 </Link>
               </>
-            )}
+            ) : null}
           </div>
 
           {/* Mobile: Burger + Actions */}
