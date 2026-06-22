@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
@@ -50,7 +51,7 @@ export function Navbar() {
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
           <Link href={user ? '/explore' : '/'} className="flex items-center shrink-0" onClick={closeMobileMenu}>
-            <img src="/logo-chordsheet.svg" alt="ChordSheet" className="h-8 w-auto" />
+            <Image src="/logo-chordsheet.svg" alt="ChordSheet" height={32} width={140} priority />
           </Link>
 
           {/* Navigation Desktop */}
