@@ -169,7 +169,7 @@ export function SheetCard({
               className={`absolute bottom-2.5 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
                 isPlaying
                   ? 'bg-[var(--accent)] text-white scale-100 opacity-100'
-                  : 'bg-black/50 backdrop-blur-sm text-white opacity-0 group-hover:opacity-100 hover:bg-[var(--accent)] hover:scale-105'
+                  : 'bg-black/50 backdrop-blur-sm text-white opacity-100 sm:opacity-0 group-hover:opacity-100 hover:bg-[var(--accent)] hover:scale-105'
               }`}
               title={isPlaying ? 'Stop preview' : 'Écouter un extrait'}
             >
