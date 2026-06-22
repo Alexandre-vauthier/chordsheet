@@ -311,7 +311,7 @@ export default function DashboardPage() {
                 <SheetCard
                   key={sheet.id}
                   sheet={sheet}
-                  showOwner={!isOwned}
+                  showOwner
                   onDelete={isOwned ? () => handleDelete(sheet.id!) : undefined}
                   isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
                   onToggleBookmark={sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
@@ -336,6 +336,7 @@ export default function DashboardPage() {
               <SheetCard
                 key={sheet.id}
                 sheet={sheet}
+                showOwner
                 showPublicBadge
                 onDelete={() => handleDelete(sheet.id!)}
                 isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
