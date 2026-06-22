@@ -140,12 +140,12 @@ export function SheetCard({
             {/* Dégradé bas pour lisibilité des badges */}
             <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/70 to-transparent" />
 
-            {/* Tonalité */}
-            {sheet.key && (
+            {/* Capo */}
+            {sheet.capo ? (
               <span className="absolute bottom-2.5 left-3 text-xs font-bold text-white/95 drop-shadow">
-                {sheet.key}
+                Capo {sheet.capo}
               </span>
-            )}
+            ) : null}
 
             {/* Variants badge */}
             {variantCount && variantCount > 1 && (
@@ -231,20 +231,27 @@ export function SheetCard({
         {/* ── Contenu ───────────────────────────────────────── */}
         <div className="px-3 pt-2.5 pb-3 relative">
 
-          {/* Bookmark */}
-          {onToggleBookmark && (
-            <button
-              onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleBookmark(); }}
-              className={`absolute top-2 right-2.5 text-base transition-all ${
-                isBookmarked
-                  ? 'text-amber-400'
-                  : 'text-[var(--ink-faint)] opacity-0 group-hover:opacity-100 hover:text-amber-400'
-              }`}
-              title={isBookmarked ? 'Retirer du book' : 'Ajouter au book'}
-            >
-              {isBookmarked ? '★' : '☆'}
-            </button>
-          )}
+          {/* Bookmark + note empilés */}
+          <div className="absolute top-2 right-2.5 flex flex-col items-center gap-0.5">
+            {onToggleBookmark && (
+              <button
+                onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleBookmark(); }}
+                className={`text-base transition-all leading-none ${
+                  isBookmarked
+                    ? 'text-amber-400'
+                    : 'text-[var(--ink-faint)] opacity-0 group-hover:opacity-100 hover:text-amber-400'
+                }`}
+                title={isBookmarked ? 'Retirer du book' : 'Ajouter au book'}
+              >
+                {isBookmarked ? '★' : '☆'}
+              </button>
+            )}
+            {showRating && sheet.ratingCount > 0 && (
+              <span className="text-[10px] font-semibold text-[var(--ink-light)] leading-none">
+                {sheet.averageRating?.toFixed(1)}
+              </span>
+            )}
+          </div>
 
           <Link href={destination}>
             <h3 className="font-semibold text-[var(--ink)] text-sm leading-tight truncate group-hover:text-[var(--accent)] transition-colors pr-6">
@@ -275,33 +282,13 @@ export function SheetCard({
             </p>
           )}
 
-          <div className="flex items-center justify-between mt-2 gap-1">
-            <div className="flex items-center gap-1 flex-wrap">
-              {sheet.tempo && (
-                <span className="text-[10px] text-[var(--ink-faint)] bg-[var(--line)]/60 px-1.5 py-0.5 rounded">
-                  {sheet.tempo}
-                </span>
-              )}
-              {sheet.capo ? (
-                <span className="text-[10px] text-[var(--ink-faint)] bg-[var(--line)]/60 px-1.5 py-0.5 rounded">
-                  Capo {sheet.capo}
-                </span>
-              ) : null}
-              {!hideDifficulty && sheet.difficulty && (
-                <span className="text-[10px] text-[var(--ink-faint)] bg-[var(--line)]/60 px-1.5 py-0.5 rounded">
-                  {DIFFICULTY_LABELS[sheet.difficulty as Difficulty]}
-                </span>
-              )}
+          {!hideDifficulty && sheet.difficulty && (
+            <div className="mt-2">
+              <span className="text-[10px] text-[var(--ink-faint)] bg-[var(--line)]/60 px-1.5 py-0.5 rounded">
+                {DIFFICULTY_LABELS[sheet.difficulty as Difficulty]}
+              </span>
             </div>
-            {showRating && sheet.ratingCount > 0 && (
-              <div className="flex items-center gap-0.5 shrink-0">
-                <span className="text-amber-400 text-xs leading-none">★</span>
-                <span className="text-[11px] font-semibold text-[var(--ink)]">
-                  {sheet.averageRating?.toFixed(1)}
-                </span>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </div>
