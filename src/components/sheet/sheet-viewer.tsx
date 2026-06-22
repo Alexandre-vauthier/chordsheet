@@ -322,7 +322,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
           </div>{/* fin artwork+titre */}
 
           {/* Contrôles : ligne pleine largeur sous le titre sur mobile, colonne droite sur desktop */}
-          <div className="print:hidden flex flex-col gap-2 mt-3 sm:mt-0 sm:flex-shrink-0 sm:items-end">
+          <div className="print:hidden hidden sm:flex flex-col gap-2 sm:flex-shrink-0 sm:items-end">
             <div className="flex items-center gap-2">
               {/* Toggle métronome */}
               <button
@@ -370,7 +370,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 onClick={() => setChordsEnabled(v => !v)}
                 title={chordsEnabled ? 'Désactiver la lecture des accords' : 'Activer la lecture des accords'}
                 className={`
-                  hidden sm:flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
+                  flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
                   ${chordsEnabled
                     ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
                     : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
