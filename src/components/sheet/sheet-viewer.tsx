@@ -246,7 +246,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
       <div className="mb-8 border-b-2 border-[var(--ink)] pb-4 print:mb-6 print:pb-3">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between sm:gap-4">
           {/* Artwork + Titre : toujours sur la même ligne */}
-          <div className="flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
+          <div className="relative flex items-start gap-3 sm:gap-4 flex-1 min-w-0">
           {/* Artwork */}
           {artworkUrl && (
             <div className="flex-shrink-0 print:hidden">
@@ -314,6 +314,11 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               </p>
             )}
           </div>
+          {sheet.capo ? (
+            <span className="sm:hidden print:hidden absolute bottom-0 right-0 px-1.5 py-0.5 bg-[var(--cell-bg)] text-[var(--ink-light)] rounded text-xs border border-[var(--line)]">
+              Capo {sheet.capo}
+            </span>
+          ) : null}
           </div>{/* fin artwork+titre */}
 
           {/* Contrôles : ligne pleine largeur sous le titre sur mobile, colonne droite sur desktop */}
@@ -476,7 +481,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             </div>
 
             {/* Métadonnées compactes sous les boutons */}
-            <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
+            <div className="hidden sm:flex flex-wrap items-center gap-1.5 sm:justify-end">
               {/* Genres — cliquables vers Explorer filtré */}
               {sheet.genres?.map((genre) => (
                 <Link
