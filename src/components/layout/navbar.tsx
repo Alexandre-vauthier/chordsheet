@@ -14,6 +14,7 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -45,7 +46,7 @@ export function Navbar() {
 
   return (
     <nav className="bg-[var(--nav-bg)] text-[var(--nav-text)] sticky top-0 z-[60]">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <div className="max-w-[1270px] mx-auto px-4 sm:px-6">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
           <Link href={user ? '/explore' : '/'} className="flex items-center" onClick={closeMobileMenu}>
@@ -80,20 +81,35 @@ export function Navbar() {
                   </Link>
                 ))}
 
-                {/* Barre de recherche desktop */}
-                <form onSubmit={handleSearch} className="relative">
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    value={searchValue}
-                    onChange={(e) => setSearchValue(e.target.value)}
-                    placeholder="Rechercher…"
-                    className="w-44 pl-8 pr-3 py-1.5 rounded-lg text-sm bg-white/10 text-[var(--nav-text)] placeholder:text-[var(--nav-text)]/50 border border-white/15 outline-none focus:bg-white/15 focus:border-white/30 transition-all"
-                  />
-                  <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--nav-text)]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-                  </svg>
-                </form>
+                {/* Barre de recherche desktop — icône uniquement, s'ouvre au clic */}
+                {searchOpen ? (
+                  <form onSubmit={e => { handleSearch(e); setSearchOpen(false); }} className="relative">
+                    <input
+                      ref={searchInputRef}
+                      type="text"
+                      autoFocus
+                      value={searchValue}
+                      onChange={e => setSearchValue(e.target.value)}
+                      onBlur={() => { if (!searchValue.trim()) setSearchOpen(false); }}
+                      onKeyDown={e => e.key === 'Escape' && setSearchOpen(false)}
+                      placeholder="Rechercher…"
+                      className="w-44 pl-8 pr-3 py-1.5 rounded-lg text-sm bg-white/10 text-[var(--nav-text)] placeholder:text-[var(--nav-text)]/50 border border-white/15 outline-none focus:bg-white/15 focus:border-white/30 transition-all"
+                    />
+                    <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--nav-text)]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                    </svg>
+                  </form>
+                ) : (
+                  <button
+                    onClick={() => setSearchOpen(true)}
+                    className="p-1.5 rounded-lg text-[var(--nav-text)]/70 hover:text-[var(--nav-text)] hover:bg-white/10 transition-colors"
+                    title="Rechercher"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                    </svg>
+                  </button>
+                )}
                 <Link
                   href="/sheet/new"
                   className="flex items-center gap-1 px-3 py-1.5 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm rounded-lg font-medium transition-colors"

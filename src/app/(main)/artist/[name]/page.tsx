@@ -70,7 +70,7 @@ export default function ArtistPage({ params }: ArtistPageProps) {
   }, [sheets, artistName]);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    <div className="max-w-[1270px] mx-auto px-4 sm:px-6 py-8">
       {/* Header artiste */}
       <div className="flex items-center gap-6 mb-8">
         <div className="flex-shrink-0 w-28 h-28 rounded-full overflow-hidden bg-gradient-to-br from-[var(--cell-bg)] to-[var(--line)] shadow-lg">

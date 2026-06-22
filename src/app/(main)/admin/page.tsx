@@ -184,7 +184,7 @@ export default function AdminPage() {
 
   if (loading || loadingData) {
     return (
-      <div className="max-w-6xl mx-auto px-4 py-8">
+      <div className="max-w-[1270px] mx-auto px-4 py-8">
         <div className="animate-pulse space-y-6">
           <div className="h-8 w-48 bg-gray-200 rounded" />
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">

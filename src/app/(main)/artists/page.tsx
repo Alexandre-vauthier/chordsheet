@@ -100,7 +100,7 @@ export default function ArtistsPage() {
   }, [filtered, activeLetter, searchQuery]);
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    <div className="max-w-[1270px] mx-auto px-4 sm:px-6 py-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-[var(--ink)]">Artistes</h1>

@@ -155,7 +155,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    <div className="max-w-[1270px] mx-auto px-4 sm:px-6 py-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -177,13 +177,11 @@ export default function DashboardPage() {
               title="Grille aléatoire"
               className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-[var(--ink-light)] hover:text-[var(--ink)] hover:bg-[var(--cell-bg)] border border-[var(--line)] transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <rect x="2" y="2" width="20" height="20" rx="3" strokeWidth="2"/>
-                <circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none"/>
-                <circle cx="16" cy="8" r="1.2" fill="currentColor" stroke="none"/>
-                <circle cx="8" cy="16" r="1.2" fill="currentColor" stroke="none"/>
-                <circle cx="16" cy="16" r="1.2" fill="currentColor" stroke="none"/>
-                <circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="16 3 21 3 21 8"/>
+                <line x1="4" y1="20" x2="21" y2="3"/>
+                <polyline points="21 16 21 21 16 21"/>
+                <line x1="15" y1="15" x2="21" y2="21"/>
               </svg>
               Aléatoire
             </button>

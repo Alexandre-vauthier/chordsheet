@@ -1,10 +1,10 @@
 import type { CreatorLevel } from '@/types';
 
 const LEVEL_STYLES: Record<CreatorLevel, string> = {
-  'Découvreur':  'bg-[var(--line)] text-[var(--ink-light)]',
-  'Contributeur': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
-  'Référence':   'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
-  'Maître':      'bg-[var(--accent-soft)] text-[var(--accent)]',
+  'Découvreur':  'bg-[var(--line)] text-[var(--ink-faint)]',
+  'Contributeur': 'bg-[var(--line)] text-[var(--ink-light)]',
+  'Référence':   'bg-[var(--accent-soft)] text-[var(--accent)]',
+  'Maître':      'bg-[var(--accent)] text-white',
 };
 
 interface LevelBadgeProps {
