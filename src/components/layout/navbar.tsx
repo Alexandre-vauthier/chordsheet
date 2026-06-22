@@ -46,13 +46,11 @@ export function Navbar() {
 
   return (
     <nav className="bg-[var(--nav-bg)] text-[var(--nav-text)] sticky top-0 z-[60]">
-      <div className="max-w-[1270px] mx-auto px-4 sm:px-6">
+      <div className="w-full px-5 sm:px-8">
         <div className="flex items-center justify-between h-14">
           {/* Logo */}
-          <Link href={user ? '/explore' : '/'} className="flex items-center" onClick={closeMobileMenu}>
-            <span className="font-playfair text-xl font-bold">
-              Chord<span className="text-[var(--accent)]">Sheet</span>
-            </span>
+          <Link href={user ? '/explore' : '/'} className="flex items-center shrink-0" onClick={closeMobileMenu}>
+            <img src="/logo-chordsheet.svg" alt="ChordSheet" className="h-8 w-auto" />
           </Link>
 
           {/* Navigation Desktop */}
