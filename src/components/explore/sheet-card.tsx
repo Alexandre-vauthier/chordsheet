@@ -238,7 +238,7 @@ export function SheetCard({
                 src={artworkUrl}
                 alt=""
                 aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-cover scale-150 blur-2xl opacity-90 pointer-events-none select-none"
+                className="absolute inset-0 w-full h-full object-cover scale-150 blur-[15px] opacity-90 pointer-events-none select-none"
               />
               <div className="absolute inset-0 bg-black/45 pointer-events-none" />
             </>
