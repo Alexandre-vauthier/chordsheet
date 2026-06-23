@@ -109,20 +109,26 @@ body {
 
 .sheet-card-wrap {
   perspective: 900px;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: box-shadow 0.12s ease-out;
 }
 
 .sheet-card-inner {
   transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(var(--scale, 1));
-  transition: transform 0.12s ease-out, box-shadow 0.12s ease-out;
+  transition: transform 0.12s ease-out;
   will-change: transform;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.sheet-card-wrap:hover {
+  box-shadow:
+    0 20px 40px -8px rgba(0,0,0,0.35),
+    0 0 0 1px rgba(255,255,255,0.07);
 }
 
 .sheet-card-wrap:hover .sheet-card-inner {
   --scale: 1.02;
-  box-shadow:
-    0 20px 40px -8px rgba(0,0,0,0.35),
-    0 0 0 1px rgba(255,255,255,0.07);
 }
 
 /* Shine blanc radial qui suit le curseur */
