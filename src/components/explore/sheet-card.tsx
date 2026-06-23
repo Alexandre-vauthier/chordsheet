@@ -120,7 +120,7 @@ export function SheetCard({
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      <div className="sheet-card-inner rounded-2xl overflow-hidden bg-[var(--cell-bg)] border border-[var(--line)]">
+      <div className="sheet-card-inner rounded-2xl bg-[var(--cell-bg)] border border-[var(--line)]">
 
         {/* ── Artwork carré ─────────────────────────────────── */}
         <div className="aspect-square relative overflow-hidden">

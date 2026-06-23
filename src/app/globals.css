@@ -109,8 +109,6 @@ body {
 
 .sheet-card-wrap {
   perspective: 900px;
-  border-radius: 1rem;
-  overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   transition: box-shadow 0.12s ease-out;
 }
@@ -119,6 +117,7 @@ body {
   transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(var(--scale, 1));
   transition: transform 0.12s ease-out;
   will-change: transform;
+  clip-path: inset(0 round 1rem);
 }
 
 .sheet-card-wrap:hover {
