@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import type { Sheet, Difficulty } from '@/types';
 import { DIFFICULTY_LABELS } from '@/types';
@@ -54,6 +54,24 @@ function hashGradient(s: string) {
   return GRADIENTS[Math.abs(h) % GRADIENTS.length];
 }
 
+function extractDominantColor(img: HTMLImageElement): string | null {
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = 10; canvas.height = 10;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.drawImage(img, 0, 0, 10, 10);
+    const d = ctx.getImageData(0, 0, 10, 10).data;
+    let r = 0, g = 0, b = 0;
+    for (let i = 0; i < d.length; i += 4) { r += d[i]; g += d[i + 1]; b += d[i + 2]; }
+    const n = d.length / 4;
+    const [r0, g0, b0] = [r / n, g / n, b / n];
+    const lum = 0.299 * r0 + 0.587 * g0 + 0.114 * b0;
+    const factor = lum > 80 ? 80 / lum : 1;
+    return `rgb(${Math.round(r0 * factor)},${Math.round(g0 * factor)},${Math.round(b0 * factor)})`;
+  } catch { return null; }
+}
+
 export function SheetCard({
   sheet,
   showOwner = false,
@@ -73,11 +91,15 @@ export function SheetCard({
   );
   const [isPlaying, setIsPlaying] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [dominantColor, setDominantColor] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const rafRef = useRef<number | null>(null);
 
+  useEffect(() => { setDominantColor(null); }, [artworkUrl]);
+
   const destination = href ?? `/sheet/${sheet.id}`;
   const gradient = hashGradient((sheet.title ?? '') + (sheet.artist ?? ''));
+  const colored = !!dominantColor;
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -130,6 +152,8 @@ export function SheetCard({
                 src={artworkUrl}
                 alt={`${sheet.artist} — ${sheet.title}`}
                 className="w-full h-full object-cover"
+                crossOrigin="anonymous"
+                onLoad={e => setDominantColor(extractDominantColor(e.currentTarget))}
               />
             ) : (
               <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
@@ -229,7 +253,10 @@ export function SheetCard({
         </div>
 
         {/* ── Contenu ───────────────────────────────────────── */}
-        <div className="px-3 pt-2.5 pb-3 relative">
+        <div
+          className="px-3 pt-2.5 pb-3 relative transition-colors duration-500"
+          style={dominantColor ? { backgroundColor: dominantColor } : undefined}
+        >
 
           {/* Bookmark + note empilés */}
           <div className="absolute top-2 right-2.5 flex flex-col items-center gap-0.5">
@@ -239,7 +266,9 @@ export function SheetCard({
                 className={`text-base transition-all leading-none ${
                   isBookmarked
                     ? 'text-amber-400'
-                    : 'text-[var(--ink-faint)] opacity-0 group-hover:opacity-100 hover:text-amber-400'
+                    : colored
+                      ? 'text-white/50 opacity-0 group-hover:opacity-100 hover:text-amber-400'
+                      : 'text-[var(--ink-faint)] opacity-0 group-hover:opacity-100 hover:text-amber-400'
                 }`}
                 title={isBookmarked ? 'Retirer du book' : 'Ajouter au book'}
               >
@@ -247,14 +276,14 @@ export function SheetCard({
               </button>
             )}
             {showRating && sheet.ratingCount > 0 && (
-              <span className="text-[10px] font-semibold text-[var(--ink-light)] leading-none">
+              <span className={`text-[10px] font-semibold leading-none ${colored ? 'text-white/70' : 'text-[var(--ink-light)]'}`}>
                 {sheet.averageRating?.toFixed(1)}
               </span>
             )}
           </div>
 
           <Link href={destination}>
-            <h3 className="font-semibold text-[var(--ink)] text-sm leading-tight truncate group-hover:text-[var(--accent)] transition-colors pr-6">
+            <h3 className={`font-semibold text-sm leading-tight truncate group-hover:text-[var(--accent)] transition-colors pr-6 ${colored ? 'text-white' : 'text-[var(--ink)]'}`}>
               {sheet.title || 'Sans titre'}
             </h3>
           </Link>
@@ -263,16 +292,16 @@ export function SheetCard({
             <Link
               href={`/artist/${encodeURIComponent(sheet.artist)}`}
               onClick={e => e.stopPropagation()}
-              className="text-xs text-[var(--ink-light)] truncate block mt-0.5 hover:text-[var(--accent)] transition-colors"
+              className={`text-xs truncate block mt-0.5 hover:text-[var(--accent)] transition-colors ${colored ? 'text-white/75' : 'text-[var(--ink-light)]'}`}
             >
               {sheet.artist}
             </Link>
           ) : (
-            <span className="text-xs text-[var(--ink-faint)] block mt-0.5">Artiste inconnu</span>
+            <span className={`text-xs block mt-0.5 ${colored ? 'text-white/55' : 'text-[var(--ink-faint)]'}`}>Artiste inconnu</span>
           )}
 
           {showOwner && sheet.ownerName && (
-            <p className="text-[10px] text-[var(--ink-faint)] mt-0.5 truncate">
+            <p className={`text-[10px] mt-0.5 truncate ${colored ? 'text-white/55' : 'text-[var(--ink-faint)]'}`}>
               par{' '}
               {sheet.ownerId && sheet.ownerId !== 'deleted' ? (
                 <Link href={`/user/${sheet.ownerId}`} className="hover:text-[var(--accent)] transition-colors" onClick={e => e.stopPropagation()}>
