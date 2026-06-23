@@ -229,7 +229,7 @@ export function SheetCard({
         </div>
 
         {/* ── Contenu ───────────────────────────────────────── */}
-        <div className="px-3 pt-2.5 pb-3 relative overflow-hidden">
+        <div className="px-3 pt-2.5 pb-3 relative overflow-hidden rounded-b-2xl">
 
           {/* Fond flou de la pochette — même URL = cache navigateur, zéro requête supplémentaire */}
           {artworkUrl && (
@@ -238,7 +238,7 @@ export function SheetCard({
                 src={artworkUrl}
                 alt=""
                 aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-cover scale-150 blur-[15px] opacity-90 pointer-events-none select-none rounded-b-2xl"
+                className="absolute inset-0 w-full h-full object-cover scale-150 blur-[15px] opacity-90 pointer-events-none select-none"
               />
               <div className="absolute inset-0 bg-black/45 pointer-events-none" />
             </>
