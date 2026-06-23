@@ -120,8 +120,7 @@ export function SheetCard({
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      <div className="sheet-card-inner rounded-2xl border border-[var(--line)]">
-      <div className="rounded-2xl overflow-hidden bg-[var(--cell-bg)]">
+      <div className="sheet-card-inner rounded-2xl overflow-hidden bg-[var(--cell-bg)] border border-[var(--line)]">
 
         {/* ── Artwork carré ─────────────────────────────────── */}
         <div className="aspect-square relative overflow-hidden">
@@ -239,7 +238,7 @@ export function SheetCard({
                 src={artworkUrl}
                 alt=""
                 aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-cover scale-150 blur-[15px] opacity-90 pointer-events-none select-none"
+                className="absolute inset-0 w-full h-full object-cover scale-150 blur-[15px] opacity-90 pointer-events-none select-none rounded-b-2xl"
               />
               <div className="absolute inset-0 bg-black/45 pointer-events-none" />
             </>
@@ -308,8 +307,7 @@ export function SheetCard({
             )}
           </div>
         </div>
-      </div>{/* fin overflow-hidden wrapper */}
-      </div>{/* fin sheet-card-inner */}
+      </div>
     </div>
   );
 }
