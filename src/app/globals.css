@@ -117,7 +117,6 @@ body {
   transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) scale(var(--scale, 1));
   transition: transform 0.12s ease-out;
   will-change: transform;
-  clip-path: inset(0 round 1rem);
 }
 
 .sheet-card-wrap:hover {
