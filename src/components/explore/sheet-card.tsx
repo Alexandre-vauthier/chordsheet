@@ -139,26 +139,26 @@ export function SheetCard({
             {/* Dégradé bas pour lisibilité des badges */}
             <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/70 to-transparent" />
 
-            {/* Capo */}
+            {/* Badges top-left — flex pour éviter les chevauchements */}
+            <div className="absolute top-2.5 left-3 flex flex-wrap gap-1">
+              {variantCount && variantCount > 1 && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-sm text-white font-medium">
+                  {variantCount} versions
+                </span>
+              )}
+              {showPublicBadge && sheet.isPublic && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/80 text-white font-medium">
+                  Public
+                </span>
+              )}
+            </div>
+
+            {/* Capo — top-right (ne coexiste pas avec le 3-dot) */}
             {sheet.capo ? (
-              <span className="absolute bottom-2.5 left-3 text-xs font-bold text-white/95 drop-shadow">
+              <span className="absolute top-2.5 right-2.5 text-[10px] px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-sm text-white font-medium">
                 Capo {sheet.capo}
               </span>
             ) : null}
-
-            {/* Variants badge */}
-            {variantCount && variantCount > 1 && (
-              <span className="absolute top-2.5 left-3 text-[10px] px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-sm text-white font-medium">
-                {variantCount} versions
-              </span>
-            )}
-
-            {/* Public badge */}
-            {showPublicBadge && sheet.isPublic && (
-              <span className="absolute top-2.5 left-3 text-[10px] px-2 py-0.5 rounded-full bg-green-500/80 text-white font-medium">
-                Public
-              </span>
-            )}
           </Link>
 
         {/* Shine + foil holographique — avant les boutons pour ne pas les masquer */}
@@ -245,30 +245,32 @@ export function SheetCard({
           {/* Contenu au-dessus du fond flou */}
           <div className="relative z-10">
 
-            {/* Bookmark + note empilés */}
-            <div className="absolute top-0 right-0 flex flex-col items-center gap-0.5">
-              {onToggleBookmark && (
-                <button
-                  onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleBookmark(); }}
-                  className={`text-base transition-all leading-none ${
-                    isBookmarked
-                      ? 'text-amber-400'
-                      : `${artworkUrl ? 'text-white/50' : 'text-[var(--ink-faint)]'} opacity-0 group-hover:opacity-100 hover:text-amber-400`
-                  }`}
-                  title={isBookmarked ? 'Retirer du book' : 'Ajouter au book'}
-                >
-                  {isBookmarked ? '★' : '☆'}
-                </button>
-              )}
-              {showRating && sheet.ratingCount > 0 && (
-                <span className={`text-[10px] font-semibold leading-none ${artworkUrl ? 'text-white/70' : 'text-[var(--ink-light)]'}`}>
-                  {sheet.averageRating?.toFixed(1)}
-                </span>
-              )}
-            </div>
+            {/* Ligne rating + bookmark */}
+            {((showRating && sheet.ratingCount > 0) || onToggleBookmark) && (
+              <div className="flex items-center justify-between mb-1.5">
+                {showRating && sheet.ratingCount > 0 ? (
+                  <span className={`text-xs font-semibold flex items-center gap-0.5 ${artworkUrl ? 'text-amber-300' : 'text-[var(--ink-light)]'}`}>
+                    ★ {sheet.averageRating?.toFixed(1)}
+                  </span>
+                ) : <span />}
+                {onToggleBookmark && (
+                  <button
+                    onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleBookmark(); }}
+                    className={`text-lg leading-none transition-all ${
+                      isBookmarked
+                        ? 'text-amber-400'
+                        : `${artworkUrl ? 'text-white/50' : 'text-[var(--ink-faint)]'} opacity-0 group-hover:opacity-100 hover:text-amber-400`
+                    }`}
+                    title={isBookmarked ? 'Retirer du book' : 'Ajouter au book'}
+                  >
+                    {isBookmarked ? '★' : '☆'}
+                  </button>
+                )}
+              </div>
+            )}
 
             <Link href={destination}>
-              <h3 className={`font-bold text-base leading-tight line-clamp-2 group-hover:text-[var(--accent)] transition-colors pr-6 ${artworkUrl ? 'text-white' : 'text-[var(--ink)]'}`}>
+              <h3 className={`font-bold text-base leading-tight line-clamp-2 group-hover:text-[var(--accent)] transition-colors ${artworkUrl ? 'text-white' : 'text-[var(--ink)]'}`}>
                 {sheet.title || 'Sans titre'}
               </h3>
             </Link>
