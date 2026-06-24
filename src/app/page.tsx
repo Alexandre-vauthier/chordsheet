@@ -154,18 +154,18 @@ const FEATURES = [
 const STEPS = [
   {
     n: '01',
-    title: 'Crée ta grille',
-    text: 'Importe depuis Ultimate Guitar, colle des accords texte, ou construis visuellement mesure par mesure. En moins de 2 minutes.',
+    title: 'Crée ou importe',
+    text: 'Saisis visuellement, colle des accords depuis Ultimate Guitar, ou prends en photo une partition — l\'IA s\'occupe du reste.',
   },
   {
     n: '02',
-    title: 'Organise ton répertoire',
-    text: 'Classe par setlist, instrumente, transpose, ajoute des favoris. Ton book de grilles toujours à portée.',
+    title: 'Organise et partage',
+    text: 'Range dans ton book, crée des setlists, transpose. Partage avec ton groupe ou distribue à toute une classe en un clic.',
   },
   {
     n: '03',
     title: 'Monte sur scène',
-    text: 'Active le mode concert : plein écran, défilement au BPM, boîte à rythmes intégrée. Prêt à jouer.',
+    text: 'Active le mode concert : plein écran, défilement au BPM, boîte à rythmes. Synchronise tout le groupe en temps réel.',
   },
 ];
 
