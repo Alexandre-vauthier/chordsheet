@@ -38,7 +38,7 @@ function LandingCard({ sheet }: { sheet: MiniSheet }) {
   return (
     <Link
       href={isPlaceholder ? '/explore' : `/sheet/${sheet.id}`}
-      className="relative block aspect-square rounded-2xl overflow-hidden mb-3 flex-shrink-0 hover:scale-[1.04] hover:shadow-2xl transition-all duration-200"
+      className="relative block aspect-square rounded-2xl overflow-hidden mb-3 flex-shrink-0"
     >
       {artworkUrl ? (
         <img src={artworkUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
