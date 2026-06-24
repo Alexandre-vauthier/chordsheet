@@ -120,11 +120,10 @@ export function SheetCard({
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
-      <div className="sheet-card-inner rounded-2xl overflow-hidden bg-[var(--cell-bg)] border border-[var(--line)]">
+      <div className="sheet-card-inner aspect-square relative rounded-2xl overflow-hidden bg-[var(--cell-bg)] border border-[var(--line)]">
 
-        {/* ── Artwork carré ─────────────────────────────────── */}
-        <div className="aspect-square relative overflow-hidden">
-          <Link href={destination} className="block w-full h-full">
+        {/* ── Artwork ───────────────────────────────────────── */}
+          <Link href={destination} className="absolute inset-0 block">
             {artworkUrl ? (
               <img
                 src={artworkUrl}
@@ -162,7 +161,7 @@ export function SheetCard({
             )}
           </Link>
 
-          {/* Shine + foil holographique — avant les boutons pour ne pas les masquer */}
+        {/* Shine + foil holographique — avant les boutons pour ne pas les masquer */}
           <div className="card-shine absolute inset-0 pointer-events-none" />
           <div className="card-foil absolute inset-0 pointer-events-none" />
 
@@ -170,7 +169,7 @@ export function SheetCard({
           {previewUrl && (
             <button
               onClick={handlePreview}
-              className={`absolute bottom-2.5 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
+              className={`absolute bottom-2.5 right-3 z-20 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
                 isPlaying
                   ? 'bg-[var(--accent)] text-white scale-100 opacity-100'
                   : 'bg-black/50 backdrop-blur-sm text-white opacity-100 sm:opacity-0 group-hover:opacity-100 hover:bg-[var(--accent)] hover:scale-105'
@@ -192,7 +191,7 @@ export function SheetCard({
 
           {/* Actions édition (dashboard) — menu 3 points */}
           {onDelete && (
-            <div className="absolute top-2.5 right-2.5">
+            <div className="absolute top-2.5 right-2.5 z-20">
               <button
                 onClick={e => { e.preventDefault(); e.stopPropagation(); setMenuOpen(v => !v); }}
                 className="w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
@@ -227,10 +226,8 @@ export function SheetCard({
             </div>
           )}
 
-        </div>
-
         {/* ── Contenu ───────────────────────────────────────── */}
-        <div className="px-3 pt-2.5 pb-3 relative overflow-hidden rounded-b-2xl">
+        <div className="absolute bottom-0 left-0 right-0 px-3 pt-2.5 pb-3 overflow-hidden rounded-b-2xl">
 
           {/* Fond flou de la pochette — même URL = cache navigateur, zéro requête supplémentaire */}
           {artworkUrl && (
@@ -271,7 +268,7 @@ export function SheetCard({
             </div>
 
             <Link href={destination}>
-              <h3 className={`font-semibold text-sm leading-tight truncate group-hover:text-[var(--accent)] transition-colors pr-6 ${artworkUrl ? 'text-white' : 'text-[var(--ink)]'}`}>
+              <h3 className={`font-bold text-base leading-tight line-clamp-2 group-hover:text-[var(--accent)] transition-colors pr-6 ${artworkUrl ? 'text-white' : 'text-[var(--ink)]'}`}>
                 {sheet.title || 'Sans titre'}
               </h3>
             </Link>
