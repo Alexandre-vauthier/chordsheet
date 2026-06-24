@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
 import { useArtwork } from '@/lib/use-artwork';
@@ -80,9 +81,7 @@ function LandingNav({ scrolled }: { scrolled: boolean }) {
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[var(--nav-bg)]/95 backdrop-blur-sm border-b border-white/8' : 'bg-transparent'}`}>
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <span className="font-playfair font-bold text-xl text-[var(--nav-text)]">
-          Chord<span className="text-[var(--accent)]">Sheet</span>
-        </span>
+        <Image src="/logo-chordsheet.svg" alt="ChordSheet" height={28} width={122} priority />
         <div className="hidden sm:flex items-center gap-7 text-[var(--nav-text)]/65 text-sm">
           <a href="#book" className="hover:text-[var(--nav-text)] transition-colors">Le Book</a>
           <a href="#features" className="hover:text-[var(--nav-text)] transition-colors">Fonctionnalités</a>
@@ -240,9 +239,9 @@ export default function Home() {
           <p className="text-[var(--accent)] text-xs font-semibold tracking-widest uppercase mb-5">
             La librairie de grilles d&apos;accords
           </p>
-          <h1 className="font-playfair text-6xl sm:text-7xl font-bold text-[var(--nav-text)] mb-5 tracking-tight leading-none">
-            Chord<span className="text-[var(--accent)]">Sheet</span>
-          </h1>
+          <div className="mb-5 flex justify-center">
+            <Image src="/logo-chordsheet.svg" alt="ChordSheet" height={64} width={280} priority className="w-auto h-12 sm:h-16" />
+          </div>
           <p className="text-[var(--nav-text)]/70 text-xl sm:text-2xl mb-3 font-light leading-snug">
             Crée, partage et joue tes grilles d&apos;accords.
           </p>
