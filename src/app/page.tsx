@@ -261,10 +261,10 @@ export default function Home() {
               Créer un compte gratuit
             </Link>
             <Link
-              href="/explore"
+              href="/login"
               className="px-7 py-3.5 bg-white/8 text-[var(--nav-text)] rounded-xl font-semibold text-base hover:bg-white/12 transition-colors border border-white/10"
             >
-              Explorer les grilles
+              Se connecter
             </Link>
           </div>
           {sheetCount !== null && sheetCount > 0 && (
