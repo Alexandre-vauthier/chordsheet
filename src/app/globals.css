@@ -164,6 +164,12 @@ body {
   opacity: calc(var(--active, 0) * 0.6);
 }
 
+/* ── Landing page — colonnes défilantes ──────────────────────────────────── */
+@keyframes scrollUp {
+  0%   { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
 /* Print styles */
 @media print {
   /* Force light mode variables regardless of theme */
