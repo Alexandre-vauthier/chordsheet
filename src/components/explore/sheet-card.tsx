@@ -153,12 +153,6 @@ export function SheetCard({
               )}
             </div>
 
-            {/* Capo — top-right (ne coexiste pas avec le 3-dot) */}
-            {sheet.capo ? (
-              <span className="absolute top-2.5 right-2.5 text-[10px] px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-sm text-white font-medium">
-                Capo {sheet.capo}
-              </span>
-            ) : null}
           </Link>
 
         {/* Shine + foil holographique — avant les boutons pour ne pas les masquer */}
@@ -245,58 +239,47 @@ export function SheetCard({
           {/* Contenu au-dessus du fond flou */}
           <div className="relative z-10">
 
-            {/* Ligne rating + bookmark */}
-            {((showRating && sheet.ratingCount > 0) || onToggleBookmark) && (
-              <div className="flex items-center justify-between mb-1.5">
-                {showRating && sheet.ratingCount > 0 ? (
-                  <span className={`text-xs font-semibold flex items-center gap-0.5 ${artworkUrl ? 'text-amber-300' : 'text-[var(--ink-light)]'}`}>
-                    ★ {sheet.averageRating?.toFixed(1)}
-                  </span>
-                ) : <span />}
-                {onToggleBookmark && (
-                  <button
-                    onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleBookmark(); }}
-                    className={`text-lg leading-none transition-all ${
-                      isBookmarked
-                        ? 'text-amber-400'
-                        : `${artworkUrl ? 'text-white/50' : 'text-[var(--ink-faint)]'} opacity-0 group-hover:opacity-100 hover:text-amber-400`
-                    }`}
-                    title={isBookmarked ? 'Retirer du book' : 'Ajouter au book'}
-                  >
-                    {isBookmarked ? '★' : '☆'}
-                  </button>
-                )}
-              </div>
-            )}
-
-            <Link href={destination}>
-              <h3 className={`font-bold text-base leading-tight line-clamp-2 group-hover:text-[var(--accent)] transition-colors ${artworkUrl ? 'text-white' : 'text-[var(--ink)]'}`}>
-                {sheet.title || 'Sans titre'}
-              </h3>
-            </Link>
-
-            {sheet.artist ? (
-              <Link
-                href={`/artist/${encodeURIComponent(sheet.artist)}`}
-                onClick={e => e.stopPropagation()}
-                className={`text-xs truncate block mt-0.5 hover:text-[var(--accent)] transition-colors ${artworkUrl ? 'text-white/75' : 'text-[var(--ink-light)]'}`}
-              >
-                {sheet.artist}
+            {/* Titre + bookmark sur la même ligne */}
+            <div className="flex items-start justify-between gap-2">
+              <Link href={destination} className="min-w-0">
+                <h3 className={`font-bold text-base leading-tight line-clamp-2 group-hover:text-[var(--accent)] transition-colors ${artworkUrl ? 'text-white' : 'text-[var(--ink)]'}`}>
+                  {sheet.title || 'Sans titre'}
+                </h3>
               </Link>
-            ) : (
-              <span className={`text-xs block mt-0.5 ${artworkUrl ? 'text-white/55' : 'text-[var(--ink-faint)]'}`}>Artiste inconnu</span>
-            )}
+              {onToggleBookmark && (
+                <button
+                  onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleBookmark(); }}
+                  className={`text-lg leading-none shrink-0 transition-all mt-0.5 ${
+                    isBookmarked
+                      ? 'text-amber-400'
+                      : `${artworkUrl ? 'text-white/50' : 'text-[var(--ink-faint)]'} opacity-0 group-hover:opacity-100 hover:text-amber-400`
+                  }`}
+                  title={isBookmarked ? 'Retirer du book' : 'Ajouter au book'}
+                >
+                  {isBookmarked ? '★' : '☆'}
+                </button>
+              )}
+            </div>
 
-            {showOwner && sheet.ownerName && (
-              <p className={`text-[10px] mt-0.5 truncate ${artworkUrl ? 'text-white/55' : 'text-[var(--ink-faint)]'}`}>
-                par{' '}
-                {sheet.ownerId && sheet.ownerId !== 'deleted' ? (
-                  <Link href={`/user/${sheet.ownerId}`} className="hover:text-[var(--accent)] transition-colors" onClick={e => e.stopPropagation()}>
-                    {sheet.ownerName}
-                  </Link>
-                ) : sheet.ownerName}
-              </p>
-            )}
+            {/* Artiste + rating sur la même ligne */}
+            <div className="flex items-center gap-1.5 mt-0.5">
+              {sheet.artist ? (
+                <Link
+                  href={`/artist/${encodeURIComponent(sheet.artist)}`}
+                  onClick={e => e.stopPropagation()}
+                  className={`text-xs truncate hover:text-[var(--accent)] transition-colors ${artworkUrl ? 'text-white/75' : 'text-[var(--ink-light)]'}`}
+                >
+                  {sheet.artist}
+                </Link>
+              ) : (
+                <span className={`text-xs truncate ${artworkUrl ? 'text-white/55' : 'text-[var(--ink-faint)]'}`}>Artiste inconnu</span>
+              )}
+              {showRating && sheet.ratingCount > 0 && (
+                <span className={`text-xs font-semibold shrink-0 ${artworkUrl ? 'text-amber-300' : 'text-[var(--ink-light)]'}`}>
+                  ★ {sheet.averageRating?.toFixed(1)}
+                </span>
+              )}
+            </div>
 
             {!hideDifficulty && sheet.difficulty && (
               <div className="mt-2">
