@@ -8,7 +8,7 @@ import { Footer } from '@/components/layout/footer';
 import { ConcertBanner } from '@/components/layout/concert-banner';
 
 // Routes accessibles sans authentification
-const PUBLIC_PREFIXES = ['/explore', '/legal', '/artist', '/user', '/song'];
+const PUBLIC_PREFIXES = ['/explore', '/legal', '/artist', '/user', '/song', '/sheet'];
 
 export default function MainLayout({
   children,
