@@ -139,6 +139,16 @@ const FEATURES = [
     title: 'Impression propre',
     text: 'Mise en page optimisée A4 avec diagrammes, répétitions et sections — prête en un clic.',
   },
+  {
+    icon: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></>,
+    title: 'Détection IA',
+    text: 'Prends en photo une partition ou une grille papier — l\'IA reconnaît les accords et crée ta grille automatiquement.',
+  },
+  {
+    icon: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803a7.5 7.5 0 0010.607 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.5 10.5h-6"/></>,
+    title: 'Dictionnaire d\'accords',
+    text: 'Bibliothèque complète pour guitare, piano, ukulélé et plus. Identifie un accord en plaçant tes doigts sur le manche ou le clavier.',
+  },
 ];
 
 const STEPS = [
@@ -478,7 +488,7 @@ export default function Home() {
         <p className="text-center text-[var(--nav-text)]/40 mb-14 text-sm">
           De la création à la scène, sans friction.
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {FEATURES.map((f) => (
             <div key={f.title} className="rounded-2xl border border-white/8 bg-white/4 px-5 py-5 flex flex-col gap-3 hover:bg-white/6 transition-colors">
               <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/15 flex items-center justify-center text-[var(--accent)]">
