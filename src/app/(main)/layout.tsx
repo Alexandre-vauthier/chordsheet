@@ -1,11 +1,14 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { ConcertBanner } from '@/components/layout/concert-banner';
+
+// Routes accessibles sans authentification
+const PUBLIC_PREFIXES = ['/explore', '/legal', '/artist', '/user', '/song'];
 
 export default function MainLayout({
   children,
@@ -14,12 +17,15 @@ export default function MainLayout({
 }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+
+  const isPublic = PUBLIC_PREFIXES.some(p => pathname.startsWith(p));
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && !user && !isPublic) {
       router.push('/login');
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, isPublic]);
 
   if (loading) {
     return (
@@ -29,7 +35,7 @@ export default function MainLayout({
     );
   }
 
-  if (!user) {
+  if (!user && !isPublic) {
     return null;
   }
 
