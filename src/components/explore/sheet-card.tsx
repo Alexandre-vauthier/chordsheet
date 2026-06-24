@@ -162,6 +162,10 @@ export function SheetCard({
             )}
           </Link>
 
+          {/* Shine + foil holographique — avant les boutons pour ne pas les masquer */}
+          <div className="card-shine absolute inset-0 pointer-events-none" />
+          <div className="card-foil absolute inset-0 pointer-events-none" />
+
           {/* Bouton play preview */}
           {previewUrl && (
             <button
@@ -223,9 +227,6 @@ export function SheetCard({
             </div>
           )}
 
-          {/* Shine + foil holographique */}
-          <div className="card-shine absolute inset-0 pointer-events-none" />
-          <div className="card-foil absolute inset-0 pointer-events-none" />
         </div>
 
         {/* ── Contenu ───────────────────────────────────────── */}
