@@ -288,6 +288,17 @@ export default function Home() {
               <h2 className="font-playfair text-4xl font-bold text-[var(--nav-text)] mb-5 leading-tight">
                 Ton book de grilles d&apos;accords.
               </h2>
+
+              {/* Message clé */}
+              <blockquote className="border-l-2 border-[var(--accent)] pl-4 mb-6">
+                <p className="text-[var(--nav-text)]/80 text-base italic leading-relaxed">
+                  On sait. On a appris des dizaines de morceaux. Mais au moment de jouer — les accords exacts, la tonalité, l&apos;enchaînement — plus vraiment sous la main.
+                </p>
+                <p className="text-[var(--nav-text)]/45 text-sm mt-2 not-italic">
+                  C&apos;est exactement pour ça que le book existe.
+                </p>
+              </blockquote>
+
               <p className="text-[var(--nav-text)]/55 text-base leading-relaxed mb-6">
                 Le <strong className="text-[var(--nav-text)]/80">book</strong>, c&apos;est ta librairie personnelle. Tu y mets tes propres créations, mais aussi les grilles de la communauté qui t&apos;intéressent. Ton répertoire complet, toujours à portée — pour répéter, improviser ou monter sur scène.
               </p>
