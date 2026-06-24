@@ -370,122 +370,103 @@ export default function Home() {
       {/* ── Groupes ─────────────────────────────────────────────── */}
       <section id="groupes" className="px-6 py-24 border-t border-white/5">
         <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
 
-            {/* Visuel mockup */}
-            <div className="relative pb-6">
-              <div className="rounded-2xl border border-amber-400/15 bg-white/4 p-5 space-y-3">
-
-                {/* Header groupe */}
-                <div className="flex items-center gap-3 mb-1">
-                  <div className="w-9 h-9 rounded-xl bg-amber-400/15 flex items-center justify-center shrink-0">
-                    <svg className="w-4.5 h-4.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{width:'18px',height:'18px'}}>
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[var(--nav-text)]/85 text-sm font-semibold">Cours de guitare — Terminale B</p>
-                    <p className="text-[var(--nav-text)]/35 text-[10px]">12 élèves · 6 grilles distribuées</p>
-                  </div>
-                  <span className="text-[9px] px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-400 font-semibold shrink-0">Prof</span>
-                </div>
-
-                <div className="border-t border-white/6 pt-3 space-y-2">
-                  <p className="text-[var(--nav-text)]/30 text-[10px] uppercase tracking-wider font-medium mb-2">Grilles distribuées</p>
-                  {[
-                    { title: 'Wish You Were Here', artist: 'Pink Floyd', info: '11/12 vus' },
-                    { title: 'La Grange', artist: 'ZZ Top', info: '8/12 vus' },
-                    { title: 'Sultans of Swing', artist: 'Dire Straits', isNew: true },
-                  ].map(s => (
-                    <div key={s.title} className="flex items-center gap-3 rounded-xl bg-white/4 px-3 py-2">
-                      <div className="w-6 h-6 rounded-md bg-gradient-to-br from-amber-800 to-orange-900 shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[var(--nav-text)]/80 text-xs font-medium truncate">{s.title}</p>
-                        <p className="text-[var(--nav-text)]/35 text-[10px]">{s.artist}</p>
-                      </div>
-                      {s.isNew ? (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-[var(--accent)]/20 text-[var(--accent)] font-semibold shrink-0">Nouveau</span>
-                      ) : (
-                        <span className="text-[var(--nav-text)]/25 text-[10px] shrink-0">{s.info}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-white/10 px-3 py-2 text-[var(--nav-text)]/25 text-xs">
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
-                  </svg>
-                  Inviter un élève par lien…
-                </div>
-              </div>
-
-              {/* Bulle élève */}
-              <div className="absolute -bottom-2 -right-2 rounded-xl border border-white/10 bg-[#100e0b] px-3 py-2.5 shadow-2xl w-48">
-                <p className="text-[var(--nav-text)]/35 text-[9px] uppercase tracking-wider mb-2">L&apos;élève reçoit dans son book</p>
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-md bg-gradient-to-br from-amber-800 to-orange-900 shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[var(--nav-text)]/85 text-[10px] font-semibold truncate">Sultans of Swing</p>
-                    <p className="text-amber-400/70 text-[9px]">✓ Ajouté automatiquement</p>
-                  </div>
-                </div>
-              </div>
+          {/* Header */}
+          <div className="text-center mb-14">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-amber-400/25 bg-amber-400/8 mb-5">
+              <svg className="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+              <span className="text-amber-400 text-xs font-semibold tracking-widest uppercase">Premium</span>
             </div>
+            <h2 className="font-playfair text-4xl font-bold text-[var(--nav-text)] mb-4 leading-tight">
+              Jouez ensemble.<br />Apprenez ensemble.
+            </h2>
+            <p className="text-[var(--nav-text)]/50 text-base max-w-xl mx-auto">
+              Créez un groupe, invitez par lien. Partagez vos grilles avec tous les membres instantanément — qu&apos;ils soient sur scène ou en cours.
+            </p>
+          </div>
 
-            {/* Texte */}
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-amber-400/25 bg-amber-400/8 mb-5">
-                <svg className="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+          {/* Deux blocs */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+
+            {/* Groupes de musique */}
+            <div className="rounded-2xl border border-white/8 bg-white/4 p-7 flex flex-col gap-5">
+              <div className="w-11 h-11 rounded-xl bg-white/8 flex items-center justify-center">
+                <svg className="w-5 h-5 text-[var(--nav-text)]/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
                 </svg>
-                <span className="text-amber-400 text-xs font-semibold tracking-widest uppercase">Premium</span>
               </div>
-
-              <h2 className="font-playfair text-4xl font-bold text-[var(--nav-text)] mb-5 leading-tight">
-                Pour les profs.<br />Pour les groupes.
-              </h2>
-
-              <blockquote className="border-l-2 border-amber-400/35 pl-4 mb-6">
-                <p className="text-[var(--nav-text)]/80 text-base italic leading-relaxed">
-                  Tu as créé une grille pour ton cours. En un clic, tous tes élèves l&apos;ont dans leur book. La bonne version, le bon tempo — sans email, sans impression.
+              <div>
+                <h3 className="text-[var(--nav-text)] font-bold text-xl mb-2">Groupes de musique</h3>
+                <p className="text-[var(--nav-text)]/55 text-sm leading-relaxed">
+                  Tout le groupe joue la même version. Partagez votre répertoire commun, répétez avec les mêmes accords, montez sur scène en synchronisation.
                 </p>
-              </blockquote>
-
-              <p className="text-[var(--nav-text)]/55 text-sm leading-relaxed mb-5">
-                Crée un groupe, invite par lien. Distribue tes grilles à toute une classe, organise par niveau, par session ou par instrument. Pour les profs comme pour les groupes de musique qui veulent répéter la même version.
-              </p>
-
-              <ul className="space-y-3 mb-6">
+              </div>
+              <ul className="space-y-2.5">
                 {[
-                  'Distribue une grille à toute ta classe en un clic',
-                  'Les élèves la reçoivent directement dans leur book',
-                  'Organise par groupe, par niveau, par session',
+                  'Un répertoire commun pour tous les membres',
+                  'Chacun a les grilles dans son propre book',
+                  'Setlists partagées pour les concerts',
                   'Mode concert synchronisé pour jouer ensemble',
                 ].map(item => (
-                  <li key={item} className="flex items-start gap-3 text-sm text-[var(--nav-text)]/60">
-                    <svg className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <li key={item} className="flex items-start gap-2.5 text-sm text-[var(--nav-text)]/55">
+                    <svg className="w-4 h-4 text-[var(--nav-text)]/30 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
                     </svg>
                     {item}
                   </li>
                 ))}
               </ul>
+            </div>
 
-              <div className="rounded-xl border border-amber-400/15 bg-amber-400/5 px-4 py-3 mb-6">
-                <p className="text-amber-400/85 text-sm font-semibold">Un seul abonnement pour tout le groupe.</p>
-                <p className="text-[var(--nav-text)]/40 text-xs mt-0.5">Prof, élèves, musiciens — une licence commune, pas une par tête.</p>
+            {/* Professeurs */}
+            <div className="rounded-2xl border border-amber-400/20 bg-amber-400/5 p-7 flex flex-col gap-5">
+              <div className="w-11 h-11 rounded-xl bg-amber-400/15 flex items-center justify-center">
+                <svg className="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 14l9-5-9-5-9 5 9 5z"/>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+                </svg>
               </div>
-
-              <Link
-                href="/register"
-                className="inline-block px-6 py-3 bg-amber-500 text-white rounded-xl font-semibold text-sm hover:bg-amber-400 transition-colors"
-              >
-                Créer mon groupe →
-              </Link>
+              <div>
+                <h3 className="text-amber-400/90 font-bold text-xl mb-2">Professeurs</h3>
+                <p className="text-[var(--nav-text)]/55 text-sm leading-relaxed">
+                  Vous créez une grille, toute la classe la reçoit dans son book. Par classe, par niveau, par instrument — fini l&apos;impression et les liens perdus dans les emails.
+                </p>
+              </div>
+              <ul className="space-y-2.5">
+                {[
+                  'Distribuez une grille à toute une classe en un clic',
+                  'Organisez vos élèves en groupes séparés',
+                  'Chaque élève accède sans avoir à chercher',
+                  'Les élèves peuvent transposer et jouer en autonomie',
+                ].map(item => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm text-[var(--nav-text)]/55">
+                    <svg className="w-4 h-4 text-amber-400/70 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
+                    </svg>
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </div>
 
           </div>
+
+          {/* Pricing + CTA */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-5 rounded-2xl border border-amber-400/15 bg-amber-400/5 px-7 py-5">
+            <div>
+              <p className="text-amber-400/90 font-semibold text-sm">Un seul abonnement pour tout le groupe.</p>
+              <p className="text-[var(--nav-text)]/40 text-xs mt-0.5">Professeur, élèves, musiciens — une licence commune, pas une par tête.</p>
+            </div>
+            <Link
+              href="/register"
+              className="shrink-0 px-6 py-2.5 bg-amber-500 text-white rounded-xl font-semibold text-sm hover:bg-amber-400 transition-colors whitespace-nowrap"
+            >
+              Créer mon groupe →
+            </Link>
+          </div>
+
         </div>
       </section>
 
