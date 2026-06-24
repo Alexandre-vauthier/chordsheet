@@ -23,7 +23,7 @@ export default function MainLayout({
 
   useEffect(() => {
     if (!loading && !user && !isPublic) {
-      router.push('/login');
+      router.replace('/login');
     }
   }, [user, loading, router, isPublic]);
 
