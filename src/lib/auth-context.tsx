@@ -88,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             notationPreference: userData.notationPreference || 'american',
             chordColorCoding: userData.chordColorCoding ?? false,
             showInlineDiagram: userData.showInlineDiagram ?? false,
-            darkMode: userData.darkMode ?? false,
+            darkMode: userData.darkMode ?? true,
             preferredInstrument: userData.preferredInstrument,
             minimizeRepeatedSections: userData.minimizeRepeatedSections ?? false,
             printMinimizeRepeatedSections: userData.printMinimizeRepeatedSections ?? false,
@@ -103,7 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Enregistrer la date de dernière visite (silencieux)
           setDoc(doc(db, 'users', fbUser.uid), { lastVisitAt: serverTimestamp() }, { merge: true }).catch(() => {});
           // Appliquer le thème dès le chargement
-          document.documentElement.setAttribute('data-theme', (userData.darkMode ?? false) ? 'dark' : 'light');
+          document.documentElement.setAttribute('data-theme', (userData.darkMode ?? true) ? 'dark' : 'light');
         } else {
           // Créer le document utilisateur s'il n'existe pas
           const email = fbUser.email || '';
