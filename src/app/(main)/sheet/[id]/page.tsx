@@ -54,7 +54,7 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
         const data = docSnap.data();
 
         // Vérifier les droits d'accès
-        if (!data.isPublic && !data.isUnlisted && data.ownerId !== user?.id) {
+        if (!data.isPublic && !data.isUnlisted && data.ownerId !== user?.id && !isAdmin) {
           setError('Cette grille est privée');
           return;
         }
@@ -76,7 +76,7 @@ export default function ViewSheetPage({ params }: ViewSheetPageProps) {
     }
 
     loadSheet();
-  }, [id, user]);
+  }, [id, user, isAdmin]);
 
   const handlePrint = () => {
     window.print();
