@@ -116,21 +116,21 @@ export default function SongPage({ params }: { params: Promise<PageParams> }) {
   const title = decodeURIComponent(encodedTitle);
   const artist = decodeURIComponent(encodedArtist);
 
-  const { user } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
   const [sheets, setSheets] = useState<Sheet[]>([]);
   const [loading, setLoading] = useState(true);
   const { artworkUrl } = useArtwork(artist, title);
 
   useEffect(() => {
+    if (authLoading) return;
+
     async function load() {
       try {
         const db = getDb();
-        const q = query(
-          collection(db, 'sheets'),
-          where('isPublic', '==', true),
-          where('artist', '==', artist)
-        );
+        const q = isAdmin
+          ? query(collection(db, 'sheets'), where('artist', '==', artist))
+          : query(collection(db, 'sheets'), where('isPublic', '==', true), where('artist', '==', artist));
         const snapshot = await getDocs(q);
         const titleNorm = title.trim().toLowerCase();
         const loaded: Sheet[] = snapshot.docs
@@ -150,7 +150,7 @@ export default function SongPage({ params }: { params: Promise<PageParams> }) {
       }
     }
     load();
-  }, [title, artist]);
+  }, [title, artist, isAdmin, authLoading]);
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">

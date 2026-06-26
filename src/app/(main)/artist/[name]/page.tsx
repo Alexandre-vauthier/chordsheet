@@ -19,7 +19,7 @@ interface ArtistPageProps {
 export default function ArtistPage({ params }: ArtistPageProps) {
   const { name } = use(params);
   const artistName = decodeURIComponent(name);
-  const { user } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
   const { artworkUrl } = useArtwork(artistName, undefined);
   const [sheets, setSheets] = useState<Sheet[]>([]);
@@ -30,14 +30,14 @@ export default function ArtistPage({ params }: ArtistPageProps) {
   }, [artistName]);
 
   useEffect(() => {
+    if (authLoading) return;
+
     async function loadSheets() {
       try {
         const db = getDb();
-        const q = query(
-          collection(db, 'sheets'),
-          where('isPublic', '==', true),
-          where('artist', '==', artistName)
-        );
+        const q = isAdmin
+          ? query(collection(db, 'sheets'), where('artist', '==', artistName))
+          : query(collection(db, 'sheets'), where('isPublic', '==', true), where('artist', '==', artistName));
         const snapshot = await getDocs(q);
         const results = snapshot.docs.map(d => fromFirestore(d.id, d.data()));
         results.sort((a, b) => (b.updatedAt?.getTime() ?? 0) - (a.updatedAt?.getTime() ?? 0));
@@ -50,7 +50,7 @@ export default function ArtistPage({ params }: ArtistPageProps) {
     }
 
     loadSheets();
-  }, [artistName]);
+  }, [artistName, isAdmin, authLoading]);
 
   // Grouper par titre → une seule entrée par musique
   const grouped = useMemo(() => {
