@@ -164,6 +164,8 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
   if (sheet.groupId) {
     (base as unknown as Record<string, unknown>).groupId = sheet.groupId;
   }
+  // V12 - À valider (toujours écrire pour que la requête where() fonctionne)
+  (base as unknown as Record<string, unknown>).pendingValidation = sheet.pendingValidation === true;
 
   return base;
 }
@@ -215,6 +217,8 @@ export function fromFirestore(
     lyrics: (data.lyrics as string) || undefined,
     // V10 - Groupe
     groupId: (data.groupId as string) || undefined,
+    // V12 - À valider
+    pendingValidation: (data.pendingValidation as boolean) || undefined,
     // V3+ - Diagrammes d'accords & référence
     referenceUrl: (data.referenceUrl as string) || undefined,
     instrumentId: (data.instrumentId as InstrumentId) || undefined,
