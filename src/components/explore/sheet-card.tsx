@@ -151,6 +151,16 @@ export function SheetCard({
                   Public
                 </span>
               )}
+              {showPublicBadge && !sheet.isPublic && sheet.pendingValidation && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/80 text-white font-medium">
+                  À valider
+                </span>
+              )}
+              {showPublicBadge && !sheet.isPublic && !sheet.pendingValidation && (
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-sm text-white/70 font-medium">
+                  Privé
+                </span>
+              )}
             </div>
 
           </Link>

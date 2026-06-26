@@ -16,7 +16,7 @@ import type { Sheet } from '@/types';
 type SortOption = 'recent' | 'rated' | 'viewed';
 
 export default function ExplorePage() {
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, user, loading: authLoading } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -101,14 +101,14 @@ export default function ExplorePage() {
   }, [loading]);
 
   useEffect(() => {
-    async function loadPublicSheets() {
+    if (authLoading) return;
+
+    async function loadSheets() {
       try {
         const db = getDb();
-        const q = query(
-          collection(db, 'sheets'),
-          where('isPublic', '==', true),
-          limit(200)
-        );
+        const q = isAdmin
+          ? query(collection(db, 'sheets'), limit(500))
+          : query(collection(db, 'sheets'), where('isPublic', '==', true), limit(200));
 
         const snapshot = await getDocs(q);
         const loadedSheets: Sheet[] = snapshot.docs.map((docSnap) =>
@@ -117,14 +117,14 @@ export default function ExplorePage() {
 
         setSheets(loadedSheets);
       } catch (error) {
-        console.error('Error loading public sheets:', error);
+        console.error('Error loading sheets:', error);
       } finally {
         setLoading(false);
       }
     }
 
-    loadPublicSheets();
-  }, []);
+    loadSheets();
+  }, [isAdmin, authLoading]);
 
   const handleAdminDelete = async (sheetId: string) => {
     if (!confirm('Supprimer cette grille ? Cette action est irréversible.')) return;
@@ -368,6 +368,7 @@ export default function ExplorePage() {
                 key={`${sheet.title}-${sheet.artist}`}
                 sheet={sheet}
                 showOwner
+                showPublicBadge={isAdmin}
                 href={href}
                 variantCount={count}
                 isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
