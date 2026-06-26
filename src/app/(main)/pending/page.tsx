@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import type { Sheet } from '@/types';
@@ -24,12 +24,15 @@ export default function PendingPage() {
         const snap = await getDocs(
           query(
             collection(db, 'sheets'),
-            where('pendingValidation', '==', true),
-            orderBy('updatedAt', 'desc')
+            where('pendingValidation', '==', true)
           )
         );
-        const data = snap.docs.map(d => ({ id: d.id, ...d.data() } as Sheet));
+        const data = snap.docs
+          .map(d => ({ id: d.id, ...d.data() } as Sheet))
+          .sort((a, b) => (b.updatedAt?.getTime?.() ?? 0) - (a.updatedAt?.getTime?.() ?? 0));
         setSheets(data);
+      } catch (err) {
+        console.error('Erreur chargement À valider:', err);
       } finally {
         setFetching(false);
       }
