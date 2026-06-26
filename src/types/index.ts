@@ -188,6 +188,8 @@ export interface Sheet {
   groupId?: string;
   // V11 - Réputation créateur
   bookmarkCount: number;
+  // V12 - Validation admin (grille en cours, non publique)
+  pendingValidation?: boolean;
 }
 
 // Type pour la création d'une nouvelle grille

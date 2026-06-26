@@ -122,12 +122,20 @@ export function Navbar() {
                 </Link>
                 <div className="flex items-center gap-3 pl-3 border-l border-white/20">
                   {isAdmin && (
-                    <Link
-                      href="/admin"
-                      className="text-sm px-2 py-1 bg-red-500/20 text-red-300 rounded hover:bg-red-500/30 transition-colors"
-                    >
-                      Admin
-                    </Link>
+                    <>
+                      <Link
+                        href="/pending"
+                        className="text-sm px-2 py-1 bg-amber-500/20 text-amber-300 rounded hover:bg-amber-500/30 transition-colors"
+                      >
+                        À valider
+                      </Link>
+                      <Link
+                        href="/admin"
+                        className="text-sm px-2 py-1 bg-red-500/20 text-red-300 rounded hover:bg-red-500/30 transition-colors"
+                      >
+                        Admin
+                      </Link>
+                    </>
                   )}
                   {/* Menu profil */}
                   <div className="relative" ref={profileMenuRef}>

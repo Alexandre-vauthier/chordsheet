@@ -101,7 +101,7 @@ function LyricsEditor({
 }
 
 export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEditorProps) {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, isAdmin } = useAuth();
   const frenchDetectedRef = useRef(false);
   const handleFrenchDetected = useCallback(() => {
     if (frenchDetectedRef.current || user?.notationPreference === 'french') return;
@@ -739,11 +739,10 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 if (!confirmed) return;
               }
               if (!goingPublic) {
-                // Si la grille est référencée par des sets publics, garder isUnlisted
                 const hasSetRefs = 'unlistedBySetIds' in sheet && (sheet.unlistedBySetIds?.length ?? 0) > 0;
                 updateSheet({ isPublic: false, ...(hasSetRefs ? {} : { isUnlisted: false }) });
               } else {
-                updateSheet({ isPublic: true });
+                updateSheet({ isPublic: true, pendingValidation: false });
               }
             }}
             className={`relative w-11 h-6 rounded-full transition-colors ${
@@ -753,6 +752,27 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${sheet.isPublic ? 'translate-x-5' : ''}`} />
           </button>
         </div>
+
+        {/* À valider — admin uniquement */}
+        {isAdmin && (
+          <div className="flex items-center justify-between pt-2 border-t border-[var(--line)]">
+            <div>
+              <span className="text-sm text-amber-500 font-medium">À valider</span>
+              <p className="text-xs text-[var(--ink-faint)] mt-0.5">Visible uniquement par les admins, non publique</p>
+            </div>
+            <button
+              onClick={() => {
+                const next = !sheet.pendingValidation;
+                updateSheet({ pendingValidation: next, ...(next ? { isPublic: false } : {}) });
+              }}
+              className={`relative w-11 h-6 rounded-full transition-colors ${
+                sheet.pendingValidation ? 'bg-amber-500' : 'bg-[var(--line)]'
+              }`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${sheet.pendingValidation ? 'translate-x-5' : ''}`} />
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Titre de la grille — masqué pour Voix */}
