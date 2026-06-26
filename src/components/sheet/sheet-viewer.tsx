@@ -916,9 +916,9 @@ function ViewerChordCell({
         ...((isActive || isConcertActive) && !color ? { borderColor: 'var(--accent)' } : {}),
       }}
       className={`
-        chord-cell relative rounded-lg border-[1.5px] min-h-12 flex items-center justify-center
-        bg-[var(--cell-bg)] border-[#8a7a6a]
-        ${span <= 0.5 ? 'bg-[#f7f3ec] border-[var(--ink-faint)]' : ''}
+        chord-cell relative rounded-lg border-2 min-h-12 flex items-center justify-center
+        bg-[var(--cell-bg)] border-[var(--line)]
+        ${span <= 0.5 ? 'opacity-70' : ''}
         ${isActive && !color ? 'border-[var(--accent)]' : ''}
         print:min-h-10 print:border
       `}

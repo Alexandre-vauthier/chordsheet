@@ -173,15 +173,15 @@ export function BeatCell({
           ...(isActive && !color ? { borderColor: 'var(--accent)' } : {}),
         }}
         className={`
-          relative rounded-lg border-[1.5px] min-h-14 flex items-center justify-center cursor-pointer
+          relative rounded-lg border-2 min-h-14 flex items-center justify-center cursor-pointer
           transition-all duration-150 select-none
           ${isEditing
             ? 'bg-[var(--cell-active)] border-[var(--accent)] shadow-[0_0_0_3px_rgba(200,75,47,0.12)]'
             : cell.chord
-              ? 'bg-[var(--cell-bg)] border-[#8a7a6a] hover:bg-[var(--cell-hover)]'
+              ? 'bg-[var(--cell-bg)] border-[var(--line)] hover:bg-[var(--cell-hover)]'
               : 'bg-[var(--cell-bg)] border-[var(--line)] hover:bg-[var(--cell-hover)] hover:border-[var(--ink-faint)]'
           }
-          ${isSmall ? 'bg-[#f7f3ec] border-[var(--ink-faint)]' : ''}
+          ${isSmall ? 'opacity-70' : ''}
           ${isActive && !color ? 'border-[var(--accent)]' : ''}
         `}
       >
