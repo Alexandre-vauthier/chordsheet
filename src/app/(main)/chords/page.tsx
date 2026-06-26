@@ -69,6 +69,8 @@ function ChordsPageContent() {
   const [instrumentId, setInstrumentId] = useState<InstrumentId>(instrumentParam);
   const [categoryGroup, setCategoryGroup] = useState<CategoryGroup>(categoryParam);
 
+  const [searchQuery, setSearchQuery] = useState('');
+
   // Modal finder
   const [finderOpen, setFinderOpen] = useState(false);
 
@@ -216,6 +218,37 @@ function ChordsPageContent() {
       });
   }, [staticChords, instrumentId, overrides, additions, categoryGroup, extendedChords]);
 
+  // Tous les groupes de l'instrument (toutes catégories) pour la recherche
+  const allGroups = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.trim().toLowerCase();
+    type Group = { name: string; variants: (StringChord | PianoChord)[]; hasOverride: boolean; overrideDocId?: string; additionDocIds: string[]; additionStartIdx: number; };
+    const groups = new Map<string, Group>();
+    const allStatic = getChordsByInstrument(instrumentId);
+    const allExtended = getAllExtendedChords(instrumentId);
+    [...allExtended, ...allStatic].forEach((chord) => {
+      const nameLower = chord.name.trim().toLowerCase();
+      if (!nameLower.includes(q)) return;
+      const key = libraryKey(chord.name, instrumentId);
+      const ov = overrides.get(key);
+      if (!groups.has(nameLower)) groups.set(nameLower, { name: chord.name, variants: [], hasOverride: false, additionDocIds: [], additionStartIdx: 0 });
+      const g = groups.get(nameLower)!;
+      if (ov && !g.hasOverride) { g.variants.push(ov.chord); g.hasOverride = true; g.overrideDocId = ov.docId; }
+      else if (!ov) g.variants.push(chord);
+    });
+    additions.filter(a => a.instrumentId === instrumentId && a.chord.name.toLowerCase().includes(q)).forEach(a => {
+      const nameLower = a.chord.name.trim().toLowerCase();
+      if (!groups.has(nameLower)) groups.set(nameLower, { name: a.chord.name, variants: [], hasOverride: false, additionDocIds: [], additionStartIdx: 0 });
+      const g = groups.get(nameLower)!;
+      g.additionStartIdx = g.variants.length;
+      g.variants.push(a.chord);
+      g.additionDocIds.push(a.docId);
+    });
+    return Array.from(groups.values())
+      .filter(g => g.variants.length > 0)
+      .sort((a, b) => { const sa = chromaticRootSemi(a.name); const sb = chromaticRootSemi(b.name); return sa !== sb ? sa - sb : a.name.localeCompare(b.name); });
+  }, [searchQuery, instrumentId, overrides, additions]);
+
   // Pool indexé par instrument pour le finder
   const finderChordPool = useMemo(() => {
     const INSTR = ['guitar', 'ukulele', 'mandolin', 'banjo', 'piano'] as InstrumentId[];
@@ -283,7 +316,7 @@ function ChordsPageContent() {
 
   return (
     <div className="max-w-[1270px] mx-auto px-4 sm:px-6 py-8">
-      <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="font-playfair text-3xl font-bold text-[var(--ink)]">
             Bibliothèque d&apos;accords
@@ -292,13 +325,31 @@ function ChordsPageContent() {
             Tous les accords de la bibliothèque, par instrument et catégorie.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Recherche par nom */}
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" strokeLinecap="round"/>
+            </svg>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Rechercher un accord…"
+              className="pl-9 pr-8 py-2 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink)] text-sm placeholder:text-[var(--ink-faint)] focus:outline-none focus:border-[var(--accent)] w-48"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-faint)] hover:text-[var(--ink)]">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2"><path strokeLinecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            )}
+          </div>
           <button
             onClick={() => setFinderOpen(true)}
             className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm font-medium transition-colors bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
-              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35" strokeLinecap="round"/>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h2l1 3m0 0l1.5 4h9L18 7H6m0 0H4m14 0l1 3H5m0 0l-1 3h14"/>
             </svg>
             Identifier
           </button>
@@ -330,44 +381,53 @@ function ChordsPageContent() {
         ))}
       </div>
 
-      {/* Onglets de catégorie — seulement les catégories non vides */}
-      <div className="flex flex-wrap gap-1 mb-6 bg-[var(--line)] p-1 rounded-lg w-fit">
-        {CAT_ORDER.filter((cat) => nonEmptyCategories.has(cat)).map((cat) => (
-          <button
-            key={cat}
-            onClick={() => handleCategoryChange(cat)}
-            className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-              categoryGroup === cat
-                ? 'bg-[var(--cell-bg)] text-[var(--ink)] shadow-sm'
-                : 'text-[var(--ink-light)] hover:text-[var(--ink)]'
-            }`}
-          >
-            {CAT_LABELS[cat]}
-          </button>
-        ))}
-      </div>
-
-      {/* Liste unifiée : statiques + ajouts, triée alphabétiquement */}
-      {unifiedGroups.length === 0 ? (
-        <div className="text-center py-16 text-[var(--ink-faint)]">
-          Aucun accord trouvé pour cette sélection.
-        </div>
-      ) : (
-        <div className="flex flex-wrap gap-4">
-          {unifiedGroups.map((group) => (
-            <UnifiedChordGroup
-              key={group.name}
-              group={group}
-              instrumentId={instrumentId}
-              isAdmin={isAdmin}
-              onEditOverride={(chord) => openEditModal(chord, true)}
-              onEditAddition={(chord, docId) => openEditModal(chord, false, docId)}
-              onDeleteOverride={handleDeleteOverride}
-              onDeleteAddition={handleDeleteAddition}
-            />
+      {/* Onglets de catégorie — masqués pendant la recherche */}
+      {!searchQuery && (
+        <div className="flex flex-wrap gap-1 mb-6 bg-[var(--line)] p-1 rounded-lg w-fit">
+          {CAT_ORDER.filter((cat) => nonEmptyCategories.has(cat)).map((cat) => (
+            <button
+              key={cat}
+              onClick={() => handleCategoryChange(cat)}
+              className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                categoryGroup === cat
+                  ? 'bg-[var(--cell-bg)] text-[var(--ink)] shadow-sm'
+                  : 'text-[var(--ink-light)] hover:text-[var(--ink)]'
+              }`}
+            >
+              {CAT_LABELS[cat]}
+            </button>
           ))}
         </div>
       )}
+
+      {/* Résultats */}
+      {(() => {
+        const groups = searchQuery ? allGroups : unifiedGroups;
+        if (groups.length === 0) return (
+          <div className="text-center py-16 text-[var(--ink-faint)]">
+            {searchQuery ? `Aucun accord trouvé pour « ${searchQuery} ».` : 'Aucun accord trouvé pour cette sélection.'}
+          </div>
+        );
+        return (
+          <>
+            {searchQuery && <p className="text-[var(--ink-faint)] text-sm mb-4">{groups.length} accord{groups.length > 1 ? 's' : ''} trouvé{groups.length > 1 ? 's' : ''}</p>}
+            <div className="flex flex-wrap gap-4">
+              {groups.map((group) => (
+                <UnifiedChordGroup
+                  key={group.name}
+                  group={group}
+                  instrumentId={instrumentId}
+                  isAdmin={isAdmin}
+                  onEditOverride={(chord) => openEditModal(chord, true)}
+                  onEditAddition={(chord, docId) => openEditModal(chord, false, docId)}
+                  onDeleteOverride={handleDeleteOverride}
+                  onDeleteAddition={handleDeleteAddition}
+                />
+              ))}
+            </div>
+          </>
+        );
+      })()}
 
       {/* Modal finder — tous instruments, statiques + additions admin */}
       {finderOpen && (
