@@ -47,6 +47,10 @@ export function chordToFirestore(chord: StringChord | PianoChord): Record<string
   if ('instrumentId' in chord && (chord as CustomChord).instrumentId) {
     result.instrumentId = (chord as CustomChord).instrumentId;
   }
+  // Ajouter isExplicitlyCreated si présent (pour CustomChord)
+  if ('isExplicitlyCreated' in chord && (chord as CustomChord).isExplicitlyCreated) {
+    result.isExplicitlyCreated = (chord as CustomChord).isExplicitlyCreated;
+  }
   return result;
 }
 
