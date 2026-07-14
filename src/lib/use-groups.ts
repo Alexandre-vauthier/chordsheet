@@ -17,7 +17,7 @@ import {
   arrayRemove,
   deleteField,
 } from 'firebase/firestore';
-import { getDb } from './firebase';
+import { getDb, getAuth } from './firebase';
 import { useAuth } from './auth-context';
 import type { ActiveConcert, Group, GroupInvite, GroupRole, NewGroup } from '@/types';
 
@@ -104,42 +104,22 @@ export function useGroups() {
     return token;
   }, [user]);
 
-  const joinGroup = useCallback(async (token: string): Promise<Group> => {
+  // Rejoindre un groupe via un token d'invitation - passe par une route serveur qui
+  // valide l'invitation (existence, expiration, quota d'usages) avec des credentials admin,
+  // pour éviter qu'un client puisse rejoindre un groupe sans invitation valide.
+  const joinGroup = useCallback(async (token: string): Promise<string> => {
     if (!user) throw new Error('Non connecté');
-    const db = getDb();
+    const idToken = await getAuth().currentUser?.getIdToken();
+    if (!idToken) throw new Error('Non connecté');
 
-    const inviteRef = doc(db, 'groupInvites', token);
-    const inviteSnap = await getDoc(inviteRef);
-    if (!inviteSnap.exists()) throw new Error('Lien invalide ou expiré');
-
-    const invite = inviteSnap.data() as Record<string, unknown>;
-    const expiresAt = (invite.expiresAt as { toDate: () => Date }).toDate();
-    if (expiresAt < new Date()) throw new Error('Lien expiré');
-    if (invite.maxUses !== null && (invite.useCount as number) >= (invite.maxUses as number)) {
-      throw new Error('Lien épuisé');
-    }
-
-    const groupRef = doc(db, 'groups', invite.groupId as string);
-    const groupSnap = await getDoc(groupRef);
-    if (!groupSnap.exists()) throw new Error('Groupe introuvable');
-
-    const groupData = groupSnap.data() as Record<string, unknown>;
-    if ((groupData.memberIds as string[]).includes(user.id)) {
-      return groupFromDoc(groupSnap.id, groupData);
-    }
-
-    await updateDoc(groupRef, {
-      memberIds: arrayUnion(user.id),
-      [`roles.${user.id}`]: 'member' as GroupRole,
-      updatedAt: serverTimestamp(),
+    const res = await fetch('/api/groups/join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ token }),
     });
-    await updateDoc(inviteRef, { useCount: (invite.useCount as number) + 1 });
-
-    return groupFromDoc(groupSnap.id, {
-      ...groupData,
-      memberIds: [...(groupData.memberIds as string[]), user.id],
-      roles: { ...(groupData.roles as Record<string, GroupRole>), [user.id]: 'member' },
-    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Erreur lors de la tentative de rejoindre le groupe.');
+    return data.groupId as string;
   }, [user]);
 
   const leaveGroup = useCallback(async (groupId: string) => {

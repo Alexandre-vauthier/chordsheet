@@ -8,6 +8,10 @@ function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!);
 }
 
+// Les données d'abonnement (plan, statut, quota OCR...) vivent dans un sous-document
+// privé (users/{userId}/private/subscription), lisible uniquement par le titulaire ou un
+// admin. Seul stripeCustomerId reste sur le document utilisateur principal (peu sensible,
+// nécessaire pour retrouver un utilisateur à partir d'un événement Stripe).
 async function syncSubscription(
   userId: string,
   stripeSub: Stripe.Subscription,
@@ -18,30 +22,32 @@ async function syncSubscription(
   const sub = {
     plan: 'pro' as const,
     status: stripeSub.status as 'active' | 'trialing' | 'past_due' | 'canceled',
-    stripeCustomerId: customerId,
     stripeSubscriptionId: stripeSub.id,
     currentPeriodEnd: new Date((stripeSub as unknown as { current_period_end: number }).current_period_end * 1000),
     ocrUsedThisMonth: 0,
     ocrResetAt: new Date((stripeSub as unknown as { current_period_end: number }).current_period_end * 1000),
   };
 
-  await db.collection('users').doc(userId).update({ subscription: sub });
+  await Promise.all([
+    db.collection('users').doc(userId).set({ stripeCustomerId: customerId }, { merge: true }),
+    db.collection('users').doc(userId).collection('private').doc('subscription').set(sub, { merge: true }),
+  ]);
 }
 
 async function cancelSubscription(userId: string) {
   const db = getAdminDb();
-  await db.collection('users').doc(userId).update({
-    'subscription.plan': 'free',
-    'subscription.status': 'canceled',
-    'subscription.stripeSubscriptionId': null,
-    'subscription.currentPeriodEnd': null,
-  });
+  await db.collection('users').doc(userId).collection('private').doc('subscription').set({
+    plan: 'free',
+    status: 'canceled',
+    stripeSubscriptionId: null,
+    currentPeriodEnd: null,
+  }, { merge: true });
 }
 
 async function getUserIdByCustomer(customerId: string): Promise<string | null> {
   const db = getAdminDb();
   const snap = await db.collection('users')
-    .where('subscription.stripeCustomerId', '==', customerId)
+    .where('stripeCustomerId', '==', customerId)
     .limit(1)
     .get();
   return snap.empty ? null : snap.docs[0].id;
@@ -94,7 +100,8 @@ export async function POST(req: NextRequest) {
         const userId = await getUserIdByCustomer(invoice.customer as string);
         if (!userId) break;
         const db = getAdminDb();
-        await db.collection('users').doc(userId).update({ 'subscription.status': 'past_due' });
+        await db.collection('users').doc(userId).collection('private').doc('subscription')
+          .set({ status: 'past_due' }, { merge: true });
         break;
       }
     }

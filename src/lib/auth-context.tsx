@@ -52,7 +52,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (fbUser) {
         // Récupérer les données utilisateur depuis Firestore
-        const userDoc = await getDoc(doc(db, 'users', fbUser.uid));
+        // (les données d'abonnement vivent dans un sous-document privé, non lisible par les autres utilisateurs)
+        const [userDoc, subDoc] = await Promise.all([
+          getDoc(doc(db, 'users', fbUser.uid)),
+          getDoc(doc(db, 'users', fbUser.uid, 'private', 'subscription')),
+        ]);
         if (userDoc.exists()) {
           const userData = userDoc.data();
           const email = userData.email || fbUser.email || '';
@@ -64,11 +68,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
 
           // Désérialiser la subscription si présente
-          const rawSub = userData.subscription;
+          const rawSub = subDoc.exists() ? subDoc.data() : undefined;
           const subscription = rawSub ? {
             plan: rawSub.plan || 'free',
             status: rawSub.status || 'active',
-            stripeCustomerId: rawSub.stripeCustomerId || undefined,
+            stripeCustomerId: userData.stripeCustomerId || rawSub.stripeCustomerId || undefined,
             stripeSubscriptionId: rawSub.stripeSubscriptionId || undefined,
             currentPeriodEnd: rawSub.currentPeriodEnd?.toDate?.() || undefined,
             ocrUsedThisMonth: rawSub.ocrUsedThisMonth ?? 0,

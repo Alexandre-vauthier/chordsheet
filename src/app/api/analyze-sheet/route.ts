@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
-import { getAdminDb } from '@/lib/firebase-admin';
+import { getAdminDb, getAdminAuth, getAdminFieldValue } from '@/lib/firebase-admin';
 
 const FREE_OCR_LIMIT = 2;
 
@@ -49,18 +49,6 @@ Règles JSON :
 - Mesure vide → {"chord": "", "beats": N}
 - repeat = nombre de fois que la section est jouée (2 pour une reprise simple)`;
 
-function getAdminAuth() {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { getAuth } = require('firebase-admin/auth');
-  return getAuth();
-}
-
-function getFieldValue() {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { FieldValue } = require('firebase-admin/firestore');
-  return FieldValue;
-}
-
 // Limite de fréquence en mémoire (best-effort, par instance serveur) : évite les rafales
 // même pour un utilisateur encore dans son quota mensuel.
 const BURST_LIMIT = 5;
@@ -104,9 +92,9 @@ export async function POST(req: NextRequest) {
 
   try {
     const db = getAdminDb();
-    const userDoc = await db.collection('users').doc(userId).get();
-    if (userDoc.exists) {
-      const sub = userDoc.data()?.subscription;
+    const subDoc = await db.collection('users').doc(userId).collection('private').doc('subscription').get();
+    if (subDoc.exists) {
+      const sub = subDoc.data();
       const isPro = sub?.plan === 'pro' && (sub?.status === 'active' || sub?.status === 'trialing');
 
       if (!isPro) {
@@ -198,9 +186,10 @@ export async function POST(req: NextRequest) {
     if (userId && process.env.FIREBASE_ADMIN_PROJECT_ID) {
       try {
         const db = getAdminDb();
-        const FieldValue = getFieldValue();
-        const userDoc = await db.collection('users').doc(userId).get();
-        const sub = userDoc.data()?.subscription;
+        const FieldValue = getAdminFieldValue();
+        const subRef = db.collection('users').doc(userId).collection('private').doc('subscription');
+        const subDoc = await subRef.get();
+        const sub = subDoc.data();
         const isPro = sub?.plan === 'pro' && (sub?.status === 'active' || sub?.status === 'trialing');
         if (!isPro) {
           const resetAt = sub?.ocrResetAt?.toDate?.();
@@ -210,19 +199,11 @@ export async function POST(req: NextRequest) {
           const earnedCredits = sub?.earnedOcrCredits ?? 0;
 
           if (ocrUsed >= FREE_OCR_LIMIT && earnedCredits > 0) {
-            await db.collection('users').doc(userId).update({
-              'subscription.earnedOcrCredits': FieldValue.increment(-1),
-            });
+            await subRef.set({ earnedOcrCredits: FieldValue.increment(-1) }, { merge: true });
           } else if (resetAt && new Date() > resetAt) {
-            await db.collection('users').doc(userId).update({
-              'subscription.ocrUsedThisMonth': 1,
-              'subscription.ocrResetAt': nextReset,
-            });
+            await subRef.set({ ocrUsedThisMonth: 1, ocrResetAt: nextReset }, { merge: true });
           } else {
-            await db.collection('users').doc(userId).update({
-              'subscription.ocrUsedThisMonth': FieldValue.increment(1),
-              'subscription.ocrResetAt': resetAt ?? nextReset,
-            });
+            await subRef.set({ ocrUsedThisMonth: FieldValue.increment(1), ocrResetAt: resetAt ?? nextReset }, { merge: true });
           }
         }
       } catch (counterErr) {

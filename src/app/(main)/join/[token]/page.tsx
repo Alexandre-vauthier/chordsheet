@@ -31,8 +31,8 @@ export default function JoinGroupPage({ params }: { params: Promise<{ token: str
   const handleJoin = async () => {
     setStatus('joining');
     try {
-      const group = await joinGroup(token);
-      router.push(`/groups/${group.id}`);
+      const groupId = await joinGroup(token);
+      router.push(`/groups/${groupId}`);
     } catch (e) {
       setErrorMsg((e as Error).message);
       setStatus('error');

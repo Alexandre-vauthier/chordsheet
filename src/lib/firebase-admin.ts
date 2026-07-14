@@ -1,9 +1,7 @@
 // Initialisation lazy de Firebase Admin pour éviter les crashes d'import dans Next.js
-export function getAdminDb() {
+function ensureAdminApp() {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { initializeApp, getApps, cert } = require('firebase-admin/app');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { getFirestore } = require('firebase-admin/firestore');
   if (!getApps().length) {
     initializeApp({
       credential: cert({
@@ -13,5 +11,24 @@ export function getAdminDb() {
       }),
     });
   }
+}
+
+export function getAdminDb() {
+  ensureAdminApp();
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { getFirestore } = require('firebase-admin/firestore');
   return getFirestore();
+}
+
+export function getAdminAuth() {
+  ensureAdminApp();
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { getAuth } = require('firebase-admin/auth');
+  return getAuth();
+}
+
+export function getAdminFieldValue() {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { FieldValue } = require('firebase-admin/firestore');
+  return FieldValue;
 }

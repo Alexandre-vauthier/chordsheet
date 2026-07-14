@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
-import { collection, query, getDocs, orderBy, limit, doc, deleteDoc, updateDoc, where } from 'firebase/firestore';
+import { collection, query, getDocs, orderBy, limit, doc, deleteDoc, setDoc, updateDoc, deleteField, where } from 'firebase/firestore';
 import type { User, Sheet } from '@/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -164,13 +164,13 @@ export default function AdminPage() {
       for (const email of emails) {
         const snap = await getDocs(query(usersRef, where('email', '==', email)));
         for (const userDoc of snap.docs) {
-          await updateDoc(doc(db, 'users', userDoc.id), {
-            subscription: {
-              plan: 'pro',
-              status: 'active',
-              ocrUsedThisMonth: 0,
-            },
-          });
+          await setDoc(doc(db, 'users', userDoc.id, 'private', 'subscription'), {
+            plan: 'pro',
+            status: 'active',
+            ocrUsedThisMonth: 0,
+          }, { merge: true });
+          // Nettoyage de l'ancien emplacement (subscription vivait avant sur le doc principal)
+          await updateDoc(doc(db, 'users', userDoc.id), { subscription: deleteField() }).catch(() => {});
           updated++;
         }
       }

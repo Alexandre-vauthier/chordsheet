@@ -14,10 +14,24 @@ service cloud.firestore {
              request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds;
     }
 
+    // Helper : vérifier si l'utilisateur a un abonnement Pro actif
+    function isProUser() {
+      return request.auth != null &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)/private/subscription) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)/private/subscription).data.plan == 'pro' &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)/private/subscription).data.status in ['active', 'trialing'];
+    }
+
     // Utilisateurs - lecture/écriture pour soi-même, lecture complète pour admin
+    // (le profil ne contient plus de données de facturation, voir /private/subscription)
     match /users/{userId} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+
+      // Données privées (abonnement Stripe) - accessibles uniquement au titulaire ou à un admin
+      match /private/{docId} {
+        allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      }
     }
 
     // Grilles d'accords
@@ -107,9 +121,12 @@ service cloud.firestore {
       // Lecture ouverte aux utilisateurs authentifiés (nécessaire pour le flux d'invitation)
       allow read: if request.auth != null;
       allow list: if isAdmin();
+      // Création réservée aux comptes Pro (ou admin) - le rejoint d'un groupe existant
+      // se fait via /api/groups/join (validation de l'invitation côté serveur)
       allow create: if request.auth != null &&
                        request.resource.data.ownerId == request.auth.uid &&
-                       request.auth.uid in request.resource.data.memberIds;
+                       request.auth.uid in request.resource.data.memberIds &&
+                       (isProUser() || isAdmin());
       allow update: if request.auth != null && (
         isAdmin() ||
         // Leaders peuvent tout modifier
@@ -118,13 +135,15 @@ service cloud.firestore {
         // Membres peuvent modifier linkedSheetIds et activeConcert
         (request.auth.uid in resource.data.memberIds &&
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['linkedSheetIds', 'activeConcert', 'updatedAt'])) ||
-        // Auto-leave : membre qui se retire lui-même
+        // Auto-leave : membre qui se retire lui-même, et seulement lui (personne d'autre retiré/ajouté)
         (request.auth.uid in resource.data.memberIds &&
          !(request.auth.uid in request.resource.data.memberIds) &&
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'roles', 'updatedAt'])) ||
-        // Auto-join : utilisateur non membre, modifie seulement memberIds/roles/updatedAt
-        (!(request.auth.uid in resource.data.memberIds) &&
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'roles', 'updatedAt']))
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds', 'roles', 'updatedAt']) &&
+         request.resource.data.memberIds.size() == resource.data.memberIds.size() - 1 &&
+         resource.data.memberIds.hasAll(request.resource.data.memberIds))
+        // Rejoindre un groupe (auto-join) n'est plus autorisé en écriture directe :
+        // cela passe par /api/groups/join, qui utilise les credentials admin après
+        // avoir vérifié une invitation valide (existence, expiration, quota d'usages).
       );
       allow delete: if request.auth != null &&
                        (request.auth.uid == resource.data.ownerId || isAdmin());
@@ -141,12 +160,15 @@ service cloud.firestore {
     // Invitations de groupe
     match /groupInvites/{token} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      // Update : incrémentation de useCount par l'utilisateur qui rejoint (non-créateur)
-      allow update: if request.auth != null;
-      // Suppression : réservée au créateur de l'invitation ou à un admin (non utilisé côté client aujourd'hui)
-      allow delete: if request.auth != null &&
-                       (request.auth.uid == resource.data.createdBy || isAdmin());
+      // Création réservée aux leaders du groupe ciblé (ou admin)
+      allow create: if request.auth != null &&
+                       request.resource.data.createdBy == request.auth.uid &&
+                       (isAdmin() ||
+                        (isGroupMember(request.resource.data.groupId) &&
+                         get(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data.roles[request.auth.uid] == 'leader'));
+      // Rejoindre un groupe passe désormais par /api/groups/join (credentials admin,
+      // qui contournent ces règles) : plus besoin d'update/delete côté client.
+      allow update, delete: if isAdmin();
     }
   }
 }
