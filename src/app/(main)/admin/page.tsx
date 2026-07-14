@@ -22,6 +22,8 @@ interface UserWithStats extends Omit<User, 'createdAt' | 'updatedAt'> {
   updatedAt: Date;
   sheetsCount: number;
   setsCount: number;
+  bookmarksCount: number;
+  groupsCount: number;
   lastVisitAt: Date | null;
 }
 
@@ -56,11 +58,12 @@ export default function AdminPage() {
 
       try {
         // Statistiques globales
-        const [usersSnap, sheetsSnap, setsSnap, bookmarksSnap] = await Promise.all([
+        const [usersSnap, sheetsSnap, setsSnap, bookmarksSnap, groupsSnap] = await Promise.all([
           getDocs(collection(db, 'users')),
           getDocs(collection(db, 'sheets')),
           getDocs(collection(db, 'sets')),
           getDocs(collection(db, 'bookmarks')),
+          getDocs(collection(db, 'groups')),
         ]);
 
         const publicSheets = sheetsSnap.docs.filter(doc => doc.data().isPublic).length;
@@ -87,6 +90,22 @@ export default function AdminPage() {
           setsByUser[ownerId] = (setsByUser[ownerId] || 0) + 1;
         });
 
+        // Compter les favoris (book) par utilisateur
+        const bookmarksByUser: Record<string, number> = {};
+        bookmarksSnap.docs.forEach(doc => {
+          const userId = doc.data().userId;
+          bookmarksByUser[userId] = (bookmarksByUser[userId] || 0) + 1;
+        });
+
+        // Compter les groupes dont l'utilisateur est membre
+        const groupsByUser: Record<string, number> = {};
+        groupsSnap.docs.forEach(doc => {
+          const memberIds: string[] = doc.data().memberIds || [];
+          memberIds.forEach(memberId => {
+            groupsByUser[memberId] = (groupsByUser[memberId] || 0) + 1;
+          });
+        });
+
         // Liste des utilisateurs avec leurs stats
         const usersData: UserWithStats[] = usersSnap.docs.map(doc => {
           const data = doc.data();
@@ -100,6 +119,8 @@ export default function AdminPage() {
             updatedAt: data.updatedAt?.toDate() || new Date(),
             sheetsCount: sheetsByUser[doc.id] || 0,
             setsCount: setsByUser[doc.id] || 0,
+            bookmarksCount: bookmarksByUser[doc.id] || 0,
+            groupsCount: groupsByUser[doc.id] || 0,
             lastVisitAt: data.lastVisitAt?.toDate() || null,
           };
         });
@@ -254,6 +275,8 @@ export default function AdminPage() {
                 <th className="text-center py-2 px-3 font-medium text-[var(--ink-light)]">Rôle</th>
                 <th className="text-center py-2 px-3 font-medium text-[var(--ink-light)]">Grilles</th>
                 <th className="text-center py-2 px-3 font-medium text-[var(--ink-light)]">Sets</th>
+                <th className="text-center py-2 px-3 font-medium text-[var(--ink-light)]">Book</th>
+                <th className="text-center py-2 px-3 font-medium text-[var(--ink-light)]">Groupes</th>
                 <th className="text-left py-2 px-3 font-medium text-[var(--ink-light)]">Inscrit le</th>
                 <th className="text-left py-2 px-3 font-medium text-[var(--ink-light)]">Dernière visite</th>
               </tr>
@@ -285,6 +308,8 @@ export default function AdminPage() {
                   </td>
                   <td className="py-3 px-3 text-center font-mono">{u.sheetsCount}</td>
                   <td className="py-3 px-3 text-center font-mono">{u.setsCount}</td>
+                  <td className="py-3 px-3 text-center font-mono">{u.bookmarksCount}</td>
+                  <td className="py-3 px-3 text-center font-mono">{u.groupsCount}</td>
                   <td className="py-3 px-3 text-[var(--ink-light)]">
                     {u.createdAt.toLocaleDateString('fr-FR')}
                   </td>
