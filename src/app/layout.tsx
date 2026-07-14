@@ -22,9 +22,32 @@ const playfair = Playfair_Display({
   style: ["normal", "italic"],
 });
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://chordsheet.app';
+const SITE_TITLE = "ChordSheet - Grilles d'accords pour musiciens";
+const SITE_DESCRIPTION = "Créez, partagez et consultez vos grilles d'accords. L'outil collaboratif pour musiciens.";
+
 export const metadata: Metadata = {
-  title: "ChordSheet - Grilles d'accords pour musiciens",
-  description: "Créez, partagez et consultez vos grilles d'accords. L'outil collaboratif pour musiciens.",
+  metadataBase: new URL(BASE_URL),
+  title: {
+    default: SITE_TITLE,
+    template: '%s | ChordSheet',
+  },
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    url: BASE_URL,
+    siteName: 'ChordSheet',
+    locale: 'fr_FR',
+    type: 'website',
+    images: [{ url: '/og-image.png', width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    images: ['/og-image.png'],
+  },
 };
 
 export default function RootLayout({

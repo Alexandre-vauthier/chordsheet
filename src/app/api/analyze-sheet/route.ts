@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { getAdminDb } from '@/lib/firebase-admin';
 
 const FREE_OCR_LIMIT = 2;
 
@@ -48,24 +49,6 @@ Règles JSON :
 - Mesure vide → {"chord": "", "beats": N}
 - repeat = nombre de fois que la section est jouée (2 pour une reprise simple)`;
 
-// Initialisation lazy de Firebase Admin pour éviter les crashes d'import dans Next.js
-function getAdminDb() {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { initializeApp, getApps, cert } = require('firebase-admin/app');
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { getFirestore } = require('firebase-admin/firestore');
-  if (!getApps().length) {
-    initializeApp({
-      credential: cert({
-        projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_ADMIN_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
-    });
-  }
-  return getFirestore();
-}
-
 function getAdminAuth() {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const { getAuth } = require('firebase-admin/auth');
@@ -78,6 +61,20 @@ function getFieldValue() {
   return FieldValue;
 }
 
+// Limite de fréquence en mémoire (best-effort, par instance serveur) : évite les rafales
+// même pour un utilisateur encore dans son quota mensuel.
+const BURST_LIMIT = 5;
+const BURST_WINDOW_MS = 60_000;
+const burstLog = new Map<string, number[]>();
+
+function isBursting(userId: string): boolean {
+  const now = Date.now();
+  const timestamps = (burstLog.get(userId) ?? []).filter((t) => now - t < BURST_WINDOW_MS);
+  timestamps.push(now);
+  burstLog.set(userId, timestamps);
+  return timestamps.length > BURST_LIMIT;
+}
+
 export async function POST(req: NextRequest) {
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ error: 'Clé API Anthropic non configurée.' }, { status: 503 });
@@ -85,37 +82,48 @@ export async function POST(req: NextRequest) {
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-  // Vérification du quota OCR via le token Firebase
-  let userId: string | null = null;
+  // Authentification obligatoire : sans token Firebase valide, pas d'appel à l'API Anthropic.
   const authHeader = req.headers.get('Authorization');
-  if (authHeader?.startsWith('Bearer ') && process.env.FIREBASE_ADMIN_PROJECT_ID) {
-    try {
-      const idToken = authHeader.slice(7);
-      const decoded = await getAdminAuth().verifyIdToken(idToken);
-      userId = decoded.uid;
+  if (!authHeader?.startsWith('Bearer ') || !process.env.FIREBASE_ADMIN_PROJECT_ID) {
+    return NextResponse.json({ error: 'Authentification requise.' }, { status: 401 });
+  }
 
-      const db = getAdminDb();
-      const userDoc = await db.collection('users').doc(userId).get();
-      if (userDoc.exists) {
-        const sub = userDoc.data()?.subscription;
-        const isPro = sub?.plan === 'pro' && (sub?.status === 'active' || sub?.status === 'trialing');
+  let userId: string;
+  try {
+    const idToken = authHeader.slice(7);
+    const decoded = await getAdminAuth().verifyIdToken(idToken);
+    userId = decoded.uid;
+  } catch (authErr) {
+    console.error('[analyze-sheet] Firebase auth error:', authErr);
+    return NextResponse.json({ error: 'Session invalide, reconnecte-toi.' }, { status: 401 });
+  }
 
-        if (!isPro) {
-          const resetAt = sub?.ocrResetAt?.toDate?.();
-          const ocrUsed = resetAt && new Date() > resetAt ? 0 : (sub?.ocrUsedThisMonth ?? 0);
-          const earnedCredits = sub?.earnedOcrCredits ?? 0;
+  if (isBursting(userId)) {
+    return NextResponse.json({ error: 'Trop de requêtes, réessaie dans une minute.' }, { status: 429 });
+  }
 
-          if (ocrUsed >= FREE_OCR_LIMIT && earnedCredits <= 0) {
-            return NextResponse.json({
-              error: 'Limite d\'analyses atteinte pour ce mois. Passe à ChordSheet Pro pour des analyses illimitées.',
-              upgradeRequired: true,
-            }, { status: 429 });
-          }
+  try {
+    const db = getAdminDb();
+    const userDoc = await db.collection('users').doc(userId).get();
+    if (userDoc.exists) {
+      const sub = userDoc.data()?.subscription;
+      const isPro = sub?.plan === 'pro' && (sub?.status === 'active' || sub?.status === 'trialing');
+
+      if (!isPro) {
+        const resetAt = sub?.ocrResetAt?.toDate?.();
+        const ocrUsed = resetAt && new Date() > resetAt ? 0 : (sub?.ocrUsedThisMonth ?? 0);
+        const earnedCredits = sub?.earnedOcrCredits ?? 0;
+
+        if (ocrUsed >= FREE_OCR_LIMIT && earnedCredits <= 0) {
+          return NextResponse.json({
+            error: 'Limite d\'analyses atteinte pour ce mois. Passe à ChordSheet Pro pour des analyses illimitées.',
+            upgradeRequired: true,
+          }, { status: 429 });
         }
       }
-    } catch (authErr) {
-      console.error('[analyze-sheet] Firebase auth error (non-blocking):', authErr);
     }
+  } catch (quotaErr) {
+    console.error('[analyze-sheet] Quota check error (non-blocking):', quotaErr);
   }
 
   try {

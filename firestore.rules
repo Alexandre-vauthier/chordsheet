@@ -142,8 +142,11 @@ service cloud.firestore {
     match /groupInvites/{token} {
       allow read: if request.auth != null;
       allow create: if request.auth != null;
+      // Update : incrémentation de useCount par l'utilisateur qui rejoint (non-créateur)
       allow update: if request.auth != null;
-      allow delete: if request.auth != null;
+      // Suppression : réservée au créateur de l'invitation ou à un admin (non utilisé côté client aujourd'hui)
+      allow delete: if request.auth != null &&
+                       (request.auth.uid == resource.data.createdBy || isAdmin());
     }
   }
 }

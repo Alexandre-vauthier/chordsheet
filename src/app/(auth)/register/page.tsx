@@ -15,6 +15,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -29,6 +30,11 @@ export default function RegisterPage() {
 
     if (password.length < 6) {
       setError('Le mot de passe doit contenir au moins 6 caractères');
+      return;
+    }
+
+    if (!acceptedTerms) {
+      setError('Vous devez accepter les CGU et CGV pour créer un compte');
       return;
     }
 
@@ -117,11 +123,32 @@ export default function RegisterPage() {
             />
           </div>
 
+          <label className="flex items-start gap-2 mt-5 text-sm text-[var(--ink-light)] cursor-pointer">
+            <input
+              type="checkbox"
+              checked={acceptedTerms}
+              onChange={(e) => setAcceptedTerms(e.target.checked)}
+              className="mt-0.5 cursor-pointer accent-[var(--accent)]"
+              required
+            />
+            <span>
+              J&apos;accepte les{' '}
+              <Link href="/legal/cgu" target="_blank" className="text-[var(--accent)] hover:underline">
+                CGU
+              </Link>{' '}
+              et les{' '}
+              <Link href="/legal/cgv" target="_blank" className="text-[var(--accent)] hover:underline">
+                CGV
+              </Link>
+            </span>
+          </label>
+
           <Button
             type="submit"
-            className="w-full mt-6"
+            className="w-full mt-4"
             size="lg"
             isLoading={loading}
+            disabled={!acceptedTerms}
           >
             Créer mon compte
           </Button>

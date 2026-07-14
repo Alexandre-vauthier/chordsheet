@@ -6,20 +6,31 @@ import { useAuth } from '@/lib/auth-context';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { ConcertBanner } from '@/components/layout/concert-banner';
+import { EmailVerificationGate } from '@/components/layout/email-verification-gate';
 
-// Routes accessibles sans authentification
+// Routes accessibles sans authentification (contenu public en lecture seule)
+const PUBLIC_EXACT = ['/explore', '/chords', '/pricing'];
 const PUBLIC_PREFIXES = ['/legal'];
+// /sheet/:id (mais pas /sheet/new ni /sheet/:id/edit), /artist/:name, /user/:id
+const PUBLIC_PATTERNS = [/^\/sheet\/[^/]+$/, /^\/artist\/[^/]+$/, /^\/user\/[^/]+$/];
+
+function isPublicRoute(pathname: string): boolean {
+  if (PUBLIC_EXACT.includes(pathname)) return true;
+  if (PUBLIC_PREFIXES.some(p => pathname.startsWith(p))) return true;
+  if (pathname === '/sheet/new') return false;
+  return PUBLIC_PATTERNS.some(re => re.test(pathname));
+}
 
 export default function MainLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading } = useAuth();
+  const { user, loading, isAdmin, emailVerified } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
-  const isPublic = PUBLIC_PREFIXES.some(p => pathname.startsWith(p));
+  const isPublic = isPublicRoute(pathname);
 
   useEffect(() => {
     if (!loading && !user && !isPublic) {
@@ -37,6 +48,10 @@ export default function MainLayout({
 
   if (!user && !isPublic) {
     return null;
+  }
+
+  if (user && !isPublic && !isAdmin && !emailVerified) {
+    return <EmailVerificationGate />;
   }
 
   return (

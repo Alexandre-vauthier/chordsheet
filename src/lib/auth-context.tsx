@@ -9,6 +9,8 @@ import {
   signOut as firebaseSignOut,
   deleteUser as firebaseDeleteUser,
   updateProfile,
+  sendEmailVerification,
+  reload,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, getDocs, deleteDoc, collection, query, where, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { getAuth, getDb } from './firebase';
@@ -20,10 +22,13 @@ interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   loading: boolean;
   isAdmin: boolean;
+  emailVerified: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
+  resendVerificationEmail: () => Promise<void>;
+  refreshEmailVerification: () => Promise<boolean>;
   updateUser: (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean; printMinimizeRepeatedSections?: boolean; printChordDiagrams?: boolean; showChordSummaryByDefault?: boolean; defaultMetronome?: boolean; defaultGrooveBox?: boolean; defaultChordsAudio?: boolean; defaultCountIn?: boolean; reputation?: import('@/types').CreatorReputation }) => Promise<void>;
 }
 
@@ -33,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [emailVerified, setEmailVerified] = useState(true);
 
   // Écouter les changements d'état d'authentification
   useEffect(() => {
@@ -42,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setLoading(true);
       setFirebaseUser(fbUser);
+      setEmailVerified(fbUser?.emailVerified ?? true);
 
       if (fbUser) {
         // Récupérer les données utilisateur depuis Firestore
@@ -158,6 +165,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
+
+    await sendEmailVerification(credential.user).catch(() => {});
+  };
+
+  // Renvoyer l'email de vérification
+  const resendVerificationEmail = async () => {
+    const auth = getAuth();
+    if (auth.currentUser) {
+      await sendEmailVerification(auth.currentUser);
+    }
+  };
+
+  // Rafraîchir le statut de vérification (après clic sur le lien reçu par email)
+  const refreshEmailVerification = async () => {
+    const auth = getAuth();
+    if (!auth.currentUser) return false;
+    await reload(auth.currentUser);
+    setEmailVerified(auth.currentUser.emailVerified);
+    setFirebaseUser(auth.currentUser);
+    return auth.currentUser.emailVerified;
   };
 
   // Déconnexion
@@ -279,7 +306,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = user?.role === 'admin';
 
   return (
-    <AuthContext.Provider value={{ user, firebaseUser, loading, isAdmin, signIn, signUp, signOut, deleteAccount, updateUser }}>
+    <AuthContext.Provider value={{ user, firebaseUser, loading, isAdmin, emailVerified, signIn, signUp, signOut, deleteAccount, updateUser, resendVerificationEmail, refreshEmailVerification }}>
       {children}
     </AuthContext.Provider>
   );
