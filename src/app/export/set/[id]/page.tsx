@@ -21,52 +21,65 @@ export default async function ExportSetPage({ params, searchParams }: ExportSetP
     return <div data-export-error="true">Lien d&apos;export invalide ou expiré.</div>;
   }
 
-  const db = getAdminDb();
+  let sheets: Sheet[];
+  let overrides: [string, LibraryChord][];
+  let additions: LibraryChord[];
+  let printChordDiagrams: boolean;
+  let printMinimizeRepeatedSections: boolean;
 
-  const [setSnap, libraryChordsSnap, requesterSnap] = await Promise.all([
-    db.collection('sets').doc(setId).get(),
-    db.collection('library_chords').get(),
-    db.collection('users').doc(tokenData.userId).get(),
-  ]);
+  try {
+    const db = getAdminDb();
 
-  if (!setSnap.exists) {
-    return <div data-export-error="true">Set introuvable.</div>;
-  }
+    const [setSnap, libraryChordsSnap, requesterSnap] = await Promise.all([
+      db.collection('sets').doc(setId).get(),
+      db.collection('library_chords').get(),
+      db.collection('users').doc(tokenData.userId).get(),
+    ]);
 
-  const setData = setSnap.data()!;
-  const sheetIds: string[] = setData.sheetIds || [];
-
-  const sheetSnaps = await Promise.all(
-    sheetIds.map((sheetId: string) => db.collection('sheets').doc(sheetId).get())
-  );
-  const sheets: Sheet[] = sheetSnaps
-    .filter((snap) => snap.exists)
-    .map((snap) => fromFirestore(snap.id, snap.data()!));
-
-  // Reconstruire overrides/additions de la bibliothèque d'accords (même logique que
-  // LibraryChordsProvider.reload(), mais via Admin SDK côté serveur)
-  const overrides: [string, LibraryChord][] = [];
-  const additions: LibraryChord[] = [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  libraryChordsSnap.docs.forEach((d: any) => {
-    const raw = d.data();
-    const entry: LibraryChord = {
-      docId: d.id,
-      instrumentId: raw.instrumentId,
-      isOverride: raw.isOverride,
-      createdBy: raw.createdBy,
-      chord: chordFromFirestore(raw.chord as Record<string, unknown>),
-    };
-    if (entry.isOverride) {
-      overrides.push([libraryKey(entry.chord.name, entry.instrumentId), entry]);
-    } else {
-      additions.push(entry);
+    if (!setSnap.exists) {
+      return <div data-export-error="true">Set introuvable.</div>;
     }
-  });
 
-  const requesterData = requesterSnap.data();
-  const printChordDiagrams = requesterData?.printChordDiagrams ?? false;
-  const printMinimizeRepeatedSections = requesterData?.printMinimizeRepeatedSections ?? false;
+    const setData = setSnap.data()!;
+    const sheetIds: string[] = setData.sheetIds || [];
+
+    const sheetSnaps = await Promise.all(
+      sheetIds.map((sheetId: string) => db.collection('sheets').doc(sheetId).get())
+    );
+    sheets = sheetSnaps
+      .filter((snap) => snap.exists)
+      .map((snap) => fromFirestore(snap.id, snap.data()!));
+
+    // Reconstruire overrides/additions de la bibliothèque d'accords (même logique que
+    // LibraryChordsProvider.reload(), mais via Admin SDK côté serveur)
+    overrides = [];
+    additions = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    libraryChordsSnap.docs.forEach((d: any) => {
+      const raw = d.data();
+      const entry: LibraryChord = {
+        docId: d.id,
+        instrumentId: raw.instrumentId,
+        isOverride: raw.isOverride,
+        createdBy: raw.createdBy,
+        chord: chordFromFirestore(raw.chord as Record<string, unknown>),
+      };
+      if (entry.isOverride) {
+        overrides.push([libraryKey(entry.chord.name, entry.instrumentId), entry]);
+      } else {
+        additions.push(entry);
+      }
+    });
+
+    const requesterData = requesterSnap.data();
+    printChordDiagrams = requesterData?.printChordDiagrams ?? false;
+    printMinimizeRepeatedSections = requesterData?.printMinimizeRepeatedSections ?? false;
+  } catch (err) {
+    // TODO: diagnostic temporaire — à retirer une fois le flux stabilisé
+    console.error('[export/set page] Error:', err);
+    const msg = err instanceof Error ? err.message : String(err);
+    return <div data-export-error="true">Erreur lors de la préparation de l&apos;export : {msg}</div>;
+  }
 
   return (
     <ExportProviders overrides={overrides} additions={additions}>
