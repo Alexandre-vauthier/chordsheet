@@ -28,7 +28,8 @@ export async function POST(req: NextRequest) {
   try {
     const decoded = await getAdminAuth().verifyIdToken(authHeader.slice(7));
     userId = decoded.uid;
-  } catch {
+  } catch (authErr) {
+    console.error('[export/set-pdf] Firebase auth error:', authErr);
     return NextResponse.json({ error: 'Session invalide, reconnecte-toi.' }, { status: 401 });
   }
 
