@@ -7,6 +7,9 @@ import {
 import { getDb } from './firebase';
 import type { StringChord, PianoChord, InstrumentId } from '@/types';
 import { chordToFirestore, chordFromFirestore } from './firestore-helpers';
+import { libraryKey } from './library-key';
+
+export { libraryKey };
 
 export interface LibraryChord {
   docId: string;
@@ -15,11 +18,6 @@ export interface LibraryChord {
   /** true = remplace un accord statique existant, false = ajout pur */
   isOverride: boolean;
   createdBy: string;
-}
-
-/** Clé de lookup identique au format customChords des grilles */
-export function libraryKey(name: string, instrumentId: InstrumentId): string {
-  return `${name.trim().toLowerCase()}-${instrumentId}`;
 }
 
 interface LibraryChordsCtx {
