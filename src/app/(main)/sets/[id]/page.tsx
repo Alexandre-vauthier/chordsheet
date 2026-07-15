@@ -12,6 +12,8 @@ import { useSets } from '@/lib/use-sets';
 import { useBookmarks } from '@/lib/use-bookmarks';
 import { useSetBookmarks } from '@/lib/use-set-bookmarks';
 import { useGroups } from '@/lib/use-groups';
+import { getAuth } from '@/lib/firebase';
+import { isPro } from '@/lib/plan-limits';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { Sheet } from '@/types';
@@ -34,6 +36,8 @@ export default function SetPage({ params }: SetPageProps) {
   const [description, setDescription] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [exportError, setExportError] = useState('');
 
   // Grilles disponibles pour ajout
   const [availableSheets, setAvailableSheets] = useState<Sheet[]>([]);
@@ -106,6 +110,39 @@ export default function SetPage({ params }: SetPageProps) {
     }
   };
 
+  const handleExportPdf = async () => {
+    if (!set?.id) return;
+    setIsExportingPdf(true);
+    setExportError('');
+    try {
+      const idToken = await getAuth().currentUser?.getIdToken();
+      if (!idToken) throw new Error('Non connecté');
+
+      const res = await fetch('/api/export/set-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ setId: set.id }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Erreur lors de la génération du PDF.');
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${set.name || 'setlist'}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : 'Erreur lors de la génération du PDF.');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
   const handleAddSheet = async (sheetId: string) => {
     if (!set?.id) return;
     await addSheetToSet(set.id, sheetId);
@@ -163,6 +200,8 @@ export default function SetPage({ params }: SetPageProps) {
   const isOwner = user?.id === set?.ownerId;
   const isGroupMember = groups.some(g => g.id === set?.groupId);
   const canEdit = isOwner || isGroupMember;
+  // Un set lié à un groupe hérite de l'abonnement Pro du groupe (licence partagée)
+  const canExportPdf = isPro(user?.subscription) || !!set?.groupId;
 
   if (isLoading) {
     return (
@@ -291,6 +330,15 @@ export default function SetPage({ params }: SetPageProps) {
             <Link href={`/sets/${id}/play`}>
               <Button>▶ Lancer le set</Button>
             </Link>
+            {canExportPdf ? (
+              <Button variant="ghost" onClick={handleExportPdf} isLoading={isExportingPdf}>
+                📄 Export PDF
+              </Button>
+            ) : (
+              <Link href="/pricing">
+                <Button variant="ghost">📄 Export PDF · Pro</Button>
+              </Link>
+            )}
             {set.groupId && isGroupMember && (
               <button
                 onClick={async () => {
@@ -310,6 +358,10 @@ export default function SetPage({ params }: SetPageProps) {
           </div>
         )}
       </div>
+
+      {exportError && (
+        <p className="text-sm text-red-500 mb-4">{exportError}</p>
+      )}
 
       {/* Formulaire */}
       <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-6 mb-6">

@@ -41,9 +41,16 @@ interface LibraryChordsCtx {
 
 const Ctx = createContext<LibraryChordsCtx | undefined>(undefined);
 
-export function LibraryChordsProvider({ children }: { children: ReactNode }) {
-  const [overrides, setOverrides] = useState<Map<string, LibraryChord>>(new Map());
-  const [additions, setAdditions] = useState<LibraryChord[]>([]);
+interface LibraryChordsProviderProps {
+  children: ReactNode;
+  /** Pré-chargées côté serveur (ex: page d'export PDF) pour éviter de dépendre du fetch client */
+  initialOverrides?: Map<string, LibraryChord>;
+  initialAdditions?: LibraryChord[];
+}
+
+export function LibraryChordsProvider({ children, initialOverrides, initialAdditions }: LibraryChordsProviderProps) {
+  const [overrides, setOverrides] = useState<Map<string, LibraryChord>>(initialOverrides ?? new Map());
+  const [additions, setAdditions] = useState<LibraryChord[]>(initialAdditions ?? []);
   const [loading, setLoading] = useState(true);
 
   const reload = useCallback(async () => {

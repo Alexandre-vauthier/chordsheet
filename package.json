@@ -11,9 +11,11 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.102.0",
     "@sentry/nextjs": "^10.65.0",
+    "@sparticuz/chromium": "^149.0.0",
     "firebase": "^11.3.0",
     "firebase-admin": "^14.0.0",
     "next": "^16.2.10",
+    "puppeteer-core": "^25.3.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "stripe": "^22.2.0"

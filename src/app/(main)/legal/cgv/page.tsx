@@ -43,6 +43,7 @@ export default function CgvPage() {
         <ul className="list-disc pl-5 space-y-1">
           <li>Création et gestion de groupes de musiciens (illimité)</li>
           <li>Mode concert synchronisé en temps réel</li>
+          <li>Export PDF multi-grilles d&apos;un Set (setlist) entier en un seul document</li>
           <li>Analyses OCR de partitions illimitées (usage raisonnable : 100 analyses/mois)</li>
           <li>Badge Pro sur le profil public</li>
         </ul>

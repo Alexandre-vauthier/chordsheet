@@ -41,6 +41,9 @@ interface SheetViewerProps {
   onToggleBookmark?: () => void;
   isTogglingBookmark?: boolean;
   concertCellPath?: { sectionIdx: number; rowIdx: number; cellIdx: number; durationMs?: number; rowRepeatIndex?: number };
+  /** Surcharge des préférences d'impression de l'utilisateur (ex: rendu serveur pour export PDF, sans session Firebase) */
+  printChordDiagramsOverride?: boolean;
+  printMinimizeRepeatedSectionsOverride?: boolean;
 }
 
 function getRefLabel(url: string): string {
@@ -63,7 +66,7 @@ function sectionSignature(section: { rows: { chord: string; span: number }[][] }
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingBookmark, concertCellPath }: SheetViewerProps) {
+export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingBookmark, concertCellPath, printChordDiagramsOverride, printMinimizeRepeatedSectionsOverride }: SheetViewerProps) {
   const translate = useChordNotation();
   const getColor = useChordColor();
   const { user, updateUser } = useAuth();
@@ -641,7 +644,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
       </div>
 
       {/* Résumé accords — uniquement à l'impression, si option activée */}
-      {user?.printChordDiagrams && instrumentId !== 'voice' && instrumentId !== 'percussion' && (
+      {(printChordDiagramsOverride ?? user?.printChordDiagrams) && instrumentId !== 'voice' && instrumentId !== 'percussion' && (
         <div className="hidden print:block mb-8 print-chord-summary">
           <div className="flex items-center gap-3 mb-3">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Accords utilisés</h2>
@@ -668,7 +671,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             const sig = sectionSignature(section);
             const firstLabel = seenSignatures.get(sig);
             const isDuplicate = minimizeRepeated && !!firstLabel;
-            const isDuplicateForPrint = (user?.printMinimizeRepeatedSections ?? false) && !!firstLabel;
+            const isDuplicateForPrint = (printMinimizeRepeatedSectionsOverride ?? user?.printMinimizeRepeatedSections ?? false) && !!firstLabel;
             if (!seenSignatures.has(sig)) seenSignatures.set(sig, section.label);
             return { section, isDuplicate, isDuplicateForPrint, firstLabel: firstLabel ?? null };
           });
