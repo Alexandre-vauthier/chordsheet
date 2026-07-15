@@ -6,6 +6,11 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: __dirname,
   },
+  // @sparticuz/chromium charge son binaire dynamiquement (pas de require/import statique),
+  // le traçage de fichiers de Next.js ne l'inclut donc pas automatiquement dans le bundle serverless.
+  outputFileTracingIncludes: {
+    '/api/export/set-pdf': ['./node_modules/@sparticuz/chromium/bin/**'],
+  },
 };
 
 export default withSentryConfig(nextConfig, {
