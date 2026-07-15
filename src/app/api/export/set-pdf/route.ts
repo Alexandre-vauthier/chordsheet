@@ -100,8 +100,18 @@ export async function POST(req: NextRequest) {
     });
 
     const page = await browser.newPage();
-    await page.goto(exportUrl, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('[data-export-ready="true"], [data-export-error="true"]', { timeout: 15000 });
+    const navResponse = await page.goto(exportUrl, { waitUntil: 'domcontentloaded' });
+
+    try {
+      await page.waitForSelector('[data-export-ready="true"], [data-export-error="true"]', { timeout: 15000 });
+    } catch {
+      // TODO: diagnostic temporaire — à retirer une fois le flux stabilisé
+      const html = await page.content().catch(() => '');
+      const snippet = html.replace(/\s+/g, ' ').slice(0, 800);
+      throw new Error(
+        `Page export non chargée (status=${navResponse?.status()}, url=${page.url()}) — extrait: ${snippet}`
+      );
+    }
 
     const errorEl = await page.$('[data-export-error="true"]');
     if (errorEl) {
