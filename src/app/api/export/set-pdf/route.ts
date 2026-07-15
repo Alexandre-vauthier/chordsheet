@@ -30,9 +30,7 @@ export async function POST(req: NextRequest) {
     userId = decoded.uid;
   } catch (authErr) {
     console.error('[export/set-pdf] Firebase auth error:', authErr);
-    // TODO: debug temporaire — à repasser au message générique une fois résolu
-    const debugMsg = authErr instanceof Error ? authErr.message : String(authErr);
-    return NextResponse.json({ error: `Session invalide, reconnecte-toi. (debug: ${debugMsg})` }, { status: 401 });
+    return NextResponse.json({ error: 'Session invalide, reconnecte-toi.' }, { status: 401 });
   }
 
   if (isBursting(userId)) {
