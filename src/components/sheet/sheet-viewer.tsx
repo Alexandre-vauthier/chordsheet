@@ -35,6 +35,20 @@ function hasLocalInstrument(): boolean {
   return !!(v && (INSTRUMENTS as readonly string[]).includes(v));
 }
 
+// Icône SVG (au lieu des glyphes Unicode ♩/♪, absents des polices de l'environnement
+// headless utilisé pour l'export PDF serveur)
+function NoteIcon({ unit, className }: { unit: 'quarter' | 'eighth'; className?: string }) {
+  return (
+    <svg viewBox="0 0 16 16" className={className} fill="currentColor" aria-hidden="true">
+      <ellipse cx="4.5" cy="12" rx="3.2" ry="2.3" transform="rotate(-18 4.5 12)" />
+      <rect x="7.1" y="1.5" width="1.3" height="10.5" />
+      {unit === 'eighth' && (
+        <path d="M8.4 1.5c2.6 0.9 3.7 2.8 3.3 5.5-0.3-1.7-1.5-2.8-3.3-3.3z" />
+      )}
+    </svg>
+  );
+}
+
 interface SheetViewerProps {
   sheet: Sheet;
   isBookmarked?: boolean;
@@ -395,10 +409,10 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                     const units = ['quarter', 'eighth'] as const;
                     setLocalTempoUnit(u => units[(units.indexOf(u) + 1) % units.length]);
                   }}
-                  title="Changer l'unité de tempo (♩ noire → ♪ croche)"
-                  className="text-base leading-none hover:text-[var(--accent)] transition-colors cursor-pointer"
+                  title="Changer l'unité de tempo (noire → croche)"
+                  className="hover:text-[var(--accent)] transition-colors cursor-pointer"
                 >
-                  {localTempoUnit === 'eighth' ? '♪' : '♩'}
+                  <NoteIcon unit={localTempoUnit} className="w-3.5 h-3.5" />
                 </button>
                 <input
                   type="number"
@@ -503,7 +517,6 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   className="w-5 h-5 flex items-center justify-center rounded border border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors text-xs font-medium"
                 >−</button>
                 <span className="flex items-center gap-1 px-1.5 py-0.5 bg-[var(--cell-bg)] text-[var(--ink)] rounded text-xs min-w-[3rem] justify-center border border-[var(--line)]">
-                  <span className="text-xs">♯♭</span>
                   {displayKey || '—'}
                   {transpose !== 0 && (
                     <span className="text-[9px] opacity-70">{transpose > 0 ? `+${transpose}` : transpose}</span>
@@ -549,11 +562,12 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
           <div className="hidden print:flex flex-col items-end justify-center gap-1 shrink-0 text-right">
             {sheet.key && (
               <span className="text-sm font-semibold text-[var(--ink)]">
-                ♯♭ {displayKey}
+                {displayKey}
               </span>
             )}
-            <span className="text-sm text-[var(--ink)]">
-              {localTempoUnit === 'eighth' ? '♪' : '♩'} {localTempo} BPM
+            <span className="flex items-center gap-1 text-sm text-[var(--ink)]">
+              <NoteIcon unit={localTempoUnit} className="w-3 h-3" />
+              {localTempo} BPM
             </span>
             {sheet.capo ? (
               <span className="text-sm text-[var(--ink-light)]">Capo {sheet.capo}</span>
