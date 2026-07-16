@@ -18,7 +18,7 @@ import { useArtwork } from '@/lib/use-artwork';
 import { useAuth } from '@/lib/auth-context';
 import { INSTRUMENT_CONFIG } from '@/lib/chord-data';
 import { useChordVariants } from '@/lib/use-chord-variants';
-import { playChord, playMetronomeTick } from '@/lib/chord-audio';
+import { playChord, playMetronomeTick, preloadInstrument } from '@/lib/chord-audio';
 import { transposeSections, transposeKey } from '@/lib/transpose';
 
 const LS_KEY = 'chordsheet_instrument';
@@ -109,6 +109,11 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.preferredInstrument]);
+
+  // Précharger le son échantillonné de l'instrument courant, pour qu'il soit prêt au premier clic
+  useEffect(() => {
+    preloadInstrument(instrumentId);
+  }, [instrumentId]);
 
   const handleInstrumentChange = (id: InstrumentId) => {
     setInstrumentId(id);

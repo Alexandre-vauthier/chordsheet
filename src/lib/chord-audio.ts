@@ -1,6 +1,13 @@
 // Système audio pour jouer les accords
 import type { StringChord, PianoChord, InstrumentId } from '@/types';
 import { isPianoChord } from '@/types';
+import { preloadInstrumentSound, isInstrumentSoundReady, playSampledNote } from './instrument-sounds';
+
+// Fréquence (Hz) → numéro MIDI le plus proche. Nos accordages sont tempérés égaux
+// et les frettes des demi-tons entiers, donc l'arrondi est exact (à l'erreur flottante près).
+function freqToMidi(freq: number): number {
+  return Math.round(69 + 12 * Math.log2(freq / 440));
+}
 
 // Fréquences des cordes à vide (string 1 = aigu, string N = grave)
 export const OPEN_FREQS: Record<string, Record<number, number>> = {
@@ -35,7 +42,7 @@ export function noteNameToFreq(name: string): number | null {
 // Singleton AudioContext
 let audioContext: AudioContext | null = null;
 
-function getAudioContext(): AudioContext {
+export function getAudioContext(): AudioContext {
   if (!audioContext) {
     audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
   }
@@ -106,9 +113,23 @@ function getPianoChordFrequencies(chord: PianoChord, capo = 0): number[] {
     .map(f => f * capoShift);
 }
 
+// Précharge l'instrument échantillonné pour cet instrumentId (idempotent, no-op pour
+// voice/percussion). À appeler dès qu'on sait quel instrument va être joué (montage de
+// la vue, changement d'instrument) pour qu'il soit prêt au premier clic.
+export function preloadInstrument(instrumentId: InstrumentId): void {
+  preloadInstrumentSound(getAudioContext(), instrumentId);
+}
+
 // Jouer une seule note
-export function playNote(freq: number, isPiano = false): void {
+export function playNote(freq: number, isPiano = false, instrumentId?: InstrumentId): void {
   const ctx = getAudioContext();
+  const targetInstrument = instrumentId ?? (isPiano ? 'piano' : undefined);
+
+  if (targetInstrument && isInstrumentSoundReady(targetInstrument)) {
+    playSampledNote(targetInstrument, freqToMidi(freq), ctx.currentTime, 1.4);
+    return;
+  }
+
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
 
@@ -126,21 +147,29 @@ export function playNote(freq: number, isPiano = false): void {
 
 // Références aux oscillateurs en cours pour pouvoir les couper
 let activeNodes: { osc: OscillatorNode; gain: GainNode }[] = [];
+// Références aux voix échantillonnées en cours (instrument-sounds.ts)
+let activeStopFns: (() => void)[] = [];
 
 // Couper le son en cours (fade out rapide)
 function stopActiveChord() {
   const ctx = audioContext;
-  if (!ctx) return;
-  const now = ctx.currentTime;
-  for (const { osc, gain } of activeNodes) {
-    try {
-      gain.gain.cancelScheduledValues(now);
-      gain.gain.setValueAtTime(gain.gain.value, now);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
-      osc.stop(now + 0.06);
-    } catch { /* already stopped */ }
+  if (ctx) {
+    const now = ctx.currentTime;
+    for (const { osc, gain } of activeNodes) {
+      try {
+        gain.gain.cancelScheduledValues(now);
+        gain.gain.setValueAtTime(gain.gain.value, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
+        osc.stop(now + 0.06);
+      } catch { /* already stopped */ }
+    }
   }
   activeNodes = [];
+
+  for (const stop of activeStopFns) {
+    try { stop(); } catch { /* already stopped */ }
+  }
+  activeStopFns = [];
 }
 
 // Jouer un tick de métronome (click court et sec)
@@ -207,6 +236,13 @@ export function playChord(
   const strumDelay = isPiano ? 0.06 : 0.04;
   const decay = isPiano ? 1.8 : 2.2;
   const vol = isPiano ? 0.22 : 0.28;
+
+  if (isInstrumentSoundReady(instrumentId)) {
+    activeStopFns = freqs
+      .map((freq, i) => playSampledNote(instrumentId, freqToMidi(freq), ctx.currentTime + i * strumDelay, decay))
+      .filter((stop): stop is () => void => stop !== null);
+    return;
+  }
 
   const nodes: { osc: OscillatorNode; gain: GainNode }[] = [];
 

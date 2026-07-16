@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import type { InstrumentId, StringChord, PianoChord, FingerPosition, ChordBarre } from '@/types';
-import { playChord, playNote, OPEN_FREQS, noteNameToFreq } from '@/lib/chord-audio';
+import { playChord, playNote, OPEN_FREQS, noteNameToFreq, preloadInstrument } from '@/lib/chord-audio';
 import { selectionToPitchClasses, pianoPitchClasses, findMatchingChords, type ChordMatch } from '@/lib/chord-finder';
 import { ChordDiagram } from './chord-diagram';
 import { PianoKeyboard } from './piano-keyboard';
@@ -38,6 +38,11 @@ interface ChordFinderProps {
 
 export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, onSelect }: ChordFinderProps) {
   const [instrumentId, setInstrumentId] = useState<InstrumentId>(initialInstrument);
+
+  useEffect(() => {
+    preloadInstrument(instrumentId);
+  }, [instrumentId]);
+
   const isPiano = instrumentId === 'piano';
   const isVoice = instrumentId === 'voice';
   const config = (!isPiano && !isVoice) ? INSTRUMENT_CONFIG[instrumentId as Exclude<InstrumentId, 'piano' | 'voice' | 'percussion'>] : null;
@@ -70,7 +75,7 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, 
 
   const handleFretClick = useCallback((stringNum: number, fret: number) => {
     const openFreq = OPEN_FREQS[instrumentId]?.[stringNum];
-    if (openFreq) playNote(openFreq * Math.pow(2, fret / 12));
+    if (openFreq) playNote(openFreq * Math.pow(2, fret / 12), false, instrumentId);
     setOpenStrings(prev => prev.filter(s => s !== stringNum));
     setMutedStrings(prev => prev.filter(s => s !== stringNum));
     const existingIndex = fingers.findIndex(([s, f]) => s === stringNum && f === fret);
@@ -87,7 +92,7 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, 
 
   const toggleOpenString = useCallback((stringNum: number) => {
     const openFreq = OPEN_FREQS[instrumentId]?.[stringNum];
-    if (openFreq) playNote(openFreq);
+    if (openFreq) playNote(openFreq, false, instrumentId);
     setFingers(prev => prev.filter(([s]) => s !== stringNum));
     setMutedStrings(prev => prev.filter(s => s !== stringNum));
     setOpenStrings(prev =>

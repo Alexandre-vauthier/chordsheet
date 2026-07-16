@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { InstrumentId, StringChord, PianoChord, FingerPosition, ChordBarre } from '@/types';
 import { INSTRUMENTS } from '@/types';
-import { playChord, playNote, OPEN_FREQS, noteNameToFreq, ensureAudioContext } from '@/lib/chord-audio';
+import { playChord, playNote, OPEN_FREQS, noteNameToFreq, ensureAudioContext, preloadInstrument } from '@/lib/chord-audio';
 
 // Configuration par instrument
 const INSTRUMENT_CONFIG: Record<Exclude<InstrumentId, 'piano' | 'voice' | 'percussion'>, { strings: number; frets: number; label: string }> = {
@@ -31,6 +31,10 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
   const [instrumentId, setInstrumentId] = useState<InstrumentId>(initialInstrument);
   const [chordName, setChordName] = useState('');
   const [chordFull, setChordFull] = useState('');
+
+  useEffect(() => {
+    preloadInstrument(instrumentId);
+  }, [instrumentId]);
 
   // État pour instruments à cordes
   const [fingers, setFingers] = useState<FingerPosition[]>([]);
@@ -69,7 +73,7 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
   const handleFretClick = useCallback((stringNum: number, fret: number) => {
     // Jouer le son de la note
     const openFreq = OPEN_FREQS[instrumentId]?.[stringNum];
-    if (openFreq) playNote(openFreq * Math.pow(2, fret / 12));
+    if (openFreq) playNote(openFreq * Math.pow(2, fret / 12), false, instrumentId);
 
     // Retirer de open/muted si présent
     setOpenStrings(prev => prev.filter(s => s !== stringNum));
@@ -96,7 +100,7 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
   const toggleOpenString = useCallback((stringNum: number) => {
     // Jouer le son de la corde à vide
     const openFreq = OPEN_FREQS[instrumentId]?.[stringNum];
-    if (openFreq) playNote(openFreq);
+    if (openFreq) playNote(openFreq, false, instrumentId);
 
     // Retirer des autres états
     setFingers(prev => prev.filter(([s]) => s !== stringNum));

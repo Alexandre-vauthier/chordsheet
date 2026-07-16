@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import type { InstrumentId, StringChord, PianoChord, FingerPosition, ChordBarre } from '@/types';
-import { playChord, playNote, OPEN_FREQS, noteNameToFreq, ensureAudioContext } from '@/lib/chord-audio';
+import { playChord, playNote, OPEN_FREQS, noteNameToFreq, ensureAudioContext, preloadInstrument } from '@/lib/chord-audio';
 
 const CATEGORY_OPTIONS = [
   { value: 'major', label: 'Majeur' },
@@ -61,6 +61,10 @@ export function ChordEditorModal({
   const isVoice = instrumentId === 'voice';
   const config = (!isPiano && !isVoice) ? INSTRUMENT_CONFIG[instrumentId as Exclude<InstrumentId, 'piano' | 'voice' | 'percussion'>] : null;
 
+  useEffect(() => {
+    preloadInstrument(instrumentId);
+  }, [instrumentId]);
+
   // Nom éditable (pour les nouveaux accords admin sans nom prédéfini)
   const [editableName, setEditableName] = useState(chordName);
 
@@ -114,7 +118,7 @@ export function ChordEditorModal({
   const handleFretClick = (stringNum: number, fret: number) => {
     // Jouer le son de la note
     const openFreq = OPEN_FREQS[instrumentId]?.[stringNum];
-    if (openFreq) playNote(openFreq * Math.pow(2, fret / 12));
+    if (openFreq) playNote(openFreq * Math.pow(2, fret / 12), false, instrumentId);
 
     setOpenStrings(prev => prev.filter(s => s !== stringNum));
     setMutedStrings(prev => prev.filter(s => s !== stringNum));
@@ -135,7 +139,7 @@ export function ChordEditorModal({
 
   const toggleOpenString = (stringNum: number) => {
     const openFreq = OPEN_FREQS[instrumentId]?.[stringNum];
-    if (openFreq) playNote(openFreq);
+    if (openFreq) playNote(openFreq, false, instrumentId);
 
     setFingers(prev => prev.filter(([s]) => s !== stringNum));
     setMutedStrings(prev => prev.filter(s => s !== stringNum));
