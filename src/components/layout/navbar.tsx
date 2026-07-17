@@ -12,12 +12,28 @@ import { useSheetsIndex } from '@/lib/use-sheets-index';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import type { Sheet } from '@/types';
 
-function getSearchSuggestions(sheets: Sheet[], query: string, max = 6): Sheet[] {
+type SearchResult =
+  | { kind: 'sheet'; key: string; sheet: Sheet }
+  | { kind: 'artist'; key: string; name: string };
+
+// Deux sections : grilles dont le titre correspond, puis artistes dont le nom correspond
+// (cliquer un artiste mène à sa page, qui liste toutes ses grilles — pas besoin de
+// dupliquer les grilles d'un même artiste dans la section "Grilles").
+function getSearchResults(sheets: Sheet[], artistNames: string[], query: string): SearchResult[] {
   const q = query.trim().toLowerCase();
   if (q.length < 2) return [];
-  return sheets
-    .filter((s) => s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q))
-    .slice(0, max);
+
+  const sheetResults: SearchResult[] = sheets
+    .filter((s) => s.title.toLowerCase().includes(q))
+    .slice(0, 4)
+    .map((sheet) => ({ kind: 'sheet', key: `sheet-${sheet.id}`, sheet }));
+
+  const artistResults: SearchResult[] = artistNames
+    .filter((n) => n.toLowerCase().includes(q))
+    .slice(0, 3)
+    .map((name) => ({ kind: 'artist', key: `artist-${name}`, name }));
+
+  return [...sheetResults, ...artistResults];
 }
 
 export function Navbar() {
@@ -33,9 +49,9 @@ export function Navbar() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
-  const { sheets: sheetsIndex } = useSheetsIndex();
+  const { sheets: sheetsIndex, artistNames } = useSheetsIndex();
   const debouncedSearch = useDebouncedValue(searchValue);
-  const suggestions = getSearchSuggestions(sheetsIndex, debouncedSearch);
+  const suggestions = getSearchResults(sheetsIndex, artistNames, debouncedSearch);
   const showSuggestions = searchFocused && debouncedSearch.trim().length >= 2;
 
   useEffect(() => {
@@ -67,8 +83,8 @@ export function Navbar() {
     performSearch();
   };
 
-  const handleSelectSuggestion = (sheet: Sheet) => {
-    router.push(`/sheet/${sheet.id}`);
+  const handleSelectSuggestion = (result: SearchResult) => {
+    router.push(result.kind === 'sheet' ? `/sheet/${result.sheet.id}` : `/artist/${encodeURIComponent(result.name)}`);
     setSearchValue('');
     setActiveSuggestion(-1);
     setSearchOpen(false);
@@ -161,14 +177,17 @@ export function Navbar() {
                       <SuggestionsDropdown
                         items={suggestions}
                         activeIndex={activeSuggestion}
-                        getKey={(s) => s.id!}
+                        getKey={(r) => r.key}
+                        getSection={(r) => r.kind === 'sheet' ? 'Grilles' : 'Artistes'}
                         onHover={setActiveSuggestion}
                         onSelect={handleSelectSuggestion}
-                        renderItem={(s) => (
+                        renderItem={(r) => r.kind === 'sheet' ? (
                           <>
-                            <p className="text-[var(--ink)] truncate">{s.title}</p>
-                            <p className="text-xs text-[var(--ink-faint)] truncate">{s.artist}</p>
+                            <p className="text-[var(--ink)] truncate">{r.sheet.title}</p>
+                            <p className="text-xs text-[var(--ink-faint)] truncate">{r.sheet.artist}</p>
                           </>
+                        ) : (
+                          <p className="text-[var(--ink)] truncate">{r.name}</p>
                         )}
                         footer={
                           <button
@@ -372,14 +391,17 @@ export function Navbar() {
                 <SuggestionsDropdown
                   items={suggestions}
                   activeIndex={activeSuggestion}
-                  getKey={(s) => s.id!}
+                  getKey={(r) => r.key}
+                  getSection={(r) => r.kind === 'sheet' ? 'Grilles' : 'Artistes'}
                   onHover={setActiveSuggestion}
                   onSelect={handleSelectSuggestion}
-                  renderItem={(s) => (
+                  renderItem={(r) => r.kind === 'sheet' ? (
                     <>
-                      <p className="text-[var(--ink)] truncate">{s.title}</p>
-                      <p className="text-xs text-[var(--ink-faint)] truncate">{s.artist}</p>
+                      <p className="text-[var(--ink)] truncate">{r.sheet.title}</p>
+                      <p className="text-xs text-[var(--ink-faint)] truncate">{r.sheet.artist}</p>
                     </>
+                  ) : (
+                    <p className="text-[var(--ink)] truncate">{r.name}</p>
                   )}
                   footer={
                     <button
