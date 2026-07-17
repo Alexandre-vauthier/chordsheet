@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
+import { collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { getDb } from '@/lib/firebase';
 import { computeDifficulty } from '@/lib/compute-difficulty';
 import type { Sheet, Section, NewSheet, StringChord, PianoChord, CustomChord, InstrumentId } from '@/types';
 import { createEmptySection, GENRES } from '@/types';
@@ -16,6 +18,15 @@ import { CoachMark } from './coach-mark';
 import { getChordsByInstrument, getAllExtendedChords } from '@/lib/chord-data';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
 import { useAuth } from '@/lib/auth-context';
+import { useSheetsIndex } from '@/lib/use-sheets-index';
+import { useDebouncedValue } from '@/lib/use-debounced-value';
+import { SuggestionsDropdown } from '@/components/ui/suggestions-dropdown';
+
+function getArtistSuggestions(names: string[], value: string, max = 6): string[] {
+  const q = value.trim().toLowerCase();
+  if (q.length < 2) return [];
+  return names.filter((n) => n.toLowerCase().includes(q) && n.toLowerCase() !== q).slice(0, max);
+}
 
 interface SheetEditorProps {
   initialSheet: NewSheet | Sheet;
@@ -371,6 +382,32 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
 
   // Ref vers l'input artiste pour le focus via TAB depuis le titre
   const artistInputRef = useRef<HTMLInputElement>(null);
+  const [artistFocused, setArtistFocused] = useState(false);
+  const [activeArtistSuggestion, setActiveArtistSuggestion] = useState(-1);
+
+  // Suggestions d'artiste : grilles publiques + grilles (privées incluses) de l'utilisateur —
+  // pousse vers l'orthographe déjà existante pour éviter de fragmenter les pages artiste
+  // (qui matchent aujourd'hui sur une égalité stricte, sensible à la casse).
+  const { artistNames: publicArtistNames } = useSheetsIndex();
+  const [ownArtistNames, setOwnArtistNames] = useState<string[]>([]);
+  useEffect(() => {
+    if (!user) return;
+    const db = getDb();
+    getDocs(query(collection(db, 'sheets'), where('ownerId', '==', user.id), limit(300)))
+      .then((snap) => {
+        const names = Array.from(new Set(
+          snap.docs.map((d) => (d.data().artist as string)?.trim()).filter((n): n is string => !!n)
+        ));
+        setOwnArtistNames(names);
+      })
+      .catch(() => {});
+  }, [user]);
+  const artistSuggestionPool = useMemo(
+    () => Array.from(new Set([...publicArtistNames, ...ownArtistNames])),
+    [publicArtistNames, ownArtistNames]
+  );
+  const debouncedArtist = useDebouncedValue(sheet.artist);
+  const artistSuggestions = getArtistSuggestions(artistSuggestionPool, debouncedArtist);
 
   // Navigation entre cellules via TAB — focus la cellule cible par data-cell-id
   const navigateToCell = useCallback(
@@ -553,18 +590,49 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
           </div>
         </div>
         <div className="flex flex-wrap gap-4 mt-3">
-          <input
-            ref={artistInputRef}
-            type="text"
-            value={sheet.artist}
-            onChange={(e) => {
-              const val = e.target.value.replace(/(^|\s)\S/g, (c) => c.toUpperCase());
-              updateSheet({ artist: val });
-            }}
-            placeholder="Artiste…"
-            className="font-sans text-sm text-[var(--ink-light)] bg-transparent border-none outline-none
-              placeholder:text-[var(--ink-faint)]"
-          />
+          <div className="relative">
+            <input
+              ref={artistInputRef}
+              type="text"
+              value={sheet.artist}
+              onChange={(e) => {
+                const val = e.target.value.replace(/(^|\s)\S/g, (c) => c.toUpperCase());
+                updateSheet({ artist: val });
+                setActiveArtistSuggestion(-1);
+              }}
+              onFocus={() => setArtistFocused(true)}
+              onBlur={() => setArtistFocused(false)}
+              onKeyDown={(e) => {
+                if (artistSuggestions.length === 0) return;
+                if (e.key === 'ArrowDown') {
+                  e.preventDefault();
+                  setActiveArtistSuggestion((i) => Math.min(i + 1, artistSuggestions.length - 1));
+                } else if (e.key === 'ArrowUp') {
+                  e.preventDefault();
+                  setActiveArtistSuggestion((i) => Math.max(i - 1, 0));
+                } else if (e.key === 'Enter' && activeArtistSuggestion >= 0) {
+                  e.preventDefault();
+                  updateSheet({ artist: artistSuggestions[activeArtistSuggestion] });
+                  setActiveArtistSuggestion(-1);
+                } else if (e.key === 'Escape') {
+                  setActiveArtistSuggestion(-1);
+                }
+              }}
+              placeholder="Artiste…"
+              className="font-sans text-sm text-[var(--ink-light)] bg-transparent border-none outline-none
+                placeholder:text-[var(--ink-faint)]"
+            />
+            {artistFocused && artistSuggestions.length > 0 && (
+              <SuggestionsDropdown
+                items={artistSuggestions}
+                activeIndex={activeArtistSuggestion}
+                getKey={(name) => name}
+                onHover={setActiveArtistSuggestion}
+                onSelect={(name) => { updateSheet({ artist: name }); setActiveArtistSuggestion(-1); }}
+                renderItem={(name) => <span className="text-[var(--ink)]">{name}</span>}
+              />
+            )}
+          </div>
           <div className="relative flex items-center gap-1 text-[var(--ink-faint)]" onMouseEnter={isFirstSheet ? handleKeyHover : undefined}>
             <span className="text-sm">♯♭</span>
             <input

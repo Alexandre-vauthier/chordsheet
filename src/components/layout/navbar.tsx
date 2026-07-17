@@ -7,6 +7,18 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { LevelBadge } from '@/components/reputation/level-badge';
+import { SuggestionsDropdown } from '@/components/ui/suggestions-dropdown';
+import { useSheetsIndex } from '@/lib/use-sheets-index';
+import { useDebouncedValue } from '@/lib/use-debounced-value';
+import type { Sheet } from '@/types';
+
+function getSearchSuggestions(sheets: Sheet[], query: string, max = 6): Sheet[] {
+  const q = query.trim().toLowerCase();
+  if (q.length < 2) return [];
+  return sheets
+    .filter((s) => s.title.toLowerCase().includes(q) || s.artist.toLowerCase().includes(q))
+    .slice(0, max);
+}
 
 export function Navbar() {
   const { user, loading, isAdmin, signOut } = useAuth();
@@ -16,8 +28,15 @@ export function Navbar() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+  const [activeSuggestion, setActiveSuggestion] = useState(-1);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  const { sheets: sheetsIndex } = useSheetsIndex();
+  const debouncedSearch = useDebouncedValue(searchValue);
+  const suggestions = getSearchSuggestions(sheetsIndex, debouncedSearch);
+  const showSuggestions = searchFocused && debouncedSearch.trim().length >= 2;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -35,12 +54,47 @@ export function Navbar() {
     router.push('/login');
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  const performSearch = () => {
     const q = searchValue.trim();
     router.push(q ? `/explore?q=${encodeURIComponent(q)}` : '/explore');
     setSearchValue('');
+    setActiveSuggestion(-1);
     searchInputRef.current?.blur();
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    performSearch();
+  };
+
+  const handleSelectSuggestion = (sheet: Sheet) => {
+    router.push(`/sheet/${sheet.id}`);
+    setSearchValue('');
+    setActiveSuggestion(-1);
+    setSearchOpen(false);
+    setMobileMenuOpen(false);
+    searchInputRef.current?.blur();
+  };
+
+  // Navigation clavier dans le dropdown : le dernier index (== suggestions.length)
+  // représente la ligne "Voir tous les résultats", qui retombe sur handleSearch.
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape') {
+      setSearchOpen(false);
+      setActiveSuggestion(-1);
+      return;
+    }
+    if (!showSuggestions) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveSuggestion((i) => Math.min(i + 1, suggestions.length));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveSuggestion((i) => Math.max(i - 1, 0));
+    } else if (e.key === 'Enter' && activeSuggestion >= 0 && activeSuggestion < suggestions.length) {
+      e.preventDefault();
+      handleSelectSuggestion(suggestions[activeSuggestion]);
+    }
   };
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
@@ -93,15 +147,40 @@ export function Navbar() {
                       type="text"
                       autoFocus
                       value={searchValue}
-                      onChange={e => setSearchValue(e.target.value)}
-                      onBlur={() => { if (!searchValue.trim()) setSearchOpen(false); }}
-                      onKeyDown={e => e.key === 'Escape' && setSearchOpen(false)}
+                      onChange={e => { setSearchValue(e.target.value); setActiveSuggestion(-1); }}
+                      onFocus={() => setSearchFocused(true)}
+                      onBlur={() => { setSearchFocused(false); if (!searchValue.trim()) setSearchOpen(false); }}
+                      onKeyDown={handleSearchKeyDown}
                       placeholder="Rechercher…"
-                      className="w-44 pl-8 pr-3 py-1.5 rounded-lg text-sm bg-white/10 text-[var(--nav-text)] placeholder:text-[var(--nav-text)]/50 border border-white/15 outline-none focus:bg-white/15 focus:border-white/30 transition-all"
+                      className="w-64 pl-8 pr-3 py-1.5 rounded-lg text-sm bg-white/10 text-[var(--nav-text)] placeholder:text-[var(--nav-text)]/50 border border-white/15 outline-none focus:bg-white/15 focus:border-white/30 transition-all"
                     />
                     <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--nav-text)]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
                     </svg>
+                    {showSuggestions && (
+                      <SuggestionsDropdown
+                        items={suggestions}
+                        activeIndex={activeSuggestion}
+                        getKey={(s) => s.id!}
+                        onHover={setActiveSuggestion}
+                        onSelect={handleSelectSuggestion}
+                        renderItem={(s) => (
+                          <>
+                            <p className="text-[var(--ink)] truncate">{s.title}</p>
+                            <p className="text-xs text-[var(--ink-faint)] truncate">{s.artist}</p>
+                          </>
+                        )}
+                        footer={
+                          <button
+                            type="button"
+                            onMouseDown={(e) => { e.preventDefault(); performSearch(); setSearchOpen(false); }}
+                            className="w-full text-left px-4 py-2.5 text-sm text-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors cursor-pointer"
+                          >
+                            Voir tous les résultats
+                          </button>
+                        }
+                      />
+                    )}
                   </form>
                 ) : (
                   <button
@@ -279,13 +358,40 @@ export function Navbar() {
               <input
                 type="text"
                 value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
+                onChange={(e) => { setSearchValue(e.target.value); setActiveSuggestion(-1); }}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setSearchFocused(false)}
+                onKeyDown={handleSearchKeyDown}
                 placeholder="Rechercher…"
                 className="w-full pl-8 pr-3 py-2 rounded-lg text-sm bg-white/10 text-[var(--nav-text)] placeholder:text-[var(--nav-text)]/50 border border-white/15 outline-none focus:bg-white/15 focus:border-white/30 transition-all"
               />
               <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--nav-text)]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
               </svg>
+              {showSuggestions && (
+                <SuggestionsDropdown
+                  items={suggestions}
+                  activeIndex={activeSuggestion}
+                  getKey={(s) => s.id!}
+                  onHover={setActiveSuggestion}
+                  onSelect={handleSelectSuggestion}
+                  renderItem={(s) => (
+                    <>
+                      <p className="text-[var(--ink)] truncate">{s.title}</p>
+                      <p className="text-xs text-[var(--ink-faint)] truncate">{s.artist}</p>
+                    </>
+                  )}
+                  footer={
+                    <button
+                      type="button"
+                      onMouseDown={(e) => { e.preventDefault(); performSearch(); closeMobileMenu(); }}
+                      className="w-full text-left px-4 py-2.5 text-sm text-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors cursor-pointer"
+                    >
+                      Voir tous les résultats
+                    </button>
+                  }
+                />
+              )}
             </form>
             {[
               { href: '/dashboard', label: 'Mon book' },
