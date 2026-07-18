@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useGroups } from '@/lib/use-groups';
 import { useSets } from '@/lib/use-sets';
 import { useAuth } from '@/lib/auth-context';
@@ -27,6 +28,7 @@ function groupInitials(name: string): string {
 }
 
 function GroupCard({ group, setsCount }: { group: Group; setsCount: number }) {
+  const t = useTranslations('Groups');
   const color = groupColor(group.id || group.name);
   const initials = groupInitials(group.name);
   const sheetCount = group.linkedSheetIds.length;
@@ -53,11 +55,11 @@ function GroupCard({ group, setsCount }: { group: Group; setsCount: number }) {
           <p className="text-sm text-[var(--ink-light)] mt-0.5 truncate">{group.description}</p>
         )}
         <div className="flex items-center gap-2 mt-1 text-xs text-[var(--ink-faint)]">
-          <span>{group.memberIds.length} membre{group.memberIds.length > 1 ? 's' : ''}</span>
+          <span>{t('membersCount', { count: group.memberIds.length })}</span>
           <span>·</span>
-          <span>{sheetCount} grille{sheetCount !== 1 ? 's' : ''}</span>
+          <span>{t('sheetsCount', { count: sheetCount })}</span>
           <span>·</span>
-          <span>{setsCount} set{setsCount !== 1 ? 's' : ''}</span>
+          <span>{t('setsCountShort', { count: setsCount })}</span>
         </div>
       </div>
 
@@ -70,6 +72,7 @@ function GroupCard({ group, setsCount }: { group: Group; setsCount: number }) {
 }
 
 export default function GroupsPage() {
+  const t = useTranslations('Groups');
   const { user } = useAuth();
   const { groups, loading } = useGroups();
   const { sets } = useSets(user?.id);
@@ -83,12 +86,12 @@ export default function GroupsPage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="font-playfair text-2xl font-bold text-[var(--ink)]">Mes groupes</h1>
+        <h1 className="font-playfair text-2xl font-bold text-[var(--ink)]">{t('title')}</h1>
         <Link
           href="/groups/new"
           className="px-4 py-2 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm font-medium rounded-lg transition-colors"
         >
-          + Nouveau groupe
+          {t('newGroup')}
         </Link>
       </div>
 
@@ -105,13 +108,13 @@ export default function GroupsPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
           </div>
-          <p className="font-medium text-[var(--ink-light)]">Aucun groupe pour l&apos;instant</p>
-          <p className="text-sm mt-1">Crée un groupe ou rejoins-en un via un lien d&apos;invitation.</p>
+          <p className="font-medium text-[var(--ink-light)]">{t('emptyTitle')}</p>
+          <p className="text-sm mt-1">{t('emptyDesc')}</p>
           <Link
             href="/groups/new"
             className="inline-block mt-4 px-4 py-2 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm font-medium rounded-lg transition-colors"
           >
-            Créer mon premier groupe
+            {t('createFirst')}
           </Link>
         </div>
       ) : (

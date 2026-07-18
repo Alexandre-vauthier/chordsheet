@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
@@ -17,6 +18,7 @@ interface ArtistViewClientProps {
 }
 
 export function ArtistViewClient({ name }: ArtistViewClientProps) {
+  const t = useTranslations('ArtistView');
   const artistName = decodeURIComponent(name);
   const { user, isAdmin, loading: authLoading } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
@@ -91,8 +93,8 @@ export function ArtistViewClient({ name }: ArtistViewClientProps) {
           </h1>
           <p className="text-[var(--ink-light)] mt-1">
             {loading
-              ? 'Chargement…'
-              : `${grouped.length} titre${grouped.length > 1 ? 's' : ''}${sheets.length > grouped.length ? ` · ${sheets.length} versions` : ''}`
+              ? t('loading')
+              : <>{t('titlesCount', { count: grouped.length })}{sheets.length > grouped.length && ` ${t('versionsCount', { count: sheets.length })}`}</>
             }
           </p>
         </div>
@@ -121,9 +123,9 @@ export function ArtistViewClient({ name }: ArtistViewClientProps) {
         </div>
       ) : (
         <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-8 text-center">
-          <p className="text-[var(--ink-faint)]">Aucune grille publique pour cet artiste</p>
+          <p className="text-[var(--ink-faint)]">{t('noPublicSheets')}</p>
           <Link href="/explore" className="mt-4 inline-block">
-            <Button variant="ghost">Retour à l&apos;exploration</Button>
+            <Button variant="ghost">{t('backToExplore')}</Button>
           </Link>
         </div>
       )}
@@ -132,10 +134,10 @@ export function ArtistViewClient({ name }: ArtistViewClientProps) {
       {!loading && (
         <div className="mt-12 pt-8 border-t border-[var(--line)] text-center">
           <p className="text-sm text-[var(--ink-light)] mb-4">
-            Tu connais un morceau de {artistName} qui n&apos;est pas encore là ?
+            {t('missingSongPrompt', { artist: artistName })}
           </p>
           <Link href="/sheet/new">
-            <Button variant="primary">+ Créer une grille</Button>
+            <Button variant="primary">{t('createSheet')}</Button>
           </Link>
         </div>
       )}

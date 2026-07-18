@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Link, useRouter } from '@/i18n/navigation';
 
 export default function RegisterPage() {
+  const t = useTranslations('Auth');
   const router = useRouter();
   const { signUp } = useAuth();
 
@@ -24,17 +26,17 @@ export default function RegisterPage() {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas');
+      setError(t('errorPasswordMismatch'));
       return;
     }
 
     if (password.length < 6) {
-      setError('Le mot de passe doit contenir au moins 6 caractères');
+      setError(t('errorPasswordTooShort'));
       return;
     }
 
     if (!acceptedTerms) {
-      setError('Vous devez accepter les CGU et CGV pour créer un compte');
+      setError(t('errorMustAcceptTerms'));
       return;
     }
 
@@ -45,15 +47,15 @@ export default function RegisterPage() {
       localStorage.setItem('chordsheet_show_welcome', '1');
       router.push('/explore');
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur lors de la création du compte';
+      const errorMessage = err instanceof Error ? err.message : t('errorGenericRegister');
       if (errorMessage.includes('email-already-in-use')) {
-        setError('Cette adresse email est déjà utilisée');
+        setError(t('errorEmailInUse'));
       } else if (errorMessage.includes('invalid-email')) {
-        setError('Adresse email invalide');
+        setError(t('errorInvalidEmail'));
       } else if (errorMessage.includes('weak-password')) {
-        setError('Le mot de passe est trop faible');
+        setError(t('errorWeakPassword'));
       } else {
-        setError('Erreur lors de la création du compte. Veuillez réessayer.');
+        setError(t('errorRegisterRetry'));
       }
     } finally {
       setLoading(false);
@@ -69,7 +71,7 @@ export default function RegisterPage() {
               Chord<span className="text-[var(--accent)]">Sheet</span>
             </h1>
           </Link>
-          <p className="text-[var(--ink-light)] mt-2">Créez votre compte musicien</p>
+          <p className="text-[var(--ink-light)] mt-2">{t('registerTitle')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-[var(--cell-bg)] rounded-xl p-8 shadow-sm border border-[var(--line)]">
@@ -82,8 +84,8 @@ export default function RegisterPage() {
           <div className="space-y-5">
             <Input
               type="text"
-              label="Nom d'artiste"
-              placeholder="Votre nom ou pseudo"
+              label={t('displayName')}
+              placeholder={t('displayNamePlaceholder')}
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               required
@@ -92,8 +94,8 @@ export default function RegisterPage() {
 
             <Input
               type="email"
-              label="Email"
-              placeholder="vous@exemple.com"
+              label={t('email')}
+              placeholder={t('emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -102,8 +104,8 @@ export default function RegisterPage() {
 
             <Input
               type="password"
-              label="Mot de passe"
-              placeholder="Au moins 6 caractères"
+              label={t('password')}
+              placeholder={t('passwordMinPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -113,8 +115,8 @@ export default function RegisterPage() {
 
             <Input
               type="password"
-              label="Confirmer le mot de passe"
-              placeholder="••••••••"
+              label={t('confirmPassword')}
+              placeholder={t('passwordPlaceholder')}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
@@ -132,11 +134,11 @@ export default function RegisterPage() {
               required
             />
             <span>
-              J&apos;accepte les{' '}
+              {t('acceptTermsPrefix')}{' '}
               <Link href="/legal/cgu" target="_blank" className="text-[var(--accent)] hover:underline">
                 CGU
               </Link>{' '}
-              et les{' '}
+              {t('and')}{' '}
               <Link href="/legal/cgv" target="_blank" className="text-[var(--accent)] hover:underline">
                 CGV
               </Link>
@@ -150,13 +152,13 @@ export default function RegisterPage() {
             isLoading={loading}
             disabled={!acceptedTerms}
           >
-            Créer mon compte
+            {t('createMyAccount')}
           </Button>
 
           <p className="text-center text-sm text-[var(--ink-light)] mt-6">
-            Déjà un compte ?{' '}
+            {t('alreadyHaveAccount')}{' '}
             <Link href="/login" className="text-[var(--accent)] hover:underline font-medium">
-              Se connecter
+              {t('signIn')}
             </Link>
           </p>
         </form>

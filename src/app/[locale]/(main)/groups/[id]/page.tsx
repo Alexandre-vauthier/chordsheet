@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
+import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 
 import {
@@ -48,6 +49,7 @@ function SheetRow({
   canRemove: boolean;
   onRemove: () => void;
 }) {
+  const t = useTranslations('Groups');
   const { artworkUrl } = useArtwork(sheet.artist, sheet.title);
 
   return (
@@ -79,7 +81,7 @@ function SheetRow({
             onClick={onRemove}
             className="text-xs text-[var(--ink-faint)] hover:text-red-500 transition-colors"
           >
-            Retirer
+            {t('remove')}
           </button>
         )}
       </div>
@@ -88,6 +90,7 @@ function SheetRow({
 }
 
 export default function GroupDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const t = useTranslations('Groups');
   const { id: groupId } = use(params);
   const { user } = useAuth();
   const { generateInviteToken, leaveGroup, removeMember, deleteGroup, linkSheet, unlinkSheet } = useGroups();
@@ -251,31 +254,31 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
       }
       setAttachPool(prev => prev.filter(s => s.id !== sheet.id));
     } catch {
-      setActionError('Erreur lors du rattachement.');
+      setActionError(t('errorAttach'));
     } finally {
       setAttachLoading(null);
     }
   };
 
   const handleDetachOwned = async (sheet: Sheet) => {
-    if (!sheet.id || !confirm(`Retirer "${sheet.title}" du groupe ?`)) return;
+    if (!sheet.id || !confirm(t('confirmDetachOwned', { title: sheet.title }))) return;
     try {
       const db = getDb();
       await updateDoc(doc(db, 'sheets', sheet.id), { groupId: deleteField(), updatedAt: serverTimestamp() });
       setOwnedSheets(prev => prev.filter(s => s.id !== sheet.id));
     } catch {
-      setActionError('Erreur lors du retrait.');
+      setActionError(t('errorRemove'));
     }
   };
 
   const handleUnlink = async (sheet: Sheet) => {
-    if (!sheet.id || !confirm(`Retirer "${sheet.title}" de la liste du groupe ?`)) return;
+    if (!sheet.id || !confirm(t('confirmUnlink', { title: sheet.title }))) return;
     try {
       await unlinkSheet(groupId, sheet.id);
       setLinkedSheets(prev => prev.filter(s => s.id !== sheet.id));
       setGroup(prev => prev ? { ...prev, linkedSheetIds: prev.linkedSheetIds.filter(id => id !== sheet.id) } : prev);
     } catch {
-      setActionError('Erreur lors du retrait.');
+      setActionError(t('errorRemove'));
     }
   };
 
@@ -298,20 +301,20 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
       setGroupSets(prev => [{ id: ref.id, name: newSetName.trim(), description: undefined, ownerId: user.id, ownerName: user.displayName, sheetIds: [], isPublic: false, groupId, createdAt: new Date(), updatedAt: new Date() }, ...prev]);
       setNewSetName('');
     } catch {
-      setActionError('Erreur lors de la création du set.');
+      setActionError(t('errorCreateSet'));
     } finally {
       setIsCreatingSet(false);
     }
   };
 
   const handleDeleteSet = async (setId: string, setName: string) => {
-    if (!confirm(`Supprimer le set "${setName}" ?`)) return;
+    if (!confirm(t('confirmDeleteSet', { name: setName }))) return;
     try {
       const db = getDb();
       await deleteDoc(doc(db, 'sets', setId));
       setGroupSets(prev => prev.filter(s => s.id !== setId));
     } catch {
-      setActionError('Erreur lors de la suppression du set.');
+      setActionError(t('errorDeleteSet'));
     }
   };
 
@@ -322,7 +325,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
       const token = await generateInviteToken(group.id!, group.name);
       setInviteLink(`${window.location.origin}/join/${token}`);
     } catch {
-      setActionError('Erreur lors de la génération du lien.');
+      setActionError(t('errorGenerateInvite'));
     } finally {
       setInviteLoading(false);
     }
@@ -335,13 +338,13 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
   };
 
   const handleLeave = async () => {
-    if (!confirm('Quitter ce groupe ?')) return;
+    if (!confirm(t('confirmLeave'))) return;
     try { await leaveGroup(groupId); router.push('/groups'); }
     catch (e) { setActionError((e as Error).message); }
   };
 
   const handleRemoveMember = async (memberId: string, memberName: string) => {
-    if (!confirm(`Retirer ${memberName} du groupe ?`)) return;
+    if (!confirm(t('confirmRemoveMember', { name: memberName }))) return;
     try {
       await removeMember(groupId, memberId);
       setMembers(prev => prev.filter(m => m.id !== memberId));
@@ -349,9 +352,9 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
   };
 
   const handleDelete = async () => {
-    if (!confirm(`Supprimer le groupe "${group?.name}" ? Cette action est irréversible.`)) return;
+    if (!confirm(t('confirmDeleteGroup', { name: group?.name ?? '' }))) return;
     try { await deleteGroup(groupId); router.push('/groups'); }
-    catch { setActionError('Erreur lors de la suppression.'); }
+    catch { setActionError(t('errorDeleteGroup')); }
   };
 
   const filteredPool = attachSearch
@@ -376,8 +379,8 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
   if (!group) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <p className="text-[var(--ink-light)]">Groupe introuvable.</p>
-        <Link href="/groups" className="mt-4 inline-block text-sm text-[var(--accent)]">← Mes groupes</Link>
+        <p className="text-[var(--ink-light)]">{t('notFound')}</p>
+        <Link href="/groups" className="mt-4 inline-block text-sm text-[var(--accent)]">← {t('backToGroups')}</Link>
       </div>
     );
   }
@@ -386,7 +389,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
       <div>
         <Link href="/groups" className="text-sm text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors">
-          ← Mes groupes
+          ← {t('backToGroups')}
         </Link>
         <div className="mt-2">
           <h1 className="font-playfair text-2xl font-bold text-[var(--ink)]">{group.name}</h1>
@@ -401,7 +404,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
       {/* Sets */}
       <section>
         <h2 className="text-sm font-semibold text-[var(--ink-light)] uppercase tracking-wide mb-3">
-          Sets ({groupSets.length})
+          {t('setsHeading', { count: groupSets.length })}
         </h2>
 
         {isMember && (
@@ -411,20 +414,20 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
               value={newSetName}
               onChange={e => setNewSetName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleCreateSet()}
-              placeholder="Nom du set (ex: Concert du 15 juin)…"
+              placeholder={t('setNamePlaceholder')}
               className="flex-1 px-3 py-2 text-sm border border-[var(--line)] rounded-lg bg-[var(--cell-bg)] text-[var(--ink)] placeholder:text-[var(--ink-faint)] focus:outline-none focus:border-[var(--accent)] transition-colors"
             />
             <button
               onClick={handleCreateSet}
               disabled={!newSetName.trim() || isCreatingSet}
               className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50">
-              {isCreatingSet ? '…' : '+ Créer'}
+              {isCreatingSet ? '…' : t('createSetShort')}
             </button>
           </div>
         )}
 
         {groupSets.length === 0 ? (
-          <p className="text-sm text-[var(--ink-faint)] py-3 text-center">Aucun set pour l&apos;instant.</p>
+          <p className="text-sm text-[var(--ink-faint)] py-3 text-center">{t('noSetsYet')}</p>
         ) : (
           <div className="space-y-2">
             {groupSets.map(set => (
@@ -432,21 +435,21 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                 <Link href={`/sets/${set.id}`} className="flex-1 min-w-0 hover:opacity-75 transition-opacity">
                   <div className="text-sm font-medium text-[var(--ink)] truncate">{set.name}</div>
                   <div className="text-xs text-[var(--ink-faint)]">
-                    {set.sheetIds.length} grille{set.sheetIds.length !== 1 ? 's' : ''}
-                    {set.isPublic && <span className="ml-2 text-green-600">· public</span>}
+                    {t('sheetsCount', { count: set.sheetIds.length })}
+                    {set.isPublic && <span className="ml-2 text-green-600">· {t('publicBadge')}</span>}
                   </div>
                 </Link>
                 <div className="flex items-center gap-3 ml-3 shrink-0">
                   {set.sheetIds.length > 0 && (
                     <Link href={`/sets/${set.id}/play`}
                       className="text-xs text-[var(--ink-faint)] hover:text-[var(--accent)] transition-colors">
-                      Lancer
+                      {t('play')}
                     </Link>
                   )}
                   {(isLeader || set.ownerId === user?.id) && (
                     <button onClick={() => handleDeleteSet(set.id!, set.name)}
                       className="text-xs text-[var(--ink-faint)] hover:text-red-500 transition-colors">
-                      Supprimer
+                      {t('delete')}
                     </button>
                   )}
                 </div>
@@ -460,18 +463,18 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
       <section>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-[var(--ink-light)] uppercase tracking-wide">
-            Grilles ({allSheets.length})
+            {t('sheetsHeading', { count: allSheets.length })}
           </h2>
           <div className="flex gap-2">
             {isMember && (
               <button onClick={handleOpenAttach}
                 className="text-xs px-3 py-1.5 border border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] rounded-lg transition-colors">
-                Rattacher une grille
+                {t('attachSheet')}
               </button>
             )}
             <Link href={`/sheet/new?groupId=${groupId}`}
               className="text-xs px-3 py-1.5 bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors">
-              + Nouvelle grille
+              {t('newSheet')}
             </Link>
           </div>
         </div>
@@ -480,7 +483,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
         {showAttach && (
           <div className="mb-4 p-4 bg-[var(--paper)] border border-[var(--accent)]/30 rounded-xl space-y-3">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-medium text-[var(--ink)]">Rattacher une grille</p>
+              <p className="text-sm font-medium text-[var(--ink)]">{t('attachSheet')}</p>
               <button onClick={() => setShowAttach(false)} className="text-[var(--ink-faint)] hover:text-[var(--ink)] text-lg leading-none">×</button>
             </div>
 
@@ -488,15 +491,15 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
               type="text"
               value={attachSearch}
               onChange={e => setAttachSearch(e.target.value)}
-              placeholder="Rechercher par titre ou artiste…"
+              placeholder={t('searchByTitleOrArtist')}
               autoFocus
               className="w-full px-3 py-2 text-sm border border-[var(--line)] rounded-lg bg-[var(--cell-bg)] text-[var(--ink)] placeholder:text-[var(--ink-faint)] focus:outline-none focus:border-[var(--accent)] transition-colors"
             />
 
             {attachListLoading ? (
-              <div className="text-sm text-[var(--ink-faint)] text-center py-3">Chargement…</div>
+              <div className="text-sm text-[var(--ink-faint)] text-center py-3">{t('loading')}</div>
             ) : filteredPool.length === 0 ? (
-              <p className="text-sm text-[var(--ink-faint)] text-center py-3">Aucun résultat.</p>
+              <p className="text-sm text-[var(--ink-faint)] text-center py-3">{t('noResults')}</p>
             ) : (
               <div className="space-y-1.5 max-h-64 overflow-y-auto">
                 {filteredPool.map(sheet => (
@@ -506,7 +509,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                       <div className="text-xs text-[var(--ink-faint)] truncate">
                         {sheet.artist}
                         {sheet.ownerId !== user?.id && (
-                          <span className="ml-2 opacity-60">· par {sheet.ownerName}</span>
+                          <span className="ml-2 opacity-60">· {t('byOwner', { name: sheet.ownerName })}</span>
                         )}
                       </div>
                     </div>
@@ -514,7 +517,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                       onClick={() => handleAttach(sheet)}
                       disabled={attachLoading === sheet.id}
                       className="shrink-0 ml-3 text-xs px-3 py-1 bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50">
-                      {attachLoading === sheet.id ? '…' : 'Rattacher'}
+                      {attachLoading === sheet.id ? '…' : t('attach')}
                     </button>
                   </div>
                 ))}
@@ -524,7 +527,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
         )}
 
         {allSheets.length === 0 ? (
-          <p className="text-sm text-[var(--ink-faint)] py-4 text-center">Aucune grille pour l&apos;instant.</p>
+          <p className="text-sm text-[var(--ink-faint)] py-4 text-center">{t('noSheetsYet')}</p>
         ) : (
           <div className="space-y-2">
             {allSheets.map(({ sheet, type }) => (
@@ -549,7 +552,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
       {/* Membres */}
       <section>
         <h2 className="text-sm font-semibold text-[var(--ink-light)] uppercase tracking-wide mb-3">
-          Membres ({members.length})
+          {t('membersHeading', { count: members.length })}
         </h2>
         <div className="space-y-2">
           {members.map(member => (
@@ -570,7 +573,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
               {isLeader && member.id !== user?.id && (
                 <button onClick={() => handleRemoveMember(member.id, member.displayName)}
                   className="text-xs text-[var(--ink-faint)] hover:text-red-500 transition-colors px-1.5 py-0.5 rounded">
-                  Retirer
+                  {t('remove')}
                 </button>
               )}
             </div>
@@ -582,11 +585,11 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
       {isMember && (
         <section>
           <h2 className="text-sm font-semibold text-[var(--ink-light)] uppercase tracking-wide mb-3">
-            Inviter des membres
+            {t('inviteMembers')}
           </h2>
           <div className="p-4 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl space-y-3">
             <p className="text-sm text-[var(--ink-light)]">
-              Génère un lien d&apos;invitation valable 7 jours et partage-le avec tes musiciens.
+              {t('inviteDesc')}
             </p>
             {inviteLink ? (
               <div className="flex gap-2">
@@ -594,13 +597,13 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                   className="flex-1 px-3 py-2 text-sm border border-[var(--line)] rounded-lg bg-[var(--cell-bg)] text-[var(--ink)] focus:outline-none" />
                 <button onClick={handleCopyInvite}
                   className="px-3 py-2 text-sm border border-[var(--line)] rounded-lg bg-[var(--cell-bg)] hover:border-[var(--accent)] transition-colors text-[var(--ink)]">
-                  {inviteCopied ? '✓ Copié' : 'Copier'}
+                  {inviteCopied ? t('copied') : t('copy')}
                 </button>
               </div>
             ) : (
               <button onClick={handleGenerateInvite} disabled={inviteLoading}
                 className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50">
-                {inviteLoading ? 'Génération…' : 'Générer un lien'}
+                {inviteLoading ? t('generating') : t('generateLink')}
               </button>
             )}
           </div>
@@ -612,13 +615,13 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
         {!isOwner && (
           <button onClick={handleLeave}
             className="px-4 py-2 text-sm border border-[var(--line)] text-[var(--ink-light)] rounded-lg hover:border-red-300 hover:text-red-500 transition-colors">
-            Quitter le groupe
+            {t('leaveGroup')}
           </button>
         )}
         {isOwner && (
           <button onClick={handleDelete}
             className="px-4 py-2 text-sm border border-red-200 text-red-500 rounded-lg hover:bg-red-50 transition-colors">
-            Supprimer le groupe
+            {t('deleteGroup')}
           </button>
         )}
       </section>

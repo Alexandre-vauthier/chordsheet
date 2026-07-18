@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { useAuth } from '@/lib/auth-context';
@@ -10,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Link, useRouter } from '@/i18n/navigation';
 
 export default function LoginPage() {
+  const t = useTranslations('Auth');
   const router = useRouter();
   const { signIn } = useAuth();
 
@@ -30,13 +32,13 @@ export default function LoginPage() {
       await signIn(email, password);
       router.push('/explore');
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Erreur de connexion';
+      const errorMessage = err instanceof Error ? err.message : t('errorGenericLogin');
       if (errorMessage.includes('user-not-found') || errorMessage.includes('wrong-password') || errorMessage.includes('invalid-credential')) {
-        setError('Email ou mot de passe incorrect');
+        setError(t('errorWrongCredentials'));
       } else if (errorMessage.includes('invalid-email')) {
-        setError('Adresse email invalide');
+        setError(t('errorInvalidEmail'));
       } else {
-        setError('Erreur de connexion. Veuillez réessayer.');
+        setError(t('errorLoginRetry'));
       }
     } finally {
       setLoading(false);
@@ -45,7 +47,7 @@ export default function LoginPage() {
 
   const handleResetPassword = async () => {
     if (!email.trim()) {
-      setError('Entrez votre email pour recevoir le lien de réinitialisation');
+      setError(t('errorEmailRequiredForReset'));
       return;
     }
     setResetLoading(true);
@@ -54,7 +56,7 @@ export default function LoginPage() {
       await sendPasswordResetEmail(getAuth(), email.trim());
       setResetSent(true);
     } catch {
-      setError('Impossible d\'envoyer l\'email. Vérifiez l\'adresse saisie.');
+      setError(t('errorResetFailed'));
     } finally {
       setResetLoading(false);
     }
@@ -69,7 +71,7 @@ export default function LoginPage() {
               Chord<span className="text-[var(--accent)]">Sheet</span>
             </h1>
           </Link>
-          <p className="text-[var(--ink-light)] mt-2">Connectez-vous à votre compte</p>
+          <p className="text-[var(--ink-light)] mt-2">{t('loginTitle')}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-[var(--cell-bg)] rounded-xl p-8 shadow-sm border border-[var(--line)]">
@@ -80,15 +82,15 @@ export default function LoginPage() {
           )}
           {resetSent && (
             <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-              Email de réinitialisation envoyé à <strong>{email}</strong>. Vérifiez votre boîte mail.
+              {t('resetSentPrefix')} <strong>{email}</strong>. {t('resetSentSuffix')}
             </div>
           )}
 
           <div className="space-y-5">
             <Input
               type="email"
-              label="Email"
-              placeholder="vous@exemple.com"
+              label={t('email')}
+              placeholder={t('emailPlaceholder')}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -98,8 +100,8 @@ export default function LoginPage() {
             <div>
               <Input
                 type="password"
-                label="Mot de passe"
-                placeholder="••••••••"
+                label={t('password')}
+                placeholder={t('passwordPlaceholder')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -113,7 +115,7 @@ export default function LoginPage() {
                   disabled={resetLoading}
                   className="text-xs text-[var(--ink-faint)] hover:text-[var(--accent)] transition-colors"
                 >
-                  {resetLoading ? 'Envoi…' : 'Mot de passe oublié ?'}
+                  {resetLoading ? t('sending') : t('forgotPassword')}
                 </button>
               </div>
             </div>
@@ -125,13 +127,13 @@ export default function LoginPage() {
             size="lg"
             isLoading={loading}
           >
-            Se connecter
+            {t('signIn')}
           </Button>
 
           <p className="text-center text-sm text-[var(--ink-light)] mt-6">
-            Pas encore de compte ?{' '}
+            {t('noAccountYet')}{' '}
             <Link href="/register" className="text-[var(--accent)] hover:underline font-medium">
-              Créer un compte
+              {t('signUp')}
             </Link>
           </p>
         </form>

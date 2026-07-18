@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import type { Sheet, Difficulty } from '@/types';
 import { DIFFICULTY_LABELS } from '@/types';
 import { useArtwork } from '@/lib/use-artwork';
+import { useDifficultyLabel } from '@/lib/use-genre-labels';
 import { Link } from '@/i18n/navigation';
 
 // Singleton audio global
@@ -67,6 +69,8 @@ export function SheetCard({
   hideDifficulty = true,
   showPublicBadge = false,
 }: SheetCardProps) {
+  const t = useTranslations('SheetCard');
+  const difficultyLabel = useDifficultyLabel();
   const { artworkUrl, previewUrl } = useArtwork(
     hideArtwork ? undefined : sheet.artist,
     hideArtwork ? undefined : sheet.title,
@@ -143,22 +147,22 @@ export function SheetCard({
             <div className="absolute top-2.5 left-3 flex flex-wrap gap-1">
               {variantCount && variantCount > 1 && (
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-sm text-white font-medium">
-                  {variantCount} versions
+                  {t('versions', { count: variantCount })}
                 </span>
               )}
               {showPublicBadge && sheet.isPublic && (
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-500/80 text-white font-medium">
-                  Public
+                  {t('public')}
                 </span>
               )}
               {showPublicBadge && !sheet.isPublic && sheet.pendingValidation && (
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/80 text-white font-medium">
-                  À valider
+                  {t('pendingValidation')}
                 </span>
               )}
               {showPublicBadge && !sheet.isPublic && !sheet.pendingValidation && (
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/50 backdrop-blur-sm text-white/70 font-medium">
-                  Privé
+                  {t('private')}
                 </span>
               )}
             </div>
@@ -178,7 +182,7 @@ export function SheetCard({
                   ? 'bg-[var(--accent)] text-white scale-100 opacity-100'
                   : 'bg-black/50 backdrop-blur-sm text-white opacity-100 sm:opacity-0 group-hover:opacity-100 hover:bg-[var(--accent)] hover:scale-105'
               }`}
-              title={isPlaying ? 'Stop preview' : 'Écouter un extrait'}
+              title={isPlaying ? t('stopPreview') : t('listenPreview')}
             >
               {isPlaying ? (
                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
@@ -214,7 +218,7 @@ export function SheetCard({
                     <svg className="w-3.5 h-3.5 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                     </svg>
-                    Modifier
+                    {t('edit')}
                   </Link>
                   <button
                     onClick={e => { e.preventDefault(); e.stopPropagation(); onDelete(); }}
@@ -223,7 +227,7 @@ export function SheetCard({
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                     </svg>
-                    Supprimer
+                    {t('delete')}
                   </button>
                 </div>
               )}
@@ -253,7 +257,7 @@ export function SheetCard({
             <div className="flex items-start justify-between gap-2">
               <Link href={destination} className="min-w-0">
                 <h3 className={`font-bold text-base leading-tight line-clamp-2 group-hover:text-[var(--accent)] transition-colors ${artworkUrl ? 'text-white' : 'text-[var(--ink)]'}`}>
-                  {sheet.title || 'Sans titre'}
+                  {sheet.title || t('untitled')}
                 </h3>
               </Link>
               {onToggleBookmark && (
@@ -264,7 +268,7 @@ export function SheetCard({
                       ? 'text-amber-400'
                       : `${artworkUrl ? 'text-white/50' : 'text-[var(--ink-faint)]'} opacity-0 group-hover:opacity-100 hover:text-amber-400`
                   }`}
-                  title={isBookmarked ? 'Retirer du book' : 'Ajouter au book'}
+                  title={isBookmarked ? t('removeFromBook') : t('addToBook')}
                 >
                   {isBookmarked ? '★' : '☆'}
                 </button>
@@ -282,7 +286,7 @@ export function SheetCard({
                   {sheet.artist}
                 </Link>
               ) : (
-                <span className={`text-xs truncate ${artworkUrl ? 'text-white/55' : 'text-[var(--ink-faint)]'}`}>Artiste inconnu</span>
+                <span className={`text-xs truncate ${artworkUrl ? 'text-white/55' : 'text-[var(--ink-faint)]'}`}>{t('unknownArtist')}</span>
               )}
               {showRating && sheet.ratingCount > 0 && (
                 <span className={`text-xs font-semibold shrink-0 ${artworkUrl ? 'text-amber-300' : 'text-[var(--ink-light)]'}`}>
@@ -294,7 +298,7 @@ export function SheetCard({
             {!hideDifficulty && sheet.difficulty && (
               <div className="mt-2">
                 <span className={`text-[10px] px-1.5 py-0.5 rounded ${artworkUrl ? 'text-white/70 bg-white/10' : 'text-[var(--ink-faint)] bg-[var(--line)]/60'}`}>
-                  {DIFFICULTY_LABELS[sheet.difficulty as Difficulty]}
+                  {difficultyLabel(DIFFICULTY_LABELS[sheet.difficulty as Difficulty])}
                 </span>
               </div>
             )}

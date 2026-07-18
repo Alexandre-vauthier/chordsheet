@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
 import { useArtwork } from '@/lib/use-artwork';
+import { useGenreLabel } from '@/lib/use-genre-labels';
 import { Input } from '@/components/ui/input';
 import type { Sheet } from '@/types';
 import { Link } from '@/i18n/navigation';
@@ -24,6 +26,8 @@ function letterOf(name: string): string {
 const ALPHABET = ['#', ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))];
 
 export default function ArtistsPage() {
+  const t = useTranslations('Artists');
+  const genreLabel = useGenreLabel();
   const [sheets, setSheets] = useState<Sheet[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -103,9 +107,9 @@ export default function ArtistsPage() {
     <div className="max-w-[1270px] mx-auto px-4 sm:px-6 py-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[var(--ink)]">Artistes</h1>
+        <h1 className="text-2xl font-bold text-[var(--ink)]">{t('title')}</h1>
         <p className="text-[var(--ink-light)] mt-1">
-          {loading ? 'Chargement…' : `${artists.length} artiste${artists.length > 1 ? 's' : ''} · ${sheets.length} grille${sheets.length > 1 ? 's' : ''}`}
+          {loading ? t('loading') : t('summary', { artistCount: artists.length, sheetCount: sheets.length })}
         </p>
       </div>
 
@@ -113,7 +117,7 @@ export default function ArtistsPage() {
       <div className="mb-4">
         <Input
           type="search"
-          placeholder="Rechercher un artiste…"
+          placeholder={t('searchPlaceholder')}
           value={searchQuery}
           onChange={e => { setSearchQuery(e.target.value); setActiveLetter(''); }}
           className="max-w-sm"
@@ -133,7 +137,7 @@ export default function ArtistsPage() {
                   : 'bg-[var(--cell-bg)] text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
               }`}
             >
-              {genre}
+              {genreLabel(genre)}
             </button>
           ))}
         </div>
@@ -151,7 +155,7 @@ export default function ArtistsPage() {
                 : 'bg-[var(--cell-bg)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] border border-[var(--line)]'
               }`}
           >
-            Voir tout
+            {t('viewAll')}
           </button>
 
           {ALPHABET.map(l => {
@@ -188,8 +192,8 @@ export default function ArtistsPage() {
         filtered.length > 0 ? (
           <>
             <p className="text-sm text-[var(--ink-light)] mb-4">
-              {filtered.length} artiste{filtered.length > 1 ? 's' : ''}
-              {activeGenre && <span className="ml-1 text-[var(--accent)]">· {activeGenre}</span>}
+              {t('resultsCount', { count: filtered.length })}
+              {activeGenre && <span className="ml-1 text-[var(--accent)]">· {genreLabel(activeGenre)}</span>}
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
               {filtered.map(artist => (
@@ -198,7 +202,7 @@ export default function ArtistsPage() {
             </div>
           </>
         ) : (
-          <p className="text-[var(--ink-faint)] py-8 text-center">Aucun artiste trouvé pour «&nbsp;{searchQuery}&nbsp;»</p>
+          <p className="text-[var(--ink-faint)] py-8 text-center">{t('noResultsFor', { query: searchQuery })}</p>
         )
       ) : grouped ? (
         <div className="space-y-10">
@@ -219,6 +223,7 @@ export default function ArtistsPage() {
 }
 
 function ArtistCard({ artist }: { artist: ArtistEntry }) {
+  const t = useTranslations('Artists');
   const { artworkUrl } = useArtwork(artist.name, undefined);
 
   const initials = artist.name
@@ -247,7 +252,7 @@ function ArtistCard({ artist }: { artist: ArtistEntry }) {
           {artist.name}
         </div>
         <div className="text-xs text-[var(--ink-faint)]">
-          {artist.titleCount} titre{artist.titleCount > 1 ? 's' : ''}
+          {t('titlesCount', { count: artist.titleCount })}
         </div>
       </div>
     </Link>
