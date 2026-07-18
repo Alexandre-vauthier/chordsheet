@@ -170,5 +170,19 @@ service cloud.firestore {
       // qui contournent ces règles) : plus besoin d'update/delete côté client.
       allow update, delete: if isAdmin();
     }
+
+    // Groupe éphémère ("session live") — invités anonymes acceptés (voir auth-context.tsx).
+    // Le code (= document ID) fait office de secret partagé, même modèle de confiance
+    // que groupInvites : quiconque le connaît peut lire/pousser une grille.
+    match /liveSessions/{code} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && isProUser() &&
+                       request.resource.data.hostId == request.auth.uid;
+      allow update: if request.auth != null &&
+                       request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['currentSheetId', 'currentSheetTitle', 'currentSheetArtist',
+                                   'pushedBy', 'pushedByName', 'updatedAt']);
+      allow delete: if request.auth != null && resource.data.hostId == request.auth.uid;
+    }
   }
 }

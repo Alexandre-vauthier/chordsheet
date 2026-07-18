@@ -3,17 +3,21 @@
 import { useEffect } from 'react';
 
 import { useAuth } from '@/lib/auth-context';
+import { LiveSessionProvider } from '@/lib/live-session-context';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { ConcertBanner } from '@/components/layout/concert-banner';
+import { LiveSessionBanner } from '@/components/layout/live-session-banner';
 import { EmailVerificationGate } from '@/components/layout/email-verification-gate';
 import { usePathname, useRouter } from '@/i18n/navigation';
 
 // Routes accessibles sans authentification (contenu public en lecture seule)
 const PUBLIC_EXACT = ['/explore', '/chords', '/pricing'];
 const PUBLIC_PREFIXES = ['/legal'];
-// /sheet/:id (mais pas /sheet/new ni /sheet/:id/edit), /artist/:name, /user/:id
-const PUBLIC_PATTERNS = [/^\/sheet\/[^/]+$/, /^\/artist\/[^/]+$/, /^\/user\/[^/]+$/];
+// /sheet/:id (mais pas /sheet/new ni /sheet/:id/edit), /artist/:name, /user/:id,
+// /session/:code (rejoindre une session éphémère sans compte — pas /session lui-même,
+// qui reste réservé aux hôtes Pro connectés)
+const PUBLIC_PATTERNS = [/^\/sheet\/[^/]+$/, /^\/artist\/[^/]+$/, /^\/user\/[^/]+$/, /^\/session\/[^/]+$/];
 
 function isPublicRoute(pathname: string): boolean {
   if (PUBLIC_EXACT.includes(pathname)) return true;
@@ -56,11 +60,14 @@ export default function MainLayout({
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <ConcertBanner />
-      <main className="flex-1">{children}</main>
-      <Footer />
-    </div>
+    <LiveSessionProvider>
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <ConcertBanner />
+        <LiveSessionBanner />
+        <main className="flex-1">{children}</main>
+        <Footer />
+      </div>
+    </LiveSessionProvider>
   );
 }

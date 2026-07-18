@@ -362,6 +362,26 @@ export interface GroupInvite {
   useCount: number;
 }
 
+// ─── Groupe éphémère ("session live") ────────────────────────────────────────
+// Session temporaire sans compte requis pour les invités (auth anonyme Firebase) :
+// n'importe quel participant peut pousser une grille, tous les appareils suivent.
+
+export interface LiveSession {
+  id?: string;                        // = code (6 caractères), document ID
+  hostId: string;
+  hostName: string;
+  createdAt: Date;
+  expiresAt: Date;                    // createdAt + 6h
+  currentSheetId: string | null;
+  currentSheetTitle: string | null;   // dénormalisé pour affichage avant fetch
+  currentSheetArtist: string | null;
+  pushedBy: string | null;
+  pushedByName: string | null;
+  updatedAt: Date;
+}
+
+export type NewLiveSession = Omit<LiveSession, 'id'>;
+
 // ─── Helpers pour créer des objets par défaut ────────────────────────────────
 
 export const createEmptyCell = (span: CellSpan = 1): Cell => ({

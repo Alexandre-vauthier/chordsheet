@@ -50,6 +50,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setFirebaseUser(fbUser);
       setEmailVerified(fbUser?.emailVerified ?? true);
 
+      if (fbUser?.isAnonymous) {
+        // Invité de session éphémère : pas de doc Firestore `users` créé pour éviter
+        // de polluer la collection avec des comptes fantômes — l'identité pour cette
+        // feature est firebaseUser.uid, jamais `user` (voir live-session-context.tsx)
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
       if (fbUser) {
         // Récupérer les données utilisateur depuis Firestore
         // (les données d'abonnement vivent dans un sous-document privé, non lisible par les autres utilisateurs)

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { doc, getDoc, updateDoc, increment, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
@@ -9,6 +10,7 @@ import { fromFirestore } from '@/lib/firestore-helpers';
 import { useBookmarks } from '@/lib/use-bookmarks';
 import { useRatings } from '@/lib/use-ratings';
 import { useSets } from '@/lib/use-sets';
+import { useLiveSession } from '@/lib/live-session-context';
 import { SheetViewer } from '@/components/sheet/sheet-viewer';
 import { RatingStars } from '@/components/sheet/rating-stars';
 
@@ -20,10 +22,12 @@ interface SheetViewClientProps {
 }
 
 export function SheetViewClient({ id }: SheetViewClientProps) {
+  const t = useTranslations('LiveSession');
   const router = useRouter();
   const { user, isAdmin } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
   const { userRating, rateSheet, isLoading: ratingLoading } = useRatings(id, user?.id);
+  const { sessionCode, pushSheet } = useLiveSession();
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -230,6 +234,20 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
                 >
                   🖨 Imprimer / PDF
                 </button>
+                {sessionCode && sheet && (
+                  <button
+                    onClick={() => {
+                      if (!sheet.isPublic) return;
+                      pushSheet({ id, title: sheet.title, artist: sheet.artist }).catch(() => {});
+                      setMenuOpen(false);
+                    }}
+                    disabled={!sheet.isPublic}
+                    title={!sheet.isPublic ? t('makePublicToSend') : undefined}
+                    className="w-full text-left px-4 py-2.5 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--ink)] disabled:cursor-not-allowed"
+                  >
+                    📡 {t('sendToSession')}
+                  </button>
+                )}
                 {user && (
                   <button
                     onClick={() => { handleToggleBookmark(); setMenuOpen(false); }}
