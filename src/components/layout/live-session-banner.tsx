@@ -8,7 +8,7 @@ import { useSearchSuggestions } from '@/lib/use-search-suggestions';
 
 export function LiveSessionBanner() {
   const t = useTranslations('LiveSession');
-  const { session, isHost, pushSheet, endSession, leaveSession } = useLiveSession();
+  const { session, isHost, viewedSheet, pushSheet, endSession, leaveSession } = useLiveSession();
   const { firebaseUser } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -45,6 +45,10 @@ export function LiveSessionBanner() {
     setQuery('');
   };
 
+  // La grille actuellement consultée par CE participant peut être envoyée en un
+  // clic, sans recherche — sauf si c'est déjà celle affichée pour tout le monde.
+  const canSendViewed = !!viewedSheet && viewedSheet.id !== session.currentSheetId;
+
   return (
     <div className="bg-red-600 text-white print:hidden">
       <div className="max-w-4xl mx-auto px-4 py-2 flex items-center gap-3">
@@ -66,7 +70,7 @@ export function LiveSessionBanner() {
           </span>
         )}
 
-        <div ref={searchRef} className={`relative ${searchOpen ? 'flex-1' : 'shrink-0'}`}>
+        <div ref={searchRef} className={`relative flex items-center gap-1.5 ${searchOpen ? 'flex-1' : 'shrink-0'}`}>
           {searchOpen ? (
             <input
               autoFocus
@@ -77,6 +81,22 @@ export function LiveSessionBanner() {
               placeholder={t('addSheetPlaceholder')}
               className="w-full px-3 py-1 rounded-lg bg-white/15 placeholder:text-white/60 text-white text-sm focus:outline-none focus:bg-white/25 transition-colors"
             />
+          ) : canSendViewed ? (
+            <>
+              <button
+                onClick={() => pushSheet(viewedSheet!).catch(() => {})}
+                className="shrink-0 px-3 py-1 bg-white text-red-600 rounded-lg text-xs font-semibold hover:bg-red-50 transition-colors cursor-pointer"
+              >
+                📡 {t('sendToSession')}
+              </button>
+              <button
+                onClick={() => setSearchOpen(true)}
+                title={t('addSheet')}
+                className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-white/70 hover:text-white hover:bg-white/15 transition-colors cursor-pointer"
+              >
+                🔍
+              </button>
+            </>
           ) : (
             <button
               onClick={() => setSearchOpen(true)}

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useTranslations } from 'next-intl';
 
 import { doc, getDoc, updateDoc, increment, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
@@ -22,12 +21,11 @@ interface SheetViewClientProps {
 }
 
 export function SheetViewClient({ id }: SheetViewClientProps) {
-  const t = useTranslations('LiveSession');
   const router = useRouter();
   const { user, isAdmin } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
   const { userRating, rateSheet, isLoading: ratingLoading } = useRatings(id, user?.id);
-  const { sessionCode, session, pushSheet } = useLiveSession();
+  const { setViewedSheet } = useLiveSession();
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,6 +78,18 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
 
     loadSheet();
   }, [id, user, isAdmin]);
+
+  // Signale au contexte de session live quelle grille est consultée, pour que la
+  // bannière puisse proposer un envoi direct en un clic (seules les grilles
+  // publiques sont lisibles par des invités anonymes, donc les seules envoyables)
+  useEffect(() => {
+    if (sheet?.isPublic) {
+      setViewedSheet({ id, title: sheet.title, artist: sheet.artist });
+    } else {
+      setViewedSheet(null);
+    }
+    return () => setViewedSheet(null);
+  }, [id, sheet, setViewedSheet]);
 
   const handlePrint = () => {
     window.print();
@@ -214,23 +224,6 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
               </span>
               <RatingStars value={userRating} onChange={handleRate} size="sm" />
             </div>
-          )}
-
-          {/* Session live : envoi direct en un clic (si session active) */}
-          {sessionCode && sheet.isPublic && (
-            session?.currentSheetId === id ? (
-              <span title={t('alreadySent')} className="w-8 h-8 flex items-center justify-center rounded-full shrink-0">
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
-              </span>
-            ) : (
-              <button
-                onClick={() => pushSheet({ id, title: sheet.title, artist: sheet.artist }).catch(() => {})}
-                title={t('sendToSession')}
-                className="w-8 h-8 flex items-center justify-center rounded-full text-[var(--ink-light)] hover:bg-red-50 hover:text-red-600 transition-colors shrink-0 cursor-pointer"
-              >
-                <span className="w-2.5 h-2.5 rounded-full border-2 border-current" />
-              </button>
-            )
           )}
 
           {/* Droite : menu "..." */}

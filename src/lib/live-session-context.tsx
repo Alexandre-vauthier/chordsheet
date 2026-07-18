@@ -39,6 +39,12 @@ function sessionFromDoc(id: string, data: Record<string, unknown>): LiveSession 
 
 type SessionStatus = 'idle' | 'loading' | 'found' | 'not-found';
 
+interface ViewedSheet {
+  id: string;
+  title: string;
+  artist: string;
+}
+
 interface LiveSessionContextType {
   sessionCode: string | null;
   session: LiveSession | null;
@@ -47,6 +53,11 @@ interface LiveSessionContextType {
   loading: boolean;
   nickname: string;
   setNickname: (name: string) => void;
+  // Grille publique actuellement affichée par CE participant (renseigné par
+  // sheet-view-client.tsx) — permet à la bannière de proposer un envoi direct
+  // en un clic plutôt que de forcer une recherche.
+  viewedSheet: ViewedSheet | null;
+  setViewedSheet: (sheet: ViewedSheet | null) => void;
   startSession: () => Promise<string>;
   joinSession: (code: string, nickname?: string) => Promise<void>;
   pushSheet: (sheet: { id: string; title: string; artist: string }) => Promise<void>;
@@ -64,6 +75,7 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
   const [sessionStatus, setSessionStatus] = useState<SessionStatus>('idle');
   const [loading, setLoading] = useState(false);
   const [nickname, setNicknameState] = useState('');
+  const [viewedSheet, setViewedSheetState] = useState<ViewedSheet | null>(null);
   // Identifie le dernier push déjà traité (évite de re-naviguer si l'utilisateur
   // quitte la grille poussée manuellement ensuite, ou à chaque re-render)
   const lastProcessedPushRef = useRef<number | null>(null);
@@ -82,6 +94,10 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
     if (typeof window === 'undefined') return;
     if (name.trim()) sessionStorage.setItem(NICKNAME_KEY, name.trim());
     else sessionStorage.removeItem(NICKNAME_KEY);
+  }, []);
+
+  const setViewedSheet = useCallback((sheet: ViewedSheet | null) => {
+    setViewedSheetState(sheet);
   }, []);
 
   // Souscription live au document de session
@@ -204,7 +220,7 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
   const isHost = !!session && !!user && session.hostId === user.id;
 
   return (
-    <LiveSessionContext.Provider value={{ sessionCode, session, sessionStatus, isHost, loading, nickname, setNickname, startSession, joinSession, pushSheet, endSession, leaveSession }}>
+    <LiveSessionContext.Provider value={{ sessionCode, session, sessionStatus, isHost, loading, nickname, setNickname, viewedSheet, setViewedSheet, startSession, joinSession, pushSheet, endSession, leaveSession }}>
       {children}
     </LiveSessionContext.Provider>
   );
