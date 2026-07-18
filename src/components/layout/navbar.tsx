@@ -8,7 +8,7 @@ import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { LevelBadge } from '@/components/reputation/level-badge';
 import { SuggestionsDropdown } from '@/components/ui/suggestions-dropdown';
-import { useSheetsIndex } from '@/lib/use-sheets-index';
+import { useSearchSuggestions } from '@/lib/use-search-suggestions';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import type { Sheet } from '@/types';
 
@@ -18,22 +18,13 @@ type SearchResult =
 
 // Deux sections : grilles dont le titre correspond, puis artistes dont le nom correspond
 // (cliquer un artiste mène à sa page, qui liste toutes ses grilles — pas besoin de
-// dupliquer les grilles d'un même artiste dans la section "Grilles").
-function getSearchResults(sheets: Sheet[], artistNames: string[], query: string): SearchResult[] {
-  const q = query.trim().toLowerCase();
-  if (q.length < 2) return [];
-
-  const sheetResults: SearchResult[] = sheets
-    .filter((s) => s.title.toLowerCase().includes(q))
-    .slice(0, 4)
-    .map((sheet) => ({ kind: 'sheet', key: `sheet-${sheet.id}`, sheet }));
-
-  const artistResults: SearchResult[] = artistNames
-    .filter((n) => n.toLowerCase().includes(q))
-    .slice(0, 3)
-    .map((name) => ({ kind: 'artist', key: `artist-${name}`, name }));
-
-  return [...sheetResults, ...artistResults];
+// dupliquer les grilles d'un même artiste dans la section "Grilles"). Le filtrage se
+// fait côté Firestore (useSearchSuggestions) — ici on ne fait qu'assembler l'affichage.
+function toSearchResults(sheets: Sheet[], artistNames: string[]): SearchResult[] {
+  return [
+    ...sheets.map((sheet): SearchResult => ({ kind: 'sheet', key: `sheet-${sheet.id}`, sheet })),
+    ...artistNames.map((name): SearchResult => ({ kind: 'artist', key: `artist-${name}`, name })),
+  ];
 }
 
 export function Navbar() {
@@ -49,9 +40,9 @@ export function Navbar() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
-  const { sheets: sheetsIndex, artistNames } = useSheetsIndex();
   const debouncedSearch = useDebouncedValue(searchValue);
-  const suggestions = getSearchResults(sheetsIndex, artistNames, debouncedSearch);
+  const { sheets: sheetMatches, artistNames: artistMatches } = useSearchSuggestions(debouncedSearch);
+  const suggestions = toSearchResults(sheetMatches, artistMatches);
   const showSuggestions = searchFocused && debouncedSearch.trim().length >= 2;
 
   useEffect(() => {

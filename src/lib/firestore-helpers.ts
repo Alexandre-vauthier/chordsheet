@@ -84,7 +84,9 @@ interface FirestoreSection {
 
 interface FirestoreSheet {
   title: string;
+  titleLower: string;
   artist: string;
+  artistLower: string;
   key: string;
   tempo: string;
   ownerId: string;
@@ -105,9 +107,13 @@ interface FirestoreSheet {
 
 // Convertir Sheet vers format Firestore (pour sauvegarde)
 export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
+  const title = sheet.title.trim();
+  const artist = sheet.artist.trim();
   const base: FirestoreSheet = {
-    title: sheet.title.trim(),
-    artist: sheet.artist.trim(),
+    title,
+    titleLower: title.toLowerCase(),
+    artist,
+    artistLower: artist.toLowerCase(),
     key: sheet.key,
     tempo: sheet.tempo,
     ownerId: sheet.ownerId,

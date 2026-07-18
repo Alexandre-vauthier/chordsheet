@@ -18,11 +18,13 @@ import { CoachMark } from './coach-mark';
 import { getChordsByInstrument, getAllExtendedChords } from '@/lib/chord-data';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
 import { useAuth } from '@/lib/auth-context';
-import { useSheetsIndex } from '@/lib/use-sheets-index';
+import { usePublicArtistSuggestions } from '@/lib/use-search-suggestions';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { SuggestionsDropdown } from '@/components/ui/suggestions-dropdown';
 
-function getArtistSuggestions(names: string[], value: string, max = 6): string[] {
+// Filtre local pour les grilles privées de l'utilisateur (petit lot déjà chargé,
+// pas besoin d'une requête Firestore dédiée par frappe).
+function filterOwnArtistNames(names: string[], value: string, max = 6): string[] {
   const q = value.trim().toLowerCase();
   if (q.length < 2) return [];
   return names.filter((n) => n.toLowerCase().includes(q) && n.toLowerCase() !== q).slice(0, max);
@@ -388,7 +390,6 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   // Suggestions d'artiste : grilles publiques + grilles (privées incluses) de l'utilisateur —
   // pousse vers l'orthographe déjà existante pour éviter de fragmenter les pages artiste
   // (qui matchent aujourd'hui sur une égalité stricte, sensible à la casse).
-  const { artistNames: publicArtistNames } = useSheetsIndex();
   const [ownArtistNames, setOwnArtistNames] = useState<string[]>([]);
   useEffect(() => {
     if (!user) return;
@@ -402,12 +403,15 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
       })
       .catch(() => {});
   }, [user]);
-  const artistSuggestionPool = useMemo(
-    () => Array.from(new Set([...publicArtistNames, ...ownArtistNames])),
-    [publicArtistNames, ownArtistNames]
-  );
   const debouncedArtist = useDebouncedValue(sheet.artist);
-  const artistSuggestions = getArtistSuggestions(artistSuggestionPool, debouncedArtist);
+  const publicArtistSuggestions = usePublicArtistSuggestions(debouncedArtist);
+  const artistSuggestions = useMemo(
+    () =>
+      Array.from(new Set([...publicArtistSuggestions, ...filterOwnArtistNames(ownArtistNames, debouncedArtist)]))
+        .sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }))
+        .slice(0, 6),
+    [publicArtistSuggestions, ownArtistNames, debouncedArtist]
+  );
 
   // Navigation entre cellules via TAB — focus la cellule cible par data-cell-id
   const navigateToCell = useCallback(

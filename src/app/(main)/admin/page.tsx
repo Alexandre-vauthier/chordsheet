@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getAuth } from 'firebase/auth';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { collection, query, getDocs, orderBy, limit, doc, deleteDoc, setDoc, updateDoc, deleteField, where } from 'firebase/firestore';
@@ -41,6 +42,8 @@ export default function AdminPage() {
   const [deletingSheet, setDeletingSheet] = useState<string | null>(null);
   const [settingPro, setSettingPro] = useState(false);
   const [proResult, setProResult] = useState('');
+  const [backfillingSearch, setBackfillingSearch] = useState(false);
+  const [backfillResult, setBackfillResult] = useState('');
 
   // Rediriger si pas admin
   useEffect(() => {
@@ -203,6 +206,29 @@ export default function AdminPage() {
     }
   };
 
+  // Ajoute titleLower/artistLower aux grilles existantes qui ne les ont pas encore
+  // (nécessaires pour la recherche par préfixe de la navbar/éditeur). Sans danger à
+  // relancer : ne touche que les documents où les champs manquent.
+  const handleBackfillSearchFields = async () => {
+    setBackfillingSearch(true);
+    setBackfillResult('');
+    try {
+      const idToken = await getAuth().currentUser?.getIdToken();
+      if (!idToken) throw new Error('Non connecté');
+      const res = await fetch('/api/admin/backfill-search-fields', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || 'Erreur lors de la mise à jour.');
+      setBackfillResult(`✓ ${data.updated}/${data.total} grille(s) mise(s) à jour`);
+    } catch (e) {
+      setBackfillResult(`Erreur : ${e instanceof Error ? e.message : 'inconnue'}`);
+    } finally {
+      setBackfillingSearch(false);
+    }
+  };
+
   if (loading || loadingData) {
     return (
       <div className="max-w-[1270px] mx-auto px-4 py-8">
@@ -248,6 +274,24 @@ export default function AdminPage() {
             className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
           >
             {settingPro ? 'En cours…' : 'Passer en Pro'}
+          </button>
+        </div>
+      </div>
+
+      {/* Index de recherche (titleLower/artistLower) */}
+      <div className="mb-8 p-4 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <p className="text-sm font-medium text-[var(--ink)]">Index de recherche</p>
+          <p className="text-xs text-[var(--ink-faint)]">Met à jour les grilles existantes pour qu&apos;elles apparaissent dans la recherche/suggestions (à faire une fois, sans risque de relancer).</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {backfillResult && <span className="text-xs text-[var(--ink-light)]">{backfillResult}</span>}
+          <button
+            onClick={handleBackfillSearchFields}
+            disabled={backfillingSearch}
+            className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+          >
+            {backfillingSearch ? 'En cours…' : 'Mettre à jour l’index'}
           </button>
         </div>
       </div>
