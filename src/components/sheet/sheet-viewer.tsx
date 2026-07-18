@@ -229,6 +229,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
     bpm: (() => { const b = parseTempo(localTempo); return b > 100 ? Math.round(b / 2) : b; })(),
     beatsPerMeasure: sheet.beatsPerMeasure ?? 4,
     genres: sheet.genres ?? [],
+    groovePattern: sheet.groovePattern,
   });
 
   const { artworkUrl, previewUrl } = useArtwork(sheet.artist, sheet.title);

@@ -176,6 +176,10 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
   }
   // V12 - À valider (toujours écrire pour que la requête where() fonctionne)
   (base as unknown as Record<string, unknown>).pendingValidation = sheet.pendingValidation === true;
+  // V13 - Boîte à rythme
+  if (sheet.groovePattern) {
+    (base as unknown as Record<string, unknown>).groovePattern = sheet.groovePattern;
+  }
 
   return base;
 }
@@ -229,6 +233,8 @@ export function fromFirestore(
     groupId: (data.groupId as string) || undefined,
     // V12 - À valider
     pendingValidation: (data.pendingValidation as boolean) || undefined,
+    // V13 - Boîte à rythme
+    groovePattern: (data.groovePattern as string) || undefined,
     // V3+ - Diagrammes d'accords & référence
     referenceUrl: (data.referenceUrl as string) || undefined,
     instrumentId: (data.instrumentId as InstrumentId) || undefined,

@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { InstrumentSelector, ChordSummary, ChordEditorModal } from '@/components/chord';
 import type { CustomChordMap } from '@/components/chord';
 import { usePlayback, parseTempo } from '@/lib/use-playback';
-import { useGrooveBox } from '@/lib/use-groove-box';
+import { useGrooveBox, PATTERN_DEFS } from '@/lib/use-groove-box';
 import { stopPreviewAudio } from '@/components/explore/sheet-card';
 import { CoachMark } from './coach-mark';
 import { getChordsByInstrument, getAllExtendedChords } from '@/lib/chord-data';
@@ -177,6 +177,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     bpm: grooveBpm,
     beatsPerMeasure: sheet.beatsPerMeasure ?? 4,
     genres: sheet.genres ?? [],
+    groovePattern: sheet.groovePattern,
   });
 
   // Pool d'accords indexé par instrument pour le chord finder
@@ -763,6 +764,25 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
               <option value="">Aucun</option>
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((n) => (
                 <option key={n} value={n}>Capo {n}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-[var(--ink-light)]">Boîte à rythme :</span>
+            <select
+              value={sheet.groovePattern ?? ''}
+              onChange={(e) => updateSheet({ groovePattern: e.target.value || undefined })}
+              className="cursor-pointer px-2 py-1 rounded border border-[var(--line)] text-sm bg-[var(--cell-bg)]
+                focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            >
+              <option value="">Automatique (selon genre)</option>
+              {Array.from(new Set(PATTERN_DEFS.map((p) => p.category))).map((category) => (
+                <optgroup key={category} label={category}>
+                  {PATTERN_DEFS.filter((p) => p.category === category).map((p) => (
+                    <option key={p.id} value={p.id}>{p.label}</option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </div>

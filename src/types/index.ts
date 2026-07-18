@@ -190,6 +190,8 @@ export interface Sheet {
   bookmarkCount: number;
   // V12 - Validation admin (grille en cours, non publique)
   pendingValidation?: boolean;
+  // V13 - Boîte à rythme : pattern choisi explicitement (sinon déduit des genres)
+  groovePattern?: string;
 }
 
 // Type pour la création d'une nouvelle grille

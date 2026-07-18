@@ -1,43 +1,40 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { DrumMachine } from 'smplr';
+import { getAudioContext } from './chord-audio';
 
-// ─── Samples audio (Tone.js CDN — kit CR78) ──────────────────────────────────
+// ─── Voix disponibles (kit LM-2 "LinnDrum") ──────────────────────────────────
+// Le LinnDrum a été le premier échantillonneur de batterie du marché : ses sons
+// sont de vrais fûts enregistrés, pas une synthèse analogique (contrairement au
+// kit CR-78 utilisé auparavant) — c'est ce qui rend la boîte à rythme réaliste.
 
-const SAMPLE_URLS = {
-  kick:  'https://tonejs.github.io/audio/drum-samples/CR78/kick.mp3',
-  snare: 'https://tonejs.github.io/audio/drum-samples/CR78/snare.mp3',
-  hihat: 'https://tonejs.github.io/audio/drum-samples/CR78/hihat.mp3',
+export type Voice =
+  | 'kick' | 'snare' | 'snareGhost' | 'hihatClosed' | 'hihatOpen' | 'ride'
+  | 'rimshot' | 'clap' | 'cowbell' | 'tomHigh' | 'tomLow' | 'congaHigh'
+  | 'congaLow' | 'crash' | 'tambourine';
+
+const VOICE_SAMPLE: Record<Voice, { group: string; velocity: number }> = {
+  kick:        { group: 'kick',       velocity: 120 },
+  snare:       { group: 'snare-h',    velocity: 110 },
+  snareGhost:  { group: 'snare-l',    velocity: 55 },
+  hihatClosed: { group: 'hhclosed',   velocity: 70 },
+  hihatOpen:   { group: 'hhopen',     velocity: 75 },
+  ride:        { group: 'ride',       velocity: 75 },
+  rimshot:     { group: 'stick-h',    velocity: 95 },
+  clap:        { group: 'clap',       velocity: 100 },
+  cowbell:     { group: 'cowbell',    velocity: 90 },
+  tomHigh:     { group: 'tom-h',      velocity: 100 },
+  tomLow:      { group: 'tom-l',      velocity: 100 },
+  congaHigh:   { group: 'conga-h',    velocity: 90 },
+  congaLow:    { group: 'conga-l',    velocity: 90 },
+  crash:       { group: 'crash',      velocity: 100 },
+  tambourine:  { group: 'tambourine', velocity: 70 },
 };
 
-const rawCache = new Map<string, ArrayBuffer>();
+const ALL_VOICES = Object.keys(VOICE_SAMPLE) as Voice[];
 
-async function loadSample(ctx: AudioContext, url: string): Promise<AudioBuffer | null> {
-  try {
-    let raw = rawCache.get(url);
-    if (!raw) {
-      const res = await fetch(url);
-      if (!res.ok) return null;
-      raw = await res.arrayBuffer();
-      rawCache.set(url, raw);
-    }
-    return await ctx.decodeAudioData(raw.slice(0));
-  } catch {
-    return null;
-  }
-}
-
-function playSample(ctx: AudioContext, buf: AudioBuffer, dest: AudioNode, t: number, vol = 1) {
-  const src = ctx.createBufferSource();
-  src.buffer = buf;
-  const gain = ctx.createGain();
-  gain.gain.value = vol;
-  src.connect(gain);
-  gain.connect(dest);
-  src.start(t);
-}
-
-// ─── Synthèse de secours ──────────────────────────────────────────────────────
+// ─── Synthèse de secours (le temps que les échantillons LM-2 chargent) ──────
 
 function synthKick(ctx: AudioContext, dest: AudioNode, t: number) {
   const osc = ctx.createOscillator();
@@ -105,25 +102,96 @@ function synthHihat(ctx: AudioContext, dest: AudioNode, t: number, vol = 0.28) {
   }
 }
 
-// ─── Patterns (16 steps = une mesure 4/4) ────────────────────────────────────
-
-type Pattern = { k: boolean[]; s: boolean[]; h: boolean[] };
-
-function pat(k: string, s: string, h: string): Pattern {
-  const f = (str: string) => [...str].map(c => c === 'X');
-  return { k: f(k), s: f(s), h: f(h) };
+function playVoiceFallback(ctx: AudioContext, dest: AudioNode, voice: Voice, t: number) {
+  if (voice === 'kick') synthKick(ctx, dest, t);
+  else if (voice === 'snare') synthSnare(ctx, dest, t);
+  else if (voice === 'hihatClosed') synthHihat(ctx, dest, t);
+  // Les autres voix n'ont pas d'équivalent synthétisé : silencieuses tant que
+  // les échantillons ne sont pas prêts (quelques centaines de ms au premier play).
 }
 
-const PATTERNS: Record<string, Pattern> = {
-  rock:    pat('X.......X.......', '....X.......X...', 'X.X.X.X.X.X.X.X.'),
-  pop:     pat('X...X...X...X...', '....X.......X...', 'X.X.X.X.X.X.X.X.'),
-  jazz:    pat('X...............', '....X...X.......', 'X...X.X.X...X.X.'),
-  blues:   pat('X.......X.......', '....X.......X...', 'X..X..X.X..X..X.'),
-  reggae:  pat('........X.......', '....X.......X...', '.X.X.X.X.X.X.X.X'),
-  funk:    pat('X..X....X..X....', '....X..X....X...', 'XXXXXXXXXXXXXXXX'),
-  bossa:   pat('X..X....X..X....', '....X.......X...', 'X.X.X.X.X.X.X.X.'),
-  country: pat('X.......X.......', '....X.......X...', 'X.X.X.X.X.X.X.X.'),
-};
+// ─── Patterns (16 pas = une mesure 4/4, 8 premiers = 3/4 tronqué) ───────────
+
+type Pattern = Partial<Record<Voice, number[]>>;
+
+interface PatternDef {
+  id: string;
+  label: string;
+  category: string;
+  pattern: Pattern;
+}
+
+export const PATTERN_DEFS: PatternDef[] = [
+  {
+    id: 'rock', label: 'Rock', category: 'Rock / Pop',
+    pattern: { kick: [0, 8], snare: [4, 12], hihatClosed: [0, 2, 4, 6, 8, 10, 12, 14] },
+  },
+  {
+    id: 'rockDriving', label: 'Rock (dynamique)', category: 'Rock / Pop',
+    pattern: { kick: [0, 3, 8, 11], snare: [4, 12], hihatClosed: [0, 2, 4, 6, 8, 10, 12, 14] },
+  },
+  {
+    id: 'pop', label: 'Pop', category: 'Rock / Pop',
+    pattern: { kick: [0, 4, 8, 12], snare: [4, 12], hihatClosed: [0, 2, 4, 6, 8, 10, 12, 14] },
+  },
+  {
+    id: 'popBallad', label: 'Pop (ballade)', category: 'Rock / Pop',
+    pattern: { kick: [0, 8], rimshot: [4, 12], hihatClosed: [2, 6, 10, 14] },
+  },
+  {
+    id: 'jazz', label: 'Jazz (ride)', category: 'Jazz / Blues',
+    pattern: { kick: [0], snare: [4, 8], ride: [0, 4, 6, 8, 12, 14] },
+  },
+  {
+    id: 'jazzBrush', label: 'Jazz (balais)', category: 'Jazz / Blues',
+    pattern: { kick: [0], snareGhost: [2, 6, 10, 14], ride: [0, 8] },
+  },
+  {
+    id: 'blues', label: 'Blues', category: 'Jazz / Blues',
+    pattern: { kick: [0, 8], snare: [4, 12], hihatClosed: [0, 3, 6, 8, 11, 14] },
+  },
+  {
+    id: 'bluesShuffle', label: 'Blues (shuffle)', category: 'Jazz / Blues',
+    pattern: { kick: [0, 3, 8, 11], snare: [4, 12], hihatClosed: [0, 3, 6, 8, 11, 14] },
+  },
+  {
+    id: 'reggae', label: 'Reggae', category: 'Reggae / Latin',
+    pattern: { kick: [8], snare: [4, 12], hihatClosed: [1, 3, 5, 7, 9, 11, 13, 15] },
+  },
+  {
+    id: 'reggaeSkank', label: 'Reggae (skank)', category: 'Reggae / Latin',
+    pattern: { kick: [8], rimshot: [4, 12], hihatClosed: [1, 3, 5, 7, 9, 11, 13, 15] },
+  },
+  {
+    id: 'bossa', label: 'Bossa nova', category: 'Reggae / Latin',
+    pattern: { kick: [0, 3, 8, 11], rimshot: [4, 12], congaLow: [2, 6, 10, 14], hihatClosed: [0, 2, 4, 6, 8, 10, 12, 14] },
+  },
+  {
+    id: 'samba', label: 'Samba', category: 'Reggae / Latin',
+    pattern: { kick: [0, 8], congaHigh: [0, 2, 4, 6, 8, 10, 12, 14], congaLow: [3, 7, 11, 15], cowbell: [2, 6, 10, 14] },
+  },
+  {
+    id: 'funk', label: 'Funk', category: 'Funk / Soul',
+    pattern: { kick: [0, 3, 8, 11], snare: [4, 7, 12], hihatClosed: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] },
+  },
+  {
+    id: 'funkGhost', label: 'Funk (ghost notes)', category: 'Funk / Soul',
+    pattern: {
+      kick: [0, 3, 6, 8, 11], snare: [4, 7, 12], snareGhost: [1, 5, 9, 13, 15],
+      cowbell: [2, 6, 10, 14], hihatClosed: [0, 2, 4, 6, 8, 10, 12, 14], hihatOpen: [15],
+    },
+  },
+  {
+    id: 'country', label: 'Country', category: 'Country / Folk',
+    pattern: { kick: [0, 8], rimshot: [4, 12], hihatClosed: [0, 2, 4, 6, 8, 10, 12, 14] },
+  },
+  {
+    id: 'countryTrain', label: 'Country (train beat)', category: 'Country / Folk',
+    pattern: { kick: [0, 4, 8, 12], rimshot: [2, 6, 10, 14], hihatClosed: [0, 2, 4, 6, 8, 10, 12, 14] },
+  },
+];
+
+const PATTERNS: Record<string, Pattern> = Object.fromEntries(PATTERN_DEFS.map((p) => [p.id, p.pattern]));
 
 const GENRE_MAP: Record<string, string> = {
   'Rock': 'rock', 'Metal': 'rock', 'Punk': 'rock',
@@ -136,59 +204,33 @@ const GENRE_MAP: Record<string, string> = {
   'Country': 'country', 'Folk': 'country',
 };
 
-function pickPattern(genres: string[]): Pattern {
+function pickPatternId(genres: string[]): string {
   for (const g of genres) {
-    const k = GENRE_MAP[g];
-    if (k && PATTERNS[k]) return PATTERNS[k];
+    const id = GENRE_MAP[g];
+    if (id && PATTERNS[id]) return id;
   }
-  return PATTERNS.rock;
+  return 'rock';
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
+function resolvePattern(groovePattern: string | undefined, genres: string[]): Pattern {
+  if (groovePattern && PATTERNS[groovePattern]) return PATTERNS[groovePattern];
+  return PATTERNS[pickPatternId(genres)];
+}
 
-type Samples = { kick: AudioBuffer | null; snare: AudioBuffer | null; hihat: AudioBuffer | null };
+// ─── Instrument échantillonné partagé (chargé une seule fois, sur le même
+// AudioContext que les accords — voir chord-audio.ts) ───────────────────────
 
-export function useGrooveBox({
-  enabled,
-  muted,
-  bpm,
-  beatsPerMeasure,
-  genres,
-}: {
-  enabled: boolean;  // lifecycle : suit isPlaying
-  muted: boolean;    // mute/unmute sans relancer l'AudioContext
-  bpm: number;
-  beatsPerMeasure: number;
-  genres: string[];
-}) {
-  const ctxRef = useRef<AudioContext | null>(null);
-  const destRef = useRef<AudioNode | null>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const stepRef = useRef(0);
-  const nextTimeRef = useRef(0);
-  const samplesRef = useRef<Samples | null>(null);
+type DrumMachineInstance = {
+  load: Promise<unknown>;
+  start: (event: { note: string; time: number; velocity?: number }) => (time?: number) => void;
+};
 
-  const bpmRef = useRef(bpm);
-  const bpmPerMeasureRef = useRef(beatsPerMeasure);
-  const patternRef = useRef(pickPattern(genres));
-  const mutedRef = useRef(muted);
+let compressor: DynamicsCompressorNode | null = null;
+let drumInstance: DrumMachineInstance | null = null;
+let drumReady = false;
 
-  useEffect(() => { bpmRef.current = bpm; }, [bpm]);
-  useEffect(() => { bpmPerMeasureRef.current = beatsPerMeasure; }, [beatsPerMeasure]);
-  useEffect(() => { patternRef.current = pickPattern(genres); }, [genres]);
-  useEffect(() => { mutedRef.current = muted; }, [muted]);
-
-  useEffect(() => {
-    if (!enabled) {
-      if (timerRef.current) clearInterval(timerRef.current);
-      ctxRef.current?.close().catch(() => {});
-      ctxRef.current = null;
-      destRef.current = null;
-      samplesRef.current = null;
-      return;
-    }
-
-    const ctx = new AudioContext();
+function ensureAudioGraph(ctx: AudioContext): AudioNode {
+  if (!compressor) {
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -18;
     comp.knee.value = 10;
@@ -196,43 +238,84 @@ export function useGrooveBox({
     comp.attack.value = 0.003;
     comp.release.value = 0.12;
     comp.connect(ctx.destination);
+    compressor = comp;
+  }
+  if (!drumInstance) {
+    const instance = DrumMachine(ctx, { instrument: 'LM-2', destination: compressor }) as unknown as DrumMachineInstance;
+    drumInstance = instance;
+    instance.load
+      .then(() => { drumReady = true; })
+      .catch(() => { drumInstance = null; drumReady = false; });
+  }
+  return compressor;
+}
 
-    ctxRef.current = ctx;
-    destRef.current = comp;
+function playVoice(ctx: AudioContext, dest: AudioNode, voice: Voice, t: number) {
+  if (drumReady && drumInstance) {
+    const { group, velocity } = VOICE_SAMPLE[voice];
+    drumInstance.start({ note: group, time: t, velocity });
+    return;
+  }
+  playVoiceFallback(ctx, dest, voice, t);
+}
+
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+
+export function useGrooveBox({
+  enabled,
+  muted,
+  bpm,
+  beatsPerMeasure,
+  genres,
+  groovePattern,
+}: {
+  enabled: boolean;  // lifecycle : suit isPlaying
+  muted: boolean;    // mute/unmute sans relancer la programmation
+  bpm: number;
+  beatsPerMeasure: number;
+  genres: string[];
+  groovePattern?: string; // id explicite (voir PATTERN_DEFS) ; sinon déduit des genres
+}) {
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const stepRef = useRef(0);
+  const nextTimeRef = useRef(0);
+
+  const bpmRef = useRef(bpm);
+  const bpmPerMeasureRef = useRef(beatsPerMeasure);
+  const patternRef = useRef(resolvePattern(groovePattern, genres));
+  const mutedRef = useRef(muted);
+
+  useEffect(() => { bpmRef.current = bpm; }, [bpm]);
+  useEffect(() => { bpmPerMeasureRef.current = beatsPerMeasure; }, [beatsPerMeasure]);
+  useEffect(() => { patternRef.current = resolvePattern(groovePattern, genres); }, [genres, groovePattern]);
+  useEffect(() => { mutedRef.current = muted; }, [muted]);
+
+  useEffect(() => {
+    if (!enabled) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = null;
+      return;
+    }
+
+    const ctx = getAudioContext();
+    const dest = ensureAudioGraph(ctx);
     stepRef.current = 0;
     nextTimeRef.current = ctx.currentTime + 0.05;
 
-    Promise.all([
-      loadSample(ctx, SAMPLE_URLS.kick),
-      loadSample(ctx, SAMPLE_URLS.snare),
-      loadSample(ctx, SAMPLE_URLS.hihat),
-    ]).then(([kick, snare, hihat]) => {
-      if (ctxRef.current === ctx) samplesRef.current = { kick, snare, hihat };
-    });
-
     const tick = () => {
-      const c = ctxRef.current;
-      const d = destRef.current;
-      if (!c || !d) return;
       const s16 = 15 / bpmRef.current;
       const stepsPerMeasure = bpmPerMeasureRef.current * 4;
       const pattern = patternRef.current;
-      const samples = samplesRef.current;
 
-      while (nextTimeRef.current < c.currentTime + 0.1) {
+      while (nextTimeRef.current < ctx.currentTime + 0.1) {
         const t = nextTimeRef.current;
         const m = stepRef.current % stepsPerMeasure;
 
-        // Avancer le pointeur même si muté pour garder le tempo
         if (!mutedRef.current) {
-          if (pattern.k[m]) {
-            samples?.kick ? playSample(c, samples.kick, d, t, 1.0) : synthKick(c, d, t);
-          }
-          if (pattern.s[m]) {
-            samples?.snare ? playSample(c, samples.snare, d, t, 0.9) : synthSnare(c, d, t);
-          }
-          if (pattern.h[m]) {
-            samples?.hihat ? playSample(c, samples.hihat, d, t, 0.4) : synthHihat(c, d, t);
+          for (const voice of ALL_VOICES) {
+            if (pattern[voice]?.includes(m)) {
+              playVoice(ctx, dest, voice, t);
+            }
           }
         }
 
@@ -245,10 +328,7 @@ export function useGrooveBox({
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
-      ctx.close().catch(() => {});
-      ctxRef.current = null;
-      destRef.current = null;
-      samplesRef.current = null;
+      timerRef.current = null;
     };
   }, [enabled]);
 }
