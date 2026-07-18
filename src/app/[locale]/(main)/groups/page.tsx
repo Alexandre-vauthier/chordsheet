@@ -73,6 +73,7 @@ function GroupCard({ group, setsCount }: { group: Group; setsCount: number }) {
 
 export default function GroupsPage() {
   const t = useTranslations('Groups');
+  const tSession = useTranslations('LiveSession');
   const { user } = useAuth();
   const { groups, loading } = useGroups();
   const { sets } = useSets(user?.id);
@@ -85,14 +86,22 @@ export default function GroupsPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
         <h1 className="font-playfair text-2xl font-bold text-[var(--ink)]">{t('title')}</h1>
-        <Link
-          href="/groups/new"
-          className="px-4 py-2 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          {t('newGroup')}
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/session"
+            className="px-4 py-2 border border-[var(--line)] text-[var(--ink)] text-sm font-medium rounded-lg hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+          >
+            📡 {tSession('liveSessionCta')}
+          </Link>
+          <Link
+            href="/groups/new"
+            className="px-4 py-2 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            {t('newGroup')}
+          </Link>
+        </div>
       </div>
 
       {loading ? (
@@ -116,6 +125,11 @@ export default function GroupsPage() {
           >
             {t('createFirst')}
           </Link>
+          <p className="text-xs mt-4">
+            {tSession.rich('groupsEmptyHint', {
+              link: (chunks) => <Link href="/session" className="text-[var(--accent)] hover:underline">{chunks}</Link>,
+            })}
+          </p>
         </div>
       ) : (
         <div className="space-y-3">

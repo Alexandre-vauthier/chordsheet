@@ -1016,6 +1016,8 @@
     "backHome": "Retour à l'accueil",
     "joinError": "Impossible de rejoindre cette session.",
     "sendToSession": "Envoyer à la session",
-    "makePublicToSend": "Rends la grille publique pour l'envoyer"
+    "makePublicToSend": "Rends la grille publique pour l'envoyer",
+    "liveSessionCta": "Session live",
+    "groupsEmptyHint": "Besoin de juste un moment ? <link>Démarre une session live</link> à la place — sans groupe à créer."
   }
 }
