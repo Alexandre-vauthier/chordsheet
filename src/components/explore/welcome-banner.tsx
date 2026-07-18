@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 const LS_KEY = 'chordsheet_welcome_dismissed';
 const LS_NEW = 'chordsheet_show_welcome';
 
 export function WelcomeBanner() {
+  const t = useTranslations('WelcomeBanner');
   const [visible, setVisible] = useState(false);
   const [isNew, setIsNew] = useState(false);
 
@@ -28,6 +30,12 @@ export function WelcomeBanner() {
 
   if (!visible) return null;
 
+  const pillars = [
+    { icon: '📖', label: t('pillar1Label'), desc: t('pillar1Desc') },
+    { icon: '🎵', label: t('pillar2Label'), desc: t('pillar2Desc') },
+    { icon: '🤝', label: t('pillar3Label'), desc: t('pillar3Desc') },
+  ];
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
@@ -38,7 +46,7 @@ export function WelcomeBanner() {
         <button
           onClick={dismiss}
           className="cursor-pointer absolute top-4 right-4 p-1.5 rounded-lg text-[var(--ink-faint)] hover:text-[var(--ink)] hover:bg-[var(--line)] transition-colors"
-          title="Fermer"
+          title={t('close')}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -54,34 +62,26 @@ export function WelcomeBanner() {
             </div>
             <div>
               {isNew ? (
-                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--accent)]">Bienvenue !</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--accent)]">{t('welcomeBadge')}</p>
               ) : (
-                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--ink-faint)]">ChordSheet</p>
+                <p className="text-xs font-semibold uppercase tracking-wider text-[var(--ink-faint)]">{t('brand')}</p>
               )}
               <h2 className="text-lg font-bold text-[var(--ink)] font-playfair leading-tight">
-                C&apos;est quoi exactement ?
+                {t('title')}
               </h2>
             </div>
           </div>
 
           <p className="text-sm text-[var(--ink-light)] leading-relaxed">
-            Pas un cours de musique — plutôt un <strong className="text-[var(--ink)]">carnet de bord pour musiciens</strong>.
-            On y note les accords et la structure d&apos;un morceau (Intro, Couplet, Refrain…)
-            pour avoir une vue simplifiée et jouer sans chercher.
+            {t.rich('body1', { strong: (chunks) => <strong className="text-[var(--ink)]">{chunks}</strong> })}
           </p>
           <p className="text-sm text-[var(--ink-light)] leading-relaxed mt-3">
-            Constitue ton book personnel, retrouve tes morceaux d&apos;un coup d&apos;œil,
-            et partage-les avec d&apos;autres musiciens.{' '}
-            <strong className="text-[var(--ink)]">La grille ne remplace pas la partition</strong> — elle te rappelle l&apos;essentiel.
+            {t.rich('body2', { strong: (chunks) => <strong className="text-[var(--ink)]">{chunks}</strong> })}
           </p>
 
           {/* Trois piliers */}
           <div className="grid grid-cols-3 gap-2 mt-5">
-            {[
-              { icon: '📖', label: 'Ton book', desc: 'Tous tes morceaux en un endroit' },
-              { icon: '🎵', label: 'Vue simplifiée', desc: 'Accords + structure, rien de superflu' },
-              { icon: '🤝', label: 'Collaboratif', desc: 'Partage avec la communauté' },
-            ].map(({ icon, label, desc }) => (
+            {pillars.map(({ icon, label, desc }) => (
               <div key={label} className="rounded-xl bg-[var(--cream)] border border-[var(--line)] px-3 py-3 text-center">
                 <div className="text-xl mb-1">{icon}</div>
                 <div className="text-xs font-semibold text-[var(--ink)]">{label}</div>
@@ -98,13 +98,13 @@ export function WelcomeBanner() {
             onClick={dismiss}
             className="flex-1 text-center px-4 py-2.5 rounded-xl bg-[var(--accent)] text-white text-sm font-medium hover:bg-[#a83d25] transition-colors"
           >
-            + Créer ma première grille
+            {t('createFirst')}
           </Link>
           <button
             onClick={dismiss}
             className="cursor-pointer flex-1 px-4 py-2.5 rounded-xl border border-[var(--line)] text-sm text-[var(--ink-light)] hover:border-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
           >
-            Explorer les grilles
+            {t('explore')}
           </button>
         </div>
       </div>

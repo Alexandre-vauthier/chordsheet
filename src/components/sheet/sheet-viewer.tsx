@@ -20,6 +20,8 @@ import { useChordVariants } from '@/lib/use-chord-variants';
 import { playChord, playMetronomeTick, preloadInstrument } from '@/lib/chord-audio';
 import { transposeSections, transposeKey } from '@/lib/transpose';
 import { Link } from '@/i18n/navigation';
+import { useTranslations } from 'next-intl';
+import { useGenreLabel } from '@/lib/use-genre-labels';
 
 const LS_KEY = 'chordsheet_instrument';
 
@@ -60,13 +62,13 @@ interface SheetViewerProps {
   printMinimizeRepeatedSectionsOverride?: boolean;
 }
 
-function getRefLabel(url: string): string {
+function getRefLabel(url: string, referenceFallback: string): string {
   if (url.includes('youtube.com') || url.includes('youtu.be')) return '▶ YouTube';
   if (url.includes('spotify.com')) return '♫ Spotify';
   if (url.includes('deezer.com')) return '♫ Deezer';
   if (url.includes('soundcloud.com')) return '♫ SoundCloud';
   if (url.includes('apple.com/music') || url.includes('music.apple')) return '♫ Apple Music';
-  return '🔗 Référence';
+  return referenceFallback;
 }
 
 const spanToGridCols = (span: CellSpan) => Math.round(span / 0.25);
@@ -81,6 +83,8 @@ function sectionSignature(section: { rows: { chord: string; span: number }[][] }
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingBookmark, concertCellPath, printChordDiagramsOverride, printMinimizeRepeatedSectionsOverride }: SheetViewerProps) {
+  const t = useTranslations('SheetViewer');
+  const genreLabel = useGenreLabel();
   const translate = useChordNotation();
   const getColor = useChordColor();
   const { user, updateUser } = useAuth();
@@ -276,7 +280,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               <div
                 className="relative w-20 h-20 group/art cursor-pointer"
                 onClick={previewUrl ? togglePreview : undefined}
-                title={previewUrl ? (previewPlaying ? 'Pause l\'extrait' : 'Écouter l\'extrait') : undefined}
+                title={previewUrl ? (previewPlaying ? t('pauseSample') : t('playSample')) : undefined}
               >
                 <img
                   src={artworkUrl}
@@ -298,13 +302,13 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h1 className="font-playfair text-3xl font-bold text-[var(--ink)] print:text-2xl">
-                {sheet.title || 'Sans titre'}
+                {sheet.title || t('untitled')}
               </h1>
               {onToggleBookmark && (
                 <button
                   onClick={onToggleBookmark}
                   disabled={isTogglingBookmark}
-                  title={isBookmarked ? 'Retirer du book' : 'Ajouter au book'}
+                  title={isBookmarked ? t('removeFromBook') : t('addToBook')}
                   className={`print:hidden shrink-0 text-2xl leading-none transition-colors ${
                     isBookmarked ? 'text-amber-400' : 'text-[var(--ink-faint)] hover:text-amber-400'
                   }`}
@@ -323,7 +327,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             )}
             {sheet.ownerName && (
               <p className="text-xs text-[var(--ink-faint)] mt-1 print:hidden">
-                par{' '}
+                {t('by')}{' '}
                 {sheet.ownerId && sheet.ownerId !== 'deleted' ? (
                   <Link
                     href={`/user/${sheet.ownerId}`}
@@ -339,7 +343,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
           </div>
           {sheet.capo ? (
             <span className="sm:hidden print:hidden absolute bottom-0 right-0 px-1.5 py-0.5 bg-[var(--cell-bg)] text-[var(--ink-light)] rounded text-xs border border-[var(--line)]">
-              Capo {sheet.capo}
+              {t('capo', { n: sheet.capo })}
             </span>
           ) : null}
           </div>{/* fin artwork+titre */}
@@ -350,7 +354,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               {/* Toggle métronome */}
               <button
                 onClick={() => setMetronomeEnabled(v => !v)}
-                title={metronomeEnabled ? 'Désactiver le métronome' : 'Activer le métronome'}
+                title={metronomeEnabled ? t('disableMetronome') : t('enableMetronome')}
                 className={`
                   flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
                   ${metronomeEnabled
@@ -371,7 +375,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               {/* Toggle boite à rythme */}
               <button
                 onClick={() => setGrooveEnabled(v => !v)}
-                title={grooveEnabled ? 'Désactiver la boite à rythme' : 'Activer la boite à rythme'}
+                title={grooveEnabled ? t('disableGrooveBox') : t('enableGrooveBox')}
                 className={`
                   flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
                   ${grooveEnabled
@@ -391,7 +395,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               {/* Toggle lecture des accords */}
               <button
                 onClick={() => setChordsEnabled(v => !v)}
-                title={chordsEnabled ? 'Désactiver la lecture des accords' : 'Activer la lecture des accords'}
+                title={chordsEnabled ? t('disableChordAudio') : t('enableChordAudio')}
                 className={`
                   flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
                   ${chordsEnabled
@@ -415,7 +419,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                     const units = ['quarter', 'eighth'] as const;
                     setLocalTempoUnit(u => units[(units.indexOf(u) + 1) % units.length]);
                   }}
-                  title="Changer l'unité de tempo (noire → croche)"
+                  title={t('changeTempoUnit')}
                   className="hover:text-[var(--accent)] transition-colors cursor-pointer"
                 >
                   <NoteIcon unit={localTempoUnit} className="w-3.5 h-3.5" />
@@ -435,7 +439,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   }}
                   className="w-10 bg-transparent border-none outline-none text-sm font-medium text-center
                     [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                  title="Modifier le tempo"
+                  title={t('editTempo')}
                 />
                 <span className="text-xs text-[var(--ink-light)]">BPM</span>
               </div>
@@ -443,7 +447,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               {/* Toggle count-in */}
               <button
                 onClick={() => setCountInEnabled(v => !v)}
-                title={countInEnabled ? 'Désactiver le décompte' : 'Activer le décompte (4 temps avant play)'}
+                title={countInEnabled ? t('disableCountIn') : t('enableCountIn')}
                 className={`
                   flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
                   ${countInEnabled
@@ -463,7 +467,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               {/* Play / Stop */}
               <button
                 onClick={handlePlay}
-                title={isPlaying ? 'Stop' : countBeat > 0 ? 'Annuler le décompte' : `Play — ${bpm} BPM`}
+                title={isPlaying ? 'Stop' : countBeat > 0 ? t('cancelCountIn') : t('playWithBpm', { bpm })}
                 className={`
                   flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
                   transition-all duration-150 border-[1.5px]
@@ -512,7 +516,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   href={`/explore?genre=${encodeURIComponent(genre)}`}
                   className="px-2 py-0.5 bg-[var(--line)] text-[var(--ink-light)] rounded-full text-xs font-medium hover:bg-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
                 >
-                  {genre}
+                  {genreLabel(genre)}
                 </Link>
               ))}
 
@@ -536,19 +540,19 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   <button
                     onClick={() => setTranspose(0)}
                     className="text-[9px] text-[var(--ink-faint)] hover:text-[var(--accent)] transition-colors"
-                    title="Réinitialiser"
+                    title={t('reset')}
                   >↺</button>
                 )}
               </div>
 
               {sheet.capo ? (
                 <span className="px-1.5 py-0.5 bg-[var(--cell-bg)] text-[var(--ink-light)] rounded text-xs border border-[var(--line)]">
-                  Capo {sheet.capo}
+                  {t('capo', { n: sheet.capo })}
                 </span>
               ) : null}
               {sheet.beatsPerMeasure === 3 && (
                 <span className="px-1.5 py-0.5 bg-[var(--cell-bg)] text-[var(--ink-light)] rounded text-xs border border-[var(--line)]">
-                  Ternaire
+                  {t('ternary')}
                 </span>
               )}
               {sheet.referenceUrl && (
@@ -558,7 +562,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   rel="noopener noreferrer"
                   className="px-1.5 py-0.5 bg-red-50 text-red-700 rounded text-xs hover:bg-red-100 transition-colors"
                 >
-                  {getRefLabel(sheet.referenceUrl)}
+                  {getRefLabel(sheet.referenceUrl, t('referenceLabel'))}
                 </a>
               )}
             </div>
@@ -576,10 +580,10 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               {localTempo} BPM
             </span>
             {sheet.capo ? (
-              <span className="text-sm text-[var(--ink-light)]">Capo {sheet.capo}</span>
+              <span className="text-sm text-[var(--ink-light)]">{t('capo', { n: sheet.capo })}</span>
             ) : null}
             {sheet.beatsPerMeasure === 3 && (
-              <span className="text-sm text-[var(--ink-light)]">Ternaire</span>
+              <span className="text-sm text-[var(--ink-light)]">{t('ternary')}</span>
             )}
           </div>
         </div>
@@ -593,7 +597,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               onClick={() => setShowChordSummary(v => !v)}
               className="flex items-center gap-1.5 text-sm font-medium text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors"
             >
-              Accords utilisés
+              {t('chordsUsed')}
               <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${showChordSummary ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
               </svg>
@@ -607,7 +611,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   setMinimizeRepeated(next);
                   updateUser({ minimizeRepeatedSections: next }).catch(() => {/* silent */});
                 }}
-                title="Masquer les accords des sections identiques"
+                title={t('hideRepeatedSectionsTitle')}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs border transition-colors ${
                   minimizeRepeated
                     ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
@@ -617,13 +621,13 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
                   <path d="M4 6h16M4 12h10M4 18h7" strokeLinecap="round"/>
                 </svg>
-                Minimiser
+                {t('minimize')}
               </button>
             )}
             {showChordSummary && instrumentId !== 'voice' && (
               <button
                 onClick={() => setShowInlineDiagram(v => !v)}
-                title={showInlineDiagram ? 'Masquer les diagrammes dans les cases' : 'Afficher les diagrammes dans les cases'}
+                title={showInlineDiagram ? t('hideInlineDiagrams') : t('showInlineDiagrams')}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs border transition-colors ${
                   showInlineDiagram
                     ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
@@ -639,7 +643,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   <line x1="12" y1="2" x2="12" y2="22" strokeWidth="1.2"/>
                   <line x1="17" y1="2" x2="17" y2="22" strokeWidth="1.2"/>
                 </svg>
-                Diagrammes
+                {t('diagrams')}
               </button>
             )}
             <InstrumentSelector
@@ -667,7 +671,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
       {(printChordDiagramsOverride ?? user?.printChordDiagrams) && instrumentId !== 'voice' && instrumentId !== 'percussion' && (
         <div className="hidden print:block mb-8 print-chord-summary">
           <div className="flex items-center gap-3 mb-3">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Accords utilisés</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">{t('chordsUsed')}</h2>
             <div className="flex-1 h-px bg-[var(--line)]" />
           </div>
           <ChordSummary
@@ -722,7 +726,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                     ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
                     : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
                   }`}
-                title={isPlaying && activeStep?.sectionId === section.id ? 'Stop' : 'Jouer cette section'}
+                title={isPlaying && activeStep?.sectionId === section.id ? 'Stop' : t('playSection')}
               >
                 {isPlaying && activeStep?.sectionId === section.id ? (
                   <><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><rect x="4" y="3" width="4" height="14" rx="1"/><rect x="12" y="3" width="4" height="14" rx="1"/></svg>Stop</>
@@ -738,7 +742,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
                   <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2M10 20h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                Identique à <span className="font-medium text-[var(--ink-light)] uppercase tracking-wide ml-0.5">{firstLabel}</span>
+                {t('sameAs')} <span className="font-medium text-[var(--ink-light)] uppercase tracking-wide ml-0.5">{firstLabel}</span>
               </div>
             )}
             <div className={`space-y-2 ${isDuplicate ? 'hidden print:block' : ''} ${isDuplicateForPrint ? 'print:hidden' : ''}`}>
@@ -827,7 +831,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
       {sheet.lyrics && instrumentId === 'voice' && (
         <div className="mt-10 print:mt-8">
           <div className="flex items-center gap-3 mb-4">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Paroles</h2>
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">{t('lyrics')}</h2>
             <div className="flex-1 h-px bg-[var(--line)]" />
           </div>
           <pre className="whitespace-pre-wrap font-sans text-[0.95rem] text-[var(--ink)] leading-loose bg-[var(--cell-bg)] rounded-lg border border-[var(--line)] p-6">
@@ -885,6 +889,7 @@ function ViewerChordCell({
   showInlineDiagram: boolean;
   capo?: number;
 }) {
+  const t = useTranslations('SheetViewer');
   const [hovered, setHovered] = useState(false);
   const leaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Pour le piano, le capo décale la hauteur → chercher l'accord transposé
@@ -981,7 +986,7 @@ function ViewerChordCell({
               e.stopPropagation();
               if (playableChord) playChord(playableChord, instrumentId, capo);
             }}
-            title="Cliquer pour écouter"
+            title={t('clickToListen')}
           >
             {!isPianoChord(inlineDiagramChord) ? (
               <ChordDiagram chord={inlineDiagramChord} size="xs" numStrings={numStrings} horizontal={diagramHorizontal} />
@@ -1012,7 +1017,7 @@ function ViewerChordCell({
             <div
               className="group/play relative flex justify-center cursor-pointer"
               onClick={(e) => { e.stopPropagation(); playChord(displayChord, instrumentId, capo); }}
-              title="Cliquer pour écouter"
+              title={t('clickToListen')}
             >
               {!isPianoChord(displayChord) ? (
                 <ChordDiagram chord={displayChord} size="sm" numStrings={numStrings} horizontal={diagramHorizontal} />

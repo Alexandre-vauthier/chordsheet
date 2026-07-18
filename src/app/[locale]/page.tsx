@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
 import { useArtwork } from '@/lib/use-artwork';
@@ -29,6 +30,8 @@ function hashGradient(s: string) {
 interface MiniSheet { id: string; title: string; artist: string; }
 
 /* ── Carte de fond ────────────────────────────────────────────────── */
+// Les titres/artistes affichés (placeholders ou grilles réelles) sont du contenu
+// utilisateur — jamais traduits, quelle que soit la langue de l'interface.
 
 function LandingCard({ sheet }: { sheet: MiniSheet }) {
   const { artworkUrl } = useArtwork(sheet.artist || undefined, sheet.title || undefined);
@@ -78,27 +81,28 @@ function ScrollColumn({ sheets, duration, offsetPx = 0 }: { sheets: MiniSheet[];
 /* ── Navbar ───────────────────────────────────────────────────────── */
 
 function LandingNav({ scrolled }: { scrolled: boolean }) {
+  const t = useTranslations('Landing.nav');
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[var(--nav-bg)]/95 backdrop-blur-sm border-b border-white/8' : 'bg-transparent'}`}>
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
         <Image src="/logo-chordsheet.svg" alt="ChordSheet" height={28} width={122} priority />
         <div className="hidden sm:flex items-center gap-7 text-[var(--nav-text)]/65 text-sm">
-          <a href="#book" className="hover:text-[var(--nav-text)] transition-colors">Mon Book</a>
+          <a href="#book" className="hover:text-[var(--nav-text)] transition-colors">{t('book')}</a>
           <a href="#groupes" className="flex items-center gap-1.5 hover:text-[var(--nav-text)] transition-colors">
             <svg className="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
             </svg>
-            Groupes
+            {t('bands')}
           </a>
-          <a href="#features" className="hover:text-[var(--nav-text)] transition-colors">Fonctionnalités</a>
-          <a href="#how" className="hover:text-[var(--nav-text)] transition-colors">Comment ça marche</a>
+          <a href="#features" className="hover:text-[var(--nav-text)] transition-colors">{t('features')}</a>
+          <a href="#how" className="hover:text-[var(--nav-text)] transition-colors">{t('how')}</a>
         </div>
         <div className="flex items-center gap-3">
           <Link href="/login" className="text-[var(--nav-text)]/65 text-sm hover:text-[var(--nav-text)] transition-colors hidden sm:block px-3 py-2">
-            Se connecter
+            {t('login')}
           </Link>
           <Link href="/register" className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity">
-            Créer un compte
+            {t('register')}
           </Link>
         </div>
       </div>
@@ -109,65 +113,17 @@ function LandingNav({ scrolled }: { scrolled: boolean }) {
 /* ── Données statiques ────────────────────────────────────────────── */
 
 const FEATURES = [
-  {
-    icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>,
-    title: 'Éditeur visuel',
-    text: 'Crée ta grille en quelques minutes. Import depuis Ultimate Guitar ou saisie case par case.',
-  },
-  {
-    icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>,
-    title: 'Mode concert',
-    text: 'Défilement automatique plein écran, BPM réglable. Joue sans jamais décrocher les yeux.',
-  },
-  {
-    icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>,
-    title: 'Transposition',
-    text: 'Change de tonalité en un clic. Parfait pour adapter au chanteur ou changer de capo.',
-  },
-  {
-    icon: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></>,
-    title: 'Tous les instruments',
-    text: 'Guitare, piano, ukulélé, basse, mandoline — diagrammes d\'accords générés automatiquement.',
-  },
-  {
-    icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>,
-    title: 'Partage & setlists',
-    text: 'Publie tes grilles, partage par lien, organise tes sets pour les concerts.',
-  },
-  {
-    icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>,
-    title: 'Impression propre',
-    text: 'Mise en page optimisée A4 avec diagrammes, répétitions et sections — prête en un clic.',
-  },
-  {
-    icon: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></>,
-    title: 'Détection IA',
-    text: 'Prends en photo une partition ou une grille papier — l\'IA reconnaît les accords et crée ta grille automatiquement.',
-  },
-  {
-    icon: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803a7.5 7.5 0 0010.607 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.5 10.5h-6"/></>,
-    title: 'Dictionnaire d\'accords',
-    text: 'Bibliothèque complète pour guitare, piano, ukulélé et plus. Identifie un accord en plaçant tes doigts sur le manche ou le clavier.',
-  },
+  { id: 'editor', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/> },
+  { id: 'concert', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/> },
+  { id: 'transpose', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/> },
+  { id: 'instruments', icon: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></> },
+  { id: 'sharing', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/> },
+  { id: 'print', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/> },
+  { id: 'ai', icon: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></> },
+  { id: 'dictionary', icon: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803a7.5 7.5 0 0010.607 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.5 10.5h-6"/></> },
 ];
 
-const STEPS = [
-  {
-    n: '01',
-    title: 'Crée ou importe',
-    text: 'Saisis visuellement, colle des accords depuis Ultimate Guitar, ou prends en photo une partition — l\'IA s\'occupe du reste.',
-  },
-  {
-    n: '02',
-    title: 'Organise et partage',
-    text: 'Range dans ton book, crée des setlists, transpose. Partage avec ton groupe ou distribue à toute une classe en un clic.',
-  },
-  {
-    n: '03',
-    title: 'Monte sur scène',
-    text: 'Active le mode concert : plein écran, défilement au BPM, boîte à rythmes. Synchronise tout le groupe en temps réel.',
-  },
-];
+const STEPS = ['step1', 'step2', 'step3'];
 
 const PLACEHOLDERS: MiniSheet[] = [
   { id: 'ph-1',  title: 'Wonderwall',               artist: 'Oasis' },
@@ -195,6 +151,7 @@ const PLACEHOLDERS: MiniSheet[] = [
 /* ── Page ─────────────────────────────────────────────────────────── */
 
 export default function Home() {
+  const t = useTranslations('Landing');
   const [sheets, setSheets] = useState<MiniSheet[]>(PLACEHOLDERS);
   const [sheetCount, setSheetCount] = useState<number | null>(null);
   const [scrolled, setScrolled] = useState(false);
@@ -252,34 +209,34 @@ export default function Home() {
         {/* Contenu */}
         <div className="relative z-10 text-center px-6 max-w-2xl mx-auto pointer-events-none">
           <p className="text-[var(--accent)] text-xs font-semibold tracking-widest uppercase mb-5">
-            La librairie de grilles d&apos;accords
+            {t('hero.eyebrow')}
           </p>
           <div className="mb-5 flex justify-center">
             <Image src="/logo-chordsheet.svg" alt="ChordSheet" height={64} width={280} priority className="w-auto h-12 sm:h-16" />
           </div>
           <p className="text-[var(--nav-text)]/70 text-xl sm:text-2xl mb-3 font-light leading-snug">
-            Crée, partage et joue tes grilles d&apos;accords.
+            {t('hero.tagline')}
           </p>
           <p className="text-[var(--nav-text)]/40 text-sm mb-10 max-w-md mx-auto">
-            L&apos;outil qu&apos;il manquait pour organiser ton répertoire, répéter et monter sur scène.
+            {t('hero.subtitle')}
           </p>
           <div className="flex gap-3 justify-center flex-wrap pointer-events-auto">
             <Link
               href="/register"
               className="px-7 py-3.5 bg-[var(--accent)] text-white rounded-xl font-semibold text-base hover:opacity-90 transition-opacity shadow-lg shadow-[#c84b2f]/30"
             >
-              Créer un compte gratuit
+              {t('hero.cta')}
             </Link>
             <Link
               href="/login"
               className="px-7 py-3.5 bg-white/8 text-[var(--nav-text)] rounded-xl font-semibold text-base hover:bg-white/12 transition-colors border border-white/10"
             >
-              Se connecter
+              {t('hero.login')}
             </Link>
           </div>
           {sheetCount !== null && sheetCount > 0 && (
             <p className="mt-6 text-[var(--nav-text)]/30 text-xs pointer-events-auto">
-              {sheetCount}+ grilles partagées par la communauté
+              {t('hero.sheetCount', { count: sheetCount })}
             </p>
           )}
         </div>
@@ -298,31 +255,26 @@ export default function Home() {
 
             {/* Texte */}
             <div>
-              <p className="text-[var(--accent)] text-xs font-semibold tracking-widest uppercase mb-4">Le cœur de ChordSheet</p>
+              <p className="text-[var(--accent)] text-xs font-semibold tracking-widest uppercase mb-4">{t('book.eyebrow')}</p>
               <h2 className="font-playfair text-4xl font-bold text-[var(--nav-text)] mb-5 leading-tight">
-                Mon book de grilles d&apos;accords.
+                {t('book.title')}
               </h2>
 
               {/* Message clé */}
               <blockquote className="border-l-2 border-[var(--accent)] pl-4 mb-6">
                 <p className="text-[var(--nav-text)]/80 text-base italic leading-relaxed">
-                  On sait. On a appris des dizaines de morceaux. Mais au moment de jouer — les accords exacts, la tonalité, l&apos;enchaînement — plus vraiment sous la main.
+                  {t('book.quote')}
                 </p>
                 <p className="text-[var(--nav-text)]/45 text-sm mt-2 not-italic">
-                  C&apos;est exactement pour ça que le book existe.
+                  {t('book.quoteFooter')}
                 </p>
               </blockquote>
 
               <p className="text-[var(--nav-text)]/55 text-base leading-relaxed mb-6">
-                Le <strong className="text-[var(--nav-text)]/80">book</strong>, c&apos;est ta librairie personnelle. Tu y mets tes propres créations, mais aussi les grilles de la communauté qui t&apos;intéressent. Ton répertoire complet, toujours à portée — pour répéter, improviser ou monter sur scène.
+                {t.rich('book.body', { strong: (chunks) => <strong className="text-[var(--nav-text)]/80">{chunks}</strong> })}
               </p>
               <ul className="space-y-3 mb-8">
-                {[
-                  'Ajoute n\'importe quelle grille publique en un clic',
-                  'Retrouve tout ton répertoire au même endroit',
-                  'Organise en setlists pour chaque concert',
-                  'Transpose, joue, imprime — sans quitter ton book',
-                ].map(item => (
+                {[t('book.item1'), t('book.item2'), t('book.item3'), t('book.item4')].map(item => (
                   <li key={item} className="flex items-start gap-3 text-sm text-[var(--nav-text)]/60">
                     <svg className="w-4 h-4 text-[var(--accent)] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
@@ -335,7 +287,7 @@ export default function Home() {
                 href="/register"
                 className="inline-block px-6 py-3 bg-[var(--accent)] text-white rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
               >
-                Créer mon book gratuit →
+                {t('book.cta')}
               </Link>
             </div>
 
@@ -346,14 +298,14 @@ export default function Home() {
                   <svg className="w-4 h-4 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
                   </svg>
-                  <span className="text-[var(--nav-text)]/70 text-sm font-semibold">Mon book</span>
-                  <span className="ml-auto text-[var(--nav-text)]/30 text-xs">12 grilles</span>
+                  <span className="text-[var(--nav-text)]/70 text-sm font-semibold">{t('book.previewLabel')}</span>
+                  <span className="ml-auto text-[var(--nav-text)]/30 text-xs">{t('book.previewCount')}</span>
                 </div>
                 {[
-                  { title: 'Wish You Were Here', artist: 'Pink Floyd', tag: 'Ma grille' },
-                  { title: 'Wonderwall', artist: 'Oasis', tag: 'Communauté' },
-                  { title: 'Hallelujah', artist: 'Leonard Cohen', tag: 'Communauté' },
-                  { title: 'Hotel California', artist: 'Eagles', tag: 'Ma grille' },
+                  { title: 'Wish You Were Here', artist: 'Pink Floyd', mine: true },
+                  { title: 'Wonderwall', artist: 'Oasis', mine: false },
+                  { title: 'Hallelujah', artist: 'Leonard Cohen', mine: false },
+                  { title: 'Hotel California', artist: 'Eagles', mine: true },
                 ].map((s) => (
                   <div key={s.title} className="flex items-center gap-3 rounded-xl bg-white/4 px-3 py-2.5">
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-800 to-indigo-900 shrink-0" />
@@ -361,14 +313,14 @@ export default function Home() {
                       <p className="text-[var(--nav-text)]/85 text-xs font-semibold truncate">{s.title}</p>
                       <p className="text-[var(--nav-text)]/40 text-[10px] truncate">{s.artist}</p>
                     </div>
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full shrink-0 font-medium ${s.tag === 'Ma grille' ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'bg-white/8 text-[var(--nav-text)]/40'}`}>
-                      {s.tag}
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full shrink-0 font-medium ${s.mine ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'bg-white/8 text-[var(--nav-text)]/40'}`}>
+                      {s.mine ? t('book.tagMine') : t('book.tagCommunity')}
                     </span>
                   </div>
                 ))}
                 <div className="flex items-center gap-3 rounded-xl border border-dashed border-white/10 px-3 py-2.5">
                   <div className="w-8 h-8 rounded-lg bg-white/5 shrink-0 flex items-center justify-center text-white/20 text-lg">+</div>
-                  <p className="text-[var(--nav-text)]/25 text-xs">Ajoute une grille depuis Explorer…</p>
+                  <p className="text-[var(--nav-text)]/25 text-xs">{t('book.previewAdd')}</p>
                 </div>
               </div>
             </div>
@@ -387,13 +339,13 @@ export default function Home() {
               <svg className="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
               </svg>
-              <span className="text-amber-400 text-xs font-semibold tracking-widest uppercase">Premium</span>
+              <span className="text-amber-400 text-xs font-semibold tracking-widest uppercase">{t('bands.badge')}</span>
             </div>
             <h2 className="font-playfair text-4xl font-bold text-[var(--nav-text)] mb-4 leading-tight">
-              Jouez ensemble.<br />Apprenez ensemble.
+              {t('bands.title')}<br />{t('bands.titleBreak')}
             </h2>
             <p className="text-[var(--nav-text)]/50 text-base max-w-xl mx-auto">
-              Créez un groupe, invitez par lien. Partagez vos grilles avec tous les membres instantanément — qu&apos;ils soient sur scène ou en cours.
+              {t('bands.subtitle')}
             </p>
           </div>
 
@@ -408,18 +360,13 @@ export default function Home() {
                 </svg>
               </div>
               <div>
-                <h3 className="text-[var(--nav-text)] font-bold text-xl mb-2">Groupes de musique</h3>
+                <h3 className="text-[var(--nav-text)] font-bold text-xl mb-2">{t('bands.musicTitle')}</h3>
                 <p className="text-[var(--nav-text)]/55 text-sm leading-relaxed">
-                  Tout le groupe joue la même version. Partagez votre répertoire commun, répétez avec les mêmes accords, montez sur scène en synchronisation.
+                  {t('bands.musicText')}
                 </p>
               </div>
               <ul className="space-y-2.5">
-                {[
-                  'Un répertoire commun pour tous les membres',
-                  'Chacun a les grilles dans son propre book',
-                  'Setlists partagées pour les concerts',
-                  'Mode concert synchronisé pour jouer ensemble',
-                ].map(item => (
+                {[t('bands.musicItem1'), t('bands.musicItem2'), t('bands.musicItem3'), t('bands.musicItem4')].map(item => (
                   <li key={item} className="flex items-start gap-2.5 text-sm text-[var(--nav-text)]/55">
                     <svg className="w-4 h-4 text-[var(--nav-text)]/30 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
@@ -439,18 +386,13 @@ export default function Home() {
                 </svg>
               </div>
               <div>
-                <h3 className="text-amber-400/90 font-bold text-xl mb-2">Professeurs</h3>
+                <h3 className="text-amber-400/90 font-bold text-xl mb-2">{t('bands.teachersTitle')}</h3>
                 <p className="text-[var(--nav-text)]/55 text-sm leading-relaxed">
-                  Vous créez une grille, toute la classe la reçoit dans son book. Par classe, par niveau, par instrument — fini l&apos;impression et les liens perdus dans les emails.
+                  {t('bands.teachersText')}
                 </p>
               </div>
               <ul className="space-y-2.5">
-                {[
-                  'Distribuez une grille à toute une classe en un clic',
-                  'Organisez vos élèves en groupes séparés',
-                  'Chaque élève accède sans avoir à chercher',
-                  'Les élèves peuvent transposer et jouer en autonomie',
-                ].map(item => (
+                {[t('bands.teachersItem1'), t('bands.teachersItem2'), t('bands.teachersItem3'), t('bands.teachersItem4')].map(item => (
                   <li key={item} className="flex items-start gap-2.5 text-sm text-[var(--nav-text)]/55">
                     <svg className="w-4 h-4 text-amber-400/70 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
@@ -466,14 +408,14 @@ export default function Home() {
           {/* Pricing + CTA */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-5 rounded-2xl border border-amber-400/15 bg-amber-400/5 px-7 py-5">
             <div>
-              <p className="text-amber-400/90 font-semibold text-sm">Un seul abonnement pour tout le groupe.</p>
-              <p className="text-[var(--nav-text)]/40 text-xs mt-0.5">Professeur, élèves, musiciens — une licence commune, pas une par tête.</p>
+              <p className="text-amber-400/90 font-semibold text-sm">{t('bands.pricingText')}</p>
+              <p className="text-[var(--nav-text)]/40 text-xs mt-0.5">{t('bands.pricingSubtext')}</p>
             </div>
             <Link
               href="/register"
               className="shrink-0 px-6 py-2.5 bg-amber-500 text-white rounded-xl font-semibold text-sm hover:bg-amber-400 transition-colors whitespace-nowrap"
             >
-              Créer mon groupe →
+              {t('bands.cta')}
             </Link>
           </div>
 
@@ -483,20 +425,20 @@ export default function Home() {
       {/* ── Fonctionnalités ─────────────────────────────────────── */}
       <section id="features" className="px-6 py-24 max-w-5xl mx-auto">
         <h2 className="text-center text-[var(--nav-text)] text-3xl font-bold mb-2 font-playfair">
-          Tout ce qu&apos;il faut pour jouer.
+          {t('features.title')}
         </h2>
         <p className="text-center text-[var(--nav-text)]/40 mb-14 text-sm">
-          De la création à la scène, sans friction.
+          {t('features.subtitle')}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {FEATURES.map((f) => (
-            <div key={f.title} className="rounded-2xl border border-white/8 bg-white/4 px-5 py-5 flex flex-col gap-3 hover:bg-white/6 transition-colors">
+            <div key={f.id} className="rounded-2xl border border-white/8 bg-white/4 px-5 py-5 flex flex-col gap-3 hover:bg-white/6 transition-colors">
               <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/15 flex items-center justify-center text-[var(--accent)]">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">{f.icon}</svg>
               </div>
               <div>
-                <h3 className="text-[var(--nav-text)] font-semibold text-sm mb-1">{f.title}</h3>
-                <p className="text-[var(--nav-text)]/50 text-sm leading-relaxed">{f.text}</p>
+                <h3 className="text-[var(--nav-text)] font-semibold text-sm mb-1">{t(`features.${f.id}.title`)}</h3>
+                <p className="text-[var(--nav-text)]/50 text-sm leading-relaxed">{t(`features.${f.id}.text`)}</p>
               </div>
             </div>
           ))}
@@ -507,18 +449,18 @@ export default function Home() {
       <section id="how" className="px-6 py-24 border-t border-white/5">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-center text-[var(--nav-text)] text-3xl font-bold mb-2 font-playfair">
-            Simple dès le départ.
+            {t('how.title')}
           </h2>
           <p className="text-center text-[var(--nav-text)]/40 mb-16 text-sm">
-            Trois étapes pour passer de zéro à la scène.
+            {t('how.subtitle')}
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {STEPS.map((step) => (
-              <div key={step.n} className="flex flex-col gap-4">
-                <span className="font-playfair text-5xl font-bold text-[var(--accent)]/20 leading-none">{step.n}</span>
+            {STEPS.map((stepId, i) => (
+              <div key={stepId} className="flex flex-col gap-4">
+                <span className="font-playfair text-5xl font-bold text-[var(--accent)]/20 leading-none">{String(i + 1).padStart(2, '0')}</span>
                 <div>
-                  <h3 className="text-[var(--nav-text)] font-bold text-base mb-2">{step.title}</h3>
-                  <p className="text-[var(--nav-text)]/50 text-sm leading-relaxed">{step.text}</p>
+                  <h3 className="text-[var(--nav-text)] font-bold text-base mb-2">{t(`how.${stepId}.title`)}</h3>
+                  <p className="text-[var(--nav-text)]/50 text-sm leading-relaxed">{t(`how.${stepId}.text`)}</p>
                 </div>
               </div>
             ))}
@@ -530,23 +472,23 @@ export default function Home() {
       <section className="px-6 py-24 border-t border-white/5">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="font-playfair text-4xl font-bold text-[var(--nav-text)] mb-4 leading-tight">
-            Prêt à organiser<br />ton répertoire ?
+            {t('finalCta.title')}<br />{t('finalCta.titleBreak')}
           </h2>
           <p className="text-[var(--nav-text)]/45 text-base mb-8">
-            Gratuit, sans carte bancaire. Ton répertoire en ligne en 2 minutes.
+            {t('finalCta.subtitle')}
           </p>
           <div className="flex gap-3 justify-center flex-wrap">
             <Link
               href="/register"
               className="px-7 py-3.5 bg-[var(--accent)] text-white rounded-xl font-semibold text-base hover:opacity-90 transition-opacity shadow-lg shadow-[#c84b2f]/25"
             >
-              Créer un compte gratuit
+              {t('finalCta.cta')}
             </Link>
             <Link
               href="/explore"
               className="px-7 py-3.5 border border-white/15 text-[var(--nav-text)]/70 rounded-xl font-semibold text-base hover:border-white/25 hover:text-[var(--nav-text)] transition-colors"
             >
-              Voir les grilles
+              {t('finalCta.browse')}
             </Link>
           </div>
         </div>
@@ -555,11 +497,11 @@ export default function Home() {
       {/* ── Footer ──────────────────────────────────────────────── */}
       <footer className="text-center py-8 text-[var(--nav-text)]/25 text-xs border-t border-white/5">
         <div className="flex justify-center gap-6 mb-2">
-          <Link href="/legal/cgu" className="hover:text-[var(--nav-text)]/50 transition-colors">CGU</Link>
-          <Link href="/legal/confidentialite" className="hover:text-[var(--nav-text)]/50 transition-colors">Confidentialité</Link>
-          <Link href="/legal/mentions-legales" className="hover:text-[var(--nav-text)]/50 transition-colors">Mentions légales</Link>
+          <Link href="/legal/cgu" className="hover:text-[var(--nav-text)]/50 transition-colors">{t('footer.terms')}</Link>
+          <Link href="/legal/confidentialite" className="hover:text-[var(--nav-text)]/50 transition-colors">{t('footer.privacy')}</Link>
+          <Link href="/legal/mentions-legales" className="hover:text-[var(--nav-text)]/50 transition-colors">{t('footer.legalNotice')}</Link>
         </div>
-        © {new Date().getFullYear()} ChordSheet
+        {t('footer.copyright', { year: new Date().getFullYear() })}
       </footer>
     </main>
   );

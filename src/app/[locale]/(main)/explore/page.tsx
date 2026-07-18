@@ -2,11 +2,13 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { collection, query, where, getDocs, limit, deleteDoc, doc } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
 import { useBookmarks } from '@/lib/use-bookmarks';
+import { useGenreLabel, useDifficultyLabel } from '@/lib/use-genre-labels';
 import { Input } from '@/components/ui/input';
 import { SheetCard, stopPreviewAudio } from '@/components/explore/sheet-card';
 import { WelcomeBanner } from '@/components/explore/welcome-banner';
@@ -17,6 +19,9 @@ import { useRouter } from '@/i18n/navigation';
 type SortOption = 'recent' | 'rated' | 'viewed';
 
 export default function ExplorePage() {
+  const t = useTranslations('Explore');
+  const genreLabel = useGenreLabel();
+  const difficultyLabel = useDifficultyLabel();
   const { isAdmin, user, loading: authLoading } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
   const router = useRouter();
@@ -128,14 +133,14 @@ export default function ExplorePage() {
   }, [isAdmin, authLoading]);
 
   const handleAdminDelete = async (sheetId: string) => {
-    if (!confirm('Supprimer cette grille ? Cette action est irréversible.')) return;
+    if (!confirm(t('confirmDeleteSheet'))) return;
     try {
       const db = getDb();
       await deleteDoc(doc(db, 'sheets', sheetId));
       setSheets(prev => prev.filter(s => s.id !== sheetId));
     } catch (error) {
       console.error('Error deleting sheet:', error);
-      alert('Erreur lors de la suppression');
+      alert(t('errorDelete'));
     }
   };
 
@@ -227,11 +232,11 @@ export default function ExplorePage() {
     <div className="max-w-[1270px] mx-auto px-4 sm:px-6 py-8">
       <WelcomeBanner />
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[var(--ink)]">Explorer</h1>
+        <h1 className="text-2xl font-bold text-[var(--ink)]">{t('title')}</h1>
         <p className="text-[var(--ink-light)] mt-1">
-          Découvrez les grilles partagées par la communauté
-          {sheets.length > 0 && ` (${sheets.length} grille${sheets.length > 1 ? 's' : ''})`}
-          {groupedResults.length > 0 && groupedResults.length < sheets.length && ` · ${groupedResults.length} titre${groupedResults.length > 1 ? 's' : ''} uniques`}
+          {t('subtitle')}
+          {sheets.length > 0 && ` ${t('subtitleCount', { count: sheets.length })}`}
+          {groupedResults.length > 0 && groupedResults.length < sheets.length && ` · ${t('subtitleUniqueTitles', { count: groupedResults.length })}`}
         </p>
       </div>
 
@@ -242,7 +247,7 @@ export default function ExplorePage() {
           <div className="flex-1">
             <Input
               type="search"
-              placeholder="Rechercher par titre, artiste, tonalité..."
+              placeholder={t('searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full"
@@ -252,9 +257,9 @@ export default function ExplorePage() {
             onClick={handleRandom}
             disabled={sheets.length === 0}
             className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)] text-sm text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors disabled:opacity-40"
-            title="Ouvrir une grille au hasard"
+            title={t('randomTitle')}
           >
-            ⚄ Aléatoire
+            {t('random')}
           </button>
         </div>
 
@@ -262,7 +267,7 @@ export default function ExplorePage() {
         <div className="flex flex-wrap items-center gap-3">
           {/* Tri */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-[var(--ink-light)]">Trier par :</span>
+            <span className="text-sm text-[var(--ink-light)]">{t('sortBy')}</span>
             <div className="flex rounded-lg border border-[var(--line)] overflow-hidden">
               <button
                 onClick={() => handleSortBy('recent')}
@@ -272,7 +277,7 @@ export default function ExplorePage() {
                     : 'bg-[var(--cell-bg)] text-[var(--ink-light)] hover:bg-[var(--cell-hover)]'
                 }`}
               >
-                Récents
+                {t('sortRecent')}
               </button>
               <button
                 onClick={() => handleSortBy('rated')}
@@ -282,7 +287,7 @@ export default function ExplorePage() {
                     : 'bg-[var(--cell-bg)] text-[var(--ink-light)] hover:bg-[var(--cell-hover)]'
                 }`}
               >
-                Mieux notés
+                {t('sortRated')}
               </button>
               <button
                 onClick={() => handleSortBy('viewed')}
@@ -292,7 +297,7 @@ export default function ExplorePage() {
                     : 'bg-[var(--cell-bg)] text-[var(--ink-light)] hover:bg-[var(--cell-hover)]'
                 }`}
               >
-                Plus consultés
+                {t('sortViewed')}
               </button>
             </div>
           </div>
@@ -307,25 +312,25 @@ export default function ExplorePage() {
             className="px-3 py-1.5 rounded-lg border border-[var(--line)] text-sm bg-[var(--cell-bg)]
               text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
           >
-            <option value="">Tous les genres</option>
+            <option value="">{t('allGenres')}</option>
             {GENRES.map((genre) => (
               <option key={genre} value={genre}>
-                {genre}
+                {genreLabel(genre)}
               </option>
             ))}
           </select>
 
           {/* Difficulté */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-[var(--ink-light)]">Difficulté :</span>
+            <span className="text-sm text-[var(--ink-light)]">{t('difficultyLabel')}</span>
             <select
               value={selectedDifficulty ?? ''}
               onChange={(e) => handleDifficulty(e.target.value ? Number(e.target.value) as Difficulty : null)}
               className="text-sm border border-[var(--line)] rounded-lg px-2 py-1 bg-[var(--cell-bg)] text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             >
-              <option value="">Toutes</option>
+              <option value="">{t('allDifficulties')}</option>
               {DIFFICULTY_OPTIONS.map(({ value, label }) => (
-                <option key={value} value={value}>{label}</option>
+                <option key={value} value={value}>{difficultyLabel(label)}</option>
               ))}
             </select>
           </div>
@@ -336,7 +341,7 @@ export default function ExplorePage() {
               onClick={clearFilters}
               className="ml-auto text-sm text-[var(--accent)] hover:underline"
             >
-              Réinitialiser
+              {t('reset')}
             </button>
           )}
         </div>
@@ -359,8 +364,8 @@ export default function ExplorePage() {
         <>
           {hasActiveFilters && (
             <p className="text-sm text-[var(--ink-light)] mb-4">
-              {groupedResults.length} titre{groupedResults.length > 1 ? 's' : ''}
-              {filteredSheets.length > groupedResults.length && ` (${filteredSheets.length} versions)`}
+              {t('resultsCount', { count: groupedResults.length })}
+              {filteredSheets.length > groupedResults.length && ` ${t('resultsVersions', { count: filteredSheets.length })}`}
             </p>
           )}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
@@ -385,20 +390,20 @@ export default function ExplorePage() {
             <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <p className="text-lg">Aucun résultat pour &laquo;&nbsp;{searchQuery}&nbsp;&raquo;</p>
-            <p className="text-sm mt-1">Cette grille n&apos;existe pas encore — pourquoi ne pas la créer ?</p>
+            <p className="text-lg">{t('noResultsForQuery', { query: searchQuery })}</p>
+            <p className="text-sm mt-1">{t('noResultsHint')}</p>
             <div className="flex gap-3 justify-center mt-4">
               <button
                 onClick={clearFilters}
                 className="px-4 py-2 text-sm text-[var(--ink-light)] border border-[var(--line)] rounded-lg hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
               >
-                Réinitialiser
+                {t('reset')}
               </button>
               <a
                 href={`/sheet/new`}
                 className="px-4 py-2 text-sm text-white bg-[var(--accent)] rounded-lg hover:bg-[#a83d25] transition-colors"
               >
-                + Créer cette grille
+                {t('createThisSheet')}
               </a>
             </div>
           </div>
@@ -409,8 +414,8 @@ export default function ExplorePage() {
             <svg className="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
             </svg>
-            <p className="text-lg">Aucune grille publique pour le moment</p>
-            <p className="text-sm mt-1">Soyez le premier à partager !</p>
+            <p className="text-lg">{t('noPublicSheetsYet')}</p>
+            <p className="text-sm mt-1">{t('beFirstToShare')}</p>
           </div>
         </div>
       )}
