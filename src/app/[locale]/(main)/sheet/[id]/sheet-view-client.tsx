@@ -27,7 +27,7 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
   const { user, isAdmin } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
   const { userRating, rateSheet, isLoading: ratingLoading } = useRatings(id, user?.id);
-  const { sessionCode, pushSheet } = useLiveSession();
+  const { sessionCode, session, pushSheet } = useLiveSession();
   const [sheet, setSheet] = useState<Sheet | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -216,6 +216,23 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
             </div>
           )}
 
+          {/* Session live : envoi direct en un clic (si session active) */}
+          {sessionCode && sheet.isPublic && (
+            session?.currentSheetId === id ? (
+              <span title={t('alreadySent')} className="w-8 h-8 flex items-center justify-center rounded-full shrink-0">
+                <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+              </span>
+            ) : (
+              <button
+                onClick={() => pushSheet({ id, title: sheet.title, artist: sheet.artist }).catch(() => {})}
+                title={t('sendToSession')}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-[var(--ink-light)] hover:bg-red-50 hover:text-red-600 transition-colors shrink-0 cursor-pointer"
+              >
+                <span className="w-2.5 h-2.5 rounded-full border-2 border-current" />
+              </button>
+            )
+          )}
+
           {/* Droite : menu "..." */}
           <div className="relative shrink-0" ref={menuRef}>
             <button
@@ -234,20 +251,6 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
                 >
                   🖨 Imprimer / PDF
                 </button>
-                {sessionCode && sheet && (
-                  <button
-                    onClick={() => {
-                      if (!sheet.isPublic) return;
-                      pushSheet({ id, title: sheet.title, artist: sheet.artist }).catch(() => {});
-                      setMenuOpen(false);
-                    }}
-                    disabled={!sheet.isPublic}
-                    title={!sheet.isPublic ? t('makePublicToSend') : undefined}
-                    className="w-full text-left px-4 py-2.5 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[var(--ink)] disabled:cursor-not-allowed"
-                  >
-                    📡 {t('sendToSession')}
-                  </button>
-                )}
                 {user && (
                   <button
                     onClick={() => { handleToggleBookmark(); setMenuOpen(false); }}

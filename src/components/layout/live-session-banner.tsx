@@ -12,7 +12,7 @@ export function LiveSessionBanner() {
   const { firebaseUser } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
-  const { sheets, loading } = useSearchSuggestions(query);
+  const { sheets, sheetsByArtist, loading } = useSearchSuggestions(query);
   const searchRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,8 +30,13 @@ export function LiveSessionBanner() {
   if (!session) return null;
 
   const pushedByMe = session.pushedBy === firebaseUser?.uid;
-  // Seules les grilles publiques sont lisibles par des invités anonymes
-  const publicResults = sheets.filter(s => s.isPublic);
+  // Fusionne les correspondances par titre ET par artiste (dédupliquées) — sinon
+  // chercher "Nirvana" ne remonte aucune grille (seul le nom d'artiste était exposé
+  // par le hook, pas les grilles elles-mêmes). Seules les grilles publiques sont
+  // lisibles par des invités anonymes.
+  const publicResults = Array.from(
+    new Map([...sheets, ...sheetsByArtist].map(s => [s.id, s])).values()
+  ).filter(s => s.isPublic);
 
   const handlePush = (sheet: { id?: string; title: string; artist: string }) => {
     if (!sheet.id) return;

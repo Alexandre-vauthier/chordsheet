@@ -12,19 +12,21 @@ export default function SessionHubPage() {
   const t = useTranslations('LiveSession');
   const router = useRouter();
   const { user } = useAuth();
-  const { sessionCode, isHost, startSession } = useLiveSession();
+  const { sessionCode, startSession } = useLiveSession();
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
   const [joinCode, setJoinCode] = useState('');
 
   const userIsPro = isPro(user?.subscription);
 
-  // Session déjà active : direction la vue partagée
+  // Session déjà active (hôte OU invité) : direction la vue partagée plutôt que
+  // le hub de création — sinon un invité qui clique "Session live" après s'être
+  // connecté se retrouve sur l'écran "démarrer une session" au lieu de la sienne.
   useEffect(() => {
-    if (sessionCode && isHost) {
+    if (sessionCode) {
       router.replace(`/session/${sessionCode}`);
     }
-  }, [sessionCode, isHost, router]);
+  }, [sessionCode, router]);
 
   const handleStart = async () => {
     setStarting(true);
@@ -44,7 +46,7 @@ export default function SessionHubPage() {
     router.push(`/session/${joinCode.trim().toUpperCase()}`);
   };
 
-  if (sessionCode && isHost) {
+  if (sessionCode) {
     return null;
   }
 

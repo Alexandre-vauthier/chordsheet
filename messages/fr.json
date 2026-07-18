@@ -1016,7 +1016,7 @@
     "backHome": "Retour à l'accueil",
     "joinError": "Impossible de rejoindre cette session.",
     "sendToSession": "Envoyer à la session",
-    "makePublicToSend": "Rends la grille publique pour l'envoyer",
+    "alreadySent": "Déjà envoyée à la session",
     "liveSessionCta": "Session live",
     "groupsEmptyHint": "Besoin de juste un moment ? <link>Démarre une session live</link> à la place — sans groupe à créer.",
     "addSheet": "Ajouter une grille",

@@ -1016,7 +1016,7 @@
     "backHome": "Back to home",
     "joinError": "Couldn't join this session.",
     "sendToSession": "Send to session",
-    "makePublicToSend": "Make the sheet public to send it",
+    "alreadySent": "Already sent to session",
     "liveSessionCta": "Live session",
     "groupsEmptyHint": "Just need something quick? <link>Start a live session</link> instead — no group to create.",
     "addSheet": "Add a sheet",

@@ -42,6 +42,10 @@ function dedupeNames(sheets: Sheet[], excluding: string | null, max: number): st
 interface SearchSuggestions {
   sheets: Sheet[];
   artistNames: string[];
+  // Grilles trouvées par préfixe d'artiste (pas seulement de titre) — utile pour
+  // un usage qui a besoin de grilles cliquables directement (ex: banniere de session
+  // live), contrairement à `artistNames` qui ne sert qu'à pointer vers /artist/[name].
+  sheetsByArtist: Sheet[];
   loading: boolean;
 }
 
@@ -50,6 +54,7 @@ export function useSearchSuggestions(searchQuery: string): SearchSuggestions {
   const { isAdmin } = useAuth();
   const [sheets, setSheets] = useState<Sheet[]>([]);
   const [artistNames, setArtistNames] = useState<string[]>([]);
+  const [sheetsByArtist, setSheetsByArtist] = useState<Sheet[]>([]);
   const [loading, setLoading] = useState(false);
   const requestId = useRef(0);
 
@@ -58,6 +63,7 @@ export function useSearchSuggestions(searchQuery: string): SearchSuggestions {
     if (q.length < 2) {
       setSheets([]);
       setArtistNames([]);
+      setSheetsByArtist([]);
       setLoading(false);
       return;
     }
@@ -71,11 +77,13 @@ export function useSearchSuggestions(searchQuery: string): SearchSuggestions {
         if (id !== requestId.current) return;
         setSheets(titleMatches);
         setArtistNames(dedupeNames(artistMatches, null, MAX_ARTIST_RESULTS));
+        setSheetsByArtist(artistMatches);
       })
       .catch(() => {
         if (id === requestId.current) {
           setSheets([]);
           setArtistNames([]);
+          setSheetsByArtist([]);
         }
       })
       .finally(() => {
@@ -83,7 +91,7 @@ export function useSearchSuggestions(searchQuery: string): SearchSuggestions {
       });
   }, [searchQuery, isAdmin]);
 
-  return { sheets, artistNames, loading };
+  return { sheets, artistNames, sheetsByArtist, loading };
 }
 
 // Éditeur : suggestions d'orthographe d'artiste déjà utilisée dans le catalogue public,
