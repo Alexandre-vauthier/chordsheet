@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getAuth } from '@/lib/firebase';
 import { getDb } from '@/lib/firebase';
@@ -10,6 +9,7 @@ import { toFirestore } from '@/lib/firestore-helpers';
 import { useAuth } from '@/lib/auth-context';
 import { getRemainingOcr, isPro } from '@/lib/plan-limits';
 import type { Section, Cell, CellSpan, NewSheet } from '@/types';
+import { Link, useRouter } from '@/i18n/navigation';
 
 interface ChordEntry { chord: string; beats: number }
 

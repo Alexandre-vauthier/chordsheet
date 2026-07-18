@@ -1,5 +1,4 @@
-import Link from 'next/link';
-
+import { Link } from '@/i18n/navigation';
 export function Footer() {
   return (
     <footer className="mt-auto border-t border-[var(--line)] bg-[var(--cell-bg)] print:hidden">

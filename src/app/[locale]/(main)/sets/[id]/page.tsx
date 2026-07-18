@@ -1,0 +1,516 @@
+'use client';
+
+import { useState, useEffect, use } from 'react';
+
+import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { useAuth } from '@/lib/auth-context';
+import { getDb } from '@/lib/firebase';
+import { fromFirestore } from '@/lib/firestore-helpers';
+import { useSet } from '@/lib/use-sets';
+import { useSets } from '@/lib/use-sets';
+import { useBookmarks } from '@/lib/use-bookmarks';
+import { useSetBookmarks } from '@/lib/use-set-bookmarks';
+import { useGroups } from '@/lib/use-groups';
+import { getAuth } from '@/lib/firebase';
+import { isPro } from '@/lib/plan-limits';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import type { Sheet } from '@/types';
+import { Link, useRouter } from '@/i18n/navigation';
+
+interface SetPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default function SetPage({ params }: SetPageProps) {
+  const { id } = use(params);
+  const router = useRouter();
+  const { user } = useAuth();
+  const { set, sheets, isLoading, error } = useSet(id);
+  const { updateSet, reorderSheets, removeSheetFromSet, addSheetToSet } = useSets(user?.id);
+  const { launchConcert, groups } = useGroups();
+  const { bookmarkedSheets } = useBookmarks(user?.id);
+  const { isBookmarked: isSetBookmarked, toggleBookmark: toggleSetBookmark } = useSetBookmarks(user?.id);
+
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [exportError, setExportError] = useState('');
+
+  // Grilles disponibles pour ajout
+  const [availableSheets, setAvailableSheets] = useState<Sheet[]>([]);
+  const [showAddSheet, setShowAddSheet] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Drag and drop
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [localSheets, setLocalSheets] = useState<Sheet[]>([]);
+
+  // Initialiser les valeurs du formulaire
+  useEffect(() => {
+    if (set) {
+      setName(set.name);
+      setDescription(set.description || '');
+    }
+  }, [set]);
+
+  // Synchroniser localSheets avec sheets
+  useEffect(() => {
+    setLocalSheets(sheets);
+  }, [sheets]);
+
+  // Charger les grilles disponibles (propres grilles + book/favoris)
+  useEffect(() => {
+    async function loadAvailableSheets() {
+      if (!user) return;
+
+      try {
+        const db = getDb();
+        const q = query(
+          collection(db, 'sheets'),
+          where('ownerId', '==', user.id),
+          orderBy('updatedAt', 'desc')
+        );
+
+        const snapshot = await getDocs(q);
+        const ownSheets: Sheet[] = snapshot.docs.map((docSnap) =>
+          fromFirestore(docSnap.id, docSnap.data())
+        );
+
+        // Combiner grilles propres + favoris (sans doublons)
+        const ownSheetIds = new Set(ownSheets.map(s => s.id));
+        const allSheets = [
+          ...ownSheets,
+          ...bookmarkedSheets.filter(s => !ownSheetIds.has(s.id))
+        ];
+
+        setAvailableSheets(allSheets);
+      } catch (error) {
+        console.error('Error loading sheets:', error);
+      }
+    }
+
+    loadAvailableSheets();
+  }, [user, bookmarkedSheets]);
+
+  const handleSave = async () => {
+    if (!set?.id) return;
+
+    setIsSaving(true);
+    try {
+      await updateSet(set.id, { name, description });
+      setHasChanges(false);
+    } catch (error) {
+      console.error('Error saving set:', error);
+      alert('Erreur lors de la sauvegarde');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    if (!set?.id) return;
+    setIsExportingPdf(true);
+    setExportError('');
+    try {
+      const idToken = await getAuth().currentUser?.getIdToken();
+      if (!idToken) throw new Error('Non connecté');
+
+      const res = await fetch('/api/export/set-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ setId: set.id }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Erreur lors de la génération du PDF.');
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${set.name || 'setlist'}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : 'Erreur lors de la génération du PDF.');
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
+  const handleAddSheet = async (sheetId: string) => {
+    if (!set?.id) return;
+    await addSheetToSet(set.id, sheetId);
+    setShowAddSheet(false);
+    setSearchQuery('');
+  };
+
+  const handleRemoveSheet = async (sheetId: string) => {
+    if (!set?.id) return;
+    await removeSheetFromSet(set.id, sheetId);
+  };
+
+  // Drag and drop handlers
+  const handleDragStart = (index: number) => {
+    setDraggedIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+
+    const newSheets = [...localSheets];
+    const draggedSheet = newSheets[draggedIndex];
+    newSheets.splice(draggedIndex, 1);
+    newSheets.splice(index, 0, draggedSheet);
+    setLocalSheets(newSheets);
+    setDraggedIndex(index);
+  };
+
+  const handleDragEnd = async () => {
+    if (!set?.id || draggedIndex === null) return;
+
+    const newSheetIds = localSheets.map((s) => s.id!);
+    await reorderSheets(set.id, newSheetIds);
+    setDraggedIndex(null);
+  };
+
+  // Filtrer les grilles disponibles
+  const filteredAvailableSheets = availableSheets.filter((sheet) => {
+    // Exclure les grilles déjà dans le set
+    if (set?.sheetIds.includes(sheet.id!)) return false;
+
+    // Filtrer par recherche
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      return (
+        sheet.title.toLowerCase().includes(query) ||
+        sheet.artist.toLowerCase().includes(query)
+      );
+    }
+    return true;
+  });
+
+  // useGroups() est déjà abonné en temps réel — pas besoin de getDoc séparé
+  const isOwner = user?.id === set?.ownerId;
+  const isGroupMember = groups.some(g => g.id === set?.groupId);
+  const canEdit = isOwner || isGroupMember;
+  // Un set lié à un groupe hérite de l'abonnement Pro du groupe (licence partagée)
+  const canExportPdf = isPro(user?.subscription) || !!set?.groupId;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[var(--accent)] border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (error || !set) {
+    return (
+      <div className="max-w-md mx-auto mt-20 text-center">
+        <p className="text-red-600 mb-4">{error || 'Set non trouvé'}</p>
+        <button
+          onClick={() => router.push('/sets')}
+          className="text-[var(--accent)] hover:underline"
+        >
+          Retour aux sets
+        </button>
+      </div>
+    );
+  }
+
+  // Nombre de grilles non accessibles (privées)
+  const hiddenSheetsCount = set ? set.sheetIds.length - sheets.length : 0;
+
+  // Vue lecture seule pour les visiteurs
+  if (!canEdit) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+        <div className="mb-8">
+          <div className="flex items-start gap-3">
+            <h1 className="flex-1 text-2xl font-bold text-[var(--ink)]">{set.name}</h1>
+            <button
+              onClick={() => user ? toggleSetBookmark(id) : router.push('/login')}
+              title={isSetBookmarked(id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+              className={`shrink-0 text-2xl leading-none transition-colors cursor-pointer ${
+                isSetBookmarked(id) ? 'text-amber-400' : 'text-[var(--ink-faint)] hover:text-amber-400'
+              }`}
+            >
+              {isSetBookmarked(id) ? '★' : '☆'}
+            </button>
+          </div>
+          {set.description && (
+            <p className="text-[var(--ink-light)] mt-1">{set.description}</p>
+          )}
+          <p className="text-sm text-[var(--ink-faint)] mt-2">
+            par {set.ownerName} • {sheets.length} grille{sheets.length > 1 ? 's' : ''} accessible{sheets.length > 1 ? 's' : ''}
+          </p>
+        </div>
+
+        {hiddenSheetsCount > 0 && (
+          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm">
+            {hiddenSheetsCount} grille{hiddenSheetsCount > 1 ? 's' : ''} de ce set {hiddenSheetsCount > 1 ? 'sont privées' : 'est privée'} et non accessible{hiddenSheetsCount > 1 ? 's' : ''}.
+          </div>
+        )}
+
+        {sheets.length > 0 && (
+          <div className="flex gap-3 mb-6">
+            <Link href={`/sets/${id}/play`}>
+              <Button>▶ Lancer le set</Button>
+            </Link>
+            {set.groupId && isGroupMember && (
+              <button
+                onClick={async () => {
+                  try {
+                    await launchConcert(set.groupId!, id, set.name);
+                    router.push(`/sets/${id}/play`);
+                  } catch (err) {
+                    alert('Erreur : ' + (err instanceof Error ? err.message : String(err)));
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                Lancer le concert
+              </button>
+            )}
+          </div>
+        )}
+
+        {sheets.length === 0 && (
+          <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-8 text-center">
+            <p className="text-[var(--ink-light)]">Aucune grille accessible dans ce set.</p>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          {sheets.map((sheet, index) => (
+            <Link
+              key={sheet.id}
+              href={`/sheet/${sheet.id}`}
+              className="flex items-center gap-4 p-4 bg-[var(--cell-bg)] rounded-lg border border-[var(--line)] hover:border-[var(--accent)] transition-colors"
+            >
+              <span className="w-8 h-8 flex items-center justify-center bg-[var(--cell-bg)] rounded-full text-sm font-medium text-[var(--ink-light)]">
+                {index + 1}
+              </span>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium text-[var(--ink)] truncate">
+                  {sheet.title || 'Sans titre'}
+                </h3>
+                {sheet.artist && (
+                  <p className="text-sm text-[var(--ink-light)] truncate">{sheet.artist}</p>
+                )}
+              </div>
+              {sheet.key && (
+                <span className="text-xs text-[var(--ink-faint)]">{sheet.key}</span>
+              )}
+            </Link>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Vue édition pour le propriétaire ou membre du groupe
+  return (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <Button variant="ghost" onClick={() => router.push(set.groupId ? `/groups/${set.groupId}` : '/sets')}>
+          {set.groupId ? '← Retour au groupe' : '← Retour aux sets'}
+        </Button>
+        {sheets.length > 0 && (
+          <div className="flex gap-3">
+            <Link href={`/sets/${id}/play`}>
+              <Button>▶ Lancer le set</Button>
+            </Link>
+            {canExportPdf ? (
+              <Button variant="ghost" onClick={handleExportPdf} isLoading={isExportingPdf}>
+                📄 Export PDF
+              </Button>
+            ) : (
+              <Link href="/pricing">
+                <Button variant="ghost">📄 Export PDF · Pro</Button>
+              </Link>
+            )}
+            {set.groupId && isGroupMember && (
+              <button
+                onClick={async () => {
+                  try {
+                    await launchConcert(set.groupId!, id, set.name);
+                    router.push(`/sets/${id}/play`);
+                  } catch (err) {
+                    alert('Erreur : ' + (err instanceof Error ? err.message : String(err)));
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                Lancer le concert
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {exportError && (
+        <p className="text-sm text-red-500 mb-4">{exportError}</p>
+      )}
+
+      {/* Formulaire */}
+      <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-6 mb-6">
+        <div className="space-y-4">
+          <Input
+            label="Nom du set"
+            type="text"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value);
+              setHasChanges(true);
+            }}
+            placeholder="Ex: Concert du 15 mars"
+          />
+
+          <div>
+            <label className="block text-sm font-medium text-[var(--ink)] mb-1.5">
+              Description (optionnel)
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => {
+                setDescription(e.target.value);
+                setHasChanges(true);
+              }}
+              placeholder="Notes sur le concert, le lieu, etc."
+              rows={2}
+              className="w-full px-4 py-2.5 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)]
+                text-[var(--ink)] placeholder:text-[var(--ink-faint)]
+                focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+            />
+          </div>
+
+          {hasChanges && (
+            <Button onClick={handleSave} isLoading={isSaving}>
+              Sauvegarder
+            </Button>
+          )}
+        </div>
+
+      </div>
+
+      {/* Liste des grilles */}
+      <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-semibold text-[var(--ink)]">
+            Grilles ({sheets.length})
+          </h2>
+          <Button variant="ghost" onClick={() => setShowAddSheet(!showAddSheet)}>
+            {showAddSheet ? 'Annuler' : '+ Ajouter une grille'}
+          </Button>
+        </div>
+
+        {/* Panneau d'ajout */}
+        {showAddSheet && (
+          <div className="mb-4 p-4 bg-[var(--cell-bg)] rounded-lg">
+            <Input
+              type="search"
+              placeholder="Rechercher une grille..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="mb-3"
+            />
+            <div className="max-h-48 overflow-y-auto space-y-1">
+              {filteredAvailableSheets.length > 0 ? (
+                filteredAvailableSheets.map((sheet) => (
+                  <button
+                    key={sheet.id}
+                    onClick={() => handleAddSheet(sheet.id!)}
+                    className="w-full flex items-center gap-3 p-2 rounded hover:bg-[var(--cell-bg)] transition-colors text-left"
+                  >
+                    <span className="font-medium text-sm text-[var(--ink)]">
+                      {sheet.title || 'Sans titre'}
+                    </span>
+                    {sheet.artist && (
+                      <span className="text-xs text-[var(--ink-light)]">
+                        {sheet.artist}
+                      </span>
+                    )}
+                  </button>
+                ))
+              ) : (
+                <p className="text-sm text-[var(--ink-faint)] text-center py-2">
+                  {searchQuery ? 'Aucune grille trouvée' : 'Toutes vos grilles sont déjà dans le set'}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Liste réordonnables */}
+        {localSheets.length > 0 ? (
+          <div className="space-y-2">
+            <p className="text-xs text-[var(--ink-faint)] mb-2">
+              Glissez-déposez pour réorganiser l&apos;ordre
+            </p>
+            {localSheets.map((sheet, index) => (
+              <div
+                key={sheet.id}
+                draggable
+                onDragStart={() => handleDragStart(index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragEnd={handleDragEnd}
+                className={`flex items-center gap-3 p-3 bg-[var(--cell-bg)] rounded-lg border-2 cursor-move transition-all
+                  ${draggedIndex === index ? 'border-[var(--accent)] opacity-50' : 'border-transparent'}
+                  hover:border-[var(--line)]`}
+              >
+                <span className="w-6 h-6 flex items-center justify-center bg-[var(--cell-bg)] rounded text-xs font-medium text-[var(--ink-light)]">
+                  {index + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-sm text-[var(--ink)] truncate">
+                    {sheet.title || 'Sans titre'}
+                  </h3>
+                  {sheet.artist && (
+                    <p className="text-xs text-[var(--ink-light)] truncate">{sheet.artist}</p>
+                  )}
+                </div>
+                {sheet.key && (
+                  <span className="text-xs text-[var(--ink-faint)]">{sheet.key}</span>
+                )}
+                <Link
+                  href={`/sheet/${sheet.id}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="p-1 text-[var(--ink-faint)] hover:text-[var(--accent)] transition-colors"
+                  title="Consulter"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </Link>
+                <button
+                  onClick={() => handleRemoveSheet(sheet.id!)}
+                  className="p-1 text-[var(--ink-faint)] hover:text-red-500 transition-colors"
+                  title="Retirer du set"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 text-[var(--ink-faint)]">
+            <p>Aucune grille dans ce set</p>
+            <p className="text-sm mt-1">Ajoutez des grilles pour construire votre setlist</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation';
+
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { LevelBadge } from '@/components/reputation/level-badge';
@@ -11,6 +10,8 @@ import { SuggestionsDropdown } from '@/components/ui/suggestions-dropdown';
 import { useSearchSuggestions } from '@/lib/use-search-suggestions';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import type { Sheet } from '@/types';
+import { Link, usePathname, useRouter } from '@/i18n/navigation';
+import { LanguageSwitcher } from './language-switcher';
 
 type SearchResult =
   | { kind: 'sheet'; key: string; sheet: Sheet }
@@ -298,6 +299,11 @@ export function Navbar() {
                             Paramètres
                           </Link>
                           <div className="mx-3 my-1 border-t border-[var(--line)]" />
+                          <div className="px-4 py-2 flex items-center justify-between">
+                            <span className="text-sm text-[var(--ink-faint)]">Langue</span>
+                            <LanguageSwitcher />
+                          </div>
+                          <div className="mx-3 my-1 border-t border-[var(--line)]" />
                           <button
                             onClick={handleSignOut}
                             className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
@@ -315,6 +321,7 @@ export function Navbar() {
               </>
             ) : !loading ? (
               <>
+                <LanguageSwitcher />
                 <Link href="/login">
                   <Button variant="ghost" size="sm" className="border-white/25 text-[var(--nav-text)]">
                     Connexion
@@ -349,11 +356,14 @@ export function Navbar() {
               </button>
             )}
             {!loading && !user && (
-              <Link href="/login">
-                <Button variant="ghost" size="sm" className="border-white/25 text-[var(--nav-text)]">
-                  Connexion
-                </Button>
-              </Link>
+              <>
+                <LanguageSwitcher />
+                <Link href="/login">
+                  <Button variant="ghost" size="sm" className="border-white/25 text-[var(--nav-text)]">
+                    Connexion
+                  </Button>
+                </Link>
+              </>
             )}
           </div>
         </div>
@@ -481,6 +491,10 @@ export function Navbar() {
                 Administration
               </Link>
             )}
+            <div className="flex items-center justify-between px-3 py-2">
+              <span className="text-sm text-[var(--nav-text)]/50">Langue</span>
+              <LanguageSwitcher />
+            </div>
             <button
               onClick={handleSignOut}
               className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"

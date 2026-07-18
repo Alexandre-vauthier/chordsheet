@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import Link from 'next/link';
 import type { Sheet, Difficulty } from '@/types';
 import { DIFFICULTY_LABELS } from '@/types';
 import { useArtwork } from '@/lib/use-artwork';
+import { Link } from '@/i18n/navigation';
 
 // Singleton audio global
 let _audio: HTMLAudioElement | null = null;

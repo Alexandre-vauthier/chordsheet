@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
 import { toFirestore } from '@/lib/firestore-helpers';
 import { useAuth } from '@/lib/auth-context';
 import { parseChordSheetText } from '@/lib/chord-sheet-parser';
 import type { NewSheet } from '@/types';
+import { useRouter } from '@/i18n/navigation';
 
 interface ImportSheetModalProps {
   onClose: () => void;

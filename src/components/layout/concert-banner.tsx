@@ -1,9 +1,8 @@
 'use client';
 
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useGroups } from '@/lib/use-groups';
 import { useAuth } from '@/lib/auth-context';
+import { Link, useRouter } from '@/i18n/navigation';
 
 export function ConcertBanner() {
   const { groups, endConcert } = useGroups();

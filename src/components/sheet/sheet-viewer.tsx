@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import Link from 'next/link';
 import type { Sheet, CellSpan, InstrumentId } from '@/types';
 import { INSTRUMENTS } from '@/types';
 import { ChordSummary, InstrumentSelector, ChordDiagram, PianoKeyboard } from '@/components/chord';
@@ -20,6 +19,7 @@ import { INSTRUMENT_CONFIG } from '@/lib/chord-data';
 import { useChordVariants } from '@/lib/use-chord-variants';
 import { playChord, playMetronomeTick, preloadInstrument } from '@/lib/chord-audio';
 import { transposeSections, transposeKey } from '@/lib/transpose';
+import { Link } from '@/i18n/navigation';
 
 const LS_KEY = 'chordsheet_instrument';
 

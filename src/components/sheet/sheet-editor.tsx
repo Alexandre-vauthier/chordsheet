@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import Link from 'next/link';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
 import { computeDifficulty } from '@/lib/compute-difficulty';
@@ -21,6 +20,7 @@ import { useAuth } from '@/lib/auth-context';
 import { usePublicArtistSuggestions } from '@/lib/use-search-suggestions';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { SuggestionsDropdown } from '@/components/ui/suggestions-dropdown';
+import { Link } from '@/i18n/navigation';
 
 // Filtre local pour les grilles privées de l'utilisateur (petit lot déjà chargé,
 // pas besoin d'une requête Firestore dédiée par frappe).

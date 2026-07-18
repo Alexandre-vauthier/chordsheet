@@ -1,0 +1,885 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+
+import { useAuth } from '@/lib/auth-context';
+import { getDb } from '@/lib/firebase';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { Button } from '@/components/ui/button';
+import { isPro, getRemainingOcr, getEarnedOcrCredits } from '@/lib/plan-limits';
+import { fromFirestore } from '@/lib/firestore-helpers';
+import { LevelBadge } from '@/components/reputation/level-badge';
+import { BadgesDisplay } from '@/components/reputation/badges-display';
+import { computeScore, computeLevel, computeBadges, getLevelProgress } from '@/lib/creator-reputation';
+import type { NotationPreference, InstrumentId, Sheet } from '@/types';
+import { Link, useRouter } from '@/i18n/navigation';
+
+interface UserStats {
+  sheetsCount: number;
+  publicSheetsCount: number;
+  setsCount: number;
+  bookmarksCount: number;
+}
+
+export default function ProfilePage() {
+  const { user, loading, isAdmin, updateUser, signOut, deleteAccount } = useAuth();
+  const router = useRouter();
+  const [displayName, setDisplayName] = useState('');
+  const [notation, setNotation] = useState<NotationPreference>('american');
+  const [colorCoding, setColorCoding] = useState(false);
+  const [inlineDiagram, setInlineDiagram] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [minimizeRepeated, setMinimizeRepeated] = useState(false);
+  const [showChordSummaryByDefault, setShowChordSummaryByDefault] = useState(true);
+  const [printMinimizeRepeated, setPrintMinimizeRepeated] = useState(false);
+  const [printChordDiagrams, setPrintChordDiagrams] = useState(false);
+  const [defaultMetronome, setDefaultMetronome] = useState(false);
+  const [defaultGrooveBox, setDefaultGrooveBox] = useState(false);
+  const [defaultChordsAudio, setDefaultChordsAudio] = useState(true);
+  const [defaultCountIn, setDefaultCountIn] = useState(false);
+  const [preferredInstrument, setPreferredInstrument] = useState<InstrumentId | undefined>(undefined);
+  const [isSaving, setIsSaving] = useState(false);
+  const [showDeleteZone, setShowDeleteZone] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSavingNotation, setIsSavingNotation] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [stats, setStats] = useState<UserStats | null>(null);
+  const [publicSheets, setPublicSheets] = useState<Sheet[]>([]);
+
+  // Charger le nom initial
+  useEffect(() => {
+    if (user) {
+      setDisplayName(user.displayName);
+      if (user.notationPreference) setNotation(user.notationPreference);
+      setColorCoding(user.chordColorCoding ?? false);
+      setInlineDiagram(user.showInlineDiagram ?? false);
+      setDarkMode(user.darkMode ?? false);
+      setPreferredInstrument(user.preferredInstrument);
+      setMinimizeRepeated(user.minimizeRepeatedSections ?? false);
+      setShowChordSummaryByDefault(user.showChordSummaryByDefault ?? true);
+      setPrintMinimizeRepeated(user.printMinimizeRepeatedSections ?? false);
+      setPrintChordDiagrams(user.printChordDiagrams ?? false);
+      setDefaultMetronome(user.defaultMetronome ?? false);
+      setDefaultGrooveBox(user.defaultGrooveBox ?? false);
+      setDefaultChordsAudio(user.defaultChordsAudio ?? true);
+      setDefaultCountIn(user.defaultCountIn ?? false);
+    }
+  }, [user]);
+
+  // Charger les statistiques
+  useEffect(() => {
+    if (!user) return;
+
+    const loadStats = async () => {
+      const db = getDb();
+
+      // Compter les grilles
+      const sheetsQuery = query(
+        collection(db, 'sheets'),
+        where('ownerId', '==', user.id)
+      );
+      const sheetsSnapshot = await getDocs(sheetsQuery);
+      const sheetsCount = sheetsSnapshot.size;
+      const publicDocs = sheetsSnapshot.docs.filter(doc => doc.data().isPublic);
+      const publicSheetsCount = publicDocs.length;
+      setPublicSheets(publicDocs.map(d => fromFirestore(d.id, d.data())));
+
+      // Compter les sets
+      const setsQuery = query(
+        collection(db, 'sets'),
+        where('ownerId', '==', user.id)
+      );
+      const setsSnapshot = await getDocs(setsQuery);
+      const setsCount = setsSnapshot.size;
+
+      // Compter les favoris
+      const bookmarksQuery = query(
+        collection(db, 'bookmarks'),
+        where('userId', '==', user.id)
+      );
+      const bookmarksSnapshot = await getDocs(bookmarksQuery);
+      const bookmarksCount = bookmarksSnapshot.size;
+
+      setStats({
+        sheetsCount,
+        publicSheetsCount,
+        setsCount,
+        bookmarksCount,
+      });
+    };
+
+    loadStats();
+  }, [user]);
+
+  // Sauvegarder la notation immédiatement au clic
+  const handleNotationChange = async (value: NotationPreference) => {
+    setNotation(value);
+    setIsSavingNotation(true);
+    try {
+      await updateUser({ notationPreference: value });
+    } catch (error) {
+      console.error('Error saving notation:', error);
+    } finally {
+      setIsSavingNotation(false);
+    }
+  };
+
+  // Sauvegarder le nom
+  const handleSaveName = async () => {
+    if (!displayName.trim()) {
+      setMessage({ type: 'error', text: 'Le nom ne peut pas être vide' });
+      return;
+    }
+
+    setIsSaving(true);
+    setMessage(null);
+
+    try {
+      await updateUser({ displayName: displayName.trim(), notationPreference: notation });
+      setMessage({ type: 'success', text: 'Nom mis à jour avec succès' });
+    } catch (error) {
+      console.error('Error updating name:', error);
+      setMessage({ type: 'error', text: 'Erreur lors de la mise à jour' });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 w-32 bg-gray-200 rounded" />
+          <div className="h-32 w-32 bg-gray-200 rounded-full mx-auto" />
+          <div className="space-y-4">
+            <div className="h-10 bg-gray-200 rounded" />
+            <div className="h-10 bg-gray-200 rounded" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-8 text-center">
+        <p className="text-[var(--ink-light)]">Vous devez être connecté pour accéder à cette page.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <h1 className="font-playfair text-2xl font-bold text-[var(--ink)] mb-8">
+        Mon profil
+      </h1>
+
+      {/* Message */}
+      {message && (
+        <div
+          className={`mb-6 px-4 py-3 rounded-lg text-sm ${
+            message.type === 'success'
+              ? 'bg-green-50 text-green-700 border border-green-200'
+              : 'bg-red-50 text-red-700 border border-red-200'
+          }`}
+        >
+          {message.text}
+        </div>
+      )}
+
+      {/* Avatar */}
+      <div className="flex justify-center mb-8">
+        <div className="w-24 h-24 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-4xl font-bold shadow-lg">
+          {user.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
+        </div>
+      </div>
+
+      {/* Formulaire */}
+      <div className="space-y-6 bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-6">
+        {/* Nom d'affichage */}
+        <div>
+          <label className="block text-sm font-medium text-[var(--ink)] mb-2">
+            Nom d&apos;affichage
+          </label>
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              className="flex-1 px-4 py-2 border border-[var(--line)] rounded-lg
+                focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
+              placeholder="Votre nom"
+            />
+            <Button
+              onClick={handleSaveName}
+              isLoading={isSaving}
+              disabled={displayName === user.displayName}
+            >
+              Enregistrer
+            </Button>
+          </div>
+        </div>
+
+        {/* Email (lecture seule) */}
+        <div>
+          <label className="block text-sm font-medium text-[var(--ink)] mb-2">
+            Email
+          </label>
+          <input
+            type="email"
+            value={user.email}
+            disabled
+            className="w-full px-4 py-2 border border-[var(--line)] rounded-lg bg-[var(--cell-bg)] text-[var(--ink-light)]"
+          />
+          <p className="mt-1 text-xs text-[var(--ink-faint)]">
+            L&apos;email ne peut pas être modifié
+          </p>
+        </div>
+
+        {/* Date d'inscription */}
+        <div>
+          <label className="block text-sm font-medium text-[var(--ink)] mb-2">
+            Membre depuis
+          </label>
+          <p className="text-[var(--ink)]">
+            {user.createdAt.toLocaleDateString('fr-FR', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            })}
+          </p>
+        </div>
+
+        {/* Profil public */}
+        <div className="pt-2 border-t border-[var(--line)]">
+          <Link
+            href={`/user/${user.id}`}
+            className="text-sm font-medium text-[var(--accent)] hover:underline"
+          >
+            Voir mon profil public →
+          </Link>
+          <p className="text-xs text-[var(--ink-faint)] mt-1">
+            Visible par tous · vos grilles publiées et vos statistiques
+          </p>
+        </div>
+      </div>
+
+      {/* ── Général ────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 mt-8 mb-3">
+        <span className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Général</span>
+        <div className="flex-1 h-px bg-[var(--line)]" />
+      </div>
+
+      {/* Préférence de notation */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)]">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold text-[var(--ink)]">Notation des accords</h2>
+          {isSavingNotation && (
+            <span className="text-xs text-[var(--ink-faint)]">Sauvegarde…</span>
+          )}
+        </div>
+        <div className="flex gap-3">
+          <button
+            onClick={() => handleNotationChange('american')}
+            disabled={isSavingNotation}
+            className={`flex-1 py-3 px-4 rounded-xl border-2 text-sm font-medium transition-colors ${
+              notation === 'american'
+                ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
+                : 'border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)]'
+            }`}
+          >
+            <div className="font-mono text-lg mb-1">Am · F#m7</div>
+            <div>Anglais</div>
+          </button>
+          <button
+            onClick={() => handleNotationChange('french')}
+            disabled={isSavingNotation}
+            className={`flex-1 py-3 px-4 rounded-xl border-2 text-sm font-medium transition-colors ${
+              notation === 'french'
+                ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
+                : 'border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)]'
+            }`}
+          >
+            <div className="font-mono text-lg mb-1">Lam · Fa#m7</div>
+            <div>Français</div>
+          </button>
+        </div>
+      </div>
+
+      {/* Mode sombre */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Mode sombre</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              Thème sombre pour réduire la fatigue visuelle
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !darkMode;
+              setDarkMode(newVal);
+              try { await updateUser({ darkMode: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              darkMode ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${darkMode ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Consultation ───────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 mt-8 mb-3">
+        <span className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Consultation</span>
+        <div className="flex-1 h-px bg-[var(--line)]" />
+      </div>
+
+      {/* Instrument de prédilection */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)]">
+        <h2 className="text-base font-semibold text-[var(--ink)] mb-1">Instrument par défaut</h2>
+        <p className="text-xs text-[var(--ink-faint)] mb-4">
+          Instrument affiché par défaut en consultation, sur tous vos appareils
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {([
+            { id: 'guitar',   label: 'Guitare' },
+            { id: 'ukulele',  label: 'Ukulélé' },
+            { id: 'piano',    label: 'Piano' },
+            { id: 'mandolin', label: 'Mandoline' },
+            { id: 'banjo',    label: 'Banjo' },
+            { id: 'bass',       label: 'Basse' },
+            { id: 'voice',      label: 'Voix' },
+            { id: 'percussion', label: 'Percussion' },
+          ] as { id: InstrumentId; label: string }[]).map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={async () => {
+                setPreferredInstrument(id);
+                try { await updateUser({ preferredInstrument: id }); } catch { /* silent */ }
+              }}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+                preferredInstrument === id
+                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                  : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)]'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Code couleur des accords */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Code couleur des accords</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              Bordure colorée sur chaque case selon la note fondamentale
+            </p>
+            <div className="flex gap-1.5 mt-2">
+              {[
+                { note: 'C', color: '#dc2626' },
+                { note: 'D', color: '#ea580c' },
+                { note: 'E', color: '#ca8a04' },
+                { note: 'F', color: '#16a34a' },
+                { note: 'G', color: '#0891b2' },
+                { note: 'A', color: '#2563eb' },
+                { note: 'B', color: '#7c3aed' },
+              ].map(({ note, color }) => (
+                <span
+                  key={note}
+                  className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded"
+                  style={{ borderLeft: `5px solid ${color}`, background: `${color}15` }}
+                >
+                  {note}
+                </span>
+              ))}
+            </div>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !colorCoding;
+              setColorCoding(newVal);
+              try { await updateUser({ chordColorCoding: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              colorCoding ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${colorCoding ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Diagramme inline */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Diagramme dans la case</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              Affiche le diagramme de l&apos;accord directement dans chaque case en consultation
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !inlineDiagram;
+              setInlineDiagram(newVal);
+              try { await updateUser({ showInlineDiagram: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              inlineDiagram ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${inlineDiagram ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Minimiser les sections répétées */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Minimiser les sections identiques</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              N&apos;affiche pas les accords quand une section est identique à une précédente
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !minimizeRepeated;
+              setMinimizeRepeated(newVal);
+              try { await updateUser({ minimizeRepeatedSections: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              minimizeRepeated ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${minimizeRepeated ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Afficher les accords au chargement (desktop) */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Afficher les accords au chargement</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              Sur desktop, ouvre automatiquement les diagrammes d&apos;accords à l&apos;ouverture d&apos;une grille. Sur mobile, toujours replié.
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !showChordSummaryByDefault;
+              setShowChordSummaryByDefault(newVal);
+              try { await updateUser({ showChordSummaryByDefault: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              showChordSummaryByDefault ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${showChordSummaryByDefault ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Impression ─────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 mt-8 mb-3">
+        <span className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Impression</span>
+        <div className="flex-1 h-px bg-[var(--line)]" />
+      </div>
+
+      {/* Minimiser les sections à l'impression */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)]">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Minimiser les répétitions</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              N&apos;imprime pas les accords des sections identiques à une précédente
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !printMinimizeRepeated;
+              setPrintMinimizeRepeated(newVal);
+              try { await updateUser({ printMinimizeRepeatedSections: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              printMinimizeRepeated ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${printMinimizeRepeated ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Diagrammes à l'impression */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Diagrammes des accords</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              Afficher les accords utilisés avec leurs diagrammes en haut de la page imprimée
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !printChordDiagrams;
+              setPrintChordDiagrams(newVal);
+              try { await updateUser({ printChordDiagrams: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              printChordDiagrams ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${printChordDiagrams ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Lecture ────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 mt-8 mb-3">
+        <span className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Lecture</span>
+        <div className="flex-1 h-px bg-[var(--line)]" />
+      </div>
+
+      {/* Métronome par défaut */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)]">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Métronome activé par défaut</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              Active automatiquement le métronome à l&apos;ouverture d&apos;une grille
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !defaultMetronome;
+              setDefaultMetronome(newVal);
+              try { await updateUser({ defaultMetronome: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              defaultMetronome ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${defaultMetronome ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Boîte à rythmes par défaut */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Boîte à rythmes activée par défaut</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              Active automatiquement l&apos;accompagnement rythmique à l&apos;ouverture d&apos;une grille
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !defaultGrooveBox;
+              setDefaultGrooveBox(newVal);
+              try { await updateUser({ defaultGrooveBox: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              defaultGrooveBox ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${defaultGrooveBox ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Lecture des accords par défaut */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Lecture des accords activée par défaut</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              Joue le son des accords pendant la lecture (désactiver pour une lecture silencieuse)
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !defaultChordsAudio;
+              setDefaultChordsAudio(newVal);
+              try { await updateUser({ defaultChordsAudio: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              defaultChordsAudio ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${defaultChordsAudio ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* Décompte avant lecture par défaut */}
+      <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold text-[var(--ink)]">Décompte avant lecture par défaut</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">
+              Lance un métronome sur 4 temps avant de démarrer la lecture
+            </p>
+          </div>
+          <button
+            onClick={async () => {
+              const newVal = !defaultCountIn;
+              setDefaultCountIn(newVal);
+              try { await updateUser({ defaultCountIn: newVal }); } catch { /* silent */ }
+            }}
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              defaultCountIn ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
+            }`}
+          >
+            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${defaultCountIn ? 'translate-x-5' : ''}`} />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Ma réputation ──────────────────────────────────────────── */}
+      {publicSheets.length > 0 && (() => {
+        const score = computeScore(publicSheets);
+        const level = computeLevel(score);
+        const badges = computeBadges(publicSheets);
+        const progress = getLevelProgress(score);
+        return (
+          <>
+            <div className="flex items-center gap-3 mt-8 mb-3">
+              <span className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Ma réputation</span>
+              <div className="flex-1 h-px bg-[var(--line)]" />
+            </div>
+            <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)]">
+              {/* Niveau actuel */}
+              <div className="flex items-center gap-3 mb-4">
+                <LevelBadge level={level} size="md" />
+                <span className="text-sm text-[var(--ink-light)]">Score : <strong className="text-[var(--ink)]">{score}</strong></span>
+              </div>
+              {/* Barre de progression */}
+              {progress.next ? (
+                <div className="mb-4">
+                  <div className="flex justify-between text-xs text-[var(--ink-faint)] mb-1.5">
+                    <span>{level}</span>
+                    <span>{progress.next} — {progress.progressPct}%</span>
+                  </div>
+                  <div className="h-2 bg-[var(--line)] rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[var(--accent)] rounded-full transition-all"
+                      style={{ width: `${progress.progressPct}%` }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <p className="text-xs text-[var(--ink-faint)] mb-4">Niveau maximum atteint !</p>
+              )}
+              {/* Badges */}
+              <p className="text-xs font-medium text-[var(--ink-light)] mb-2">Badges</p>
+              <BadgesDisplay earned={badges} showAll />
+            </div>
+          </>
+        );
+      })()}
+
+      {/* Déconnexion */}
+      <div className="mt-6">
+        <button
+          onClick={async () => { await signOut(); router.push('/'); }}
+          className="w-full py-2.5 px-4 rounded-xl border border-[var(--line)] text-sm text-[var(--ink-light)]
+            hover:border-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors bg-[var(--cell-bg)]"
+        >
+          Se déconnecter
+        </button>
+      </div>
+
+      {/* Statistiques */}
+      <div className="mt-8">
+        <h2 className="font-playfair text-xl font-bold text-[var(--ink)] mb-4">
+          Statistiques
+        </h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <StatCard
+            label="Grilles"
+            value={stats?.sheetsCount ?? '-'}
+            icon={
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+            }
+          />
+          <StatCard
+            label="Publiques"
+            value={stats?.publicSheetsCount ?? '-'}
+            icon={
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+          />
+          <StatCard
+            label="Sets"
+            value={stats?.setsCount ?? '-'}
+            icon={
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            }
+          />
+          <StatCard
+            label="Favoris"
+            value={stats?.bookmarksCount ?? '-'}
+            icon={
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+              </svg>
+            }
+          />
+        </div>
+      </div>
+      {/* Mon abonnement */}
+      <SubscriptionSection user={user} />
+
+      {/* Zone danger — suppression de compte (masquée pour les admins) */}
+      {!isAdmin && (
+        <div className="mt-8 bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-6">
+          <button
+            onClick={() => { setShowDeleteZone(v => !v); setDeleteConfirm(''); }}
+            className="text-xs text-[var(--ink-faint)] hover:text-red-600 transition-colors"
+          >
+            {showDeleteZone ? '▲ Masquer' : 'Supprimer mon compte…'}
+          </button>
+
+          {showDeleteZone && (
+            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm font-semibold text-red-700 mb-1">Suppression du compte</p>
+              <p className="text-xs text-red-600 mb-4">
+                Action irréversible. Toutes vos grilles, sets et favoris seront supprimés définitivement.
+                Tapez <strong>SUPPRIMER</strong> pour confirmer.
+              </p>
+              <input
+                type="text"
+                value={deleteConfirm}
+                onChange={(e) => setDeleteConfirm(e.target.value)}
+                placeholder="SUPPRIMER"
+                className="w-full px-3 py-2 text-sm border border-red-300 rounded-lg outline-none
+                  focus:ring-2 focus:ring-red-300 mb-3 bg-[var(--cell-bg)]"
+              />
+              <button
+                disabled={deleteConfirm !== 'SUPPRIMER' || isDeleting}
+                onClick={async () => {
+                  setIsDeleting(true);
+                  try {
+                    await deleteAccount();
+                    router.push('/');
+                  } catch (err) {
+                    console.error('Error deleting account:', err);
+                    alert('Erreur lors de la suppression. Reconnectez-vous et réessayez.');
+                    setIsDeleting(false);
+                  }
+                }}
+                className="px-4 py-2 text-sm rounded-lg transition-colors
+                  disabled:opacity-40 disabled:cursor-not-allowed
+                  bg-red-600 text-white hover:bg-red-700 disabled:hover:bg-red-600"
+              >
+                {isDeleting ? 'Suppression…' : 'Confirmer la suppression'}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SubscriptionSection({ user }: { user: import('@/types').User | null }) {
+  const [portalLoading, setPortalLoading] = useState(false);
+  if (!user) return null;
+
+  const userIsPro = isPro(user.subscription);
+  const remainingOcr = getRemainingOcr(user.subscription);
+
+  const openPortal = async () => {
+    if (!user.subscription?.stripeCustomerId) return;
+    setPortalLoading(true);
+    try {
+      const res = await fetch('/api/stripe/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stripeCustomerId: user.subscription.stripeCustomerId }),
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+    } finally {
+      setPortalLoading(false);
+    }
+  };
+
+  return (
+    <div className="mt-8 bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-6">
+      <h2 className="font-semibold text-[var(--ink)] mb-4">Mon abonnement</h2>
+
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${userIsPro ? 'bg-[var(--accent)] text-white' : 'bg-[var(--line)] text-[var(--ink-light)]'}`}>
+              {userIsPro ? 'Pro' : 'Gratuit'}
+            </span>
+            {userIsPro && user.subscription?.currentPeriodEnd && (
+              <span className="text-xs text-[var(--ink-faint)]">
+                Renouvellement le {user.subscription.currentPeriodEnd.toLocaleDateString('fr-FR')}
+              </span>
+            )}
+          </div>
+          {!userIsPro && (
+            <div className="space-y-0.5">
+              <p className="text-xs text-[var(--ink-light)]">
+                Analyses OCR restantes ce mois : <strong className="text-[var(--ink)]">{remainingOcr}</strong>
+              </p>
+              {getEarnedOcrCredits(user.subscription) > 0 && (
+                <p className="text-xs text-[var(--ink-faint)]">
+                  dont <strong className="text-[var(--ink)]">{getEarnedOcrCredits(user.subscription)}</strong> crédit{getEarnedOcrCredits(user.subscription) > 1 ? 's' : ''} gagné{getEarnedOcrCredits(user.subscription) > 1 ? 's' : ''} par vos contributions
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-2">
+          {userIsPro && user.subscription?.stripeCustomerId ? (
+            <button
+              onClick={openPortal}
+              disabled={portalLoading}
+              className="px-4 py-2 text-sm border border-[var(--line)] text-[var(--ink-light)] rounded-lg hover:border-[var(--ink-light)] transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              {portalLoading ? 'Chargement…' : 'Gérer l\'abonnement'}
+            </button>
+          ) : (
+            <Link
+              href="/pricing"
+              className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors font-medium"
+            >
+              Passer à Pro
+            </Link>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value, icon }: { label: string; value: number | string; icon: React.ReactNode }) {
+  return (
+    <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-4 text-center">
+      <div className="flex justify-center mb-2 text-[var(--accent)]">
+        {icon}
+      </div>
+      <div className="text-2xl font-bold text-[var(--ink)]">{value}</div>
+      <div className="text-xs text-[var(--ink-light)]">{label}</div>
+    </div>
+  );
+}

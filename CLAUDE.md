@@ -15,25 +15,29 @@
 
 ## Structure du Projet
 
+**i18n (en cours)** : toutes les routes pages vivent sous `app/[locale]/` (`fr`/`en`, `fr` par défaut) — voir `src/i18n/` (routing, navigation, request config) et `src/proxy.ts` (détection/redirection de locale, ex-`middleware.ts` renommé par Next 16). Utiliser `Link`/`useRouter`/`usePathname`/`redirect` depuis `@/i18n/navigation` (jamais `next/link`/`next/navigation` directement) — `usePathname()` renvoie le chemin sans le préfixe de locale. `src/app/export/` reste volontairement HORS `[locale]` (cible de rendu Puppeteer pour le PDF, jamais visitée par un humain) et a son propre `layout.tsx` racine. Phase actuelle : infrastructure de routing en place, extraction des textes UI vers `messages/{fr,en}.json` pas encore faite (l'UI reste 100% française pour l'instant, y compris sous `/en`).
+
 ```
 src/
 ├── app/                    # Pages Next.js (App Router)
-│   ├── (auth)/             # Routes auth (login, register)
-│   ├── (main)/             # Routes principales (avec navbar)
-│   │   ├── dashboard/      # Mes grilles
-│   │   ├── book/           # Mon book (favoris)
-│   │   ├── explore/        # Grilles publiques
-│   │   ├── sets/           # Setlists + mode concert (sets/[id]/play)
-│   │   ├── sheet/          # CRUD grilles
-│   │   │   ├── new/        # Création
-│   │   │   └── [id]/       # Consultation + édition
-│   │   ├── chords/         # Bibliothèque d'accords
-│   │   ├── artist/[name]/  # Grilles d'un artiste
-│   │   ├── user/[id]/      # Profil public utilisateur
-│   │   ├── profile/        # Mon profil (préférences)
-│   │   ├── admin/          # Administration (admins uniquement)
-│   │   └── legal/          # Pages légales (CGU, CGV...)
-│   └── layout.tsx          # Layout racine
+│   ├── [locale]/           # Wrapper i18n (fr/en) — layout racine (html/body) ici
+│   │   ├── (auth)/         # Routes auth (login, register)
+│   │   ├── (main)/         # Routes principales (avec navbar)
+│   │   │   ├── dashboard/      # Mes grilles
+│   │   │   ├── book/           # Mon book (favoris)
+│   │   │   ├── explore/        # Grilles publiques
+│   │   │   ├── sets/           # Setlists + mode concert (sets/[id]/play)
+│   │   │   ├── sheet/          # CRUD grilles
+│   │   │   │   ├── new/        # Création
+│   │   │   │   └── [id]/       # Consultation + édition
+│   │   │   ├── chords/         # Bibliothèque d'accords
+│   │   │   ├── artist/[name]/  # Grilles d'un artiste
+│   │   │   ├── user/[id]/      # Profil public utilisateur
+│   │   │   ├── profile/        # Mon profil (préférences)
+│   │   │   ├── admin/          # Administration (admins uniquement)
+│   │   │   └── legal/          # Pages légales (CGU, CGV...)
+│   │   └── layout.tsx      # Layout racine (html/body, providers, i18n)
+│   └── export/              # Export PDF (hors [locale], cible Puppeteer)
 │
 ├── components/
 │   ├── chord/              # Diagrammes d'accords
