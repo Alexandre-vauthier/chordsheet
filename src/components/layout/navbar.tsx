@@ -296,9 +296,9 @@ export function Navbar() {
                             onClick={() => setProfileMenuOpen(false)}
                             className="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--ink)] hover:bg-[var(--cell-hover)] transition-colors"
                           >
-                            <svg className="w-4 h-4 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8.111 16.404a5.5 5.5 0 017.778 0M5.106 12.899a10 10 0 0113.788 0M12 20h.01"/>
-                            </svg>
+                            <span className="w-4 h-4 flex items-center justify-center shrink-0">
+                              <span className="w-2 h-2 rounded-full bg-red-500" />
+                            </span>
                             {t('liveSession')}
                           </Link>
                           <div className="mx-3 my-1 border-t border-[var(--line)]" />
@@ -487,8 +487,9 @@ export function Navbar() {
             <Link
               href="/session"
               onClick={closeMobileMenu}
-              className="block px-3 py-2 text-sm text-[var(--nav-text)]/70 hover:text-[var(--nav-text)] hover:bg-white/10 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--nav-text)]/70 hover:text-[var(--nav-text)] hover:bg-white/10 rounded-lg transition-colors"
             >
+              <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
               {t('liveSession')}
             </Link>
             <Link

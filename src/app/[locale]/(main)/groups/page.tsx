@@ -91,9 +91,10 @@ export default function GroupsPage() {
         <div className="flex items-center gap-2">
           <Link
             href="/session"
-            className="px-4 py-2 border border-[var(--line)] text-[var(--ink)] text-sm font-medium rounded-lg hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+            className="flex items-center gap-2 px-4 py-2 border border-[var(--line)] text-[var(--ink)] text-sm font-medium rounded-lg hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
           >
-            📡 {tSession('liveSessionCta')}
+            <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+            {tSession('liveSessionCta')}
           </Link>
           <Link
             href="/groups/new"

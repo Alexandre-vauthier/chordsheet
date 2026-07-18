@@ -1018,6 +1018,9 @@
     "sendToSession": "Envoyer à la session",
     "makePublicToSend": "Rends la grille publique pour l'envoyer",
     "liveSessionCta": "Session live",
-    "groupsEmptyHint": "Besoin de juste un moment ? <link>Démarre une session live</link> à la place — sans groupe à créer."
+    "groupsEmptyHint": "Besoin de juste un moment ? <link>Démarre une session live</link> à la place — sans groupe à créer.",
+    "addSheet": "Ajouter une grille",
+    "addSheetPlaceholder": "Chercher une grille à envoyer…",
+    "noResults": "Aucune grille publique trouvée."
   }
 }
