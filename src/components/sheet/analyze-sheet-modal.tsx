@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getAuth } from '@/lib/firebase';
@@ -27,7 +28,7 @@ function snapSpan(measures: number): CellSpan {
   return Math.max(0.25, Math.min(4, snapped)) as CellSpan;
 }
 
-function resultToSections(data: SheetResult): Section[] {
+function resultToSections(data: SheetResult, defaultSectionLabel: (n: number) => string): Section[] {
   const beatsPerMeasure: 3 | 4 = data.timeSignature?.startsWith('3') ? 3 : 4;
 
   return data.sections.map((s, i) => {
@@ -62,7 +63,7 @@ function resultToSections(data: SheetResult): Section[] {
 
     return {
       id: crypto.randomUUID(),
-      label: s.label || `Section ${i + 1}`,
+      label: s.label || defaultSectionLabel(i + 1),
       repeat: Math.max(1, s.repeat || 1),
       beatsPerMeasure,
       rows,
@@ -80,6 +81,7 @@ interface Props {
 }
 
 export function AnalyzeSheetModal({ onClose }: Props) {
+  const t = useTranslations('AnalyzeModal');
   const { user } = useAuth();
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -154,17 +156,17 @@ export function AnalyzeSheetModal({ onClose }: Props) {
       const text = await res.text();
       let data: { error?: string; upgradeRequired?: boolean } = {};
       try { data = JSON.parse(text); } catch {
-        if (res.status === 413) throw new Error('Image trop volumineuse. Réduis la résolution et réessaie.');
+        if (res.status === 413) throw new Error(t('imageTooLarge'));
         // Affiche les premiers caractères de la réponse pour aider au diagnostic
         const preview = text.slice(0, 200).replace(/<[^>]+>/g, '').trim();
-        throw new Error(`Erreur serveur (${res.status})${preview ? ` — ${preview}` : ''}`);
+        throw new Error(`${t('serverError', { status: res.status })}${preview ? ` — ${preview}` : ''}`);
       }
       if (res.status === 429 && data.upgradeRequired) throw Object.assign(new Error(data.error ?? ''), { upgradeRequired: true });
-      if (!res.ok) throw new Error(data.error ?? 'Erreur inconnue');
+      if (!res.ok) throw new Error(data.error ?? t('unknownError'));
       setResult(data as SheetResult);
       setStatus('done');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Erreur inconnue');
+      setError(e instanceof Error ? e.message : t('unknownError'));
       setStatus((e as { upgradeRequired?: boolean }).upgradeRequired ? 'upgrade' : 'error');
     }
   };
@@ -173,9 +175,9 @@ export function AnalyzeSheetModal({ onClose }: Props) {
     if (!user || !result) return;
     setIsCreating(true);
     try {
-      const sections = resultToSections(result);
+      const sections = resultToSections(result, (n) => t('defaultSectionLabel', { n }));
       const sheet: NewSheet = {
-        title: result.title || 'Sans titre',
+        title: result.title || t('untitled'),
         artist: result.artist || '',
         key: result.key || '',
         tempo: result.tempo ? `${result.tempo} BPM` : '',
@@ -197,7 +199,7 @@ export function AnalyzeSheetModal({ onClose }: Props) {
       });
       router.push(`/sheet/${ref.id}/edit`);
     } catch {
-      setError('Erreur lors de la création de la grille.');
+      setError(t('createSheetError'));
       setIsCreating(false);
     }
   };
@@ -213,13 +215,13 @@ export function AnalyzeSheetModal({ onClose }: Props) {
         {/* En-tête */}
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[var(--line)]">
           <div>
-            <h2 className="font-playfair text-lg font-bold text-[var(--ink)]">Retranscrire une partition</h2>
-            <p className="text-xs text-[var(--ink-faint)] mt-0.5">Dépose une ou plusieurs pages — la structure complète est analysée</p>
+            <h2 className="font-playfair text-lg font-bold text-[var(--ink)]">{t('title')}</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-0.5">{t('subtitle')}</p>
           </div>
           <div className="flex items-center gap-3">
             {!userIsPro && remainingOcr !== Infinity && (
               <span className={`text-xs px-2 py-0.5 rounded-full ${remainingOcr > 0 ? 'bg-[var(--cell-bg)] text-[var(--ink-light)]' : 'bg-red-50 text-red-500'}`}>
-                {remainingOcr > 0 ? `${remainingOcr} analyse${remainingOcr > 1 ? 's' : ''} restante${remainingOcr > 1 ? 's' : ''}` : 'Limite atteinte'}
+                {remainingOcr > 0 ? t('remainingAnalyses', { count: remainingOcr }) : t('limitReached')}
               </span>
             )}
             <button onClick={onClose} className="text-[var(--ink-faint)] hover:text-[var(--ink)] text-xl leading-none cursor-pointer">×</button>
@@ -240,9 +242,9 @@ export function AnalyzeSheetModal({ onClose }: Props) {
             >
               <div className="text-2xl">🎼</div>
               <p className="text-sm text-[var(--ink-light)]">
-                {pages.length > 0 ? 'Ajouter d\'autres pages' : 'Clique ou dépose les pages de ta partition'}
+                {pages.length > 0 ? t('dropZoneAddMore') : t('dropZonePrompt')}
               </p>
-              <p className="text-xs text-[var(--ink-faint)]">JPG, PNG, WebP — plusieurs fichiers acceptés</p>
+              <p className="text-xs text-[var(--ink-faint)]">{t('fileTypesHint')}</p>
             </div>
             <div className="md:hidden border-t border-[var(--line)] px-4 py-2 flex justify-center">
               <button
@@ -250,7 +252,7 @@ export function AnalyzeSheetModal({ onClose }: Props) {
                 onClick={() => cameraRef.current?.click()}
                 className="flex items-center gap-1.5 text-xs text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors cursor-pointer"
               >
-                <span>📷</span> Prendre une photo
+                <span>📷</span> {t('takePhoto')}
               </button>
             </div>
             <input
@@ -274,13 +276,13 @@ export function AnalyzeSheetModal({ onClose }: Props) {
           {/* Aperçu des pages */}
           {pages.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs font-medium text-[var(--ink-light)]">{pages.length} page{pages.length > 1 ? 's' : ''}</p>
+              <p className="text-xs font-medium text-[var(--ink-light)]">{t('pageCount', { count: pages.length })}</p>
               <div className="flex gap-2 flex-wrap">
                 {pages.map((p, i) => (
                   <div key={i} className="relative group">
                     <img
                       src={p.preview}
-                      alt={`Page ${i + 1}`}
+                      alt={t('pageAlt', { n: i + 1 })}
                       className="h-20 w-16 object-cover rounded-lg border border-[var(--line)] bg-[var(--cell-bg)]"
                     />
                     <div className="absolute top-0.5 left-0.5 bg-black/50 text-white text-[10px] rounded px-1 leading-4">
@@ -303,7 +305,7 @@ export function AnalyzeSheetModal({ onClose }: Props) {
           {status === 'loading' && (
             <div className="text-center py-6 space-y-3">
               <div className="animate-spin rounded-full h-7 w-7 border-2 border-[var(--accent)] border-t-transparent mx-auto" />
-              <p className="text-sm text-[var(--ink-light)]">Analyse de la partition{pages.length > 1 ? ` (${pages.length} pages)` : ''}…</p>
+              <p className="text-sm text-[var(--ink-light)]">{pages.length > 1 ? t('analyzingWithPages', { count: pages.length }) : t('analyzing')}</p>
             </div>
           )}
 
@@ -315,16 +317,16 @@ export function AnalyzeSheetModal({ onClose }: Props) {
           {/* Limite OCR atteinte */}
           {status === 'upgrade' && (
             <div className="rounded-xl border border-[var(--line)] bg-[var(--cell-bg)] p-5 text-center space-y-3">
-              <p className="font-semibold text-[var(--ink)] text-sm">Limite mensuelle atteinte</p>
+              <p className="font-semibold text-[var(--ink)] text-sm">{t('monthlyLimitReached')}</p>
               <p className="text-xs text-[var(--ink-light)]">
-                Le plan gratuit inclut 2 analyses par mois. Passe à ChordSheet Pro pour des analyses illimitées.
+                {t('limitBody')}
               </p>
               <Link
                 href="/pricing"
                 onClick={onClose}
                 className="inline-block px-5 py-2 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm font-medium rounded-lg transition-colors"
               >
-                Passer à Pro — 4,90 €/mois
+                {t('upgradeCta')}
               </Link>
             </div>
           )}
@@ -335,32 +337,32 @@ export function AnalyzeSheetModal({ onClose }: Props) {
               <div className="grid grid-cols-2 gap-2 text-sm">
                 {result.title && (
                   <div className="bg-[var(--cell-bg)] border border-[var(--line)] rounded-lg px-3 py-2">
-                    <div className="text-xs text-[var(--ink-faint)] mb-0.5">Titre</div>
+                    <div className="text-xs text-[var(--ink-faint)] mb-0.5">{t('titleLabel')}</div>
                     <div className="font-medium text-[var(--ink)] truncate">{result.title}</div>
                   </div>
                 )}
                 {result.artist && (
                   <div className="bg-[var(--cell-bg)] border border-[var(--line)] rounded-lg px-3 py-2">
-                    <div className="text-xs text-[var(--ink-faint)] mb-0.5">Artiste</div>
+                    <div className="text-xs text-[var(--ink-faint)] mb-0.5">{t('artistLabel')}</div>
                     <div className="font-medium text-[var(--ink)] truncate">{result.artist}</div>
                   </div>
                 )}
                 {result.key && (
                   <div className="bg-[var(--cell-bg)] border border-[var(--line)] rounded-lg px-3 py-2">
-                    <div className="text-xs text-[var(--ink-faint)] mb-0.5">Tonalité</div>
+                    <div className="text-xs text-[var(--ink-faint)] mb-0.5">{t('keyLabel')}</div>
                     <div className="font-mono font-bold text-[var(--ink)]">{result.key}</div>
                   </div>
                 )}
                 {result.tempo && (
                   <div className="bg-[var(--cell-bg)] border border-[var(--line)] rounded-lg px-3 py-2">
-                    <div className="text-xs text-[var(--ink-faint)] mb-0.5">Tempo</div>
+                    <div className="text-xs text-[var(--ink-faint)] mb-0.5">{t('tempoLabel')}</div>
                     <div className="font-mono font-bold text-[var(--ink)]">{result.tempo} BPM</div>
                   </div>
                 )}
               </div>
 
               <p className="text-xs text-[var(--ink-faint)]">
-                {result.sections.length} section{result.sections.length > 1 ? 's' : ''} · {totalChords} mesures
+                {t('sectionCountLabel', { count: result.sections.length })} · {t('measureCountLabel', { count: totalChords })}
               </p>
 
               <div className="space-y-2 max-h-44 overflow-y-auto pr-1">
@@ -373,7 +375,7 @@ export function AnalyzeSheetModal({ onClose }: Props) {
                           ×{s.repeat}
                         </span>
                       )}
-                      <span className="text-[var(--ink-faint)]">· {s.chords.length} mesures</span>
+                      <span className="text-[var(--ink-faint)]">· {t('measureCountLabel', { count: s.chords.length })}</span>
                     </div>
                     <div className="font-mono text-[var(--ink-light)] leading-relaxed">
                       {s.chords.map((c) => {
@@ -395,7 +397,7 @@ export function AnalyzeSheetModal({ onClose }: Props) {
         {/* Pied */}
         <div className="px-6 py-4 border-t border-[var(--line)] flex justify-between items-center">
           <button onClick={onClose} className="px-4 py-2 text-sm text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors cursor-pointer">
-            Annuler
+            {t('cancel')}
           </button>
           <div className="flex gap-3">
             <button
@@ -404,7 +406,7 @@ export function AnalyzeSheetModal({ onClose }: Props) {
               className="px-5 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg
                 transition-colors disabled:opacity-40 cursor-pointer"
             >
-              {status === 'loading' ? 'Analyse…' : status === 'done' ? 'Ré-analyser' : 'Analyser'}
+              {status === 'loading' ? t('analyzeLoading') : status === 'done' ? t('analyzeDone') : t('analyzeIdle')}
             </button>
             {status === 'done' && (
               <button
@@ -412,7 +414,7 @@ export function AnalyzeSheetModal({ onClose }: Props) {
                 disabled={isCreating}
                 className="px-5 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
               >
-                {isCreating ? 'Création…' : 'Créer la grille'}
+                {isCreating ? t('creating') : t('createSheet')}
               </button>
             )}
           </div>

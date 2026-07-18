@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import type { Row, Cell, CellSpan, InstrumentId, StringChord, PianoChord } from '@/types';
 import { parseChordInput, isFrenchChordInput } from '@/lib/chord-data';
 import { BeatCell } from './beat-cell';
@@ -48,6 +49,7 @@ export function GridRow({
   onDismissOnboarding,
   finderChordPool,
 }: GridRowProps) {
+  const t = useTranslations('Editor');
   const totalGridCols = 16;
 
   // Positions cumulées pour placer les boutons fusion
@@ -138,12 +140,12 @@ export function GridRow({
                 transition-all text-[10px] leading-none shadow-sm pointer-events-auto
                 ${isFirstRow ? 'opacity-100' : 'opacity-0 group-hover/row:opacity-100'}
               `}
-              title="Fusionner"
+              title={t('merge')}
             >
               ⟷
             </button>
             {showMergeCoach && (
-              <CoachMark text="Fusionne avec la case précédente" position="top" onDismiss={() => onDismissOnboarding?.()} />
+              <CoachMark text={t('mergeWithPrevious')} position="top" onDismiss={() => onDismissOnboarding?.()} />
             )}
           </div>
         );

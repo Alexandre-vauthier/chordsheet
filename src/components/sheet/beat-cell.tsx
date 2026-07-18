@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import type { Cell, InstrumentId, StringChord, PianoChord } from '@/types';
 import { ChordSuggestions } from '@/components/chord';
 import { ChordFinder } from '@/components/chord/chord-finder';
@@ -42,6 +43,7 @@ export function BeatCell({
   onDismissOnboarding,
   finderChordPool,
 }: BeatCellProps) {
+  const t = useTranslations('Editor');
   const translate = useChordNotation();
   const getColor = useChordColor();
   const [isEditing, setIsEditing] = useState(false);
@@ -216,7 +218,7 @@ export function BeatCell({
               <button
                 onMouseDown={(e) => { e.preventDefault(); setFinderOpen(true); }}
                 className="cursor-pointer absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded bg-[var(--accent-soft)] hover:bg-[var(--line)] text-[var(--accent)] text-xs transition-colors"
-                title="Identifier un accord"
+                title={t('identifyChord')}
               >
                 🔍
               </button>
@@ -245,7 +247,7 @@ export function BeatCell({
           <button
             onClick={toggleDiagram}
             className="cursor-pointer absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded bg-[var(--paper)] hover:bg-[var(--line)] text-[var(--ink-faint)] hover:text-[var(--ink-light)] text-xs transition-colors"
-            title="Voir le diagramme"
+            title={t('viewDiagram')}
           >
             ♫
           </button>
@@ -257,10 +259,10 @@ export function BeatCell({
         <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 z-20
           bg-[var(--nav-bg)] text-white text-[11px] rounded-lg px-3 py-2 shadow-lg
           whitespace-nowrap text-center leading-snug">
-          Utilise la notation Am, G7, Cmaj7…
+          {t('chordNotationHint')}
           <br />
           <a href="/chords" className="underline opacity-80 hover:opacity-100" target="_blank">
-            Voir la bibliothèque d&apos;accords
+            {t('viewChordLibrary')}
           </a>
         </div>
       )}
@@ -294,7 +296,7 @@ export function BeatCell({
         <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10">
           <button
             onClick={(e) => { e.stopPropagation(); onDismissOnboarding?.(); onSplit(); }}
-            title="Diviser en deux"
+            title={t('splitInTwo')}
             className={`
               w-5 h-5 flex items-center justify-center rounded-full
               bg-[var(--cell-bg)] border border-[var(--line)] text-[var(--ink-faint)]
@@ -306,7 +308,7 @@ export function BeatCell({
             /
           </button>
           {showSplitCoach && (
-            <CoachMark text="Divise en deux temps" position="bottom" onDismiss={() => onDismissOnboarding?.()} />
+            <CoachMark text={t('divideInTwoBeats')} position="bottom" onDismiss={() => onDismissOnboarding?.()} />
           )}
         </div>
       )}

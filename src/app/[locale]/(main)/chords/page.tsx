@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { ChordCard } from '@/components/chord';
 import { ChordEditorModal } from '@/components/chord/chord-editor-modal';
 import { ChordFinder } from '@/components/chord/chord-finder';
@@ -9,22 +10,11 @@ import type { StringChord, PianoChord, InstrumentId } from '@/types';
 import { getChordsByInstrument, getAllExtendedChords } from '@/lib/chord-data';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
 import { useAuth } from '@/lib/auth-context';
+import { useInstrumentLabel } from '@/lib/use-genre-labels';
 import { useRouter } from '@/i18n/navigation';
 
 // Catégories étendues (correspondent aux catégories de chord-data.ts)
 type CategoryGroup = 'major' | 'minor' | 'dom7' | 'maj7' | 'min7' | 'dim' | 'aug' | 'sus' | 'other';
-
-const CAT_LABELS: Record<CategoryGroup, string> = {
-  major:  'Majeurs',
-  minor:  'Mineurs',
-  dom7:   '7',
-  maj7:   'Maj 7',
-  min7:   'Min 7',
-  dim:    'Dim',
-  aug:    'Aug',
-  sus:    'Sus / Add',
-  other:  'Autres',
-};
 
 // Ordre d'affichage des onglets
 const CAT_ORDER: CategoryGroup[] = ['major', 'minor', 'dom7', 'maj7', 'min7', 'dim', 'aug', 'sus', 'other'];
@@ -50,15 +40,12 @@ function getCategoryGroup(category: string): CategoryGroup {
   return 'other';
 }
 
-const INSTRUMENTS: { id: InstrumentId; label: string }[] = [
-  { id: 'guitar', label: 'Guitare' },
-  { id: 'ukulele', label: 'Ukulélé' },
-  { id: 'piano', label: 'Piano' },
-  { id: 'mandolin', label: 'Mandoline' },
-  { id: 'banjo', label: 'Banjo' },
-];
+const INSTRUMENT_IDS: InstrumentId[] = ['guitar', 'ukulele', 'piano', 'mandolin', 'banjo'];
 
 function ChordsPageContent() {
+  const t = useTranslations('Chords');
+  const tCategory = useTranslations('ChordCategories');
+  const instrumentLabel = useInstrumentLabel();
   const searchParams = useSearchParams();
   const router = useRouter();
   const { isAdmin, user } = useAuth();
@@ -306,12 +293,12 @@ function ChordsPageContent() {
   };
 
   const handleDeleteOverride = async (docId: string) => {
-    if (!confirm('Supprimer la modification admin ? L\'accord de base sera restauré.')) return;
+    if (!confirm(t('deleteOverrideConfirm'))) return;
     await deleteLibraryChord(docId);
   };
 
   const handleDeleteAddition = async (docId: string) => {
-    if (!confirm('Supprimer cet accord ajouté ?')) return;
+    if (!confirm(t('deleteAdditionConfirm'))) return;
     await deleteLibraryChord(docId);
   };
 
@@ -320,10 +307,10 @@ function ChordsPageContent() {
       <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="font-playfair text-3xl font-bold text-[var(--ink)]">
-            Bibliothèque d&apos;accords
+            {t('pageTitle')}
           </h1>
           <p className="text-[var(--ink-light)] mt-1 text-sm">
-            Tous les accords de la bibliothèque, par instrument et catégorie.
+            {t('pageSubtitle')}
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
@@ -336,7 +323,7 @@ function ChordsPageContent() {
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Rechercher un accord…"
+              placeholder={t('searchPlaceholder')}
               className="pl-9 pr-8 py-2 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink)] text-sm placeholder:text-[var(--ink-faint)] focus:outline-none focus:border-[var(--accent)] w-48"
             />
             {searchQuery && (
@@ -352,14 +339,14 @@ function ChordsPageContent() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h2l1 3m0 0l1.5 4h9L18 7H6m0 0H4m14 0l1 3H5m0 0l-1 3h14"/>
             </svg>
-            Identifier
+            {t('identifyButton')}
           </button>
           {isAdmin && (
             <button
               onClick={openNewModal}
               className="flex-shrink-0 px-4 py-2 rounded-lg border text-sm font-medium transition-colors bg-[var(--accent)] text-white border-[var(--accent)] hover:bg-[#a83d25]"
             >
-              + Ajouter un accord
+              {t('addChordButton')}
             </button>
           )}
         </div>
@@ -367,7 +354,7 @@ function ChordsPageContent() {
 
       {/* Sélecteur d'instrument */}
       <div className="flex flex-wrap gap-2 mb-4">
-        {INSTRUMENTS.map(({ id, label }) => (
+        {INSTRUMENT_IDS.map((id) => (
           <button
             key={id}
             onClick={() => handleInstrumentChange(id)}
@@ -377,7 +364,7 @@ function ChordsPageContent() {
                 : 'bg-[var(--cell-bg)] text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--ink-faint)]'
             }`}
           >
-            {label}
+            {instrumentLabel(id)}
           </button>
         ))}
       </div>
@@ -395,7 +382,7 @@ function ChordsPageContent() {
                   : 'text-[var(--ink-light)] hover:text-[var(--ink)]'
               }`}
             >
-              {CAT_LABELS[cat]}
+              {tCategory(cat)}
             </button>
           ))}
         </div>
@@ -406,12 +393,12 @@ function ChordsPageContent() {
         const groups = searchQuery ? allGroups : unifiedGroups;
         if (groups.length === 0) return (
           <div className="text-center py-16 text-[var(--ink-faint)]">
-            {searchQuery ? `Aucun accord trouvé pour « ${searchQuery} ».` : 'Aucun accord trouvé pour cette sélection.'}
+            {searchQuery ? t('noResultsSearch', { query: searchQuery }) : t('noResultsSelection')}
           </div>
         );
         return (
           <>
-            {searchQuery && <p className="text-[var(--ink-faint)] text-sm mb-4">{groups.length} accord{groups.length > 1 ? 's' : ''} trouvé{groups.length > 1 ? 's' : ''}</p>}
+            {searchQuery && <p className="text-[var(--ink-faint)] text-sm mb-4">{t('resultsCount', { count: groups.length })}</p>}
             <div className="flex flex-wrap gap-4">
               {groups.map((group) => (
                 <UnifiedChordGroup
@@ -456,7 +443,7 @@ function ChordsPageContent() {
 
       {saving && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-[var(--cell-bg)] rounded-xl p-6 text-sm text-[var(--ink)]">Sauvegarde en cours…</div>
+          <div className="bg-[var(--cell-bg)] rounded-xl p-6 text-sm text-[var(--ink)]">{t('savingInProgress')}</div>
         </div>
       )}
     </div>
@@ -491,6 +478,7 @@ function UnifiedChordGroup({
   onDeleteOverride: (docId: string) => void;
   onDeleteAddition: (docId: string) => void;
 }) {
+  const t = useTranslations('Chords');
   const [idx, setIdx] = useState(0);
   const safeIdx = Math.min(idx, group.variants.length - 1);
   const current = group.variants[safeIdx];
@@ -514,7 +502,7 @@ function UnifiedChordGroup({
       <ChordCard chord={current} instrumentId={instrumentId} size="sm" displayName={group.name} />
       {/* Badge "modifié" uniquement visible pour l'admin */}
       {isAdmin && isCurrentOverride && (
-        <span className="text-[9px] bg-[var(--accent)] text-white px-1 rounded mt-1">modifié</span>
+        <span className="text-[9px] bg-[var(--accent)] text-white px-1 rounded mt-1">{t('modifiedBadge')}</span>
       )}
       {isAdmin && (
         <div
@@ -524,17 +512,17 @@ function UnifiedChordGroup({
           {isCurrentAddition && currentAdditionDocId ? (
             <>
               <button onClick={() => onEditAddition(current, currentAdditionDocId)}
-                className="w-6 h-6 bg-blue-500 text-white rounded text-xs flex items-center justify-center" title="Modifier cet ajout">✎</button>
+                className="w-6 h-6 bg-blue-500 text-white rounded text-xs flex items-center justify-center" title={t('editAdditionTitle')}>✎</button>
               <button onClick={() => onDeleteAddition(currentAdditionDocId)}
-                className="w-6 h-6 bg-red-500 text-white rounded text-xs flex items-center justify-center" title="Supprimer">✕</button>
+                className="w-6 h-6 bg-red-500 text-white rounded text-xs flex items-center justify-center" title={t('deleteTitle')}>✕</button>
             </>
           ) : (
             <>
               <button onClick={() => onEditOverride(current)}
-                className="w-6 h-6 bg-blue-500 text-white rounded text-xs flex items-center justify-center" title="Modifier">✎</button>
+                className="w-6 h-6 bg-blue-500 text-white rounded text-xs flex items-center justify-center" title={t('editTitle')}>✎</button>
               {isCurrentOverride && group.overrideDocId && (
                 <button onClick={() => onDeleteOverride(group.overrideDocId!)}
-                  className="w-6 h-6 bg-gray-500 text-white rounded text-xs flex items-center justify-center" title="Restaurer l'original">↩</button>
+                  className="w-6 h-6 bg-gray-500 text-white rounded text-xs flex items-center justify-center" title={t('restoreOriginalTitle')}>↩</button>
               )}
             </>
           )}

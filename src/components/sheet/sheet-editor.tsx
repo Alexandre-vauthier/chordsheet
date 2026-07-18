@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
 import { computeDifficulty } from '@/lib/compute-difficulty';
@@ -18,6 +19,7 @@ import { getChordsByInstrument, getAllExtendedChords } from '@/lib/chord-data';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
 import { useAuth } from '@/lib/auth-context';
 import { usePublicArtistSuggestions } from '@/lib/use-search-suggestions';
+import { useGenreLabel } from '@/lib/use-genre-labels';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { SuggestionsDropdown } from '@/components/ui/suggestions-dropdown';
 import { Link } from '@/i18n/navigation';
@@ -36,8 +38,6 @@ interface SheetEditorProps {
   isSaving?: boolean;
 }
 
-const SECTION_LABELS = ['Intro', 'Couplet', 'Refrain', 'Bridge', 'Pré-refrain', 'Outro', 'Solo'];
-
 // ─── Composant paroles ────────────────────────────────────────────────────────
 
 function LyricsEditor({
@@ -51,27 +51,28 @@ function LyricsEditor({
   title: string;
   onChange: (v: string) => void;
 }) {
+  const t = useTranslations('Editor');
   const [fetching, setFetching] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  const fetchLyrics = async (a = artist, t = title) => {
-    if (!a.trim() || !t.trim()) {
-      setFetchError('Renseigne l\'artiste et le titre avant de récupérer les paroles.');
+  const fetchLyrics = async (a = artist, songTitle = title) => {
+    if (!a.trim() || !songTitle.trim()) {
+      setFetchError(t('artistTitleRequired'));
       return;
     }
     setFetching(true);
     setFetchError(null);
     try {
-      const url = `https://api.lyrics.ovh/v1/${encodeURIComponent(a.trim())}/${encodeURIComponent(t.trim())}`;
+      const url = `https://api.lyrics.ovh/v1/${encodeURIComponent(a.trim())}/${encodeURIComponent(songTitle.trim())}`;
       const res = await fetch(url);
       const data = await res.json();
       if (data.lyrics) {
         onChange(data.lyrics.trim());
       } else {
-        setFetchError('Paroles introuvables pour ce titre.');
+        setFetchError(t('lyricsNotFound'));
       }
     } catch {
-      setFetchError('Impossible de contacter lyrics.ovh. Vérifie ta connexion.');
+      setFetchError(t('lyricsOvhError'));
     } finally {
       setFetching(false);
     }
@@ -88,7 +89,7 @@ function LyricsEditor({
   return (
     <div className="mt-8">
       <div className="flex items-center gap-3 mb-4">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Paroles</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">{t('lyricsHeading')}</h2>
         <div className="flex-1 h-px bg-[var(--line)]" />
         <button
           type="button"
@@ -96,7 +97,7 @@ function LyricsEditor({
           disabled={fetching}
           className="cursor-pointer flex items-center gap-1.5 px-3 py-1 text-xs rounded-lg border border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors disabled:opacity-50"
         >
-          {fetching ? '⏳ Recherche…' : '🎤 Récupérer les paroles'}
+          {fetching ? t('fetchingLyrics') : t('fetchLyrics')}
         </button>
       </div>
       {fetchError && (
@@ -105,7 +106,7 @@ function LyricsEditor({
       <textarea
         value={lyrics}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Les paroles apparaîtront ici. Tu peux aussi les saisir manuellement."
+        placeholder={t('lyricsPlaceholder')}
         rows={16}
         className="w-full px-4 py-3 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink)] text-sm font-mono resize-y focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] placeholder:text-[var(--ink-faint)]"
       />
@@ -114,6 +115,10 @@ function LyricsEditor({
 }
 
 export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEditorProps) {
+  const t = useTranslations('Editor');
+  const tSection = useTranslations('SectionLabels');
+  const tPattern = useTranslations('GroovePatterns');
+  const genreLabel = useGenreLabel();
   const { user, updateUser, isAdmin } = useAuth();
   const frenchDetectedRef = useRef(false);
   const handleFrenchDetected = useCallback(() => {
@@ -258,13 +263,13 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   // Valider la grille avant sauvegarde
   const validateSheet = (): string | null => {
     if (!sheet.title.trim()) {
-      return 'Le titre est obligatoire';
+      return t('titleRequired');
     }
     if (!sheet.artist.trim()) {
-      return 'L\'artiste est obligatoire';
+      return t('artistRequired');
     }
     if (!hasAtLeastOneChord() && !sheet.lyrics?.trim()) {
-      return 'La grille doit contenir au moins un accord ou des paroles';
+      return t('chordsOrLyricsRequired');
     }
     return null;
   };
@@ -287,18 +292,19 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
 
   // Supprimer une section
   const deleteSection = useCallback((sectionId: string) => {
-    if (!confirm('Supprimer cette section ?')) return;
+    if (!confirm(t('confirmDeleteSection'))) return;
     setSheet((prev) => ({
       ...prev,
       sections: prev.sections.filter((s) => s.id !== sectionId),
     }));
     setHasChanges(true);
-  }, []);
+  }, [t]);
 
   // Ajouter une section
   const addSection = useCallback(() => {
+    const sectionLabels = ['Intro', 'Couplet', 'Refrain', 'Bridge', 'Pré-refrain', 'Outro', 'Solo'].map((l) => tSection(l));
     const usedLabels = sheet.sections.map((s) => s.label);
-    const nextLabel = SECTION_LABELS.find((l) => !usedLabels.includes(l)) || 'Section';
+    const nextLabel = sectionLabels.find((l) => !usedLabels.includes(l)) || tSection('Section');
     const newSection = createEmptySection(nextLabel);
 
     setSheet((prev) => ({
@@ -306,7 +312,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
       sections: [...prev.sections, newSection],
     }));
     setHasChanges(true);
-  }, [sheet.sections]);
+  }, [sheet.sections, tSection]);
 
   // Dupliquer une section
   const duplicateSection = useCallback((sectionId: string) => {
@@ -317,7 +323,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
       const clone: Section = {
         ...source,
         id: crypto.randomUUID(),
-        label: `${source.label} (copie)`,
+        label: `${source.label}${t('copySuffix')}`,
         rows: source.rows.map((row) => row.map((cell) => ({ ...cell }))),
       };
       const newSections = [...prev.sections];
@@ -325,7 +331,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
       return { ...prev, sections: newSections };
     });
     setHasChanges(true);
-  }, []);
+  }, [t]);
 
   // Drag & drop sections
   const [dragSectionId, setDragSectionId] = useState<string | null>(null);
@@ -533,7 +539,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 artistInputRef.current?.focus();
               }
             }}
-            placeholder="Titre de la chanson…"
+            placeholder={t('titlePlaceholder')}
             className="font-playfair text-3xl font-bold bg-transparent border-none outline-none flex-1
               caret-[var(--accent)] placeholder:text-[var(--ink-faint)]"
           />
@@ -541,7 +547,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             {/* Toggle métronome */}
             <button
               onClick={() => setMetronomeEnabled(v => !v)}
-              title={metronomeEnabled ? 'Désactiver le métronome' : 'Activer le métronome'}
+              title={metronomeEnabled ? t('disableMetronome') : t('enableMetronome')}
               className={`
                 cursor-pointer flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
                 ${metronomeEnabled
@@ -562,7 +568,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             {/* Toggle boite à rythme */}
             <button
               onClick={() => setGrooveEnabled(v => !v)}
-              title={grooveEnabled ? 'Désactiver la boite à rythme' : 'Activer la boite à rythme'}
+              title={grooveEnabled ? t('disableGrooveBox') : t('enableGrooveBox')}
               className={`
                 cursor-pointer flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
                 ${grooveEnabled
@@ -640,7 +646,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                   setActiveArtistSuggestion(-1);
                 }
               }}
-              placeholder="Artiste…"
+              placeholder={t('artistPlaceholder')}
               className="font-sans text-sm text-[var(--ink-light)] bg-transparent border-none outline-none
                 placeholder:text-[var(--ink-faint)]"
             />
@@ -670,12 +676,12 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                   : raw;
                 updateSheet({ key: normalized });
               }}
-              placeholder="Tonalité…"
+              placeholder={t('keyPlaceholder')}
               className="font-sans text-sm text-[var(--ink-light)] bg-transparent border-none outline-none
                 placeholder:text-[var(--ink-faint)] w-24"
             />
             {keyTooltip && (
-              <CoachMark text="Indique la tonalité du morceau (ex: Am, G, C…)" position="bottom" onDismiss={() => setKeyTooltip(false)} />
+              <CoachMark text={t('keyTooltip')} position="bottom" onDismiss={() => setKeyTooltip(false)} />
             )}
           </div>
           <span className="flex items-center gap-1 text-[var(--ink-faint)]">
@@ -687,7 +693,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 const next = units[(units.indexOf(cur) + 1) % units.length];
                 updateSheet({ tempoUnit: next });
               }}
-              title="Changer l'unité de tempo (♩ noire → ♪ croche)"
+              title={t('changeTempoUnit')}
               className="text-base leading-none hover:text-[var(--accent)] transition-colors cursor-pointer"
             >
               {sheet.tempoUnit === 'eighth' ? '♪' : '♩'}
@@ -713,12 +719,12 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
               type="url"
               value={sheet.referenceUrl || ''}
               onChange={(e) => updateSheet({ referenceUrl: e.target.value })}
-              placeholder="Lien de référence (YouTube, Spotify…)"
+              placeholder={t('referencePlaceholder')}
               className="font-sans text-sm text-[var(--ink-light)] bg-transparent border-none outline-none
                 placeholder:text-[var(--ink-faint)] w-64"
             />
             {refTooltip && (
-              <CoachMark text="Colle ici un lien YouTube ou Spotify pour retrouver le morceau" position="bottom" onDismiss={() => setRefTooltip(false)} />
+              <CoachMark text={t('referenceTooltip')} position="bottom" onDismiss={() => setRefTooltip(false)} />
             )}
           </div>
         </div>
@@ -728,7 +734,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
       <div className="mb-6 p-4 bg-[var(--cell-bg)] rounded-lg border border-[var(--line)] space-y-4">
         {/* Instrument pour les diagrammes */}
         <div>
-          <span className="text-sm text-[var(--ink-light)] block mb-2">Instrument :</span>
+          <span className="text-sm text-[var(--ink-light)] block mb-2">{t('instrument')}</span>
           <InstrumentSelector
             value={sheet.instrumentId || 'guitar'}
             onChange={(instrumentId) => updateSheet({ instrumentId })}
@@ -739,7 +745,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
         <div className="flex flex-wrap items-center gap-6">
           {/* Binaire / Ternaire */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-[var(--ink-light)]">Métrique :</span>
+            <span className="text-sm text-[var(--ink-light)]">{t('meter')}</span>
             <div className="flex rounded overflow-hidden border border-[var(--line)]">
               <button
                 onClick={() => updateSheet({
@@ -752,7 +758,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                     : 'bg-[var(--cell-bg)] text-[var(--ink-light)] hover:bg-[var(--cell-hover)]'
                 }`}
               >
-                Binaire
+                {t('binary')}
               </button>
               <button
                 onClick={() => updateSheet({
@@ -765,39 +771,39 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                     : 'bg-[var(--cell-bg)] text-[var(--ink-light)] hover:bg-[var(--cell-hover)]'
                 }`}
               >
-                Ternaire
+                {t('ternary')}
               </button>
             </div>
           </div>
           {/* Capo */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-[var(--ink-light)]">Capo :</span>
+            <span className="text-sm text-[var(--ink-light)]">{t('capo')}</span>
             <select
               value={sheet.capo ?? ''}
               onChange={(e) => updateSheet({ capo: e.target.value ? Number(e.target.value) : null })}
               className="cursor-pointer px-2 py-1 rounded border border-[var(--line)] text-sm bg-[var(--cell-bg)]
                 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             >
-              <option value="">Aucun</option>
+              <option value="">{t('noCapo')}</option>
               {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((n) => (
-                <option key={n} value={n}>Capo {n}</option>
+                <option key={n} value={n}>{t('capoN', { n })}</option>
               ))}
             </select>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm text-[var(--ink-light)]">Boîte à rythme :</span>
+            <span className="text-sm text-[var(--ink-light)]">{t('grooveBox')}</span>
             <select
               value={sheet.groovePattern ?? ''}
               onChange={(e) => updateSheet({ groovePattern: e.target.value || undefined })}
               className="cursor-pointer px-2 py-1 rounded border border-[var(--line)] text-sm bg-[var(--cell-bg)]
                 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
             >
-              <option value="">Automatique (selon genre)</option>
+              <option value="">{t('automaticByGenre')}</option>
               {Array.from(new Set(PATTERN_DEFS.map((p) => p.category))).map((category) => (
                 <optgroup key={category} label={category}>
                   {PATTERN_DEFS.filter((p) => p.category === category).map((p) => (
-                    <option key={p.id} value={p.id}>{p.label}</option>
+                    <option key={p.id} value={p.id}>{tPattern(p.id)}</option>
                   ))}
                 </optgroup>
               ))}
@@ -805,7 +811,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             <button
               type="button"
               onClick={() => togglePreviewPattern(sheet.groovePattern ?? '')}
-              title={previewPattern !== null ? 'Arrêter l\'aperçu' : 'Écouter ce pattern'}
+              title={previewPattern !== null ? t('stopPreviewPattern') : t('listenToPattern')}
               className={`cursor-pointer flex items-center justify-center w-7 h-7 rounded-full border-[1.5px] transition-all duration-150 ${
                 previewPattern !== null
                   ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
@@ -828,7 +834,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
 
         {/* Genres */}
         <div>
-          <span className="text-sm text-[var(--ink-light)] block mb-2">Genres :</span>
+          <span className="text-sm text-[var(--ink-light)] block mb-2">{t('genres')}</span>
           <div className="flex flex-wrap gap-2">
             {GENRES.map((genre) => {
               const isSelected = sheet.genres?.includes(genre);
@@ -848,7 +854,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                       : 'bg-[var(--cell-bg)] text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)]'
                   }`}
                 >
-                  {genre}
+                  {genreLabel(genre)}
                 </button>
               );
             })}
@@ -857,14 +863,12 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
 
         {/* Visibilité */}
         <div className="flex items-center justify-between pt-2 border-t border-[var(--line)]">
-          <span className="text-sm text-[var(--ink-light)]">Grille publique (visible par tous)</span>
+          <span className="text-sm text-[var(--ink-light)]">{t('publicSheetLabel')}</span>
           <button
             onClick={() => {
               const goingPublic = !sheet.isPublic;
               if (goingPublic && 'forkedFrom' in sheet && sheet.forkedFrom) {
-                const confirmed = confirm(
-                  'Cette grille est une duplication.\n\nÊtes-vous sûr de vouloir la rendre publique ?\n\nSi vous n\'avez pas apporté de modifications significatives, il vaut mieux garder l\'original ou contribuer directement à la grille source.'
-                );
+                const confirmed = confirm(t('confirmForkPublic'));
                 if (!confirmed) return;
               }
               if (!goingPublic) {
@@ -886,8 +890,8 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
         {isAdmin && (
           <div className="flex items-center justify-between pt-2 border-t border-[var(--line)]">
             <div>
-              <span className="text-sm text-amber-500 font-medium">À valider</span>
-              <p className="text-xs text-[var(--ink-faint)] mt-0.5">Visible uniquement par les admins, non publique</p>
+              <span className="text-sm text-amber-500 font-medium">{t('pendingValidation')}</span>
+              <p className="text-xs text-[var(--ink-faint)] mt-0.5">{t('pendingValidationDesc')}</p>
             </div>
             <button
               onClick={() => {
@@ -907,7 +911,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
       {/* Titre de la grille — masqué pour Voix */}
       {sheet.instrumentId !== 'voice' && (
         <div className="flex items-center gap-3 mb-4">
-          <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Grille harmonique</h2>
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">{t('harmonicGrid')}</h2>
           <div className="flex-1 h-px bg-[var(--line)]" />
         </div>
       )}
@@ -985,7 +989,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)]
             flex items-center justify-center gap-2"
         >
-          + Ajouter une section
+          {t('addSection')}
         </button>
       )}
 
@@ -1029,27 +1033,27 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             {validationError ? (
               <span className="text-red-600">⚠ {validationError}</span>
             ) : hasChanges ? (
-              <span className="text-[var(--accent)]">● Modifications non sauvegardées</span>
+              <span className="text-[var(--accent)]">● {t('unsavedChanges')}</span>
             ) : 'forkedFrom' in sheet && sheet.forkedFrom ? (
-              <span className="text-[var(--ink-faint)]">⎘ Dupliquée depuis une grille existante</span>
+              <span className="text-[var(--ink-faint)]">⎘ {t('duplicatedFrom')}</span>
             ) : (
-              <span>Toutes les modifications sont sauvegardées</span>
+              <span>{t('allSaved')}</span>
             )}
           </div>
           <div className="flex gap-3">
             <Button variant="ghost" onClick={() => window.history.back()}>
-              Annuler
+              {t('cancel')}
             </Button>
             {('id' in sheet) && (
               <Link
                 href={`/sheet/${sheet.id}`}
                 className="px-4 py-2 rounded-lg border border-[var(--line)] text-sm font-medium text-[var(--ink-light)] hover:text-[var(--ink)] hover:border-[var(--ink-faint)] transition-colors"
               >
-                Consulter
+                {t('view')}
               </Link>
             )}
             <Button onClick={handleSave} isLoading={isSaving} disabled={!hasChanges && 'id' in sheet}>
-              {('id' in sheet) ? 'Sauvegarder' : 'Créer la grille'}
+              {('id' in sheet) ? t('save') : t('createSheet')}
             </Button>
           </div>
         </div>

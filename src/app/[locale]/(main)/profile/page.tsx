@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
@@ -10,6 +11,7 @@ import { isPro, getRemainingOcr, getEarnedOcrCredits } from '@/lib/plan-limits';
 import { fromFirestore } from '@/lib/firestore-helpers';
 import { LevelBadge } from '@/components/reputation/level-badge';
 import { BadgesDisplay } from '@/components/reputation/badges-display';
+import { useInstrumentLabel } from '@/lib/use-genre-labels';
 import { computeScore, computeLevel, computeBadges, getLevelProgress } from '@/lib/creator-reputation';
 import type { NotationPreference, InstrumentId, Sheet } from '@/types';
 import { Link, useRouter } from '@/i18n/navigation';
@@ -22,6 +24,9 @@ interface UserStats {
 }
 
 export default function ProfilePage() {
+  const t = useTranslations('Profile');
+  const locale = useLocale();
+  const instrumentLabel = useInstrumentLabel();
   const { user, loading, isAdmin, updateUser, signOut, deleteAccount } = useAuth();
   const router = useRouter();
   const [displayName, setDisplayName] = useState('');
@@ -128,7 +133,7 @@ export default function ProfilePage() {
   // Sauvegarder le nom
   const handleSaveName = async () => {
     if (!displayName.trim()) {
-      setMessage({ type: 'error', text: 'Le nom ne peut pas être vide' });
+      setMessage({ type: 'error', text: t('nameEmpty') });
       return;
     }
 
@@ -137,10 +142,10 @@ export default function ProfilePage() {
 
     try {
       await updateUser({ displayName: displayName.trim(), notationPreference: notation });
-      setMessage({ type: 'success', text: 'Nom mis à jour avec succès' });
+      setMessage({ type: 'success', text: t('nameUpdated') });
     } catch (error) {
       console.error('Error updating name:', error);
-      setMessage({ type: 'error', text: 'Erreur lors de la mise à jour' });
+      setMessage({ type: 'error', text: t('errorUpdate') });
     } finally {
       setIsSaving(false);
     }
@@ -164,7 +169,7 @@ export default function ProfilePage() {
   if (!user) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8 text-center">
-        <p className="text-[var(--ink-light)]">Vous devez être connecté pour accéder à cette page.</p>
+        <p className="text-[var(--ink-light)]">{t('notLoggedIn')}</p>
       </div>
     );
   }
@@ -172,7 +177,7 @@ export default function ProfilePage() {
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
       <h1 className="font-playfair text-2xl font-bold text-[var(--ink)] mb-8">
-        Mon profil
+        {t('title')}
       </h1>
 
       {/* Message */}
@@ -200,7 +205,7 @@ export default function ProfilePage() {
         {/* Nom d'affichage */}
         <div>
           <label className="block text-sm font-medium text-[var(--ink)] mb-2">
-            Nom d&apos;affichage
+            {t('displayName')}
           </label>
           <div className="flex gap-3">
             <input
@@ -209,14 +214,14 @@ export default function ProfilePage() {
               onChange={(e) => setDisplayName(e.target.value)}
               className="flex-1 px-4 py-2 border border-[var(--line)] rounded-lg
                 focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
-              placeholder="Votre nom"
+              placeholder={t('displayNamePlaceholder')}
             />
             <Button
               onClick={handleSaveName}
               isLoading={isSaving}
               disabled={displayName === user.displayName}
             >
-              Enregistrer
+              {t('save')}
             </Button>
           </div>
         </div>
@@ -224,7 +229,7 @@ export default function ProfilePage() {
         {/* Email (lecture seule) */}
         <div>
           <label className="block text-sm font-medium text-[var(--ink)] mb-2">
-            Email
+            {t('email')}
           </label>
           <input
             type="email"
@@ -233,17 +238,17 @@ export default function ProfilePage() {
             className="w-full px-4 py-2 border border-[var(--line)] rounded-lg bg-[var(--cell-bg)] text-[var(--ink-light)]"
           />
           <p className="mt-1 text-xs text-[var(--ink-faint)]">
-            L&apos;email ne peut pas être modifié
+            {t('emailReadOnly')}
           </p>
         </div>
 
         {/* Date d'inscription */}
         <div>
           <label className="block text-sm font-medium text-[var(--ink)] mb-2">
-            Membre depuis
+            {t('memberSince')}
           </label>
           <p className="text-[var(--ink)]">
-            {user.createdAt.toLocaleDateString('fr-FR', {
+            {user.createdAt.toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR', {
               year: 'numeric',
               month: 'long',
               day: 'numeric',
@@ -257,26 +262,26 @@ export default function ProfilePage() {
             href={`/user/${user.id}`}
             className="text-sm font-medium text-[var(--accent)] hover:underline"
           >
-            Voir mon profil public →
+            {t('viewPublicProfile')}
           </Link>
           <p className="text-xs text-[var(--ink-faint)] mt-1">
-            Visible par tous · vos grilles publiées et vos statistiques
+            {t('publicProfileDesc')}
           </p>
         </div>
       </div>
 
       {/* ── Général ────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 mt-8 mb-3">
-        <span className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Général</span>
+        <span className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">{t('sectionGeneral')}</span>
         <div className="flex-1 h-px bg-[var(--line)]" />
       </div>
 
       {/* Préférence de notation */}
       <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)]">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold text-[var(--ink)]">Notation des accords</h2>
+          <h2 className="text-base font-semibold text-[var(--ink)]">{t('notationTitle')}</h2>
           {isSavingNotation && (
-            <span className="text-xs text-[var(--ink-faint)]">Sauvegarde…</span>
+            <span className="text-xs text-[var(--ink-faint)]">{t('saving')}</span>
           )}
         </div>
         <div className="flex gap-3">
@@ -290,7 +295,7 @@ export default function ProfilePage() {
             }`}
           >
             <div className="font-mono text-lg mb-1">Am · F#m7</div>
-            <div>Anglais</div>
+            <div>{t('notationEnglish')}</div>
           </button>
           <button
             onClick={() => handleNotationChange('french')}
@@ -302,7 +307,7 @@ export default function ProfilePage() {
             }`}
           >
             <div className="font-mono text-lg mb-1">Lam · Fa#m7</div>
-            <div>Français</div>
+            <div>{t('notationFrench')}</div>
           </button>
         </div>
       </div>
@@ -311,9 +316,9 @@ export default function ProfilePage() {
       <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-[var(--ink)]">Mode sombre</h2>
+            <h2 className="text-base font-semibold text-[var(--ink)]">{t('darkModeTitle')}</h2>
             <p className="text-xs text-[var(--ink-faint)] mt-1">
-              Thème sombre pour réduire la fatigue visuelle
+              {t('darkModeDesc')}
             </p>
           </div>
           <button
@@ -333,27 +338,18 @@ export default function ProfilePage() {
 
       {/* ── Consultation ───────────────────────────────────────────── */}
       <div className="flex items-center gap-3 mt-8 mb-3">
-        <span className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Consultation</span>
+        <span className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">{t('sectionViewing')}</span>
         <div className="flex-1 h-px bg-[var(--line)]" />
       </div>
 
       {/* Instrument de prédilection */}
       <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)]">
-        <h2 className="text-base font-semibold text-[var(--ink)] mb-1">Instrument par défaut</h2>
+        <h2 className="text-base font-semibold text-[var(--ink)] mb-1">{t('defaultInstrumentTitle')}</h2>
         <p className="text-xs text-[var(--ink-faint)] mb-4">
-          Instrument affiché par défaut en consultation, sur tous vos appareils
+          {t('defaultInstrumentDesc')}
         </p>
         <div className="flex flex-wrap gap-2">
-          {([
-            { id: 'guitar',   label: 'Guitare' },
-            { id: 'ukulele',  label: 'Ukulélé' },
-            { id: 'piano',    label: 'Piano' },
-            { id: 'mandolin', label: 'Mandoline' },
-            { id: 'banjo',    label: 'Banjo' },
-            { id: 'bass',       label: 'Basse' },
-            { id: 'voice',      label: 'Voix' },
-            { id: 'percussion', label: 'Percussion' },
-          ] as { id: InstrumentId; label: string }[]).map(({ id, label }) => (
+          {(['guitar', 'ukulele', 'piano', 'mandolin', 'banjo', 'bass', 'voice', 'percussion'] as InstrumentId[]).map((id) => (
             <button
               key={id}
               onClick={async () => {
@@ -366,7 +362,7 @@ export default function ProfilePage() {
                   : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)]'
               }`}
             >
-              {label}
+              {instrumentLabel(id)}
             </button>
           ))}
         </div>
@@ -376,9 +372,9 @@ export default function ProfilePage() {
       <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-[var(--ink)]">Code couleur des accords</h2>
+            <h2 className="text-base font-semibold text-[var(--ink)]">{t('colorCodingTitle')}</h2>
             <p className="text-xs text-[var(--ink-faint)] mt-1">
-              Bordure colorée sur chaque case selon la note fondamentale
+              {t('colorCodingDesc')}
             </p>
             <div className="flex gap-1.5 mt-2">
               {[
@@ -419,9 +415,9 @@ export default function ProfilePage() {
       <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-[var(--ink)]">Diagramme dans la case</h2>
+            <h2 className="text-base font-semibold text-[var(--ink)]">{t('inlineDiagramTitle')}</h2>
             <p className="text-xs text-[var(--ink-faint)] mt-1">
-              Affiche le diagramme de l&apos;accord directement dans chaque case en consultation
+              {t('inlineDiagramDesc')}
             </p>
           </div>
           <button
@@ -443,9 +439,9 @@ export default function ProfilePage() {
       <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-[var(--ink)]">Minimiser les sections identiques</h2>
+            <h2 className="text-base font-semibold text-[var(--ink)]">{t('minimizeRepeatedTitle')}</h2>
             <p className="text-xs text-[var(--ink-faint)] mt-1">
-              N&apos;affiche pas les accords quand une section est identique à une précédente
+              {t('minimizeRepeatedDesc')}
             </p>
           </div>
           <button
@@ -467,9 +463,9 @@ export default function ProfilePage() {
       <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-[var(--ink)]">Afficher les accords au chargement</h2>
+            <h2 className="text-base font-semibold text-[var(--ink)]">{t('showChordSummaryTitle')}</h2>
             <p className="text-xs text-[var(--ink-faint)] mt-1">
-              Sur desktop, ouvre automatiquement les diagrammes d&apos;accords à l&apos;ouverture d&apos;une grille. Sur mobile, toujours replié.
+              {t('showChordSummaryDesc')}
             </p>
           </div>
           <button
@@ -489,7 +485,7 @@ export default function ProfilePage() {
 
       {/* ── Impression ─────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 mt-8 mb-3">
-        <span className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Impression</span>
+        <span className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">{t('sectionPrinting')}</span>
         <div className="flex-1 h-px bg-[var(--line)]" />
       </div>
 
@@ -497,9 +493,9 @@ export default function ProfilePage() {
       <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)]">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-[var(--ink)]">Minimiser les répétitions</h2>
+            <h2 className="text-base font-semibold text-[var(--ink)]">{t('printMinimizeTitle')}</h2>
             <p className="text-xs text-[var(--ink-faint)] mt-1">
-              N&apos;imprime pas les accords des sections identiques à une précédente
+              {t('printMinimizeDesc')}
             </p>
           </div>
           <button
@@ -521,9 +517,9 @@ export default function ProfilePage() {
       <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-[var(--ink)]">Diagrammes des accords</h2>
+            <h2 className="text-base font-semibold text-[var(--ink)]">{t('printDiagramsTitle')}</h2>
             <p className="text-xs text-[var(--ink-faint)] mt-1">
-              Afficher les accords utilisés avec leurs diagrammes en haut de la page imprimée
+              {t('printDiagramsDesc')}
             </p>
           </div>
           <button
@@ -543,7 +539,7 @@ export default function ProfilePage() {
 
       {/* ── Lecture ────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 mt-8 mb-3">
-        <span className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Lecture</span>
+        <span className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">{t('sectionPlayback')}</span>
         <div className="flex-1 h-px bg-[var(--line)]" />
       </div>
 
@@ -551,9 +547,9 @@ export default function ProfilePage() {
       <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)]">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-[var(--ink)]">Métronome activé par défaut</h2>
+            <h2 className="text-base font-semibold text-[var(--ink)]">{t('defaultMetronomeTitle')}</h2>
             <p className="text-xs text-[var(--ink-faint)] mt-1">
-              Active automatiquement le métronome à l&apos;ouverture d&apos;une grille
+              {t('defaultMetronomeDesc')}
             </p>
           </div>
           <button
@@ -575,9 +571,9 @@ export default function ProfilePage() {
       <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-[var(--ink)]">Boîte à rythmes activée par défaut</h2>
+            <h2 className="text-base font-semibold text-[var(--ink)]">{t('defaultGrooveBoxTitle')}</h2>
             <p className="text-xs text-[var(--ink-faint)] mt-1">
-              Active automatiquement l&apos;accompagnement rythmique à l&apos;ouverture d&apos;une grille
+              {t('defaultGrooveBoxDesc')}
             </p>
           </div>
           <button
@@ -599,9 +595,9 @@ export default function ProfilePage() {
       <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-[var(--ink)]">Lecture des accords activée par défaut</h2>
+            <h2 className="text-base font-semibold text-[var(--ink)]">{t('defaultChordsAudioTitle')}</h2>
             <p className="text-xs text-[var(--ink-faint)] mt-1">
-              Joue le son des accords pendant la lecture (désactiver pour une lecture silencieuse)
+              {t('defaultChordsAudioDesc')}
             </p>
           </div>
           <button
@@ -623,9 +619,9 @@ export default function ProfilePage() {
       <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)] mt-3">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-base font-semibold text-[var(--ink)]">Décompte avant lecture par défaut</h2>
+            <h2 className="text-base font-semibold text-[var(--ink)]">{t('defaultCountInTitle')}</h2>
             <p className="text-xs text-[var(--ink-faint)] mt-1">
-              Lance un métronome sur 4 temps avant de démarrer la lecture
+              {t('defaultCountInDesc')}
             </p>
           </div>
           <button
@@ -652,14 +648,14 @@ export default function ProfilePage() {
         return (
           <>
             <div className="flex items-center gap-3 mt-8 mb-3">
-              <span className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">Ma réputation</span>
+              <span className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">{t('sectionReputation')}</span>
               <div className="flex-1 h-px bg-[var(--line)]" />
             </div>
             <div className="bg-[var(--cell-bg)] rounded-2xl p-6 shadow-sm border border-[var(--line)]">
               {/* Niveau actuel */}
               <div className="flex items-center gap-3 mb-4">
                 <LevelBadge level={level} size="md" />
-                <span className="text-sm text-[var(--ink-light)]">Score : <strong className="text-[var(--ink)]">{score}</strong></span>
+                <span className="text-sm text-[var(--ink-light)]">{t('score')} <strong className="text-[var(--ink)]">{score}</strong></span>
               </div>
               {/* Barre de progression */}
               {progress.next ? (
@@ -676,10 +672,10 @@ export default function ProfilePage() {
                   </div>
                 </div>
               ) : (
-                <p className="text-xs text-[var(--ink-faint)] mb-4">Niveau maximum atteint !</p>
+                <p className="text-xs text-[var(--ink-faint)] mb-4">{t('maxLevelReached')}</p>
               )}
               {/* Badges */}
-              <p className="text-xs font-medium text-[var(--ink-light)] mb-2">Badges</p>
+              <p className="text-xs font-medium text-[var(--ink-light)] mb-2">{t('badges')}</p>
               <BadgesDisplay earned={badges} showAll />
             </div>
           </>
@@ -693,18 +689,18 @@ export default function ProfilePage() {
           className="w-full py-2.5 px-4 rounded-xl border border-[var(--line)] text-sm text-[var(--ink-light)]
             hover:border-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors bg-[var(--cell-bg)]"
         >
-          Se déconnecter
+          {t('signOut')}
         </button>
       </div>
 
       {/* Statistiques */}
       <div className="mt-8">
         <h2 className="font-playfair text-xl font-bold text-[var(--ink)] mb-4">
-          Statistiques
+          {t('statistics')}
         </h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <StatCard
-            label="Grilles"
+            label={t('statSheets')}
             value={stats?.sheetsCount ?? '-'}
             icon={
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -713,7 +709,7 @@ export default function ProfilePage() {
             }
           />
           <StatCard
-            label="Publiques"
+            label={t('statPublic')}
             value={stats?.publicSheetsCount ?? '-'}
             icon={
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -722,7 +718,7 @@ export default function ProfilePage() {
             }
           />
           <StatCard
-            label="Sets"
+            label={t('statSets')}
             value={stats?.setsCount ?? '-'}
             icon={
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -731,7 +727,7 @@ export default function ProfilePage() {
             }
           />
           <StatCard
-            label="Favoris"
+            label={t('statBookmarks')}
             value={stats?.bookmarksCount ?? '-'}
             icon={
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -751,26 +747,26 @@ export default function ProfilePage() {
             onClick={() => { setShowDeleteZone(v => !v); setDeleteConfirm(''); }}
             className="text-xs text-[var(--ink-faint)] hover:text-red-600 transition-colors"
           >
-            {showDeleteZone ? '▲ Masquer' : 'Supprimer mon compte…'}
+            {showDeleteZone ? t('hideDeleteZone') : t('showDeleteZone')}
           </button>
 
           {showDeleteZone && (
             <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm font-semibold text-red-700 mb-1">Suppression du compte</p>
+              <p className="text-sm font-semibold text-red-700 mb-1">{t('deleteAccountTitle')}</p>
               <p className="text-xs text-red-600 mb-4">
-                Action irréversible. Toutes vos grilles, sets et favoris seront supprimés définitivement.
-                Tapez <strong>SUPPRIMER</strong> pour confirmer.
+                {t('deleteAccountWarning')}{' '}
+                {t.rich('deleteConfirmInstruction', { word: t('deleteConfirmWord'), strong: (chunks) => <strong>{chunks}</strong> })}
               </p>
               <input
                 type="text"
                 value={deleteConfirm}
                 onChange={(e) => setDeleteConfirm(e.target.value)}
-                placeholder="SUPPRIMER"
+                placeholder={t('deleteConfirmWord')}
                 className="w-full px-3 py-2 text-sm border border-red-300 rounded-lg outline-none
                   focus:ring-2 focus:ring-red-300 mb-3 bg-[var(--cell-bg)]"
               />
               <button
-                disabled={deleteConfirm !== 'SUPPRIMER' || isDeleting}
+                disabled={deleteConfirm !== t('deleteConfirmWord') || isDeleting}
                 onClick={async () => {
                   setIsDeleting(true);
                   try {
@@ -778,7 +774,7 @@ export default function ProfilePage() {
                     router.push('/');
                   } catch (err) {
                     console.error('Error deleting account:', err);
-                    alert('Erreur lors de la suppression. Reconnectez-vous et réessayez.');
+                    alert(t('errorDeleteAccount'));
                     setIsDeleting(false);
                   }
                 }}
@@ -786,7 +782,7 @@ export default function ProfilePage() {
                   disabled:opacity-40 disabled:cursor-not-allowed
                   bg-red-600 text-white hover:bg-red-700 disabled:hover:bg-red-600"
               >
-                {isDeleting ? 'Suppression…' : 'Confirmer la suppression'}
+                {isDeleting ? t('deleting') : t('confirmDelete')}
               </button>
             </div>
           )}
@@ -797,6 +793,8 @@ export default function ProfilePage() {
 }
 
 function SubscriptionSection({ user }: { user: import('@/types').User | null }) {
+  const t = useTranslations('Profile');
+  const locale = useLocale();
   const [portalLoading, setPortalLoading] = useState(false);
   if (!user) return null;
 
@@ -821,28 +819,28 @@ function SubscriptionSection({ user }: { user: import('@/types').User | null }) 
 
   return (
     <div className="mt-8 bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-6">
-      <h2 className="font-semibold text-[var(--ink)] mb-4">Mon abonnement</h2>
+      <h2 className="font-semibold text-[var(--ink)] mb-4">{t('subscriptionTitle')}</h2>
 
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${userIsPro ? 'bg-[var(--accent)] text-white' : 'bg-[var(--line)] text-[var(--ink-light)]'}`}>
-              {userIsPro ? 'Pro' : 'Gratuit'}
+              {userIsPro ? t('pro') : t('free')}
             </span>
             {userIsPro && user.subscription?.currentPeriodEnd && (
               <span className="text-xs text-[var(--ink-faint)]">
-                Renouvellement le {user.subscription.currentPeriodEnd.toLocaleDateString('fr-FR')}
+                {t('renewsOn', { date: user.subscription.currentPeriodEnd.toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR') })}
               </span>
             )}
           </div>
           {!userIsPro && (
             <div className="space-y-0.5">
               <p className="text-xs text-[var(--ink-light)]">
-                Analyses OCR restantes ce mois : <strong className="text-[var(--ink)]">{remainingOcr}</strong>
+                {t.rich('ocrRemaining', { count: remainingOcr, strong: (chunks) => <strong className="text-[var(--ink)]">{chunks}</strong> })}
               </p>
               {getEarnedOcrCredits(user.subscription) > 0 && (
                 <p className="text-xs text-[var(--ink-faint)]">
-                  dont <strong className="text-[var(--ink)]">{getEarnedOcrCredits(user.subscription)}</strong> crédit{getEarnedOcrCredits(user.subscription) > 1 ? 's' : ''} gagné{getEarnedOcrCredits(user.subscription) > 1 ? 's' : ''} par vos contributions
+                  {t('ocrEarnedCredits', { count: getEarnedOcrCredits(user.subscription) })}
                 </p>
               )}
             </div>
@@ -856,14 +854,14 @@ function SubscriptionSection({ user }: { user: import('@/types').User | null }) 
               disabled={portalLoading}
               className="px-4 py-2 text-sm border border-[var(--line)] text-[var(--ink-light)] rounded-lg hover:border-[var(--ink-light)] transition-colors disabled:opacity-50 cursor-pointer"
             >
-              {portalLoading ? 'Chargement…' : 'Gérer l\'abonnement'}
+              {portalLoading ? t('loading') : t('manageSubscription')}
             </button>
           ) : (
             <Link
               href="/pricing"
               className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors font-medium"
             >
-              Passer à Pro
+              {t('upgradeToPro')}
             </Link>
           )}
         </div>

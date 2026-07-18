@@ -1,30 +1,30 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { useAuth } from '@/lib/auth-context';
 import { isPro } from '@/lib/plan-limits';
 import { useRouter } from '@/i18n/navigation';
 
-const FREE_FEATURES = [
-  'Grilles d\'accords illimitées',
-  'Grilles publiques et privées',
-  'Export PDF',
-  'Accords personnalisés',
-  '2 analyses OCR / mois',
-  'Favoris et sets',
-  'Transposition automatique',
-];
-
-const PRO_FEATURES = [
-  'Tout le plan gratuit',
-  'Créer des groupes (illimité)',
-  'Mode concert synchronisé',
-  'Analyses OCR illimitées',
-  'Badge Pro sur le profil',
-];
-
 export default function PricingPage() {
+  const t = useTranslations('Pricing');
+  const FREE_FEATURES = [
+    t('freeFeature1'),
+    t('freeFeature2'),
+    t('freeFeature3'),
+    t('freeFeature4'),
+    t('freeFeature5'),
+    t('freeFeature6'),
+    t('freeFeature7'),
+  ];
+  const PRO_FEATURES = [
+    t('proFeature1'),
+    t('proFeature2'),
+    t('proFeature3'),
+    t('proFeature4'),
+    t('proFeature5'),
+  ];
   const { user } = useAuth();
   const router = useRouter();
   const [billing, setBilling] = useState<'monthly' | 'yearly'>('yearly');
@@ -58,14 +58,14 @@ export default function PricingPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-14">
 
       <div className="text-center mb-10">
-        <h1 className="font-playfair text-4xl font-bold text-[var(--ink)] mb-3">Tarifs</h1>
+        <h1 className="font-playfair text-4xl font-bold text-[var(--ink)] mb-3">{t('title')}</h1>
         <p className="text-[var(--ink-light)] text-base max-w-lg mx-auto">
-          ChordSheet reste gratuit pour un usage personnel. Le Pro débloque la collaboration et l&apos;OCR illimité.
+          {t('subtitle')}
         </p>
 
         {/* Toggle mensuel / annuel */}
         <div className="flex items-center justify-center gap-3 mt-6">
-          <span className={`text-sm ${billing === 'monthly' ? 'text-[var(--ink)]' : 'text-[var(--ink-faint)]'}`}>Mensuel</span>
+          <span className={`text-sm ${billing === 'monthly' ? 'text-[var(--ink)]' : 'text-[var(--ink-faint)]'}`}>{t('monthlyLabel')}</span>
           <button
             onClick={() => setBilling(b => b === 'monthly' ? 'yearly' : 'monthly')}
             className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer ${billing === 'yearly' ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'}`}
@@ -73,8 +73,8 @@ export default function PricingPage() {
             <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${billing === 'yearly' ? 'translate-x-6' : 'translate-x-1'}`} />
           </button>
           <span className={`text-sm ${billing === 'yearly' ? 'text-[var(--ink)]' : 'text-[var(--ink-faint)]'}`}>
-            Annuel
-            <span className="ml-1.5 text-xs px-1.5 py-0.5 bg-[var(--accent-soft)] text-[var(--accent)] rounded font-medium">−33 %</span>
+            {t('yearlyLabel')}
+            <span className="ml-1.5 text-xs px-1.5 py-0.5 bg-[var(--accent-soft)] text-[var(--accent)] rounded font-medium">{t('discountBadge')}</span>
           </span>
         </div>
       </div>
@@ -84,11 +84,11 @@ export default function PricingPage() {
         {/* Plan Free */}
         <div className="rounded-2xl border border-[var(--line)] bg-[var(--paper)] p-6 flex flex-col">
           <div className="mb-5">
-            <p className="text-xs font-semibold text-[var(--ink-faint)] uppercase tracking-wide mb-1">Gratuit</p>
+            <p className="text-xs font-semibold text-[var(--ink-faint)] uppercase tracking-wide mb-1">{t('freeBadge')}</p>
             <div className="flex items-end gap-1">
-              <span className="font-playfair text-3xl font-bold text-[var(--ink)]">0 €</span>
+              <span className="font-playfair text-3xl font-bold text-[var(--ink)]">{t('freePrice')}</span>
             </div>
-            <p className="text-xs text-[var(--ink-faint)] mt-1">Pour toujours</p>
+            <p className="text-xs text-[var(--ink-faint)] mt-1">{t('foreverLabel')}</p>
           </div>
 
           <ul className="space-y-2.5 flex-1 mb-6">
@@ -105,11 +105,11 @@ export default function PricingPage() {
               href="/register"
               className="block text-center px-4 py-2.5 border border-[var(--line)] text-[var(--ink-light)] text-sm font-medium rounded-lg hover:border-[var(--ink-light)] transition-colors"
             >
-              Commencer gratuitement
+              {t('startFreeButton')}
             </a>
           ) : !userIsPro ? (
             <div className="px-4 py-2.5 border border-[var(--line)] text-[var(--ink-faint)] text-sm text-center rounded-lg">
-              Votre plan actuel
+              {t('currentPlanLabel')}
             </div>
           ) : null}
         </div>
@@ -118,20 +118,20 @@ export default function PricingPage() {
         <div className="rounded-2xl border-2 border-[var(--accent)] bg-[var(--paper)] p-6 flex flex-col relative">
           <div className="absolute -top-3 left-1/2 -translate-x-1/2">
             <span className="bg-[var(--accent)] text-white text-xs font-semibold px-3 py-1 rounded-full">
-              Recommandé
+              {t('recommendedBadge')}
             </span>
           </div>
 
           <div className="mb-5">
-            <p className="text-xs font-semibold text-[var(--accent)] uppercase tracking-wide mb-1">Pro</p>
+            <p className="text-xs font-semibold text-[var(--accent)] uppercase tracking-wide mb-1">{t('proBadge')}</p>
             <div className="flex items-end gap-1">
               <span className="font-playfair text-3xl font-bold text-[var(--ink)]">
-                {billing === 'monthly' ? '4,90 €' : '3,25 €'}
+                {billing === 'monthly' ? t('priceMonthly') : t('priceYearly')}
               </span>
-              <span className="text-[var(--ink-faint)] text-sm mb-1">/mois</span>
+              <span className="text-[var(--ink-faint)] text-sm mb-1">{t('perMonth')}</span>
             </div>
             <p className="text-xs text-[var(--ink-faint)] mt-1">
-              {billing === 'yearly' ? 'Facturé 39 € / an' : 'Facturé mensuellement'}
+              {billing === 'yearly' ? t('billedYearly') : t('billedMonthly')}
             </p>
           </div>
 
@@ -146,7 +146,7 @@ export default function PricingPage() {
 
           {userIsPro ? (
             <div className="px-4 py-2.5 bg-[var(--accent-soft)] text-[var(--accent)] text-sm text-center rounded-lg font-medium">
-              Votre plan actuel ✓
+              {t('currentPlanCheckLabel')}
             </div>
           ) : (
             <button
@@ -154,14 +154,14 @@ export default function PricingPage() {
               disabled={loading}
               className="px-4 py-2.5 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
             >
-              {loading ? 'Redirection…' : user ? 'Passer à Pro' : 'Commencer avec Pro'}
+              {loading ? t('redirecting') : user ? t('upgradeButton') : t('startProButton')}
             </button>
           )}
         </div>
       </div>
 
       <p className="text-center text-xs text-[var(--ink-faint)] mt-8">
-        Paiement sécurisé par Stripe · Annulable à tout moment · <a href="/legal/cgv" className="hover:text-[var(--ink-light)] underline">CGV</a>
+        {t('securePayment')} <a href="/legal/cgv" className="hover:text-[var(--ink-light)] underline">{t('tosLink')}</a>
       </p>
 
     </div>

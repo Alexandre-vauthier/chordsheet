@@ -14,3 +14,10 @@ export function useDifficultyLabel() {
   const t = useTranslations('Difficulty');
   return (label: string) => t(label);
 }
+
+// Les InstrumentId ('guitar', 'piano', ...) sont déjà des identifiants stables
+// (pas du texte français) — la clé de traduction est directement l'id.
+export function useInstrumentLabel() {
+  const t = useTranslations('Instruments');
+  return (instrumentId: string) => t(instrumentId);
+}

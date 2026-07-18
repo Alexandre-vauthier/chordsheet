@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { useTranslations } from 'next-intl';
+import { useInstrumentLabel } from '@/lib/use-genre-labels';
 import { Link, useRouter } from '@/i18n/navigation';
 
 import {
@@ -13,7 +14,6 @@ import { fromFirestore } from '@/lib/firestore-helpers';
 import { useAuth } from '@/lib/auth-context';
 import { useGroups } from '@/lib/use-groups';
 import { useArtwork } from '@/lib/use-artwork';
-import { INSTRUMENT_CONFIG } from '@/lib/chord-data';
 import type { Group, GroupRole, Sheet, Set, InstrumentId } from '@/types';
 
 interface MemberInfo {
@@ -91,6 +91,7 @@ function SheetRow({
 
 export default function GroupDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const t = useTranslations('Groups');
+  const instrumentLabel = useInstrumentLabel();
   const { id: groupId } = use(params);
   const { user } = useAuth();
   const { generateInviteToken, leaveGroup, removeMember, deleteGroup, linkSheet, unlinkSheet } = useGroups();
@@ -565,7 +566,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                   <div className="text-sm font-medium text-[var(--ink)]">{member.displayName}</div>
                   {member.preferredInstrument && (
                     <div className="text-xs text-[var(--ink-faint)]">
-                      {INSTRUMENT_CONFIG[member.preferredInstrument]?.label ?? member.preferredInstrument}
+                      {member.preferredInstrument ? instrumentLabel(member.preferredInstrument) : ''}
                     </div>
                   )}
                 </div>

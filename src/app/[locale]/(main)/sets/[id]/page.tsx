@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
@@ -23,6 +24,7 @@ interface SetPageProps {
 }
 
 export default function SetPage({ params }: SetPageProps) {
+  const t = useTranslations('Sets');
   const { id } = use(params);
   const router = useRouter();
   const { user } = useAuth();
@@ -104,7 +106,7 @@ export default function SetPage({ params }: SetPageProps) {
       setHasChanges(false);
     } catch (error) {
       console.error('Error saving set:', error);
-      alert('Erreur lors de la sauvegarde');
+      alert(t('errorSave'));
     } finally {
       setIsSaving(false);
     }
@@ -116,7 +118,7 @@ export default function SetPage({ params }: SetPageProps) {
     setExportError('');
     try {
       const idToken = await getAuth().currentUser?.getIdToken();
-      if (!idToken) throw new Error('Non connecté');
+      if (!idToken) throw new Error(t('notConnected'));
 
       const res = await fetch('/api/export/set-pdf', {
         method: 'POST',
@@ -126,7 +128,7 @@ export default function SetPage({ params }: SetPageProps) {
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Erreur lors de la génération du PDF.');
+        throw new Error(data.error || t('errorExportPdf'));
       }
 
       const blob = await res.blob();
@@ -137,7 +139,7 @@ export default function SetPage({ params }: SetPageProps) {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      setExportError(err instanceof Error ? err.message : 'Erreur lors de la génération du PDF.');
+      setExportError(err instanceof Error ? err.message : t('errorExportPdf'));
     } finally {
       setIsExportingPdf(false);
     }
@@ -214,12 +216,12 @@ export default function SetPage({ params }: SetPageProps) {
   if (error || !set) {
     return (
       <div className="max-w-md mx-auto mt-20 text-center">
-        <p className="text-red-600 mb-4">{error || 'Set non trouvé'}</p>
+        <p className="text-red-600 mb-4">{error || t('notFound')}</p>
         <button
           onClick={() => router.push('/sets')}
           className="text-[var(--accent)] hover:underline"
         >
-          Retour aux sets
+          {t('backToSets')}
         </button>
       </div>
     );
@@ -237,7 +239,7 @@ export default function SetPage({ params }: SetPageProps) {
             <h1 className="flex-1 text-2xl font-bold text-[var(--ink)]">{set.name}</h1>
             <button
               onClick={() => user ? toggleSetBookmark(id) : router.push('/login')}
-              title={isSetBookmarked(id) ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+              title={isSetBookmarked(id) ? t('removeFromFavorites') : t('addToFavorites')}
               className={`shrink-0 text-2xl leading-none transition-colors cursor-pointer ${
                 isSetBookmarked(id) ? 'text-amber-400' : 'text-[var(--ink-faint)] hover:text-amber-400'
               }`}
@@ -249,20 +251,20 @@ export default function SetPage({ params }: SetPageProps) {
             <p className="text-[var(--ink-light)] mt-1">{set.description}</p>
           )}
           <p className="text-sm text-[var(--ink-faint)] mt-2">
-            par {set.ownerName} • {sheets.length} grille{sheets.length > 1 ? 's' : ''} accessible{sheets.length > 1 ? 's' : ''}
+            {t('byOwnerAccessible', { owner: set.ownerName, count: sheets.length })}
           </p>
         </div>
 
         {hiddenSheetsCount > 0 && (
           <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-amber-800 text-sm">
-            {hiddenSheetsCount} grille{hiddenSheetsCount > 1 ? 's' : ''} de ce set {hiddenSheetsCount > 1 ? 'sont privées' : 'est privée'} et non accessible{hiddenSheetsCount > 1 ? 's' : ''}.
+            {t('hiddenSheetsWarning', { count: hiddenSheetsCount })}
           </div>
         )}
 
         {sheets.length > 0 && (
           <div className="flex gap-3 mb-6">
             <Link href={`/sets/${id}/play`}>
-              <Button>▶ Lancer le set</Button>
+              <Button>{t('launchSet')}</Button>
             </Link>
             {set.groupId && isGroupMember && (
               <button
@@ -271,13 +273,13 @@ export default function SetPage({ params }: SetPageProps) {
                     await launchConcert(set.groupId!, id, set.name);
                     router.push(`/sets/${id}/play`);
                   } catch (err) {
-                    alert('Erreur : ' + (err instanceof Error ? err.message : String(err)));
+                    alert(t('errorPrefix') + (err instanceof Error ? err.message : String(err)));
                   }
                 }}
                 className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
               >
                 <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                Lancer le concert
+                {t('launchConcert')}
               </button>
             )}
           </div>
@@ -285,7 +287,7 @@ export default function SetPage({ params }: SetPageProps) {
 
         {sheets.length === 0 && (
           <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-8 text-center">
-            <p className="text-[var(--ink-light)]">Aucune grille accessible dans ce set.</p>
+            <p className="text-[var(--ink-light)]">{t('noAccessibleSheets')}</p>
           </div>
         )}
 
@@ -301,7 +303,7 @@ export default function SetPage({ params }: SetPageProps) {
               </span>
               <div className="flex-1 min-w-0">
                 <h3 className="font-medium text-[var(--ink)] truncate">
-                  {sheet.title || 'Sans titre'}
+                  {sheet.title || t('untitled')}
                 </h3>
                 {sheet.artist && (
                   <p className="text-sm text-[var(--ink-light)] truncate">{sheet.artist}</p>
@@ -323,20 +325,20 @@ export default function SetPage({ params }: SetPageProps) {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <Button variant="ghost" onClick={() => router.push(set.groupId ? `/groups/${set.groupId}` : '/sets')}>
-          {set.groupId ? '← Retour au groupe' : '← Retour aux sets'}
+          {set.groupId ? t('backToGroup') : `← ${t('backToSets')}`}
         </Button>
         {sheets.length > 0 && (
           <div className="flex gap-3">
             <Link href={`/sets/${id}/play`}>
-              <Button>▶ Lancer le set</Button>
+              <Button>{t('launchSet')}</Button>
             </Link>
             {canExportPdf ? (
               <Button variant="ghost" onClick={handleExportPdf} isLoading={isExportingPdf}>
-                📄 Export PDF
+                {t('exportPdf')}
               </Button>
             ) : (
               <Link href="/pricing">
-                <Button variant="ghost">📄 Export PDF · Pro</Button>
+                <Button variant="ghost">{t('exportPdfPro')}</Button>
               </Link>
             )}
             {set.groupId && isGroupMember && (
@@ -346,13 +348,13 @@ export default function SetPage({ params }: SetPageProps) {
                     await launchConcert(set.groupId!, id, set.name);
                     router.push(`/sets/${id}/play`);
                   } catch (err) {
-                    alert('Erreur : ' + (err instanceof Error ? err.message : String(err)));
+                    alert(t('errorPrefix') + (err instanceof Error ? err.message : String(err)));
                   }
                 }}
                 className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
               >
                 <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                Lancer le concert
+                {t('launchConcert')}
               </button>
             )}
           </div>
@@ -367,19 +369,19 @@ export default function SetPage({ params }: SetPageProps) {
       <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-6 mb-6">
         <div className="space-y-4">
           <Input
-            label="Nom du set"
+            label={t('setName')}
             type="text"
             value={name}
             onChange={(e) => {
               setName(e.target.value);
               setHasChanges(true);
             }}
-            placeholder="Ex: Concert du 15 mars"
+            placeholder={t('setNamePlaceholder')}
           />
 
           <div>
             <label className="block text-sm font-medium text-[var(--ink)] mb-1.5">
-              Description (optionnel)
+              {t('description')}
             </label>
             <textarea
               value={description}
@@ -387,7 +389,7 @@ export default function SetPage({ params }: SetPageProps) {
                 setDescription(e.target.value);
                 setHasChanges(true);
               }}
-              placeholder="Notes sur le concert, le lieu, etc."
+              placeholder={t('descriptionPlaceholder')}
               rows={2}
               className="w-full px-4 py-2.5 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)]
                 text-[var(--ink)] placeholder:text-[var(--ink-faint)]
@@ -397,7 +399,7 @@ export default function SetPage({ params }: SetPageProps) {
 
           {hasChanges && (
             <Button onClick={handleSave} isLoading={isSaving}>
-              Sauvegarder
+              {t('save')}
             </Button>
           )}
         </div>
@@ -408,10 +410,10 @@ export default function SetPage({ params }: SetPageProps) {
       <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-semibold text-[var(--ink)]">
-            Grilles ({sheets.length})
+            {t('sheetsHeading', { count: sheets.length })}
           </h2>
           <Button variant="ghost" onClick={() => setShowAddSheet(!showAddSheet)}>
-            {showAddSheet ? 'Annuler' : '+ Ajouter une grille'}
+            {showAddSheet ? t('cancel') : t('addSheet')}
           </Button>
         </div>
 
@@ -420,7 +422,7 @@ export default function SetPage({ params }: SetPageProps) {
           <div className="mb-4 p-4 bg-[var(--cell-bg)] rounded-lg">
             <Input
               type="search"
-              placeholder="Rechercher une grille..."
+              placeholder={t('searchSheetPlaceholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="mb-3"
@@ -434,7 +436,7 @@ export default function SetPage({ params }: SetPageProps) {
                     className="w-full flex items-center gap-3 p-2 rounded hover:bg-[var(--cell-bg)] transition-colors text-left"
                   >
                     <span className="font-medium text-sm text-[var(--ink)]">
-                      {sheet.title || 'Sans titre'}
+                      {sheet.title || t('untitled')}
                     </span>
                     {sheet.artist && (
                       <span className="text-xs text-[var(--ink-light)]">
@@ -445,7 +447,7 @@ export default function SetPage({ params }: SetPageProps) {
                 ))
               ) : (
                 <p className="text-sm text-[var(--ink-faint)] text-center py-2">
-                  {searchQuery ? 'Aucune grille trouvée' : 'Toutes vos grilles sont déjà dans le set'}
+                  {searchQuery ? t('noSheetFound') : t('allSheetsAlreadyIn')}
                 </p>
               )}
             </div>
@@ -456,7 +458,7 @@ export default function SetPage({ params }: SetPageProps) {
         {localSheets.length > 0 ? (
           <div className="space-y-2">
             <p className="text-xs text-[var(--ink-faint)] mb-2">
-              Glissez-déposez pour réorganiser l&apos;ordre
+              {t('dragToReorder')}
             </p>
             {localSheets.map((sheet, index) => (
               <div
@@ -474,7 +476,7 @@ export default function SetPage({ params }: SetPageProps) {
                 </span>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-medium text-sm text-[var(--ink)] truncate">
-                    {sheet.title || 'Sans titre'}
+                    {sheet.title || t('untitled')}
                   </h3>
                   {sheet.artist && (
                     <p className="text-xs text-[var(--ink-light)] truncate">{sheet.artist}</p>
@@ -487,7 +489,7 @@ export default function SetPage({ params }: SetPageProps) {
                   href={`/sheet/${sheet.id}`}
                   onClick={(e) => e.stopPropagation()}
                   className="p-1 text-[var(--ink-faint)] hover:text-[var(--accent)] transition-colors"
-                  title="Consulter"
+                  title={t('view')}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -497,7 +499,7 @@ export default function SetPage({ params }: SetPageProps) {
                 <button
                   onClick={() => handleRemoveSheet(sheet.id!)}
                   className="p-1 text-[var(--ink-faint)] hover:text-red-500 transition-colors"
-                  title="Retirer du set"
+                  title={t('removeFromSet')}
                 >
                   ✕
                 </button>
@@ -506,8 +508,8 @@ export default function SetPage({ params }: SetPageProps) {
           </div>
         ) : (
           <div className="text-center py-8 text-[var(--ink-faint)]">
-            <p>Aucune grille dans ce set</p>
-            <p className="text-sm mt-1">Ajoutez des grilles pour construire votre setlist</p>
+            <p>{t('emptySetTitle')}</p>
+            <p className="text-sm mt-1">{t('emptySetDesc')}</p>
           </div>
         )}
       </div>

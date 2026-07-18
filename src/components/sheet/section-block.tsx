@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { Section, Cell, CellSpan, InstrumentId, StringChord, PianoChord } from '@/types';
 import { GridRow } from './grid-row';
 import { createEmptyRow } from '@/types';
@@ -98,6 +99,7 @@ export function SectionBlock({
   anyDragging = false,
   isSelf = false,
 }: SectionBlockProps) {
+  const t = useTranslations('Editor');
   const [isHovered, setIsHovered] = useState(false);
 
   const updateCell = (rowIndex: number, cellIndex: number, updates: Partial<Cell>) => {
@@ -166,7 +168,7 @@ export function SectionBlock({
         onDragOver={(e) => { e.preventDefault(); onDragOver(e); }}
         onDrop={(e) => { e.preventDefault(); onDrop(); }}
       >
-        <span className="text-xs text-[var(--accent)] font-medium">Déposer ici</span>
+        <span className="text-xs text-[var(--accent)] font-medium">{t('dropHere')}</span>
       </div>
     )}
     <div
@@ -184,7 +186,7 @@ export function SectionBlock({
         {/* Drag handle */}
         <span
           className={`cursor-grab active:cursor-grabbing text-[var(--ink-faint)] transition-opacity select-none ${headerControlsVisible ? 'opacity-100' : 'opacity-0'}`}
-          title="Glisser pour réordonner"
+          title={t('dragToReorder')}
         >
           ⠿
         </span>
@@ -195,12 +197,12 @@ export function SectionBlock({
             type="text"
             value={section.label}
             onChange={(e) => onUpdate({ label: e.target.value })}
-            placeholder="Section…"
+            placeholder={t('sectionPlaceholder')}
             className="font-sans text-sm font-semibold uppercase tracking-wider text-[var(--ink)]
               bg-transparent border-none outline-none w-36"
           />
           {isFirstSection && (
-            <CoachMark text="Clique pour renommer (ex: Intro, Refrain…)" position="bottom" onDismiss={() => onDismissOnboarding?.()} />
+            <CoachMark text={t('renameCoachMark')} position="bottom" onDismiss={() => onDismissOnboarding?.()} />
           )}
         </div>
 
@@ -214,14 +216,14 @@ export function SectionBlock({
             <button
               onClick={onMoveUp}
               className="bg-transparent border-none cursor-pointer text-[var(--ink-light)] px-2 py-1 rounded text-xs transition-all hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]"
-              title="Monter la section"
+              title={t('moveSectionUp')}
             >↑</button>
           )}
           {onMoveDown && (
             <button
               onClick={onMoveDown}
               className="bg-transparent border-none cursor-pointer text-[var(--ink-light)] px-2 py-1 rounded text-xs transition-all hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]"
-              title="Descendre la section"
+              title={t('moveSectionDown')}
             >↓</button>
           )}
           <button
@@ -229,7 +231,7 @@ export function SectionBlock({
             className="bg-transparent border-none cursor-pointer text-[var(--ink-light)] px-2 py-1
               rounded text-xs transition-all hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]"
           >
-            + mesure
+            {t('addMeasure')}
           </button>
           {onPlaySection && (
             <button
@@ -240,7 +242,7 @@ export function SectionBlock({
                     ? 'text-[var(--accent)] bg-[var(--accent-soft)]'
                     : 'text-[var(--ink-light)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]'
                 }`}
-              title={isSectionPlaying ? 'Stop' : 'Jouer cette section'}
+              title={isSectionPlaying ? 'Stop' : t('playThisSection')}
             >
               {isSectionPlaying ? '■ Stop' : '▶ Play'}
             </button>
@@ -249,7 +251,7 @@ export function SectionBlock({
             onClick={onDuplicate}
             className="bg-transparent border-none cursor-pointer text-[var(--ink-light)] px-2 py-1
               rounded text-xs transition-all hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]"
-            title="Dupliquer cette section"
+            title={t('duplicateThisSection')}
           >
             ⧉
           </button>
@@ -318,7 +320,7 @@ export function SectionBlock({
                       ? 'bg-[var(--accent)] text-white'
                       : 'bg-[var(--cell-bg)] border border-[var(--line)] text-[var(--ink-faint)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] hover:border-[var(--accent)]'
                     }`}
-                  title={isSectionPlaying && activeRowIndex === rowIndex ? 'Stop' : 'Jouer cette mesure'}
+                  title={isSectionPlaying && activeRowIndex === rowIndex ? 'Stop' : t('playThisMeasure')}
                 >
                   {isSectionPlaying && activeRowIndex === rowIndex ? '■' : '▶'}
                 </button>
@@ -329,7 +331,7 @@ export function SectionBlock({
                   className="cursor-pointer w-5 h-5 flex items-center justify-center rounded text-[10px]
                     bg-[var(--cell-bg)] border border-[var(--line)] text-[var(--ink-faint)]
                     hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors"
-                  title="Supprimer cette mesure"
+                  title={t('deleteThisMeasure')}
                 >
                   ✕
                 </button>
@@ -347,7 +349,7 @@ export function SectionBlock({
             text-[var(--ink-faint)] text-sm cursor-pointer transition-all bg-transparent
             hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[var(--accent-soft)]"
         >
-          + mesure
+          {t('addMeasure')}
         </button>
       )}
     </div>

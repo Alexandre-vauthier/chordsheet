@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, use, useCallback, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { useAuth } from '@/lib/auth-context';
 import { useSet } from '@/lib/use-sets';
@@ -67,6 +68,7 @@ function calculateConcertCell(
 }
 
 export default function SetPlayPage({ params }: SetPlayPageProps) {
+  const t = useTranslations('Sets');
   const { id } = use(params);
   const router = useRouter();
   const { user } = useAuth();
@@ -245,9 +247,9 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
   if (error || !set || sheets.length === 0) {
     return (
       <div className="max-w-md mx-auto mt-20 text-center">
-        <p className="text-red-600 mb-4">{error || 'Set vide ou non trouvé'}</p>
+        <p className="text-red-600 mb-4">{error || t('emptyOrNotFound')}</p>
         <button onClick={() => router.push('/sets')} className="text-[var(--accent)] hover:underline">
-          Retour aux sets
+          {t('backToSets')}
         </button>
       </div>
     );
@@ -265,7 +267,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
               href={`/sets/${id}`}
               className="text-sm text-[var(--nav-text)]/70 hover:text-[var(--nav-text)] transition-colors"
             >
-              ← Quitter
+              {t('leave')}
             </Link>
             <div className="h-4 w-px bg-white/20" />
             <span className="text-sm font-medium">{set.name}</span>
@@ -277,7 +279,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
               <div className="flex items-center gap-1.5">
                 <span className={`w-2 h-2 rounded-full ${isSynced ? 'bg-green-400' : 'bg-yellow-400 animate-pulse'}`} />
                 <span className="text-xs text-[var(--nav-text)]/70">
-                  {isSynced ? 'Synchro' : 'Connexion…'}
+                  {isSynced ? t('synced') : t('connecting')}
                 </span>
               </div>
             )}
@@ -285,10 +287,10 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
               <button
                 onClick={() => endConcert(set!.groupId!).catch(() => {})}
                 className="flex items-center gap-1.5 px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-medium transition-colors"
-                title="Terminer le concert pour tous"
+                title={t('endConcertTitle')}
               >
                 <span className="w-1.5 h-1.5 rounded bg-white" />
-                Terminer
+                {t('end')}
               </button>
             )}
             <span className="text-sm text-[var(--nav-text)]/70">
@@ -312,7 +314,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
                     : 'bg-[var(--cell-bg)] text-[var(--ink-light)] hover:bg-[var(--line)]'
                   }`}
               >
-                {index + 1}. {sheet.title || 'Sans titre'}
+                {index + 1}. {sheet.title || t('untitled')}
               </button>
             ))}
           </div>
@@ -356,7 +358,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
                   onClick={startCountIn}
                   className="px-3 py-1 text-xs rounded-lg border border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)] transition-colors"
                 >
-                  ↺ Recommencer
+                  {t('restart')}
                 </button>
               </>
             ) : isAutoScrollActive ? (
@@ -365,7 +367,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
                 className="flex items-center gap-2 px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
               >
                 <span className="w-2 h-2 rounded bg-white" />
-                Arrêter
+                {t('stop')}
               </button>
             ) : (
               <button
@@ -387,12 +389,12 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
             disabled={!hasPrevious}
             className="min-w-[120px]"
           >
-            ← Précédent
+            {t('previous')}
           </Button>
 
           <div className="text-center">
             <p className="font-medium text-[var(--ink)]">
-              {currentSheet?.title || 'Sans titre'}
+              {currentSheet?.title || t('untitled')}
             </p>
             {currentSheet?.artist && (
               <p className="text-sm text-[var(--ink-light)]">{currentSheet.artist}</p>
@@ -405,13 +407,13 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
             disabled={!hasNext}
             className="min-w-[120px]"
           >
-            Suivant →
+            {t('next')}
           </Button>
         </div>
       </div> {/* fin sticky bottom */}
 
       <div className="fixed bottom-20 right-4 text-xs text-[var(--ink-faint)] print:hidden">
-        <kbd className="px-1.5 py-0.5 bg-[var(--line)] rounded">←</kbd> / <kbd className="px-1.5 py-0.5 bg-[var(--line)] rounded">→</kbd> pour naviguer
+        <kbd className="px-1.5 py-0.5 bg-[var(--line)] rounded">←</kbd> / <kbd className="px-1.5 py-0.5 bg-[var(--line)] rounded">→</kbd> {t('keyboardHint')}
       </div>
     </div>
   );

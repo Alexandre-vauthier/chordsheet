@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
@@ -15,6 +16,7 @@ interface ImportSheetModalProps {
 }
 
 export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
+  const t = useTranslations('ImportModal');
   const { user } = useAuth();
   const router = useRouter();
   const [text, setText] = useState('');
@@ -35,7 +37,7 @@ export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
     try {
       const db = getDb();
       const sheet: NewSheet = {
-        title: parsed.title || 'Sans titre',
+        title: parsed.title || t('untitled'),
         artist: parsed.artist || '',
         key: parsed.key || '',
         tempo: '',
@@ -58,7 +60,7 @@ export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
       router.push(`/sheet/${docRef.id}/edit`);
     } catch (err) {
       console.error(err);
-      setError('Erreur lors de la création. Réessayez.');
+      setError(t('createError'));
       setIsImporting(false);
     }
   };
@@ -73,9 +75,9 @@ export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
         <div className="p-6">
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h2 className="text-xl font-bold text-[var(--ink)]">Importer depuis texte</h2>
+              <h2 className="text-xl font-bold text-[var(--ink)]">{t('title')}</h2>
               <p className="text-xs text-[var(--ink-faint)] mt-0.5">
-                Collez votre grille depuis n&apos;importe quelle source
+                {t('subtitle')}
               </p>
             </div>
             <button
@@ -90,7 +92,7 @@ export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
           <textarea
             value={text}
             onChange={e => setText(e.target.value)}
-            placeholder={`Coller ici la grille d'accords…\n\n[Intro]\nC  Am  F  G\n\n[Verse 1]\n   C              Am\nI heard there was a secret chord`}
+            placeholder={t('placeholder')}
             className="w-full h-64 px-3 py-2 text-xs font-mono border border-[var(--line)] rounded-lg
               bg-[var(--cell-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] resize-none"
           />
@@ -98,7 +100,7 @@ export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
           {/* Aperçu */}
           {parsed && parsed.sections.length > 0 && (
             <div className="mt-3 p-3 bg-[var(--cell-bg)] rounded-lg border border-[var(--line)]">
-              <p className="text-xs font-semibold text-[var(--ink-light)] mb-2">Aperçu détecté</p>
+              <p className="text-xs font-semibold text-[var(--ink-light)] mb-2">{t('detectedPreview')}</p>
               <div className="flex flex-wrap gap-1.5 mb-2">
                 {(parsed.title || parsed.artist) && (
                   <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--line)] text-[var(--ink)]">
@@ -107,19 +109,19 @@ export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
                 )}
                 {parsed.capo !== null && (
                   <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--accent-soft)] text-[var(--accent)]">
-                    Capo {parsed.capo}
+                    {t('capoLabel')} {parsed.capo}
                   </span>
                 )}
                 {parsed.key && (
                   <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--accent-soft)] text-[var(--accent)]">
-                    Tonalité : {parsed.key}
+                    {t('keyLabel')} {parsed.key}
                   </span>
                 )}
                 <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--line)] text-[var(--ink-light)]">
-                  {parsed.sections.length} section{parsed.sections.length > 1 ? 's' : ''}
+                  {t('sectionCount', { count: parsed.sections.length })}
                 </span>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--line)] text-[var(--ink-light)]">
-                  {totalChords} accord{totalChords > 1 ? 's' : ''}
+                  {t('chordCount', { count: totalChords })}
                 </span>
                 {parsed.referenceUrl && (
                   <a
@@ -128,7 +130,7 @@ export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
                     rel="noopener noreferrer"
                     className="text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
                   >
-                    ▶ YouTube détecté
+                    {t('youtubeDetected')}
                   </a>
                 )}
               </div>
@@ -140,7 +142,7 @@ export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
                   >
                     {s.label}
                     <span className="text-[var(--ink-faint)] ml-1">
-                      {s.rows.length} ligne{s.rows.length > 1 ? 's' : ''}
+                      {t('lineCount', { count: s.rows.length })}
                     </span>
                   </span>
                 ))}
@@ -150,7 +152,7 @@ export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
 
           {parsed && parsed.sections.length === 0 && text.trim() && (
             <p className="mt-3 text-xs text-[var(--ink-faint)]">
-              Aucune section détectée. Assurez-vous que le texte contient des marqueurs comme{' '}
+              {t('noSectionDetected')}{' '}
               <code className="font-mono">[Intro]</code>, <code className="font-mono">[Verse]</code>…
             </p>
           )}
@@ -163,7 +165,7 @@ export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
               onClick={onClose}
               className="px-4 py-2 text-sm text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors"
             >
-              Annuler
+              {t('cancel')}
             </button>
             <button
               onClick={handleImport}
@@ -171,7 +173,7 @@ export function ImportSheetModal({ onClose }: ImportSheetModalProps) {
               className="px-5 py-2 text-sm font-medium bg-[var(--accent)] text-white rounded-xl
                 disabled:opacity-40 hover:opacity-90 transition-opacity cursor-pointer disabled:cursor-not-allowed"
             >
-              {isImporting ? 'Création…' : 'Créer le brouillon'}
+              {isImporting ? t('creating') : t('createDraft')}
             </button>
           </div>
         </div>
