@@ -171,13 +171,30 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   const bpm = parseTempo(sheet.tempo);
   const grooveBpm = bpm > 100 ? Math.round(bpm / 2) : bpm;
 
+  // Prévisualisation d'un pattern (indépendante du Play général) : joue 2 mesures
+  // du pattern sélectionné dans le menu déroulant, puis s'arrête toute seule.
+  const [previewPattern, setPreviewPattern] = useState<string | null>(null);
+  const previewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current); }, []);
+  useEffect(() => { if (isPlaying) setPreviewPattern(null); }, [isPlaying]);
+
+  const togglePreviewPattern = useCallback((patternId: string) => {
+    if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
+    setPreviewPattern((current) => {
+      if (current === patternId) return null;
+      const measureSeconds = (60 / grooveBpm) * (sheet.beatsPerMeasure ?? 4);
+      previewTimeoutRef.current = setTimeout(() => setPreviewPattern(null), measureSeconds * 2 * 1000);
+      return patternId;
+    });
+  }, [grooveBpm, sheet.beatsPerMeasure]);
+
   useGrooveBox({
-    enabled: isPlaying,
-    muted: !grooveEnabled,
+    enabled: isPlaying || previewPattern !== null,
+    muted: previewPattern !== null ? false : !grooveEnabled,
     bpm: grooveBpm,
     beatsPerMeasure: sheet.beatsPerMeasure ?? 4,
     genres: sheet.genres ?? [],
-    groovePattern: sheet.groovePattern,
+    groovePattern: previewPattern ?? sheet.groovePattern,
   });
 
   // Pool d'accords indexé par instrument pour le chord finder
@@ -785,6 +802,26 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 </optgroup>
               ))}
             </select>
+            <button
+              type="button"
+              onClick={() => togglePreviewPattern(sheet.groovePattern ?? '')}
+              title={previewPattern !== null ? 'Arrêter l\'aperçu' : 'Écouter ce pattern'}
+              className={`cursor-pointer flex items-center justify-center w-7 h-7 rounded-full border-[1.5px] transition-all duration-150 ${
+                previewPattern !== null
+                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                  : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+              }`}
+            >
+              {previewPattern !== null ? (
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <rect x="4" y="4" width="12" height="12" rx="1" />
+                </svg>
+              ) : (
+                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                </svg>
+              )}
+            </button>
           </div>
 
         </div>

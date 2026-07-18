@@ -15,8 +15,11 @@ export type Voice =
   | 'congaLow' | 'crash' | 'tambourine';
 
 const VOICE_SAMPLE: Record<Voice, { group: string; velocity: number }> = {
-  kick:        { group: 'kick',       velocity: 120 },
-  snare:       { group: 'snare-h',    velocity: 110 },
+  kick:        { group: 'kick',       velocity: 115 },
+  // snare-h (vélocité "hard") est un échantillon nettement plus court/fin que
+  // les variantes snare-m/snare-l dans ce kit — rendu clinquant. snare-m sonne
+  // plus plein pour le coup de caisse claire principal.
+  snare:       { group: 'snare-m',    velocity: 100 },
   snareGhost:  { group: 'snare-l',    velocity: 55 },
   hihatClosed: { group: 'hhclosed',   velocity: 70 },
   hihatOpen:   { group: 'hhopen',     velocity: 75 },
@@ -231,10 +234,13 @@ let drumReady = false;
 
 function ensureAudioGraph(ctx: AudioContext): AudioNode {
   if (!compressor) {
+    // Réglages plus doux qu'avant : la compression d'origine visait à donner du
+    // corps à la synthèse de secours (signal faible) ; sur de vrais échantillons,
+    // elle écrasait les transitoires (attaque de caisse claire notamment).
     const comp = ctx.createDynamicsCompressor();
-    comp.threshold.value = -18;
-    comp.knee.value = 10;
-    comp.ratio.value = 6;
+    comp.threshold.value = -12;
+    comp.knee.value = 6;
+    comp.ratio.value = 3;
     comp.attack.value = 0.003;
     comp.release.value = 0.12;
     comp.connect(ctx.destination);
