@@ -1,31 +1,57 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { QRCodeSVG } from 'qrcode.react';
 
 import { useLiveSession } from '@/lib/live-session-context';
-import { Link } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 
 export function SessionViewClient({ code }: { code: string }) {
   const t = useTranslations('LiveSession');
+  const router = useRouter();
   const normalizedCode = code.toUpperCase();
-  const { sessionCode, session, sessionStatus, isHost, nickname, setNickname, joinSession, endSession, leaveSession } = useLiveSession();
+  const { session, sessionStatus, isHost, nickname, setNickname, joinSession, endSession, leaveSession } = useLiveSession();
   const [joinError, setJoinError] = useState('');
+  const [joining, setJoining] = useState(true);
   const [nicknameDraft, setNicknameDraft] = useState(nickname);
-
-  const alreadyJoined = sessionCode === normalizedCode;
+  // Mémorise le code déjà tenté pour CE montage — évite de retenter de rejoindre
+  // à chaque fois que sessionCode dérive de normalizedCode (ex: l'hôte termine sa
+  // propre session pendant qu'on est encore sur cette URL : sessionCode repasse à
+  // null, mais il ne faut surtout pas ré-écrire le code mort dans le stockage local).
+  const attemptedCodeRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (alreadyJoined) return;
-    joinSession(normalizedCode).catch(() => setJoinError(t('joinError')));
-  }, [alreadyJoined, normalizedCode, joinSession, t]);
+    if (attemptedCodeRef.current === normalizedCode) return;
+    attemptedCodeRef.current = normalizedCode;
+    setJoining(true);
+    joinSession(normalizedCode)
+      .catch(() => setJoinError(t('joinError')))
+      .finally(() => setJoining(false));
+  }, [normalizedCode, joinSession, t]);
 
   useEffect(() => {
     setNicknameDraft(nickname);
   }, [nickname]);
 
+  // Session introuvable/expirée : nettoie le code du stockage local pour ne pas
+  // rester bloqué dessus indéfiniment (ex: /session redirigerait sans fin vers
+  // cette URL morte au lieu de proposer d'en démarrer une nouvelle).
+  useEffect(() => {
+    if (sessionStatus === 'not-found') leaveSession();
+  }, [sessionStatus, leaveSession]);
+
   const joinUrl = typeof window !== 'undefined' ? `${window.location.origin}/session/${normalizedCode}` : '';
+
+  const handleEnd = () => {
+    if (!confirm(t('endSessionConfirm'))) return;
+    endSession().then(() => router.push('/session')).catch(() => {});
+  };
+
+  const handleLeave = () => {
+    leaveSession();
+    router.push('/explore');
+  };
 
   if (joinError) {
     return (
@@ -36,7 +62,7 @@ export function SessionViewClient({ code }: { code: string }) {
     );
   }
 
-  if (!alreadyJoined || sessionStatus === 'idle' || sessionStatus === 'loading') {
+  if (joining || sessionStatus === 'idle' || sessionStatus === 'loading') {
     return (
       <div className="max-w-md mx-auto px-4 py-16 text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-2 border-[var(--accent)] border-t-transparent mx-auto" />
@@ -107,14 +133,14 @@ export function SessionViewClient({ code }: { code: string }) {
       <div className="text-center">
         {isHost ? (
           <button
-            onClick={() => { if (confirm(t('endSessionConfirm'))) endSession(); }}
+            onClick={handleEnd}
             className="text-sm text-red-500 hover:text-red-600 transition-colors cursor-pointer"
           >
             {t('endSession')}
           </button>
         ) : (
           <button
-            onClick={() => leaveSession()}
+            onClick={handleLeave}
             className="text-sm text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors cursor-pointer"
           >
             {t('leaveSession')}
