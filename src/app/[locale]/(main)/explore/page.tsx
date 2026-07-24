@@ -19,6 +19,7 @@ import { useRouter } from '@/i18n/navigation';
 type SortOption = 'recent' | 'rated' | 'viewed';
 
 // Préférences de visibilité admin, conservées entre les visites de la page
+const ADMIN_SHOW_PUBLIC_KEY = 'explore_admin_show_public';
 const ADMIN_SHOW_PRIVATE_KEY = 'explore_admin_show_private';
 const ADMIN_SHOW_PENDING_KEY = 'explore_admin_show_pending';
 
@@ -49,19 +50,26 @@ export default function ExplorePage() {
   const [sortBy, setSortBy] = useState<SortOption>(() => (searchParams.get('sort') as SortOption) ?? 'recent');
   const [selectedGenre, setSelectedGenre] = useState<string>(() => searchParams.get('genre') ?? '');
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | null>(() => { const d = searchParams.get('difficulty'); return d ? (Number(d) as Difficulty) : null; });
-  // Toggles admin : afficher/masquer les grilles privées et à valider (visible ⇒ true par défaut).
+  // Toggles admin : afficher/masquer les grilles publiques, privées et à valider (visible ⇒ true par défaut).
   // Défaut à true côté serveur pour éviter un écart d'hydratation ; la préférence
   // stockée est relue au montage juste après.
+  const [showPublic, setShowPublic] = useState(true);
   const [showPrivate, setShowPrivate] = useState(true);
   const [showPending, setShowPending] = useState(true);
 
   // Relire la préférence de visibilité admin au montage
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (localStorage.getItem(ADMIN_SHOW_PUBLIC_KEY) === '0') setShowPublic(false);
     if (localStorage.getItem(ADMIN_SHOW_PRIVATE_KEY) === '0') setShowPrivate(false);
     if (localStorage.getItem(ADMIN_SHOW_PENDING_KEY) === '0') setShowPending(false);
   }, []);
 
+  const toggleShowPublic = () => {
+    const next = !showPublic;
+    setShowPublic(next);
+    if (typeof window !== 'undefined') localStorage.setItem(ADMIN_SHOW_PUBLIC_KEY, next ? '1' : '0');
+  };
   const toggleShowPrivate = () => {
     const next = !showPrivate;
     setShowPrivate(next);
@@ -175,11 +183,10 @@ export default function ExplorePage() {
   const filteredSheets = useMemo(() => {
     let result = [...sheets];
 
-    // Toggles admin : masquer les grilles privées / à valider si désactivés.
-    // Les publiques restent toujours affichées.
-    if (isAdmin && (!showPrivate || !showPending)) {
+    // Toggles admin : masquer les catégories désactivées (publiques / privées / à valider).
+    if (isAdmin && (!showPublic || !showPrivate || !showPending)) {
       result = result.filter((sheet) => {
-        if (sheet.isPublic) return true;
+        if (sheet.isPublic) return showPublic;
         return sheet.pendingValidation ? showPending : showPrivate;
       });
     }
@@ -228,7 +235,7 @@ export default function ExplorePage() {
     }
 
     return result;
-  }, [sheets, searchQuery, selectedGenre, selectedDifficulty, sortBy, isAdmin, showPrivate, showPending]);
+  }, [sheets, searchQuery, selectedGenre, selectedDifficulty, sortBy, isAdmin, showPublic, showPrivate, showPending]);
 
   // Grouper par titre+artiste → une seule entrée par musique
   const groupedResults = useMemo(() => {
@@ -253,16 +260,18 @@ export default function ExplorePage() {
     setSelectedGenre('');
     setSelectedDifficulty(null);
     setSortBy('recent');
+    setShowPublic(true);
     setShowPrivate(true);
     setShowPending(true);
     if (typeof window !== 'undefined') {
+      localStorage.setItem(ADMIN_SHOW_PUBLIC_KEY, '1');
       localStorage.setItem(ADMIN_SHOW_PRIVATE_KEY, '1');
       localStorage.setItem(ADMIN_SHOW_PENDING_KEY, '1');
     }
     router.replace('/explore', { scroll: false });
   };
 
-  const hasActiveFilters = searchQuery || selectedGenre || selectedDifficulty || sortBy !== 'recent' || !showPrivate || !showPending;
+  const hasActiveFilters = searchQuery || selectedGenre || selectedDifficulty || sortBy !== 'recent' || !showPublic || !showPrivate || !showPending;
 
   const handleRandom = () => {
     if (sheets.length === 0) return;
@@ -381,6 +390,18 @@ export default function ExplorePage() {
           {isAdmin && (
             <>
               <div className="hidden sm:block h-6 w-px bg-[var(--line)]" />
+              <button
+                onClick={toggleShowPublic}
+                title={t('adminTogglePublicTitle')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm transition-colors ${
+                  showPublic
+                    ? 'border-green-500 bg-green-500/10 text-green-600'
+                    : 'border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink-faint)] line-through'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-current opacity-70" />
+                {t('adminTogglePublic')}
+              </button>
               <button
                 onClick={toggleShowPrivate}
                 title={t('adminTogglePrivateTitle')}

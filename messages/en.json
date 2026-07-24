@@ -246,6 +246,8 @@
     "beFirstToShare": "Be the first to share!",
     "confirmDeleteSheet": "Delete this sheet? This action is irreversible.",
     "errorDelete": "Error deleting",
+    "adminTogglePublic": "Public",
+    "adminTogglePublicTitle": "Show / hide public sheets",
     "adminTogglePrivate": "Private",
     "adminTogglePrivateTitle": "Show / hide private sheets",
     "adminTogglePending": "Pending",

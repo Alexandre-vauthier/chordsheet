@@ -246,6 +246,8 @@
     "beFirstToShare": "Soyez le premier à partager !",
     "confirmDeleteSheet": "Supprimer cette grille ? Cette action est irréversible.",
     "errorDelete": "Erreur lors de la suppression",
+    "adminTogglePublic": "Publiques",
+    "adminTogglePublicTitle": "Afficher / masquer les grilles publiques",
     "adminTogglePrivate": "Privées",
     "adminTogglePrivateTitle": "Afficher / masquer les grilles privées",
     "adminTogglePending": "À valider",
