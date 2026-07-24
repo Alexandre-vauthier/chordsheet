@@ -1,0 +1,194 @@
+'use client';
+
+// Prototype de détection d'accords en temps réel au micro.
+// Reprend la méthode du service Python (services/chord-detector/chord_utils.py) :
+// chromagramme → comparaison cosinus à 36 templates (maj / min / dom7).
+// Objectif : évaluer la précision en conditions réelles avant d'envisager le
+// suivi automatique de la grille. Rien n'est branché sur le sheet-viewer.
+
+import { useRef, useState, useCallback, useEffect } from 'react';
+
+const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+interface Template {
+  name: string;
+  vec: number[];
+}
+
+function l2normalize(v: number[]): number[] {
+  let n = 0;
+  for (const x of v) n += x * x;
+  n = Math.sqrt(n) || 1;
+  return v.map((x) => x / n);
+}
+
+function makeTemplates(): Template[] {
+  const templates: Template[] = [];
+  for (let i = 0; i < 12; i++) {
+    const maj = new Array(12).fill(0);
+    maj[i] = 1; maj[(i + 4) % 12] = 1; maj[(i + 7) % 12] = 1;
+    templates.push({ name: NOTES[i], vec: l2normalize(maj) });
+
+    const min = new Array(12).fill(0);
+    min[i] = 1; min[(i + 3) % 12] = 1; min[(i + 7) % 12] = 1;
+    templates.push({ name: `${NOTES[i]}m`, vec: l2normalize(min) });
+
+    const dom7 = new Array(12).fill(0);
+    dom7[i] = 1; dom7[(i + 4) % 12] = 1; dom7[(i + 7) % 12] = 1; dom7[(i + 10) % 12] = 0.7;
+    templates.push({ name: `${NOTES[i]}7`, vec: l2normalize(dom7) });
+  }
+  return templates;
+}
+
+const TEMPLATES = makeTemplates();
+
+export interface ChordCandidate {
+  name: string;
+  score: number;
+}
+
+export interface ChordListenerState {
+  listening: boolean;
+  chord: string;              // accord lissé affiché ('' si rien de fiable)
+  confidence: number;         // score du meilleur candidat (0..1)
+  chroma: number[];           // 12 bins normalisés (0..1) pour la visualisation
+  candidates: ChordCandidate[]; // top 3 pour juger la précision
+  error: string | null;
+}
+
+const INITIAL: ChordListenerState = {
+  listening: false,
+  chord: '',
+  confidence: 0,
+  chroma: new Array(12).fill(0),
+  candidates: [],
+  error: null,
+};
+
+// Paramètres réglables du prototype
+const FFT_SIZE = 16384;       // résolution fréquentielle (grave mieux résolu)
+const TICK_MS = 100;          // ~10 analyses/seconde
+const F_MIN = 65;             // Hz (~C2) : on ignore le sub-grave
+const F_MAX = 2000;           // Hz : on ignore l'aigu peu informatif pour l'accord
+const SCORE_GATE = 0.72;      // score cosinus minimal pour valider un accord
+const SMOOTH_WINDOW = 5;      // vote majoritaire sur N dernières analyses
+
+export function useChordListener() {
+  const [state, setState] = useState<ChordListenerState>(INITIAL);
+
+  const ctxRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const rafRef = useRef<number | null>(null);
+  const historyRef = useRef<string[]>([]);
+  const lastTickRef = useRef(0);
+
+  const cleanup = useCallback(() => {
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = null;
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    ctxRef.current?.close().catch(() => {});
+    ctxRef.current = null;
+    analyserRef.current = null;
+    historyRef.current = [];
+    lastTickRef.current = 0;
+  }, []);
+
+  const stop = useCallback(() => {
+    cleanup();
+    setState((s) => ({ ...INITIAL, error: s.error }));
+  }, [cleanup]);
+
+  const start = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+      });
+      streamRef.current = stream;
+
+      const ctx = new AudioContext();
+      ctxRef.current = ctx;
+      await ctx.resume().catch(() => {}); // iOS : le contexte peut démarrer suspendu
+
+      const source = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
+      analyser.fftSize = FFT_SIZE;
+      analyser.smoothingTimeConstant = 0.8;
+      source.connect(analyser);
+      analyserRef.current = analyser;
+
+      setState((s) => ({ ...s, listening: true, error: null }));
+
+      const bins = analyser.frequencyBinCount;
+      const freqData = new Float32Array(bins);
+      const sr = ctx.sampleRate;
+
+      const tick = (ts: number) => {
+        rafRef.current = requestAnimationFrame(tick);
+        if (ts - lastTickRef.current < TICK_MS) return;
+        lastTickRef.current = ts;
+
+        const an = analyserRef.current;
+        if (!an) return;
+        an.getFloatFrequencyData(freqData);
+
+        const chroma = new Array(12).fill(0);
+        let energy = 0;
+        for (let k = 0; k < bins; k++) {
+          const f = (k * sr) / an.fftSize;
+          if (f < F_MIN || f > F_MAX) continue;
+          const mag = Math.pow(10, freqData[k] / 20); // dB → linéaire
+          if (!isFinite(mag)) continue;
+          const pitch = 69 + 12 * Math.log2(f / 440);
+          const pc = ((Math.round(pitch) % 12) + 12) % 12;
+          chroma[pc] += mag;
+          energy += mag;
+        }
+
+        const maxBin = Math.max(...chroma, 1e-9);
+        const chromaViz = chroma.map((x) => x / maxBin);
+        const chromaNorm = l2normalize(chroma);
+
+        // Score de tous les templates, tri décroissant
+        const scored = TEMPLATES.map((t) => {
+          let dot = 0;
+          for (let j = 0; j < 12; j++) dot += chromaNorm[j] * t.vec[j];
+          return { name: t.name, score: dot };
+        }).sort((a, b) => b.score - a.score);
+
+        const best = scored[0];
+        const gate = energy > 1e-3 && best.score > SCORE_GATE;
+        const detected = gate ? best.name : '';
+
+        // Lissage : vote majoritaire sur les dernières analyses
+        const hist = historyRef.current;
+        hist.push(detected);
+        if (hist.length > SMOOTH_WINDOW) hist.shift();
+        const counts = new Map<string, number>();
+        for (const c of hist) counts.set(c, (counts.get(c) || 0) + 1);
+        let smooth = '';
+        let smoothN = 0;
+        counts.forEach((n, c) => { if (n > smoothN) { smoothN = n; smooth = c; } });
+
+        setState((s) => ({
+          ...s,
+          chord: smooth,
+          confidence: Math.max(0, Math.min(1, best.score)),
+          chroma: chromaViz,
+          candidates: scored.slice(0, 3),
+        }));
+      };
+
+      rafRef.current = requestAnimationFrame(tick);
+    } catch (e) {
+      cleanup();
+      const msg = e instanceof Error ? e.message : 'Micro indisponible';
+      setState((s) => ({ ...s, listening: false, error: msg }));
+    }
+  }, [cleanup]);
+
+  useEffect(() => cleanup, [cleanup]);
+
+  return { ...state, start, stop };
+}
