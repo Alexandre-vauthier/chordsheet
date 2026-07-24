@@ -22,20 +22,36 @@ function l2normalize(v: number[]): number[] {
   return v.map((x) => x / n);
 }
 
+// Familles d'accords : suffixe + intervalles (demi-tons depuis la fondamentale).
+// Poids 0.7 sur les notes « de couleur » (7e, 6te, altérations) pour que les
+// triades simples ne soient pas systématiquement étiquetées en accords enrichis.
+// Rappel : le chromagramme ne voit que les 12 classes de notes, donc les accords
+// faits des mêmes notes sont indiscernables (ex. C6 = Am7).
+const QUALITIES: { suffix: string; intervals: [number, number][] }[] = [
+  { suffix: '',      intervals: [[0, 1], [4, 1], [7, 1]] },            // majeur
+  { suffix: 'm',     intervals: [[0, 1], [3, 1], [7, 1]] },            // mineur
+  { suffix: '7',     intervals: [[0, 1], [4, 1], [7, 1], [10, 0.7]] }, // dominante 7
+  { suffix: 'm7',    intervals: [[0, 1], [3, 1], [7, 1], [10, 0.7]] }, // mineur 7
+  { suffix: 'maj7',  intervals: [[0, 1], [4, 1], [7, 1], [11, 0.7]] }, // majeur 7
+  { suffix: '6',     intervals: [[0, 1], [4, 1], [7, 1], [9, 0.7]] },  // majeur 6
+  { suffix: 'm6',    intervals: [[0, 1], [3, 1], [7, 1], [9, 0.7]] },  // mineur 6
+  { suffix: 'sus2',  intervals: [[0, 1], [2, 1], [7, 1]] },            // sus2
+  { suffix: 'sus4',  intervals: [[0, 1], [5, 1], [7, 1]] },            // sus4
+  { suffix: 'dim',   intervals: [[0, 1], [3, 1], [6, 1]] },            // diminué
+  { suffix: 'aug',   intervals: [[0, 1], [4, 1], [8, 1]] },            // augmenté
+  { suffix: 'm7b5',  intervals: [[0, 1], [3, 1], [6, 1], [10, 0.7]] }, // demi-diminué
+];
+
 function makeTemplates(): Template[] {
   const templates: Template[] = [];
   for (let i = 0; i < 12; i++) {
-    const maj = new Array(12).fill(0);
-    maj[i] = 1; maj[(i + 4) % 12] = 1; maj[(i + 7) % 12] = 1;
-    templates.push({ name: NOTES[i], vec: l2normalize(maj) });
-
-    const min = new Array(12).fill(0);
-    min[i] = 1; min[(i + 3) % 12] = 1; min[(i + 7) % 12] = 1;
-    templates.push({ name: `${NOTES[i]}m`, vec: l2normalize(min) });
-
-    const dom7 = new Array(12).fill(0);
-    dom7[i] = 1; dom7[(i + 4) % 12] = 1; dom7[(i + 7) % 12] = 1; dom7[(i + 10) % 12] = 0.7;
-    templates.push({ name: `${NOTES[i]}7`, vec: l2normalize(dom7) });
+    for (const q of QUALITIES) {
+      const vec = new Array(12).fill(0);
+      for (const [semitone, weight] of q.intervals) {
+        vec[(i + semitone) % 12] = weight;
+      }
+      templates.push({ name: `${NOTES[i]}${q.suffix}`, vec: l2normalize(vec) });
+    }
   }
   return templates;
 }

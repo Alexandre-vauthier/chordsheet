@@ -106,7 +106,8 @@ export default function ChordDetectPage() {
       )}
 
       <p className="text-xs text-[var(--ink-faint)] mt-8 text-center">
-        Reconnaît majeurs, mineurs et 7 (36 accords). Notation américaine.
+        Reconnaît 12 familles : maj, min, 7, m7, maj7, 6, m6, sus2, sus4, dim, aug, m7b5.
+        Notation américaine. Rappel : les accords faits des mêmes notes sont indiscernables (ex. C6 = Am7).
         Prototype isolé, non relié à la consultation des grilles.
       </p>
     </div>
