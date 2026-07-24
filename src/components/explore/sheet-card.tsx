@@ -211,7 +211,7 @@ export function SheetCard({
                   className={`w-7 h-7 rounded-full flex items-center justify-center text-base leading-none backdrop-blur-sm transition-all hover:bg-black/70 ${
                     isBookmarked
                       ? 'bg-black/50 text-amber-400 opacity-100'
-                      : 'bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:text-amber-400'
+                      : 'bg-black/50 text-white opacity-100 sm:opacity-0 group-hover:opacity-100 hover:text-amber-400'
                   }`}
                   title={isBookmarked ? t('removeFromBook') : t('addToBook')}
                 >
@@ -222,7 +222,7 @@ export function SheetCard({
                 <div className="relative">
                   <button
                     onClick={e => { e.preventDefault(); e.stopPropagation(); setMenuOpen(v => !v); }}
-                    className="w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+                    className="w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
                   >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <circle cx="10" cy="4.5" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="10" cy="15.5" r="1.5"/>
