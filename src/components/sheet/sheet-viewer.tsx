@@ -940,9 +940,11 @@ function ViewerChordCell({
   const diagramHorizontal = instrumentId === 'percussion';
 
   return (
+    // Son réel entendu au micro = forme d'accord affichée + capo (suivi live).
+    // Sans capo, transposeChord(chord, 0) === chord.
     <div
       {...(isConcertActive ? { 'data-concert-active': '' } : {})}
-      data-chord={chord}
+      data-chord={capo > 0 ? transposeChord(chord, capo) : chord}
       style={{
         gridColumn: `span ${spanToGridCols(span)}`,
         ...(color ? { borderColor: color.border, borderLeftWidth: '5px' } : {}),
