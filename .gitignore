@@ -39,4 +39,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-.vercel
+# env
+.env*
+
+# claude code (fichiers locaux)
+.claude/scheduled_tasks.lock
+.claude/settings.local.json

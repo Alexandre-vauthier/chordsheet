@@ -1,0 +1,3 @@
+# Normalise les fins de ligne : LF dans le repo, quel que soit l'OS.
+# Evite les diffs fantomes lors d'un passage Mac <-> Windows.
+* text=auto eol=lf
