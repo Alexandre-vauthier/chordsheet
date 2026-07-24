@@ -245,7 +245,11 @@
     "noPublicSheetsYet": "No public sheets yet",
     "beFirstToShare": "Be the first to share!",
     "confirmDeleteSheet": "Delete this sheet? This action is irreversible.",
-    "errorDelete": "Error deleting"
+    "errorDelete": "Error deleting",
+    "adminTogglePrivate": "Private",
+    "adminTogglePrivateTitle": "Show / hide private sheets",
+    "adminTogglePending": "Pending",
+    "adminTogglePendingTitle": "Show / hide sheets pending review"
   },
   "SheetViewer": {
     "pauseSample": "Pause preview",

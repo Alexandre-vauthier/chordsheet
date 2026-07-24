@@ -245,7 +245,11 @@
     "noPublicSheetsYet": "Aucune grille publique pour le moment",
     "beFirstToShare": "Soyez le premier à partager !",
     "confirmDeleteSheet": "Supprimer cette grille ? Cette action est irréversible.",
-    "errorDelete": "Erreur lors de la suppression"
+    "errorDelete": "Erreur lors de la suppression",
+    "adminTogglePrivate": "Privées",
+    "adminTogglePrivateTitle": "Afficher / masquer les grilles privées",
+    "adminTogglePending": "À valider",
+    "adminTogglePendingTitle": "Afficher / masquer les grilles à valider"
   },
   "SheetViewer": {
     "pauseSample": "Pause l'extrait",

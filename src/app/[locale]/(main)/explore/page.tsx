@@ -45,6 +45,9 @@ export default function ExplorePage() {
   const [sortBy, setSortBy] = useState<SortOption>(() => (searchParams.get('sort') as SortOption) ?? 'recent');
   const [selectedGenre, setSelectedGenre] = useState<string>(() => searchParams.get('genre') ?? '');
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | null>(() => { const d = searchParams.get('difficulty'); return d ? (Number(d) as Difficulty) : null; });
+  // Toggles admin : afficher/masquer les grilles privées et à valider (visible ⇒ true par défaut)
+  const [showPrivate, setShowPrivate] = useState(true);
+  const [showPending, setShowPending] = useState(true);
 
   // Synchroniser l'URL quand les filtres changent
   const updateUrl = (params: { sort?: SortOption; genre?: string; difficulty?: Difficulty | null; q?: string }) => {
@@ -148,6 +151,15 @@ export default function ExplorePage() {
   const filteredSheets = useMemo(() => {
     let result = [...sheets];
 
+    // Toggles admin : masquer les grilles privées / à valider si désactivés.
+    // Les publiques restent toujours affichées.
+    if (isAdmin && (!showPrivate || !showPending)) {
+      result = result.filter((sheet) => {
+        if (sheet.isPublic) return true;
+        return sheet.pendingValidation ? showPending : showPrivate;
+      });
+    }
+
     // Filtre texte
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -192,7 +204,7 @@ export default function ExplorePage() {
     }
 
     return result;
-  }, [sheets, searchQuery, selectedGenre, selectedDifficulty, sortBy]);
+  }, [sheets, searchQuery, selectedGenre, selectedDifficulty, sortBy, isAdmin, showPrivate, showPending]);
 
   // Grouper par titre+artiste → une seule entrée par musique
   const groupedResults = useMemo(() => {
@@ -217,10 +229,12 @@ export default function ExplorePage() {
     setSelectedGenre('');
     setSelectedDifficulty(null);
     setSortBy('recent');
+    setShowPrivate(true);
+    setShowPending(true);
     router.replace('/explore', { scroll: false });
   };
 
-  const hasActiveFilters = searchQuery || selectedGenre || selectedDifficulty || sortBy !== 'recent';
+  const hasActiveFilters = searchQuery || selectedGenre || selectedDifficulty || sortBy !== 'recent' || !showPrivate || !showPending;
 
   const handleRandom = () => {
     if (sheets.length === 0) return;
@@ -334,6 +348,37 @@ export default function ExplorePage() {
               ))}
             </select>
           </div>
+
+          {/* Toggles admin : visibilité des grilles privées / à valider */}
+          {isAdmin && (
+            <>
+              <div className="hidden sm:block h-6 w-px bg-[var(--line)]" />
+              <button
+                onClick={() => setShowPrivate(v => !v)}
+                title={t('adminTogglePrivateTitle')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm transition-colors ${
+                  showPrivate
+                    ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
+                    : 'border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink-faint)] line-through'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-current opacity-70" />
+                {t('adminTogglePrivate')}
+              </button>
+              <button
+                onClick={() => setShowPending(v => !v)}
+                title={t('adminTogglePendingTitle')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm transition-colors ${
+                  showPending
+                    ? 'border-amber-500 bg-amber-500/10 text-amber-600'
+                    : 'border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink-faint)] line-through'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-current opacity-70" />
+                {t('adminTogglePending')}
+              </button>
+            </>
+          )}
 
           {/* Réinitialiser */}
           {hasActiveFilters && (
