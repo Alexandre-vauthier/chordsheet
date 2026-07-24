@@ -376,7 +376,23 @@
     "untitled": "Untitled",
     "removeFromBook": "Remove from book",
     "addToBook": "Add to book",
-    "unknownArtist": "Unknown artist"
+    "unknownArtist": "Unknown artist",
+    "addToSet": "Add to a set",
+    "addToGroup": "Add to a group"
+  },
+  "AddToCollection": {
+    "title": "Add to…",
+    "untitled": "Untitled",
+    "close": "Close",
+    "tabSet": "Set",
+    "tabGroup": "Group",
+    "searchSet": "Search a set…",
+    "searchGroup": "Search a group…",
+    "noSet": "No set yet. Create one below.",
+    "noGroup": "You are not a member of any group.",
+    "newSetPlaceholder": "New set…",
+    "create": "Create",
+    "error": "Something went wrong."
   },
   "Auth": {
     "loginTitle": "Sign in to your account",

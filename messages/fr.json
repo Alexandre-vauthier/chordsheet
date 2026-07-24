@@ -376,7 +376,23 @@
     "untitled": "Sans titre",
     "removeFromBook": "Retirer du book",
     "addToBook": "Ajouter au book",
-    "unknownArtist": "Artiste inconnu"
+    "unknownArtist": "Artiste inconnu",
+    "addToSet": "Ajouter à un set",
+    "addToGroup": "Ajouter à un groupe"
+  },
+  "AddToCollection": {
+    "title": "Ajouter à…",
+    "untitled": "Sans titre",
+    "close": "Fermer",
+    "tabSet": "Set",
+    "tabGroup": "Groupe",
+    "searchSet": "Rechercher un set…",
+    "searchGroup": "Rechercher un groupe…",
+    "noSet": "Aucun set. Créez-en un ci-dessous.",
+    "noGroup": "Vous ne faites partie d'aucun groupe.",
+    "newSetPlaceholder": "Nouveau set…",
+    "create": "Créer",
+    "error": "Une erreur est survenue."
   },
   "Auth": {
     "loginTitle": "Connectez-vous à votre compte",

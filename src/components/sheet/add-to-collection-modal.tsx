@@ -1,0 +1,270 @@
+'use client';
+
+import { useState, useEffect, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
+import { doc, updateDoc, deleteField, serverTimestamp } from 'firebase/firestore';
+import { getDb } from '@/lib/firebase';
+import { useAuth } from '@/lib/auth-context';
+import { useSets } from '@/lib/use-sets';
+import { useGroups } from '@/lib/use-groups';
+import type { Sheet } from '@/types';
+
+type Tab = 'set' | 'group';
+
+interface Props {
+  sheet: Sheet;
+  initialTab?: Tab;
+  onClose: () => void;
+}
+
+export function AddToCollectionModal({ sheet, initialTab = 'set', onClose }: Props) {
+  const t = useTranslations('AddToCollection');
+  const { user } = useAuth();
+  const { sets, addSheetToSet, removeSheetFromSet, createSet } = useSets(user?.id);
+  const { groups, linkSheet, unlinkSheet } = useGroups();
+
+  // Le provider n'ouvre la modale que pour une grille persistée.
+  const sheetId = sheet.id!;
+
+  const [tab, setTab] = useState<Tab>(initialTab);
+  const [search, setSearch] = useState('');
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [newSetName, setNewSetName] = useState('');
+  const [creating, setCreating] = useState(false);
+
+  // Surcharges locales pour un retour visuel immédiat (l'appartenance d'une
+  // grille possédée à un groupe repose sur son champ groupId, non re-lu ici).
+  const [setOverrides, setSetOverrides] = useState<Record<string, boolean>>({});
+  const [groupOverrides, setGroupOverrides] = useState<Record<string, boolean>>({});
+
+  // Fermeture au clavier
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const isInSet = (setId: string, sheetIds: string[]) =>
+    setOverrides[setId] ?? sheetIds.includes(sheetId);
+
+  const isInGroup = (groupId: string, linkedSheetIds: string[]) =>
+    groupOverrides[groupId] ?? (linkedSheetIds.includes(sheetId) || sheet.groupId === groupId);
+
+  const filteredSets = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return q ? sets.filter(s => s.name.toLowerCase().includes(q)) : sets;
+  }, [sets, search]);
+
+  const filteredGroups = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return q ? groups.filter(g => g.name.toLowerCase().includes(q)) : groups;
+  }, [groups, search]);
+
+  const toggleSet = async (setId: string, member: boolean) => {
+    setBusy(setId);
+    setError(null);
+    try {
+      if (member) await removeSheetFromSet(setId, sheetId);
+      else await addSheetToSet(setId, sheetId);
+      setSetOverrides(prev => ({ ...prev, [setId]: !member }));
+    } catch {
+      setError(t('error'));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  // Rattacher/détacher : groupId si c'est ma grille, linkedSheetIds sinon
+  // (même logique que la page groupe).
+  const toggleGroup = async (groupId: string, member: boolean) => {
+    if (!user) return;
+    setBusy(groupId);
+    setError(null);
+    const owned = sheet.ownerId === user.id;
+    try {
+      if (member) {
+        if (owned && sheet.groupId === groupId) {
+          await updateDoc(doc(getDb(), 'sheets', sheetId), {
+            groupId: deleteField(), updatedAt: serverTimestamp(),
+          });
+        } else {
+          await unlinkSheet(groupId, sheetId);
+        }
+      } else {
+        if (owned) {
+          await updateDoc(doc(getDb(), 'sheets', sheetId), {
+            groupId, updatedAt: serverTimestamp(),
+          });
+        } else {
+          await linkSheet(groupId, sheetId);
+        }
+      }
+      setGroupOverrides(prev => ({ ...prev, [groupId]: !member }));
+    } catch {
+      setError(t('error'));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const handleCreateSet = async () => {
+    const name = newSetName.trim();
+    if (!name || !user) return;
+    setCreating(true);
+    setError(null);
+    try {
+      await createSet({
+        name,
+        ownerId: user.id,
+        ownerName: user.displayName,
+        sheetIds: [sheetId],
+        isPublic: false,
+      });
+      setNewSetName('');
+    } catch {
+      setError(t('error'));
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md bg-[var(--paper)] border border-[var(--line)] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* En-tête */}
+        <div className="px-4 pt-4 pb-3 border-b border-[var(--line)]">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-base font-bold text-[var(--ink)] truncate">{t('title')}</h2>
+              <p className="text-xs text-[var(--ink-light)] truncate mt-0.5">
+                {sheet.title || t('untitled')}
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="shrink-0 w-7 h-7 rounded-full text-[var(--ink-light)] hover:bg-[var(--line)] hover:text-[var(--ink)] transition-colors flex items-center justify-center"
+              title={t('close')}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          {/* Onglets */}
+          <div className="flex gap-1 mt-3 p-0.5 bg-[var(--cell-bg)] rounded-lg">
+            {(['set', 'group'] as Tab[]).map(v => (
+              <button
+                key={v}
+                onClick={() => { setTab(v); setSearch(''); }}
+                className={`flex-1 text-sm font-medium py-1.5 rounded-md transition-colors ${
+                  tab === v
+                    ? 'bg-[var(--paper)] text-[var(--accent)] shadow-sm'
+                    : 'text-[var(--ink-light)] hover:text-[var(--ink)]'
+                }`}
+              >
+                {v === 'set' ? t('tabSet') : t('tabGroup')}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Recherche */}
+        <div className="px-4 pt-3">
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder={tab === 'set' ? t('searchSet') : t('searchGroup')}
+            className="w-full px-3 py-2 text-sm rounded-lg bg-[var(--cell-bg)] border border-[var(--line)] text-[var(--ink)] placeholder:text-[var(--ink-faint)] focus:outline-none focus:border-[var(--accent)]"
+          />
+        </div>
+
+        {error && (
+          <p className="px-4 pt-2 text-xs text-red-500">{error}</p>
+        )}
+
+        {/* Liste */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 min-h-[120px]">
+          {tab === 'set' ? (
+            filteredSets.length === 0 ? (
+              <p className="text-sm text-[var(--ink-faint)] text-center py-6">{t('noSet')}</p>
+            ) : (
+              <ul className="space-y-1">
+                {filteredSets.map(s => {
+                  const member = isInSet(s.id!, s.sheetIds);
+                  return (
+                    <li key={s.id}>
+                      <button
+                        onClick={() => toggleSet(s.id!, member)}
+                        disabled={busy === s.id}
+                        className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] transition-colors disabled:opacity-50"
+                      >
+                        <span className="truncate">{s.name}</span>
+                        <span className={`shrink-0 text-sm font-semibold ${member ? 'text-[var(--accent)]' : 'text-[var(--ink-faint)]'}`}>
+                          {busy === s.id ? '…' : member ? '✓' : '+'}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )
+          ) : (
+            filteredGroups.length === 0 ? (
+              <p className="text-sm text-[var(--ink-faint)] text-center py-6">{t('noGroup')}</p>
+            ) : (
+              <ul className="space-y-1">
+                {filteredGroups.map(g => {
+                  const member = isInGroup(g.id!, g.linkedSheetIds);
+                  return (
+                    <li key={g.id}>
+                      <button
+                        onClick={() => toggleGroup(g.id!, member)}
+                        disabled={busy === g.id}
+                        className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] transition-colors disabled:opacity-50"
+                      >
+                        <span className="truncate">{g.name}</span>
+                        <span className={`shrink-0 text-sm font-semibold ${member ? 'text-[var(--accent)]' : 'text-[var(--ink-faint)]'}`}>
+                          {busy === g.id ? '…' : member ? '✓' : '+'}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            )
+          )}
+        </div>
+
+        {/* Créer un set (onglet set uniquement) */}
+        {tab === 'set' && (
+          <div className="px-4 py-3 border-t border-[var(--line)] flex gap-2">
+            <input
+              type="text"
+              value={newSetName}
+              onChange={e => setNewSetName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleCreateSet(); }}
+              placeholder={t('newSetPlaceholder')}
+              className="flex-1 px-3 py-2 text-sm rounded-lg bg-[var(--cell-bg)] border border-[var(--line)] text-[var(--ink)] placeholder:text-[var(--ink-faint)] focus:outline-none focus:border-[var(--accent)]"
+            />
+            <button
+              onClick={handleCreateSet}
+              disabled={!newSetName.trim() || creating}
+              className="shrink-0 px-3 py-2 text-sm font-medium rounded-lg bg-[var(--accent)] text-white hover:opacity-90 transition-opacity disabled:opacity-40"
+            >
+              {creating ? '…' : t('create')}
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

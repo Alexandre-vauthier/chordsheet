@@ -6,6 +6,8 @@ import type { Sheet, Difficulty } from '@/types';
 import { DIFFICULTY_LABELS } from '@/types';
 import { useArtwork } from '@/lib/use-artwork';
 import { useDifficultyLabel } from '@/lib/use-genre-labels';
+import { useAuth } from '@/lib/auth-context';
+import { useAddToCollection } from '@/lib/add-to-collection-context';
 import { Link } from '@/i18n/navigation';
 
 // Singleton audio global
@@ -71,6 +73,8 @@ export function SheetCard({
 }: SheetCardProps) {
   const t = useTranslations('SheetCard');
   const difficultyLabel = useDifficultyLabel();
+  const { user } = useAuth();
+  const { openAddTo } = useAddToCollection();
   const { artworkUrl, previewUrl } = useArtwork(
     hideArtwork ? undefined : sheet.artist,
     hideArtwork ? undefined : sheet.title,
@@ -197,8 +201,8 @@ export function SheetCard({
             </button>
           )}
 
-          {/* Actions édition (dashboard) — menu 3 points */}
-          {onDelete && (
+          {/* Menu 3 points — actions collection (tout user connecté) + édition (propriétaire) */}
+          {(onDelete || user) && (
             <div className="absolute top-2.5 right-2.5 z-20">
               <button
                 onClick={e => { e.preventDefault(); e.stopPropagation(); setMenuOpen(v => !v); }}
@@ -209,26 +213,53 @@ export function SheetCard({
                 </svg>
               </button>
               {menuOpen && (
-                <div className="absolute right-0 top-8 z-20 w-36 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl shadow-xl overflow-hidden">
-                  <Link
-                    href={`/sheet/${sheet.id}/edit`}
-                    onClick={e => e.stopPropagation()}
-                    className="flex items-center gap-2 px-3 py-2 text-xs text-[var(--ink)] hover:bg-[var(--cell-hover)] transition-colors"
-                  >
-                    <svg className="w-3.5 h-3.5 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                    </svg>
-                    {t('edit')}
-                  </Link>
-                  <button
-                    onClick={e => { e.preventDefault(); e.stopPropagation(); onDelete(); }}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 transition-colors"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                    </svg>
-                    {t('delete')}
-                  </button>
+                <div className="absolute right-0 top-8 z-20 w-44 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl shadow-xl overflow-hidden">
+                  {user && (
+                    <>
+                      <button
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); setMenuOpen(false); openAddTo(sheet, 'set'); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[var(--ink)] hover:bg-[var(--cell-hover)] transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h10M4 18h10M18 14v6m3-3h-6"/>
+                        </svg>
+                        {t('addToSet')}
+                      </button>
+                      <button
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); setMenuOpen(false); openAddTo(sheet, 'group'); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-[var(--ink)] hover:bg-[var(--cell-hover)] transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-1a4 4 0 00-3-3.87M9 20H4v-1a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-4a3 3 0 11-3-3M7 11a3 3 0 11-3-3"/>
+                        </svg>
+                        {t('addToGroup')}
+                      </button>
+                    </>
+                  )}
+                  {onDelete && (
+                    <>
+                      {user && <div className="border-t border-[var(--line)]" />}
+                      <Link
+                        href={`/sheet/${sheet.id}/edit`}
+                        onClick={e => e.stopPropagation()}
+                        className="flex items-center gap-2 px-3 py-2 text-xs text-[var(--ink)] hover:bg-[var(--cell-hover)] transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        {t('edit')}
+                      </Link>
+                      <button
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); onDelete(); }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-500 hover:bg-red-50 transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                        </svg>
+                        {t('delete')}
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </div>

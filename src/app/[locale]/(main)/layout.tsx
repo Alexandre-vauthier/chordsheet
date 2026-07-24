@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 
 import { useAuth } from '@/lib/auth-context';
 import { LiveSessionProvider } from '@/lib/live-session-context';
+import { AddToCollectionProvider } from '@/lib/add-to-collection-context';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
 import { ConcertBanner } from '@/components/layout/concert-banner';
@@ -61,13 +62,15 @@ export default function MainLayout({
 
   return (
     <LiveSessionProvider>
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <ConcertBanner />
-        <LiveSessionBanner />
-        <main className="flex-1">{children}</main>
-        <Footer />
-      </div>
+      <AddToCollectionProvider>
+        <div className="min-h-screen flex flex-col">
+          <Navbar />
+          <ConcertBanner />
+          <LiveSessionBanner />
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </div>
+      </AddToCollectionProvider>
     </LiveSessionProvider>
   );
 }
