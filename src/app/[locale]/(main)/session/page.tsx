@@ -12,7 +12,7 @@ export default function SessionHubPage() {
   const t = useTranslations('LiveSession');
   const router = useRouter();
   const { user } = useAuth();
-  const { sessionCode, startSession } = useLiveSession();
+  const { sessionCode, sessionStatus, startSession, leaveSession } = useLiveSession();
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState('');
   const [joinCode, setJoinCode] = useState('');
@@ -22,11 +22,22 @@ export default function SessionHubPage() {
   // Session déjà active (hôte OU invité) : direction la vue partagée plutôt que
   // le hub de création — sinon un invité qui clique "Session live" après s'être
   // connecté se retrouve sur l'écran "démarrer une session" au lieu de la sienne.
+  // On ne redirige qu'une fois la session CONFIRMÉE active : un code périmé encore
+  // en stockage local (session terminée/expirée) ne doit pas renvoyer vers une
+  // session morte.
   useEffect(() => {
-    if (sessionCode) {
+    if (sessionCode && sessionStatus === 'found') {
       router.replace(`/session/${sessionCode}`);
     }
-  }, [sessionCode, router]);
+  }, [sessionCode, sessionStatus, router]);
+
+  // Code périmé en stockage local : le purger pour retomber sur le hub (démarrer /
+  // rejoindre) au lieu de rester bloqué sur l'ancienne session.
+  useEffect(() => {
+    if (sessionCode && sessionStatus === 'not-found') {
+      leaveSession();
+    }
+  }, [sessionCode, sessionStatus, leaveSession]);
 
   const handleStart = async () => {
     setStarting(true);
@@ -46,8 +57,16 @@ export default function SessionHubPage() {
     router.push(`/session/${joinCode.trim().toUpperCase()}`);
   };
 
-  if (sessionCode) {
-    return null;
+  // Un code est en stockage local et on n'a pas encore établi qu'il est mort :
+  // soit on résout (loading), soit la session est active et on redirige. Dans les
+  // deux cas on affiche un chargement plutôt que le hub, pour éviter un flash du
+  // formulaire "démarrer une session".
+  if (sessionCode && sessionStatus !== 'not-found') {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-16 text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[var(--accent)] border-t-transparent mx-auto" />
+      </div>
+    );
   }
 
   if (!userIsPro) {
