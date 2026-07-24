@@ -18,6 +18,10 @@ import { useRouter } from '@/i18n/navigation';
 
 type SortOption = 'recent' | 'rated' | 'viewed';
 
+// Préférences de visibilité admin, conservées entre les visites de la page
+const ADMIN_SHOW_PRIVATE_KEY = 'explore_admin_show_private';
+const ADMIN_SHOW_PENDING_KEY = 'explore_admin_show_pending';
+
 export default function ExplorePage() {
   const t = useTranslations('Explore');
   const genreLabel = useGenreLabel();
@@ -45,9 +49,29 @@ export default function ExplorePage() {
   const [sortBy, setSortBy] = useState<SortOption>(() => (searchParams.get('sort') as SortOption) ?? 'recent');
   const [selectedGenre, setSelectedGenre] = useState<string>(() => searchParams.get('genre') ?? '');
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | null>(() => { const d = searchParams.get('difficulty'); return d ? (Number(d) as Difficulty) : null; });
-  // Toggles admin : afficher/masquer les grilles privées et à valider (visible ⇒ true par défaut)
+  // Toggles admin : afficher/masquer les grilles privées et à valider (visible ⇒ true par défaut).
+  // Défaut à true côté serveur pour éviter un écart d'hydratation ; la préférence
+  // stockée est relue au montage juste après.
   const [showPrivate, setShowPrivate] = useState(true);
   const [showPending, setShowPending] = useState(true);
+
+  // Relire la préférence de visibilité admin au montage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (localStorage.getItem(ADMIN_SHOW_PRIVATE_KEY) === '0') setShowPrivate(false);
+    if (localStorage.getItem(ADMIN_SHOW_PENDING_KEY) === '0') setShowPending(false);
+  }, []);
+
+  const toggleShowPrivate = () => {
+    const next = !showPrivate;
+    setShowPrivate(next);
+    if (typeof window !== 'undefined') localStorage.setItem(ADMIN_SHOW_PRIVATE_KEY, next ? '1' : '0');
+  };
+  const toggleShowPending = () => {
+    const next = !showPending;
+    setShowPending(next);
+    if (typeof window !== 'undefined') localStorage.setItem(ADMIN_SHOW_PENDING_KEY, next ? '1' : '0');
+  };
 
   // Synchroniser l'URL quand les filtres changent
   const updateUrl = (params: { sort?: SortOption; genre?: string; difficulty?: Difficulty | null; q?: string }) => {
@@ -231,6 +255,10 @@ export default function ExplorePage() {
     setSortBy('recent');
     setShowPrivate(true);
     setShowPending(true);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(ADMIN_SHOW_PRIVATE_KEY, '1');
+      localStorage.setItem(ADMIN_SHOW_PENDING_KEY, '1');
+    }
     router.replace('/explore', { scroll: false });
   };
 
@@ -354,7 +382,7 @@ export default function ExplorePage() {
             <>
               <div className="hidden sm:block h-6 w-px bg-[var(--line)]" />
               <button
-                onClick={() => setShowPrivate(v => !v)}
+                onClick={toggleShowPrivate}
                 title={t('adminTogglePrivateTitle')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm transition-colors ${
                   showPrivate
@@ -366,7 +394,7 @@ export default function ExplorePage() {
                 {t('adminTogglePrivate')}
               </button>
               <button
-                onClick={() => setShowPending(v => !v)}
+                onClick={toggleShowPending}
                 title={t('adminTogglePendingTitle')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm transition-colors ${
                   showPending
