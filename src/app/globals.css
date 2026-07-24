@@ -86,6 +86,14 @@ body {
   to   { transform: scaleX(1); }
 }
 
+/* Cellule dont l'accord correspond à ce qui est joué au micro (suivi live).
+   Anneau via box-shadow pour ne pas entrer en conflit avec la border-color
+   inline (couleurs d'accords). */
+.chord-detected {
+  box-shadow: 0 0 0 2px var(--accent), 0 0 16px -3px var(--accent);
+  transition: box-shadow 80ms ease-out;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

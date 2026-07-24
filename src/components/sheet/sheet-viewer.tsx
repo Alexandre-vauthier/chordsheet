@@ -22,6 +22,7 @@ import { transposeSections, transposeKey } from '@/lib/transpose';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useGenreLabel } from '@/lib/use-genre-labels';
+import { LiveChordFollow } from './live-chord-follow';
 
 const LS_KEY = 'chordsheet_instrument';
 
@@ -827,6 +828,9 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
         ))}
       </div>
 
+      {/* Suivi micro (surlignage de l'accord joué) — bouton flottant */}
+      {instrumentId !== 'voice' && <LiveChordFollow />}
+
       {/* Paroles — visibles uniquement en mode Voix */}
       {sheet.lyrics && instrumentId === 'voice' && (
         <div className="mt-10 print:mt-8">
@@ -938,6 +942,7 @@ function ViewerChordCell({
   return (
     <div
       {...(isConcertActive ? { 'data-concert-active': '' } : {})}
+      data-chord={chord}
       style={{
         gridColumn: `span ${spanToGridCols(span)}`,
         ...(color ? { borderColor: color.border, borderLeftWidth: '5px' } : {}),
