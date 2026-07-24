@@ -134,6 +134,10 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   const [countBeat, setCountBeat] = useState(0); // 0 = inactif, 1-4 = décompte
   const countTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const [transpose, setTranspose] = useState(0);
+  // Le joueur a-t-il physiquement posé le capo indiqué ? Sert uniquement au suivi
+  // micro : si non, le son entendu est celui des formes à leur hauteur réelle
+  // (sans le décalage du capo). N'affecte pas les diagrammes ni la notation.
+  const [capoActive, setCapoActive] = useState(true);
   const [selectedChords, setSelectedChords] = useState<Record<string, StringChord | PianoChord>>({});
   const [localTempo, setLocalTempo] = useState<string>(sheet.tempo || '90');
   const [localTempoUnit, setLocalTempoUnit] = useState<'quarter' | 'eighth'>(sheet.tempoUnit ?? 'quarter');
@@ -343,9 +347,13 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             )}
           </div>
           {sheet.capo ? (
-            <span className="sm:hidden print:hidden absolute bottom-0 right-0 px-1.5 py-0.5 bg-[var(--cell-bg)] text-[var(--ink-light)] rounded text-xs border border-[var(--line)]">
+            <button
+              onClick={() => setCapoActive(v => !v)}
+              title={capoActive ? 'Capo pris en compte pour le suivi micro (cliquer pour l’ignorer)' : 'Capo ignoré pour le suivi micro (cliquer pour l’activer)'}
+              className={`sm:hidden print:hidden absolute bottom-0 right-0 px-1.5 py-0.5 bg-[var(--cell-bg)] rounded text-xs border border-[var(--line)] transition-colors ${capoActive ? 'text-[var(--ink-light)]' : 'text-[var(--ink-faint)] line-through'}`}
+            >
               {t('capo', { n: sheet.capo })}
-            </span>
+            </button>
           ) : null}
           </div>{/* fin artwork+titre */}
 
@@ -547,9 +555,13 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               </div>
 
               {sheet.capo ? (
-                <span className="px-1.5 py-0.5 bg-[var(--cell-bg)] text-[var(--ink-light)] rounded text-xs border border-[var(--line)]">
+                <button
+                  onClick={() => setCapoActive(v => !v)}
+                  title={capoActive ? 'Capo pris en compte pour le suivi micro (cliquer pour l’ignorer)' : 'Capo ignoré pour le suivi micro (cliquer pour l’activer)'}
+                  className={`px-1.5 py-0.5 bg-[var(--cell-bg)] rounded text-xs border border-[var(--line)] transition-colors ${capoActive ? 'text-[var(--ink-light)]' : 'text-[var(--ink-faint)] line-through'}`}
+                >
                   {t('capo', { n: sheet.capo })}
-                </span>
+                </button>
               ) : null}
               {sheet.beatsPerMeasure === 3 && (
                 <span className="px-1.5 py-0.5 bg-[var(--cell-bg)] text-[var(--ink-light)] rounded text-xs border border-[var(--line)]">
@@ -807,6 +819,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                             getColor={getColor}
                             showInlineDiagram={showInlineDiagram}
                             capo={sheet.capo ?? 0}
+                            detectCapo={capoActive ? (sheet.capo ?? 0) : 0}
                           />
                         );
                       })}
@@ -878,6 +891,7 @@ function ViewerChordCell({
   getColor,
   showInlineDiagram,
   capo = 0,
+  detectCapo = 0,
 }: {
   chord: string;
   span: CellSpan;
@@ -892,6 +906,7 @@ function ViewerChordCell({
   getColor: (chord: string) => { border: string; bg: string } | null;
   showInlineDiagram: boolean;
   capo?: number;
+  detectCapo?: number;
 }) {
   const t = useTranslations('SheetViewer');
   const [hovered, setHovered] = useState(false);
@@ -941,10 +956,11 @@ function ViewerChordCell({
 
   return (
     // Son réel entendu au micro = forme d'accord affichée + capo (suivi live).
-    // Sans capo, transposeChord(chord, 0) === chord.
+    // detectCapo vaut 0 si le joueur a désactivé le capo → on attend la hauteur
+    // réelle des formes. Sans capo, transposeChord(chord, 0) === chord.
     <div
       {...(isConcertActive ? { 'data-concert-active': '' } : {})}
-      data-chord={capo > 0 ? transposeChord(chord, capo) : chord}
+      data-chord={detectCapo > 0 ? transposeChord(chord, detectCapo) : chord}
       style={{
         gridColumn: `span ${spanToGridCols(span)}`,
         ...(color ? { borderColor: color.border, borderLeftWidth: '5px' } : {}),
