@@ -36,6 +36,10 @@ interface SheetEditorProps {
   initialSheet: NewSheet | Sheet;
   onSave: (sheet: NewSheet | Sheet) => Promise<void>;
   isSaving?: boolean;
+  // Persistance immédiate des paroles récupérées automatiquement (lyrics.ovh),
+  // sans attendre un Enregistrer manuel. Fournie en mode édition (grille déjà
+  // créée avec un id) pour que la consultation propose la Voix.
+  onLyricsFetched?: (lyrics: string) => void;
 }
 
 // ─── Composant paroles ────────────────────────────────────────────────────────
@@ -45,11 +49,13 @@ function LyricsEditor({
   artist,
   title,
   onChange,
+  onFetched,
 }: {
   lyrics: string;
   artist: string;
   title: string;
   onChange: (v: string) => void;
+  onFetched?: (v: string) => void;
 }) {
   const t = useTranslations('Editor');
   const [fetching, setFetching] = useState(false);
@@ -67,7 +73,11 @@ function LyricsEditor({
       const res = await fetch(url);
       const data = await res.json();
       if (data.lyrics) {
-        onChange(data.lyrics.trim());
+        const clean = data.lyrics.trim();
+        onChange(clean);
+        // Persister tout de suite (les paroles récupérées ne doivent pas se
+        // perdre si l'utilisateur ne clique pas Enregistrer).
+        onFetched?.(clean);
       } else {
         setFetchError(t('lyricsNotFound'));
       }
@@ -114,7 +124,7 @@ function LyricsEditor({
   );
 }
 
-export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEditorProps) {
+export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFetched }: SheetEditorProps) {
   const t = useTranslations('Editor');
   const tSection = useTranslations('SectionLabels');
   const tPattern = useTranslations('GroovePatterns');
@@ -1014,6 +1024,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
         artist={sheet.artist}
         title={sheet.title}
         onChange={(lyrics) => updateSheet({ lyrics })}
+        onFetched={onLyricsFetched}
       />
 
       {/* Modal d'édition d'accord */}
