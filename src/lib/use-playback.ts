@@ -58,6 +58,8 @@ export interface ChordSeqItem {
   rowId: string; // data-row-id de la mesure (pour le défilement)
   pos: string;   // data-pos de la cellule (pour le surlignage ciblé)
   chord: string;
+  span: number;  // durée en mesures (pour calculer la durée d'une cellule)
+  beats: number; // temps par mesure de la section (3 ou 4)
 }
 
 // Séquence ordonnée des cellules porteuses d'accord, dans l'ordre de lecture
@@ -80,6 +82,8 @@ export function buildChordSequence(sections: Section[]): ChordSeqItem[] {
               rowId: `${section.id}-${r}`,
               pos: `${section.id}:${r}:${c}`,
               chord,
+              span: row[c].span,
+              beats: section.beatsPerMeasure || 4,
             });
           }
         }

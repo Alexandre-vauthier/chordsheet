@@ -149,16 +149,19 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   const displayKey = transposeKey(sheet.key, transpose);
 
   // Séquence ordonnée pour le suivi micro : chaque cellule dans l'ordre de
-  // lecture, avec le son réellement entendu (forme transposée + capo effectif).
-  const followSequence = useMemo(
-    () =>
-      buildChordSequence(displaySections).map((it) => ({
-        pos: it.pos,
-        rowId: it.rowId,
-        sound: effectiveCapo > 0 ? transposeChord(it.chord, effectiveCapo) : it.chord,
-      })),
-    [displaySections, effectiveCapo],
-  );
+  // lecture, avec le son réellement entendu (forme transposée + capo effectif)
+  // et sa durée au tempo courant (pour avancer dans une suite d'accords
+  // identiques, où l'accord seul ne dit pas quand changer de cellule).
+  const followSequence = useMemo(() => {
+    const factor = localTempoUnit === 'eighth' ? 0.5 : 1;
+    const beatMs = (60 / parseTempo(localTempo)) * 1000 * factor;
+    return buildChordSequence(displaySections).map((it) => ({
+      pos: it.pos,
+      rowId: it.rowId,
+      sound: effectiveCapo > 0 ? transposeChord(it.chord, effectiveCapo) : it.chord,
+      durationMs: it.span * it.beats * beatMs,
+    }));
+  }, [displaySections, effectiveCapo, localTempo, localTempoUnit]);
 
   // Y a-t-il au moins une section en doublon ?
   const hasRepeatedSections = (() => {

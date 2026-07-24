@@ -5,8 +5,11 @@
 //  - Surlignage (par défaut, robuste) : allume toutes les cellules dont l'accord
 //    correspond à ce qui est joué. Aucun suivi de position.
 //  - Suivi (opt-in, plus fragile) : n'allume que la prochaine cellule attendue et
-//    fait défiler la grille. Avance par correspondance vers l'avant (fenêtre de
-//    look-ahead) pour tolérer une détection manquée ; ne recule jamais.
+//    fait défiler. Piloté par un intervalle (et non par le seul changement
+//    d'accord) pour gérer les suites d'un MÊME accord : sur un changement
+//    d'accord on avance tout de suite ; sur une répétition du même accord on
+//    avance au tempo (durée de la cellule), ce qui resynchronise à chaque
+//    changement. Avance uniquement vers l'avant, ne recule jamais.
 // L'écoute vit dans CE composant isolé (ses mises à jour ~10 Hz ne re-rendent pas
 // le sheet-viewer) et le surlignage se fait par le DOM (toggle de classe).
 
@@ -15,13 +18,16 @@ import { useChordListener } from '@/lib/use-chord-listener';
 import { chordsMatch } from '@/lib/chord-match';
 
 export interface FollowSeqItem {
-  pos: string;   // data-pos de la cellule
-  rowId: string; // data-row-id de la mesure (défilement)
-  sound: string; // accord réellement entendu (forme + capo effectif)
+  pos: string;      // data-pos de la cellule
+  rowId: string;    // data-row-id de la mesure (défilement)
+  sound: string;    // accord réellement entendu (forme + capo effectif)
+  durationMs: number; // durée de la cellule au tempo courant
 }
 
-const LOOKAHEAD = 4;      // combien de cellules à venir on scrute pour avancer
-const NAVBAR_OFFSET = 68; // hauteur navbar + marge pour le défilement
+const LOOKAHEAD = 4;       // cellules à venir scrutées pour un changement d'accord
+const NAVBAR_OFFSET = 68;  // hauteur navbar + marge pour le défilement
+const TICK_MS = 100;       // fréquence du suivi
+const DWELL_RATIO = 0.85;  // fraction de la durée d'une cellule avant d'avancer sur un accord répété
 
 function clearClass(cls: string) {
   document.querySelectorAll<HTMLElement>('.' + cls).forEach((el) => el.classList.remove(cls));
@@ -32,63 +38,89 @@ export function LiveChordFollow({ sequence }: { sequence: FollowSeqItem[] }) {
   const [followMode, setFollowMode] = useState(false);
 
   const seqRef = useRef<FollowSeqItem[]>(sequence);
+  const latestChordRef = useRef('');
   const posRef = useRef(-1);
+  const enteredAtRef = useRef(0);
 
-  // La séquence change (transposition, capo, minimisation) → on repart de zéro.
-  useEffect(() => {
-    seqRef.current = sequence;
-    posRef.current = -1;
-  }, [sequence]);
+  useEffect(() => { seqRef.current = sequence; posRef.current = -1; }, [sequence]);
+  useEffect(() => { latestChordRef.current = chord; }, [chord]);
 
-  // Réinitialiser la position à chaque (dé)activation de l'écoute ou du suivi.
+  // Mode surlignage (piloté par le changement d'accord) — allume toutes les
+  // cellules correspondantes. Désactivé quand le mode suivi est actif.
   useEffect(() => {
+    if (followMode) return;
+    if (!listening || !chord) { clearClass('chord-detected'); return; }
+    clearClass('chord-current');
+    document.querySelectorAll<HTMLElement>('[data-chord]').forEach((el) => {
+      el.classList.toggle('chord-detected', chordsMatch(chord, el.dataset.chord || ''));
+    });
+  }, [chord, listening, followMode]);
+
+  // Mode suivi (piloté par intervalle) — avance dans la grille.
+  useEffect(() => {
+    if (!listening || !followMode) return;
     posRef.current = -1;
+    enteredAtRef.current = 0;
     clearClass('chord-detected');
     clearClass('chord-current');
-  }, [listening, followMode]);
 
-  useEffect(() => {
-    if (!listening || !chord) {
-      clearClass('chord-detected');
+    const advanceTo = (idx: number) => {
+      const seq = seqRef.current;
+      posRef.current = idx;
+      enteredAtRef.current = performance.now();
       clearClass('chord-current');
-      return;
-    }
+      document
+        .querySelector<HTMLElement>(`[data-pos="${CSS.escape(seq[idx].pos)}"]`)
+        ?.classList.add('chord-current');
+      const row = document.querySelector<HTMLElement>(`[data-row-id="${CSS.escape(seq[idx].rowId)}"]`);
+      if (row) {
+        window.scrollTo({
+          top: window.scrollY + row.getBoundingClientRect().top - NAVBAR_OFFSET,
+          behavior: 'smooth',
+        });
+      }
+    };
 
-    if (!followMode) {
-      // Mode surlignage : toutes les cellules correspondantes
-      clearClass('chord-current');
-      document.querySelectorAll<HTMLElement>('[data-chord]').forEach((el) => {
-        el.classList.toggle('chord-detected', chordsMatch(chord, el.dataset.chord || ''));
-      });
-      return;
-    }
+    const id = setInterval(() => {
+      const c = latestChordRef.current;
+      if (!c) return;
+      const seq = seqRef.current;
+      if (!seq.length) return;
+      const pos = posRef.current;
 
-    // Mode suivi : avancer vers la prochaine cellule attendue
-    clearClass('chord-detected');
-    const seq = seqRef.current;
-    const pos = posRef.current;
-    // Rester en place si l'accord courant sonne encore
-    if (pos >= 0 && chordsMatch(chord, seq[pos].sound)) return;
-    for (let k = 1; k <= LOOKAHEAD; k++) {
-      const idx = pos + k;
-      if (idx >= seq.length) break;
-      if (chordsMatch(chord, seq[idx].sound)) {
-        posRef.current = idx;
-        clearClass('chord-current');
-        const cell = document.querySelector<HTMLElement>(`[data-pos="${CSS.escape(seq[idx].pos)}"]`);
-        cell?.classList.add('chord-current');
-        const row = document.querySelector<HTMLElement>(`[data-row-id="${CSS.escape(seq[idx].rowId)}"]`);
-        if (row) {
-          window.scrollTo({
-            top: window.scrollY + row.getBoundingClientRect().top - NAVBAR_OFFSET,
-            behavior: 'smooth',
-          });
+      // Pas encore calé : chercher le premier accord correspondant au début.
+      if (pos < 0) {
+        for (let k = 0; k < LOOKAHEAD && k < seq.length; k++) {
+          if (chordsMatch(c, seq[k].sound)) { advanceTo(k); return; }
         }
         return;
       }
-    }
-    // Aucun accord attendu à venir ne correspond → on attend (pas de recul)
-  }, [chord, listening, followMode]);
+
+      // L'accord courant sonne encore.
+      if (chordsMatch(c, seq[pos].sound)) {
+        const next = seq[pos + 1];
+        // Suite du même accord : avancer au tempo (durée de la cellule écoulée).
+        if (next && chordsMatch(c, next.sound) &&
+            performance.now() - enteredAtRef.current >= seq[pos].durationMs * DWELL_RATIO) {
+          advanceTo(pos + 1);
+        }
+        return;
+      }
+
+      // Changement d'accord : avancer vers la prochaine cellule qui correspond.
+      for (let k = 1; k <= LOOKAHEAD; k++) {
+        const idx = pos + k;
+        if (idx >= seq.length) break;
+        if (chordsMatch(c, seq[idx].sound)) { advanceTo(idx); return; }
+      }
+      // Rien devant ne correspond → on attend (pas de recul).
+    }, TICK_MS);
+
+    return () => {
+      clearInterval(id);
+      clearClass('chord-current');
+    };
+  }, [listening, followMode]);
 
   useEffect(
     () => () => {
