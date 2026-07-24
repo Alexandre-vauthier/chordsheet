@@ -201,13 +201,29 @@ export function SheetCard({
             </button>
           )}
 
-          {/* Menu 3 points — actions collection (tout user connecté) + édition (propriétaire) */}
-          {(onDelete || user) && (
-            <div className="absolute top-2.5 right-2.5 z-20">
-              <button
-                onClick={e => { e.preventDefault(); e.stopPropagation(); setMenuOpen(v => !v); }}
-                className="w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
-              >
+          {/* Actions haut-droite : favori (étoile) + menu 3 points, côte à côte —
+              évite le chevauchement avec le bouton play en bas à droite */}
+          {(onToggleBookmark || onDelete || user) && (
+            <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1.5">
+              {onToggleBookmark && (
+                <button
+                  onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleBookmark(); }}
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-base leading-none backdrop-blur-sm transition-all hover:bg-black/70 ${
+                    isBookmarked
+                      ? 'bg-black/50 text-amber-400 opacity-100'
+                      : 'bg-black/50 text-white opacity-0 group-hover:opacity-100 hover:text-amber-400'
+                  }`}
+                  title={isBookmarked ? t('removeFromBook') : t('addToBook')}
+                >
+                  {isBookmarked ? '★' : '☆'}
+                </button>
+              )}
+              {(onDelete || user) && (
+                <div className="relative">
+                  <button
+                    onClick={e => { e.preventDefault(); e.stopPropagation(); setMenuOpen(v => !v); }}
+                    className="w-7 h-7 rounded-full bg-black/50 backdrop-blur-sm text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-black/70"
+                  >
                 <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                   <circle cx="10" cy="4.5" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="10" cy="15.5" r="1.5"/>
                 </svg>
@@ -260,6 +276,8 @@ export function SheetCard({
                       </button>
                     </>
                   )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -284,26 +302,13 @@ export function SheetCard({
           {/* Contenu au-dessus du fond flou */}
           <div className="relative z-10">
 
-            {/* Titre + bookmark sur la même ligne */}
-            <div className="flex items-start justify-between gap-2">
+            {/* Titre (le favori est désormais en haut à droite de la pochette) */}
+            <div className="min-w-0">
               <Link href={destination} className="min-w-0">
                 <h3 className={`font-bold text-base leading-tight line-clamp-2 group-hover:text-[var(--accent)] transition-colors ${artworkUrl ? 'text-white' : 'text-[var(--ink)]'}`}>
                   {sheet.title || t('untitled')}
                 </h3>
               </Link>
-              {onToggleBookmark && (
-                <button
-                  onClick={e => { e.preventDefault(); e.stopPropagation(); onToggleBookmark(); }}
-                  className={`text-lg leading-none shrink-0 transition-all mt-0.5 ${
-                    isBookmarked
-                      ? 'text-amber-400'
-                      : `${artworkUrl ? 'text-white/50' : 'text-[var(--ink-faint)]'} opacity-0 group-hover:opacity-100 hover:text-amber-400`
-                  }`}
-                  title={isBookmarked ? t('removeFromBook') : t('addToBook')}
-                >
-                  {isBookmarked ? '★' : '☆'}
-                </button>
-              )}
             </div>
 
             {/* Artiste + rating sur la même ligne */}
