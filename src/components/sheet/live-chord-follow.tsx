@@ -25,7 +25,7 @@ export interface FollowSeqItem {
 }
 
 const LOOKAHEAD = 4;       // cellules à venir scrutées pour un changement d'accord
-const NAVBAR_OFFSET = 68;  // hauteur navbar + marge pour le défilement
+const NAVBAR_OFFSET = 104; // hauteur du bandeau fixe + marge de confort au-dessus de la cellule
 const TICK_MS = 100;       // fréquence du suivi
 const DWELL_RATIO = 0.85;  // fraction de la durée d'une cellule avant d'avancer sur un accord répété
 
