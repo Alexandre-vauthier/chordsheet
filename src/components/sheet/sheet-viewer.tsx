@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { Sheet, CellSpan, InstrumentId } from '@/types';
 import { INSTRUMENTS } from '@/types';
 import { ChordSummary, InstrumentSelector, ChordDiagram, PianoKeyboard } from '@/components/chord';
@@ -10,7 +10,7 @@ import { isPianoChord } from '@/types';
 import { useChordNotation } from '@/lib/use-chord-notation';
 import { useChordColor } from '@/lib/use-chord-color';
 import { transposeChord } from '@/lib/transpose';
-import { usePlayback, parseTempo } from '@/lib/use-playback';
+import { usePlayback, parseTempo, buildChordSequence } from '@/lib/use-playback';
 import { useGrooveBox } from '@/lib/use-groove-box';
 import type { PlayStep } from '@/lib/use-playback';
 import { useArtwork } from '@/lib/use-artwork';
@@ -147,6 +147,18 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
 
   const displaySections = transposeSections(sheet.sections, transpose);
   const displayKey = transposeKey(sheet.key, transpose);
+
+  // Séquence ordonnée pour le suivi micro : chaque cellule dans l'ordre de
+  // lecture, avec le son réellement entendu (forme transposée + capo effectif).
+  const followSequence = useMemo(
+    () =>
+      buildChordSequence(displaySections).map((it) => ({
+        pos: it.pos,
+        rowId: it.rowId,
+        sound: effectiveCapo > 0 ? transposeChord(it.chord, effectiveCapo) : it.chord,
+      })),
+    [displaySections, effectiveCapo],
+  );
 
   // Y a-t-il au moins une section en doublon ?
   const hasRepeatedSections = (() => {
@@ -808,6 +820,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                         return (
                           <ViewerChordCell
                             key={cellIndex}
+                            pos={`${section.id}:${rowIndex}:${cellIndex}`}
                             chord={cell.chord}
                             span={cell.span}
                             isActive={isActive}
@@ -842,8 +855,8 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
         ))}
       </div>
 
-      {/* Suivi micro (surlignage de l'accord joué) — bouton flottant */}
-      {instrumentId !== 'voice' && <LiveChordFollow />}
+      {/* Suivi micro (surlignage / suivi de position) — bouton flottant */}
+      {instrumentId !== 'voice' && <LiveChordFollow sequence={followSequence} />}
 
       {/* Paroles — visibles uniquement en mode Voix */}
       {sheet.lyrics && instrumentId === 'voice' && (
@@ -879,6 +892,7 @@ function resolveCustomChord(
 }
 
 function ViewerChordCell({
+  pos,
   chord,
   span,
   isActive,
@@ -893,6 +907,7 @@ function ViewerChordCell({
   showInlineDiagram,
   capo = 0,
 }: {
+  pos?: string;
   chord: string;
   span: CellSpan;
   isActive: boolean;
@@ -958,6 +973,7 @@ function ViewerChordCell({
     // (0 si le joueur a désactivé le capo). Sans capo, chord inchangé.
     <div
       {...(isConcertActive ? { 'data-concert-active': '' } : {})}
+      data-pos={pos}
       data-chord={capo > 0 ? transposeChord(chord, capo) : chord}
       style={{
         gridColumn: `span ${spanToGridCols(span)}`,

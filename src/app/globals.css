@@ -94,6 +94,16 @@ body {
   transition: box-shadow 80ms ease-out;
 }
 
+/* Cellule courante en mode Suivi de position (plus marquée, pulsée). */
+.chord-current {
+  box-shadow: 0 0 0 3px var(--accent), 0 0 22px -2px var(--accent);
+  animation: chordCurrentPulse 1.2s ease-in-out infinite;
+}
+@keyframes chordCurrentPulse {
+  0%, 100% { box-shadow: 0 0 0 3px var(--accent), 0 0 22px -2px var(--accent); }
+  50%      { box-shadow: 0 0 0 3px var(--accent), 0 0 8px -2px var(--accent); }
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

@@ -51,6 +51,44 @@ function buildSequence(sections: Section[], beatMs: number): PlayStep[] {
   return steps;
 }
 
+export interface ChordSeqItem {
+  sectionId: string;
+  rowIndex: number;
+  cellIndex: number;
+  rowId: string; // data-row-id de la mesure (pour le défilement)
+  pos: string;   // data-pos de la cellule (pour le surlignage ciblé)
+  chord: string;
+}
+
+// Séquence ordonnée des cellules porteuses d'accord, dans l'ordre de lecture
+// (sections, répétitions de section puis de mesure). Base du suivi micro.
+export function buildChordSequence(sections: Section[]): ChordSeqItem[] {
+  const seq: ChordSeqItem[] = [];
+  for (const section of sections) {
+    for (let rep = 0; rep < (section.repeat || 1); rep++) {
+      for (let r = 0; r < section.rows.length; r++) {
+        const rowRepeat = section.rowRepeats?.[r] ?? 1;
+        for (let rr = 0; rr < rowRepeat; rr++) {
+          const row = section.rows[r];
+          for (let c = 0; c < row.length; c++) {
+            const chord = row[c].chord?.trim();
+            if (!chord) continue;
+            seq.push({
+              sectionId: section.id,
+              rowIndex: r,
+              cellIndex: c,
+              rowId: `${section.id}-${r}`,
+              pos: `${section.id}:${r}:${c}`,
+              chord,
+            });
+          }
+        }
+      }
+    }
+  }
+  return seq;
+}
+
 type TempoUnit = 'quarter' | 'eighth';
 
 const TEMPO_UNIT_FACTOR: Record<TempoUnit, number> = {
