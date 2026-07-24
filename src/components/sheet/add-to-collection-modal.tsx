@@ -135,7 +135,7 @@ export function AddToCollectionModal({ sheet, initialTab = 'set', onClose }: Pro
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md bg-[var(--paper)] border border-[var(--line)] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
+        className="w-full max-w-md bg-[var(--cream)] border border-[var(--line)] rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]"
         onClick={e => e.stopPropagation()}
       >
         {/* En-tête */}
@@ -166,7 +166,7 @@ export function AddToCollectionModal({ sheet, initialTab = 'set', onClose }: Pro
                 onClick={() => { setTab(v); setSearch(''); }}
                 className={`flex-1 text-sm font-medium py-1.5 rounded-md transition-colors ${
                   tab === v
-                    ? 'bg-[var(--paper)] text-[var(--accent)] shadow-sm'
+                    ? 'bg-[var(--accent-soft)] text-[var(--accent)] shadow-sm'
                     : 'text-[var(--ink-light)] hover:text-[var(--ink)]'
                 }`}
               >
