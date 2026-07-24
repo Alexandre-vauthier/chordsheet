@@ -1,31 +1,28 @@
 'use client';
 
-// Suivi micro dans la consultation d'une grille.
-// Deux modes :
-//  - Surlignage (par défaut, robuste) : allume toutes les cellules dont l'accord
-//    correspond à ce qui est joué. Aucun suivi de position.
-//  - Suivi (opt-in, plus fragile) : n'allume que la prochaine cellule attendue et
-//    fait défiler. Piloté par un intervalle (et non par le seul changement
-//    d'accord) pour gérer les suites d'un MÊME accord : sur un changement
-//    d'accord on avance tout de suite ; sur une répétition du même accord on
-//    avance au tempo (durée de la cellule), ce qui resynchronise à chaque
-//    changement. Avance uniquement vers l'avant, ne recule jamais.
+// Suivi micro dans la consultation d'une grille : bouton REC → micro → on
+// n'allume que la prochaine cellule attendue et on fait défiler.
+// Piloté par un intervalle (et non par le seul changement d'accord) pour gérer
+// les suites d'un MÊME accord : sur un changement d'accord on avance tout de
+// suite ; sur une répétition du même accord on avance au tempo (durée de la
+// cellule), ce qui resynchronise à chaque changement. Avance uniquement vers
+// l'avant, ne recule jamais.
 // L'écoute vit dans CE composant isolé (ses mises à jour ~10 Hz ne re-rendent pas
-// le sheet-viewer) et le surlignage se fait par le DOM (toggle de classe).
+// le sheet-viewer) ; le surlignage se fait par le DOM (toggle de classe).
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useChordListener } from '@/lib/use-chord-listener';
 import { chordsMatch } from '@/lib/chord-match';
 
 export interface FollowSeqItem {
-  pos: string;      // data-pos de la cellule
-  rowId: string;    // data-row-id de la mesure (défilement)
-  sound: string;    // accord réellement entendu (forme + capo effectif)
+  pos: string;        // data-pos de la cellule
+  rowId: string;      // data-row-id de la mesure (défilement)
+  sound: string;      // accord réellement entendu (forme + capo effectif)
   durationMs: number; // durée de la cellule au tempo courant
 }
 
 const LOOKAHEAD = 4;       // cellules à venir scrutées pour un changement d'accord
-const NAVBAR_OFFSET = 104; // hauteur du bandeau fixe + marge de confort au-dessus de la cellule
+const NAVBAR_OFFSET = 104; // hauteur du bandeau fixe + marge de confort
 const TICK_MS = 100;       // fréquence du suivi
 const DWELL_RATIO = 0.85;  // fraction de la durée d'une cellule avant d'avancer sur un accord répété
 
@@ -33,9 +30,14 @@ function clearClass(cls: string) {
   document.querySelectorAll<HTMLElement>('.' + cls).forEach((el) => el.classList.remove(cls));
 }
 
-export function LiveChordFollow({ sequence }: { sequence: FollowSeqItem[] }) {
+export function LiveChordFollow({
+  sequence,
+  onListeningChange,
+}: {
+  sequence: FollowSeqItem[];
+  onListeningChange?: (listening: boolean) => void;
+}) {
   const { listening, chord, start, stop, error } = useChordListener();
-  const [followMode, setFollowMode] = useState(false);
 
   const seqRef = useRef<FollowSeqItem[]>(sequence);
   const latestChordRef = useRef('');
@@ -44,24 +46,12 @@ export function LiveChordFollow({ sequence }: { sequence: FollowSeqItem[] }) {
 
   useEffect(() => { seqRef.current = sequence; posRef.current = -1; }, [sequence]);
   useEffect(() => { latestChordRef.current = chord; }, [chord]);
+  useEffect(() => { onListeningChange?.(listening); }, [listening, onListeningChange]);
 
-  // Mode surlignage (piloté par le changement d'accord) — allume toutes les
-  // cellules correspondantes. Désactivé quand le mode suivi est actif.
   useEffect(() => {
-    if (followMode) return;
-    if (!listening || !chord) { clearClass('chord-detected'); return; }
-    clearClass('chord-current');
-    document.querySelectorAll<HTMLElement>('[data-chord]').forEach((el) => {
-      el.classList.toggle('chord-detected', chordsMatch(chord, el.dataset.chord || ''));
-    });
-  }, [chord, listening, followMode]);
-
-  // Mode suivi (piloté par intervalle) — avance dans la grille.
-  useEffect(() => {
-    if (!listening || !followMode) return;
+    if (!listening) return;
     posRef.current = -1;
     enteredAtRef.current = 0;
-    clearClass('chord-detected');
     clearClass('chord-current');
 
     const advanceTo = (idx: number) => {
@@ -120,15 +110,9 @@ export function LiveChordFollow({ sequence }: { sequence: FollowSeqItem[] }) {
       clearInterval(id);
       clearClass('chord-current');
     };
-  }, [listening, followMode]);
+  }, [listening]);
 
-  useEffect(
-    () => () => {
-      clearClass('chord-detected');
-      clearClass('chord-current');
-    },
-    [],
-  );
+  useEffect(() => () => clearClass('chord-current'), []);
 
   return (
     <div className="fixed bottom-5 right-5 z-40 flex items-end gap-3 print:hidden">
@@ -141,42 +125,22 @@ export function LiveChordFollow({ sequence }: { sequence: FollowSeqItem[] }) {
         </div>
       )}
 
-      <div className="flex flex-col items-end gap-2">
-        {listening && (
-          <button
-            onClick={() => setFollowMode((v) => !v)}
-            title={
-              followMode
-                ? 'Suivi de position actif — n’allume que l’accord attendu et fait défiler'
-                : 'Surlignage — allume tous les accords joués (cliquer pour suivre la position)'
-            }
-            className={`text-xs px-3 py-1.5 rounded-full border shadow-sm transition-colors ${
-              followMode
-                ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
-                : 'bg-[var(--cream)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)]'
-            }`}
-          >
-            {followMode ? 'Suivi' : 'Surlignage'}
-          </button>
+      <div className="relative">
+        {error && (
+          <div className="absolute bottom-full mb-2 right-0 whitespace-nowrap text-xs text-red-500 bg-[var(--cream)] border border-[var(--line)] rounded-lg px-2 py-1 shadow">
+            Micro indisponible
+          </div>
         )}
-
-        <div className="relative">
-          {error && (
-            <div className="absolute bottom-full mb-2 right-0 whitespace-nowrap text-xs text-red-500 bg-[var(--cream)] border border-[var(--line)] rounded-lg px-2 py-1 shadow">
-              Micro indisponible
-            </div>
-          )}
-          <button
-            onClick={listening ? stop : start}
-            title={listening ? 'Arrêter le suivi micro' : 'Suivre au micro — surligne l’accord joué'}
-            className={`flex items-center gap-2 h-12 px-4 rounded-full shadow-lg font-semibold text-white transition-colors ${
-              listening ? 'bg-red-600 hover:bg-red-700' : 'bg-[var(--accent)] hover:bg-[#a83d25]'
-            }`}
-          >
-            <span className={`w-3 h-3 rounded-full bg-white ${listening ? 'animate-pulse' : ''}`} />
-            <span className="text-sm">{listening ? 'Stop' : 'REC'}</span>
-          </button>
-        </div>
+        <button
+          onClick={listening ? stop : start}
+          title={listening ? 'Arrêter le suivi micro' : 'Suivre au micro — surligne l’accord joué et fait défiler'}
+          className={`flex items-center gap-2 h-12 px-4 rounded-full shadow-lg font-semibold text-white transition-colors ${
+            listening ? 'bg-red-600 hover:bg-red-700' : 'bg-[var(--accent)] hover:bg-[#a83d25]'
+          }`}
+        >
+          <span className={`w-3 h-3 rounded-full bg-white ${listening ? 'animate-pulse' : ''}`} />
+          <span className="text-sm">{listening ? 'Stop' : 'REC'}</span>
+        </button>
       </div>
     </div>
   );

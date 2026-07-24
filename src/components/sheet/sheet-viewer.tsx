@@ -129,6 +129,9 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
 
   const [metronomeEnabled, setMetronomeEnabled] = useState(() => user?.defaultMetronome ?? false);
   const [grooveEnabled, setGrooveEnabled] = useState(() => user?.defaultGrooveBox ?? false);
+  // Écoute micro en cours (remontée par LiveChordFollow) : sert à démarrer la
+  // boîte à rythme pendant le suivi si elle est activée.
+  const [recListening, setRecListening] = useState(false);
   const [chordsEnabled, setChordsEnabled] = useState(() => user?.defaultChordsAudio ?? true);
   const [countInEnabled, setCountInEnabled] = useState(() => user?.defaultCountIn ?? false);
   const [countBeat, setCountBeat] = useState(0); // 0 = inactif, 1-4 = décompte
@@ -250,7 +253,9 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   }, [concertCellPath?.sectionIdx, concertCellPath?.rowIdx]);
 
   useGrooveBox({
-    enabled: isPlaying,
+    // Tourne pendant la lecture, ou pendant le suivi micro si la boîte à rythme
+    // est activée (jouer sur un rythme pendant que le REC suit la grille).
+    enabled: isPlaying || (recListening && grooveEnabled),
     muted: !grooveEnabled,
     bpm: (() => { const b = parseTempo(localTempo); return b > 100 ? Math.round(b / 2) : b; })(),
     beatsPerMeasure: sheet.beatsPerMeasure ?? 4,
@@ -858,8 +863,10 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
         ))}
       </div>
 
-      {/* Suivi micro (surlignage / suivi de position) — bouton flottant */}
-      {instrumentId !== 'voice' && <LiveChordFollow sequence={followSequence} />}
+      {/* Suivi micro (suivi de position + défilement) — bouton flottant */}
+      {instrumentId !== 'voice' && (
+        <LiveChordFollow sequence={followSequence} onListeningChange={setRecListening} />
+      )}
 
       {/* Paroles — visibles uniquement en mode Voix */}
       {sheet.lyrics && instrumentId === 'voice' && (
