@@ -16,10 +16,11 @@ interface Template {
   penalty: number; // biais de simplicité : retranché du score cosinus au matching
 }
 
-// Un accord enrichi (4 notes) ne doit l'emporter sur la triade que s'il la bat
-// de plus de COLOR_PENALTY. Sinon les harmoniques (ex. la quinte de la tierce)
-// font gagner à tort un maj7/7/6 sur une simple triade jouée proprement.
-const COLOR_PENALTY = 0.04;
+// Prior par famille : biais retranché du score cosinus au matching. maj/min sont
+// les plus courants et sans biais ; les accords enrichis ou ambigus (sus, dim,
+// aug, 6, 7…) ne l'emportent que s'ils battent nettement la triade. Sinon les
+// harmoniques et les transitions (tierce encore faible → fondamentale + quinte)
+// font gagner à tort un sus4/maj7/6 sur un simple maj ou min.
 
 function l2normalize(v: number[]): number[] {
   let n = 0;
@@ -33,19 +34,19 @@ function l2normalize(v: number[]): number[] {
 // triades simples ne soient pas systématiquement étiquetées en accords enrichis.
 // Rappel : le chromagramme ne voit que les 12 classes de notes, donc les accords
 // faits des mêmes notes sont indiscernables (ex. C6 = Am7).
-const QUALITIES: { suffix: string; intervals: [number, number][] }[] = [
-  { suffix: '',      intervals: [[0, 1], [4, 1], [7, 1]] },            // majeur
-  { suffix: 'm',     intervals: [[0, 1], [3, 1], [7, 1]] },            // mineur
-  { suffix: '7',     intervals: [[0, 1], [4, 1], [7, 1], [10, 0.7]] }, // dominante 7
-  { suffix: 'm7',    intervals: [[0, 1], [3, 1], [7, 1], [10, 0.7]] }, // mineur 7
-  { suffix: 'maj7',  intervals: [[0, 1], [4, 1], [7, 1], [11, 0.7]] }, // majeur 7
-  { suffix: '6',     intervals: [[0, 1], [4, 1], [7, 1], [9, 0.7]] },  // majeur 6
-  { suffix: 'm6',    intervals: [[0, 1], [3, 1], [7, 1], [9, 0.7]] },  // mineur 6
-  { suffix: 'sus2',  intervals: [[0, 1], [2, 1], [7, 1]] },            // sus2
-  { suffix: 'sus4',  intervals: [[0, 1], [5, 1], [7, 1]] },            // sus4
-  { suffix: 'dim',   intervals: [[0, 1], [3, 1], [6, 1]] },            // diminué
-  { suffix: 'aug',   intervals: [[0, 1], [4, 1], [8, 1]] },            // augmenté
-  { suffix: 'm7b5',  intervals: [[0, 1], [3, 1], [6, 1], [10, 0.7]] }, // demi-diminué
+const QUALITIES: { suffix: string; intervals: [number, number][]; penalty: number }[] = [
+  { suffix: '',      intervals: [[0, 1], [4, 1], [7, 1]],            penalty: 0 },     // majeur
+  { suffix: 'm',     intervals: [[0, 1], [3, 1], [7, 1]],            penalty: 0 },     // mineur
+  { suffix: '7',     intervals: [[0, 1], [4, 1], [7, 1], [10, 0.7]], penalty: 0.04 }, // dominante 7
+  { suffix: 'm7',    intervals: [[0, 1], [3, 1], [7, 1], [10, 0.7]], penalty: 0.04 }, // mineur 7
+  { suffix: 'maj7',  intervals: [[0, 1], [4, 1], [7, 1], [11, 0.7]], penalty: 0.05 }, // majeur 7
+  { suffix: '6',     intervals: [[0, 1], [4, 1], [7, 1], [9, 0.7]],  penalty: 0.05 }, // majeur 6
+  { suffix: 'm6',    intervals: [[0, 1], [3, 1], [7, 1], [9, 0.7]],  penalty: 0.05 }, // mineur 6
+  { suffix: 'sus2',  intervals: [[0, 1], [2, 1], [7, 1]],            penalty: 0.06 }, // sus2
+  { suffix: 'sus4',  intervals: [[0, 1], [5, 1], [7, 1]],            penalty: 0.06 }, // sus4
+  { suffix: 'dim',   intervals: [[0, 1], [3, 1], [6, 1]],            penalty: 0.06 }, // diminué
+  { suffix: 'aug',   intervals: [[0, 1], [4, 1], [8, 1]],            penalty: 0.07 }, // augmenté
+  { suffix: 'm7b5',  intervals: [[0, 1], [3, 1], [6, 1], [10, 0.7]], penalty: 0.06 }, // demi-diminué
 ];
 
 function makeTemplates(): Template[] {
@@ -56,9 +57,7 @@ function makeTemplates(): Template[] {
       for (const [semitone, weight] of q.intervals) {
         vec[(i + semitone) % 12] = weight;
       }
-      // Triades (3 notes) : aucun biais. Accords enrichis (4 notes) : pénalisés.
-      const penalty = q.intervals.length >= 4 ? COLOR_PENALTY : 0;
-      templates.push({ name: `${NOTES[i]}${q.suffix}`, vec: l2normalize(vec), penalty });
+      templates.push({ name: `${NOTES[i]}${q.suffix}`, vec: l2normalize(vec), penalty: q.penalty });
     }
   }
   return templates;
