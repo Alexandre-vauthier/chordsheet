@@ -13,7 +13,13 @@ const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 interface Template {
   name: string;
   vec: number[];
+  penalty: number; // biais de simplicité : retranché du score cosinus au matching
 }
+
+// Un accord enrichi (4 notes) ne doit l'emporter sur la triade que s'il la bat
+// de plus de COLOR_PENALTY. Sinon les harmoniques (ex. la quinte de la tierce)
+// font gagner à tort un maj7/7/6 sur une simple triade jouée proprement.
+const COLOR_PENALTY = 0.04;
 
 function l2normalize(v: number[]): number[] {
   let n = 0;
@@ -50,7 +56,9 @@ function makeTemplates(): Template[] {
       for (const [semitone, weight] of q.intervals) {
         vec[(i + semitone) % 12] = weight;
       }
-      templates.push({ name: `${NOTES[i]}${q.suffix}`, vec: l2normalize(vec) });
+      // Triades (3 notes) : aucun biais. Accords enrichis (4 notes) : pénalisés.
+      const penalty = q.intervals.length >= 4 ? COLOR_PENALTY : 0;
+      templates.push({ name: `${NOTES[i]}${q.suffix}`, vec: l2normalize(vec), penalty });
     }
   }
   return templates;
@@ -166,15 +174,17 @@ export function useChordListener() {
         const chromaViz = chroma.map((x) => x / maxBin);
         const chromaNorm = l2normalize(chroma);
 
-        // Score de tous les templates, tri décroissant
+        // Score cosinus de tous les templates ; classement sur le score ajusté
+        // (cosinus - biais de simplicité), mais on conserve le cosinus brut pour
+        // l'affichage de la confiance.
         const scored = TEMPLATES.map((t) => {
           let dot = 0;
           for (let j = 0; j < 12; j++) dot += chromaNorm[j] * t.vec[j];
-          return { name: t.name, score: dot };
-        }).sort((a, b) => b.score - a.score);
+          return { name: t.name, score: dot, adj: dot - t.penalty };
+        }).sort((a, b) => b.adj - a.adj);
 
         const best = scored[0];
-        const gate = energy > 1e-3 && best.score > SCORE_GATE;
+        const gate = energy > 1e-3 && best.adj > SCORE_GATE;
         const detected = gate ? best.name : '';
 
         // Lissage : vote majoritaire sur les dernières analyses
