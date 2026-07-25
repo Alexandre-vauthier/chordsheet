@@ -12,7 +12,7 @@ import { useChordColor } from '@/lib/use-chord-color';
 import { transposeChord } from '@/lib/transpose';
 import { usePlayback, parseTempo, buildChordSequence } from '@/lib/use-playback';
 import { useGrooveBox, PATTERN_DEFS } from '@/lib/use-groove-box';
-import type { PlayStep } from '@/lib/use-playback';
+import type { PlayStep, PlayStyle, PlaybackVoice } from '@/lib/use-playback';
 import { useArtwork } from '@/lib/use-artwork';
 import { useAuth } from '@/lib/auth-context';
 import { INSTRUMENT_CONFIG, findChordVariants, parseChordInput } from '@/lib/chord-data';
@@ -42,15 +42,25 @@ function hasLocalInstrument(): boolean {
 const ACCOMPANIMENT_INSTRUMENTS: InstrumentId[] = ['guitar', 'bass', 'piano', 'mandolin', 'banjo', 'ukulele'];
 const ACCOMP_LS_KEY = 'chordsheet_accompaniment';
 
-function getSavedAccompaniment(fallback: InstrumentId[]): InstrumentId[] {
+// Map instrument -> style de jeu (plaqué / arpège). Une entrée = instrument activé.
+type AccompMap = Record<string, PlayStyle>;
+
+function getSavedAccompaniment(fallback: AccompMap): AccompMap {
   if (typeof window === 'undefined') return fallback;
   try {
     const raw = localStorage.getItem(ACCOMP_LS_KEY);
     if (!raw) return fallback;
-    const arr = JSON.parse(raw);
-    if (Array.isArray(arr)) {
-      return arr.filter((x): x is InstrumentId => ACCOMPANIMENT_INSTRUMENTS.includes(x));
+    const parsed = JSON.parse(raw);
+    const out: AccompMap = {};
+    if (Array.isArray(parsed)) {
+      // Ancien format : liste d'instruments → tous en plaqué.
+      for (const x of parsed) if (ACCOMPANIMENT_INSTRUMENTS.includes(x)) out[x] = 'block';
+    } else if (parsed && typeof parsed === 'object') {
+      for (const [k, v] of Object.entries(parsed)) {
+        if (ACCOMPANIMENT_INSTRUMENTS.includes(k as InstrumentId)) out[k] = v === 'arpeggio' ? 'arpeggio' : 'block';
+      }
     }
+    return out;
   } catch { /* JSON invalide */ }
   return fallback;
 }
@@ -161,27 +171,40 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   // Lignes actives pendant le suivi micro (pour faire clignoter et décrémenter
   // leurs badges de répétition).
   const [recActiveRows, setRecActiveRows] = useState<ActiveRow[]>([]);
-  // Instruments d'accompagnement joués (Play + suivi REC). Vide = pas de son.
-  // Par défaut : l'instrument principal si la préférence "lire les accords" est active.
-  const [accompaniment, setAccompaniment] = useState<InstrumentId[]>(() => {
-    const fallback = user?.defaultChordsAudio === false
-      ? []
-      : [hasLocalInstrument() ? getSavedInstrument('guitar') : (sheet.instrumentId ?? 'guitar')];
-    return getSavedAccompaniment(fallback).filter((i) => ACCOMPANIMENT_INSTRUMENTS.includes(i));
+  // Accompagnement joué (Play + suivi REC) : instrument -> style (plaqué / arpège).
+  // Par défaut : l'instrument principal en plaqué si la préférence "lire les accords" est active.
+  const [accompaniment, setAccompaniment] = useState<AccompMap>(() => {
+    const fallback: AccompMap = user?.defaultChordsAudio === false
+      ? {}
+      : { [hasLocalInstrument() ? getSavedInstrument('guitar') : (sheet.instrumentId ?? 'guitar')]: 'block' };
+    return getSavedAccompaniment(fallback);
   });
   const [accompMenuOpen, setAccompMenuOpen] = useState(false);
   const accompMenuRef = useRef<HTMLDivElement>(null);
 
+  const persistAccompaniment = (next: AccompMap) => {
+    if (typeof window !== 'undefined') localStorage.setItem(ACCOMP_LS_KEY, JSON.stringify(next));
+    return next;
+  };
   const toggleAccompaniment = (inst: InstrumentId) => {
     setAccompaniment((prev) => {
-      const next = prev.includes(inst) ? prev.filter((i) => i !== inst) : [...prev, inst];
-      if (typeof window !== 'undefined') localStorage.setItem(ACCOMP_LS_KEY, JSON.stringify(next));
-      return next;
+      const next = { ...prev };
+      if (inst in next) delete next[inst]; else next[inst] = 'block';
+      return persistAccompaniment(next);
     });
   };
+  const setAccompStyle = (inst: InstrumentId, style: PlayStyle) => {
+    setAccompaniment((prev) => persistAccompaniment({ ...prev, [inst]: style }));
+  };
+
+  const accompVoices: PlaybackVoice[] = useMemo(
+    () => Object.entries(accompaniment).map(([id, style]) => ({ id: id as InstrumentId, style })),
+    [accompaniment],
+  );
+  const accompCount = accompVoices.length;
 
   // Précharger le son de chaque instrument d'accompagnement
-  useEffect(() => { accompaniment.forEach(preloadInstrument); }, [accompaniment]);
+  useEffect(() => { accompVoices.forEach((v) => preloadInstrument(v.id)); }, [accompVoices]);
 
   // Fermer le menu au clic extérieur
   useEffect(() => {
@@ -242,11 +265,11 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
     tempo: localTempo,
     tempoUnit: localTempoUnit,
     instrumentId,
-    playbackInstruments: accompaniment,
+    playbackInstruments: accompVoices,
     customChords: sheet.customChords as Record<string, unknown>,
     selectedChords,
     metronomeEnabled,
-    chordsEnabled: accompaniment.length > 0,
+    chordsEnabled: accompCount > 0,
     capo: sheet.capo ?? 0,
   });
 
@@ -254,15 +277,16 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   // d'accompagnement — utilisé par le suivi micro à chaque changement d'accord.
   // Pendant le REC, on ne joue l'accompagnement QUE si la boîte à rythme est
   // cochée (sinon le suivi reste silencieux, purement visuel).
+  // En REC l'accompagnement reste en plaqué (l'arpège au tempo est réservé au Play).
   const playAccompanimentChord = useCallback((chordName: string) => {
-    if (!grooveEnabled || !accompaniment.length) return;
+    if (!grooveEnabled || !accompVoices.length) return;
     const parsed = parseChordInput(chordName).chord;
-    for (const inst of accompaniment) {
-      const custom = (sheet.customChords as Record<string, CustomChord> | undefined)?.[`${parsed.toLowerCase()}-${inst}`];
-      const chordData = (custom as StringChord | PianoChord | undefined) ?? findChordVariants(parsed, inst)[0];
-      if (chordData) playChord(chordData, inst, 0); // le nom inclut déjà transposition + capo
+    for (const voice of accompVoices) {
+      const custom = (sheet.customChords as Record<string, CustomChord> | undefined)?.[`${parsed.toLowerCase()}-${voice.id}`];
+      const chordData = (custom as StringChord | PianoChord | undefined) ?? findChordVariants(parsed, voice.id)[0];
+      if (chordData) playChord(chordData, voice.id, 0); // le nom inclut déjà transposition + capo
     }
-  }, [grooveEnabled, accompaniment, sheet.customChords]);
+  }, [grooveEnabled, accompVoices, sheet.customChords]);
 
   const bpm = parseTempo(sheet.tempo);
 
@@ -598,7 +622,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   title={t('chordAudioInstruments')}
                   className={`
                     relative flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
-                    ${accompaniment.length > 0
+                    ${accompCount > 0
                       ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
                       : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
                     }
@@ -609,34 +633,50 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                     <circle cx="6" cy="18" r="3"/>
                     <circle cx="18" cy="16" r="3"/>
                   </svg>
-                  {accompaniment.length > 0 && (
+                  {accompCount > 0 && (
                     <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-[var(--ink)] text-white text-[10px] font-bold">
-                      {accompaniment.length}
+                      {accompCount}
                     </span>
                   )}
                 </button>
                 {accompMenuOpen && (
-                  <div className="absolute right-0 top-full mt-1 z-50 w-48 bg-[var(--cream)] border border-[var(--line)] rounded-xl shadow-xl overflow-hidden py-1">
+                  <div className="absolute right-0 top-full mt-1 z-50 w-60 bg-[var(--cream)] border border-[var(--line)] rounded-xl shadow-xl overflow-hidden py-1">
                     <p className="px-3 py-1.5 text-[11px] uppercase tracking-wide text-[var(--ink-faint)]">
                       {t('chordAudioInstruments')}
                     </p>
                     {ACCOMPANIMENT_INSTRUMENTS.map((inst) => {
-                      const checked = accompaniment.includes(inst);
+                      const style = accompaniment[inst];
+                      const checked = style !== undefined;
                       return (
-                        <button
-                          key={inst}
-                          onClick={() => toggleAccompaniment(inst)}
-                          className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] transition-colors"
-                        >
-                          <span className={`flex items-center justify-center w-4 h-4 rounded border ${checked ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : 'border-[var(--line)]'}`}>
-                            {checked && (
-                              <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </span>
-                          {INSTRUMENT_CONFIG[inst]?.label ?? inst}
-                        </button>
+                        <div key={inst} className="flex items-center gap-1 pr-2">
+                          <button
+                            onClick={() => toggleAccompaniment(inst)}
+                            className="flex-1 min-w-0 flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] transition-colors"
+                          >
+                            <span className={`shrink-0 flex items-center justify-center w-4 h-4 rounded border ${checked ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : 'border-[var(--line)]'}`}>
+                              {checked && (
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </span>
+                            <span className="truncate">{INSTRUMENT_CONFIG[inst]?.label ?? inst}</span>
+                          </button>
+                          {checked && (
+                            <div className="shrink-0 flex rounded-md border border-[var(--line)] overflow-hidden text-[10px]">
+                              {(['block', 'arpeggio'] as PlayStyle[]).map((s) => (
+                                <button
+                                  key={s}
+                                  onClick={() => setAccompStyle(inst, s)}
+                                  title={s === 'block' ? t('styleBlock') : t('styleArpeggio')}
+                                  className={`px-1.5 py-1 transition-colors ${style === s ? 'bg-[var(--accent)] text-white' : 'text-[var(--ink-light)] hover:bg-[var(--accent-soft)]'}`}
+                                >
+                                  {s === 'block' ? t('styleBlock') : t('styleArpeggio')}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       );
                     })}
                   </div>

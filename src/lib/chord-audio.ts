@@ -279,3 +279,68 @@ export function playChord(
 
   activeByInstrument.set(instrumentId, { nodes, stopFns: [] });
 }
+
+// Ordre montant-descendant sur les index des notes de l'accord :
+// 3 notes -> [0,1,2,1], 4 notes -> [0,1,2,3,2,1].
+function buildArpOrder(n: number): number[] {
+  if (n <= 1) return [0];
+  const order: number[] = [];
+  for (let i = 0; i < n; i++) order.push(i);
+  for (let i = n - 2; i >= 1; i--) order.push(i);
+  return order;
+}
+
+// Jouer un accord en arpège : ses notes une par une, cadencées (stepMs), sur
+// `steps` pas, motif montant-descendant. Utilisé en lecture (Play) pour un
+// accompagnement qui suit le tempo. Les voix sont indexées par instrument comme
+// playChord (chaque nouvel accord de l'instrument coupe l'arpège précédent).
+export function playArpeggio(
+  chord: StringChord | PianoChord,
+  instrumentId: InstrumentId,
+  capo = 0,
+  stepMs = 250,
+  steps = 8,
+): void {
+  const ctx = getAudioContext();
+  const isPiano = instrumentId === 'piano';
+
+  stopActiveChord(instrumentId);
+
+  const freqs = isPianoChord(chord)
+    ? getPianoChordFrequencies(chord, capo)
+    : getStringChordFrequencies(chord, instrumentId, capo);
+  if (!freqs.length) return;
+
+  const order = buildArpOrder(freqs.length);
+  const noteDecay = isPiano ? 1.4 : 1.1;
+  const vol = isPiano ? 0.24 : 0.3;
+  const sampled = isInstrumentSoundReady(instrumentId);
+
+  const nodes: { osc: OscillatorNode; gain: GainNode }[] = [];
+  const stopFns: (() => void)[] = [];
+
+  for (let k = 0; k < steps; k++) {
+    const t = ctx.currentTime + (k * stepMs) / 1000;
+    const freq = freqs[order[k % order.length]];
+
+    if (sampled) {
+      const stop = playSampledNote(instrumentId, freqToMidi(freq), t, noteDecay);
+      if (stop) stopFns.push(stop);
+      continue;
+    }
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = isPiano ? 'sine' : 'triangle';
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(vol, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + noteDecay);
+    osc.start(t);
+    osc.stop(t + noteDecay);
+    nodes.push({ osc, gain });
+  }
+
+  activeByInstrument.set(instrumentId, { nodes, stopFns });
+}

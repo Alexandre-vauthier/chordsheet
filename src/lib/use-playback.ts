@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { Section, Cell, InstrumentId, StringChord, PianoChord } from '@/types';
 import { findChordVariants, enharmonicEquivalent, parseChordInput } from '@/lib/chord-data';
-import { playChord, playMetronomeTick } from '@/lib/chord-audio';
+import { playChord, playArpeggio, playMetronomeTick } from '@/lib/chord-audio';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
 
 export interface PlayStep {
@@ -104,14 +104,20 @@ const TEMPO_UNIT_FACTOR: Record<TempoUnit, number> = {
   eighth: 0.5,
 };
 
+export type PlayStyle = 'block' | 'arpeggio';
+export interface PlaybackVoice {
+  id: InstrumentId;
+  style: PlayStyle;
+}
+
 interface UsePlaybackOptions {
   sections: Section[];
   tempo: string | undefined;
   tempoUnit?: TempoUnit;
   instrumentId: InstrumentId;
-  // Instruments joués simultanément à chaque accord (accompagnement). Défaut :
-  // le seul instrument principal. Vide = aucun son.
-  playbackInstruments?: InstrumentId[];
+  // Voix jouées simultanément à chaque accord (accompagnement), chacune avec son
+  // style (plaqué / arpège). Défaut : le seul instrument principal, plaqué.
+  playbackInstruments?: PlaybackVoice[];
   customChords?: Record<string, unknown>;
   selectedChords?: Record<string, StringChord | PianoChord>;
   metronomeEnabled?: boolean;
@@ -130,10 +136,10 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, playback
   const beatMsRef = useRef<number>((60 / parseTempo(tempo)) * 1000 * factor);
   const bpMeasureRef = useRef<number>(sections[0]?.beatsPerMeasure || 4);
   const chordsEnabledRef = useRef(chordsEnabled);
-  // Instruments d'accompagnement, lus sans redémarrer la lecture en cours.
-  const playbackInstrumentsRef = useRef<InstrumentId[]>(playbackInstruments ?? [instrumentId]);
+  // Voix d'accompagnement, lues sans redémarrer la lecture en cours.
+  const playbackVoicesRef = useRef<PlaybackVoice[]>(playbackInstruments ?? [{ id: instrumentId, style: 'block' }]);
   useEffect(() => {
-    playbackInstrumentsRef.current = playbackInstruments ?? [instrumentId];
+    playbackVoicesRef.current = playbackInstruments ?? [{ id: instrumentId, style: 'block' }];
   }, [playbackInstruments, instrumentId]);
 
   // Mettre à jour les refs quand tempo/tempoUnit/sections changent
@@ -228,10 +234,18 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, playback
       if (i === 0 && metronomeEnabledRef.current) playMetronomeTick(true);
       const cell = getCellFn(step);
       if (cell?.chord && chordsEnabledRef.current) {
-        // Jouer l'accord sur chaque instrument d'accompagnement (voix indépendantes)
-        for (const inst of playbackInstrumentsRef.current) {
-          const chordData = resolveChord(cell.chord, inst);
-          if (chordData) playChord(chordData, inst, capo);
+        // Jouer l'accord sur chaque voix d'accompagnement (voix indépendantes),
+        // plaqué ou en arpège calé au tempo (croches sur la durée de la cellule).
+        const eighthMs = beatMsRef.current / 2;
+        for (const voice of playbackVoicesRef.current) {
+          const chordData = resolveChord(cell.chord, voice.id);
+          if (!chordData) continue;
+          if (voice.style === 'arpeggio') {
+            const steps = Math.max(1, Math.round(step.durationMs / eighthMs));
+            playArpeggio(chordData, voice.id, capo, eighthMs, steps);
+          } else {
+            playChord(chordData, voice.id, capo);
+          }
         }
       }
       i++;
