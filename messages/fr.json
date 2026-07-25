@@ -37,6 +37,7 @@
     "privacy": "Confidentialité",
     "salesTerms": "CGV",
     "contact": "Contact",
+    "discord": "Discord",
     "copyright": "© {year} ChordSheet — Alexandre Vauthier"
   },
   "Landing": {
@@ -863,7 +864,10 @@
     "pageTitle": "Contact",
     "intro": "Une question, une erreur repérée dans la bibliothèque d'accords, une suggestion ou une demande d'ajout ? Écrivez-nous, on lit tous les messages.",
     "byEmail": "Par e-mail",
-    "reasons": "Correction ou ajout d'un accord, signalement d'un bug, idée d'amélioration : tout est le bienvenu."
+    "reasons": "Correction ou ajout d'un accord, signalement d'un bug, idée d'amélioration : tout est le bienvenu.",
+    "onDiscord": "Sur Discord",
+    "discordDesc": "Rejoins la communauté : échanges, entraide, questions et nouveautés.",
+    "joinDiscord": "Rejoindre le serveur"
   },
   "Faq": {
     "pageTitle": "Questions fréquentes",

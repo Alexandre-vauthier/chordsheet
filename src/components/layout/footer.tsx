@@ -37,6 +37,9 @@ export function Footer() {
             <Link href="/contact" className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-light)] transition-colors">
               {t('contact')}
             </Link>
+            <a href="https://discord.gg/SaH6dumEVg" target="_blank" rel="noopener noreferrer" className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-light)] transition-colors">
+              {t('discord')}
+            </a>
           </nav>
         </div>
       </div>

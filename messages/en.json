@@ -37,6 +37,7 @@
     "privacy": "Privacy",
     "salesTerms": "Terms of sale",
     "contact": "Contact",
+    "discord": "Discord",
     "copyright": "© {year} ChordSheet — Alexandre Vauthier"
   },
   "Landing": {
@@ -863,7 +864,10 @@
     "pageTitle": "Contact",
     "intro": "A question, an error spotted in the chord library, a suggestion or a request to add something? Write to us — we read every message.",
     "byEmail": "By email",
-    "reasons": "Fixing or adding a chord, reporting a bug, an improvement idea: all welcome."
+    "reasons": "Fixing or adding a chord, reporting a bug, an improvement idea: all welcome.",
+    "onDiscord": "On Discord",
+    "discordDesc": "Join the community: chat, help, questions and updates.",
+    "joinDiscord": "Join the server"
   },
   "Faq": {
     "pageTitle": "Frequently asked questions",
