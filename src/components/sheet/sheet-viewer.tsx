@@ -261,12 +261,12 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   // Cleanup au démontage
   useEffect(() => () => cancelCountIn(), [cancelCountIn]);
 
-  // Auto-scroll : ligne active en haut de l'écran (solo + concert)
+  // Auto-scroll : ligne active sous le bandeau fixe, avec marge de confort
+  // (même offset que le suivi micro, cf. NAVBAR_OFFSET dans live-chord-follow).
   const scrollToRow = useCallback((rowId: string) => {
     const el = document.querySelector(`[data-row-id="${rowId}"]`) as HTMLElement | null;
     if (!el) return;
-    const navbarHeight = 56;
-    window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top - navbarHeight - 12, behavior: 'smooth' });
+    window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top - 104, behavior: 'smooth' });
   }, []);
 
   const handlePlay = useCallback(() => {

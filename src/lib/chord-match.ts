@@ -1,10 +1,10 @@
 // Rapprochement souple entre un accord détecté au micro (notation américaine,
 // ex. "G", "Dm", "Gmaj7") et un accord écrit dans une grille.
 // On compare la fondamentale (classe de note, enharmonie #/b gérée) et la
-// couleur majeur/mineur. Les accords "sus" (sans tierce) matchent les deux
-// couleurs sur la même fondamentale. Volontairement tolérant : la détection
-// live est imparfaite, et cette étape ne fait que surligner, sans suivre la
-// position dans la grille.
+// couleur : majeur, mineur ou sus. Les "sus" forment leur propre couleur (ils
+// ne se confondent PAS avec le majeur/mineur de même fondamentale — ainsi D et
+// Dsus4 restent des accords distincts). Tolérance volontaire au niveau de la
+// famille : la détection ne distingue pas les enrichissements (C ~ Cmaj7 ~ C7).
 
 const NOTE_PC: Record<string, number> = {
   C: 0, 'B#': 0,
@@ -54,5 +54,7 @@ export function chordsMatch(detected: string, cellChord: string): boolean {
   const b = parseChord(cellChord);
   if (!a || !b) return false;
   if (a.pc !== b.pc) return false;
-  return a.family === b.family || a.family === 'sus' || b.family === 'sus';
+  // Même fondamentale ET même couleur (maj / min / sus). Un sus ne matche qu'un
+  // sus → D et Dsus4 ne fusionnent plus dans le suivi.
+  return a.family === b.family;
 }
