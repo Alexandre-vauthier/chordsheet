@@ -1,12 +1,15 @@
 'use client';
 
-// Suivi micro dans la consultation d'une grille : bouton REC → micro → on
-// n'allume que la prochaine cellule attendue et on fait défiler.
-// Piloté par un intervalle (et non par le seul changement d'accord) pour gérer
-// les suites d'un MÊME accord : sur un changement d'accord on avance tout de
-// suite ; sur une répétition du même accord on avance au tempo (durée de la
-// cellule), ce qui resynchronise à chaque changement. Avance uniquement vers
-// l'avant, ne recule jamais.
+// Suivi micro dans la consultation d'une grille : bouton Suivre → micro → on
+// surligne l'accord courant et on fait défiler.
+//
+// Principe : on regroupe les cellules consécutives d'un MÊME accord (ce que la
+// détection ne sait de toute façon pas distinguer) en un seul bloc. On surligne
+// tout le bloc courant et on n'avance qu'au bloc suivant lors d'un vrai
+// changement d'accord. Résultat : une suite F F F F ne « dérive » plus (elle est
+// surlignée en entier) et le passage à l'accord suivant est net et précis.
+// Avance uniquement vers l'avant, ne recule jamais, ne saute jamais un bloc.
+//
 // L'écoute vit dans CE composant isolé (ses mises à jour ~10 Hz ne re-rendent pas
 // le sheet-viewer) ; le surlignage se fait par le DOM (toggle de classe).
 
@@ -15,48 +18,72 @@ import { useChordListener } from '@/lib/use-chord-listener';
 import { chordsMatch } from '@/lib/chord-match';
 
 export interface FollowSeqItem {
-  pos: string;        // data-pos de la cellule
-  rowId: string;      // data-row-id de la mesure (défilement)
-  sound: string;      // accord réellement entendu (forme + capo effectif)
-  durationMs: number; // durée de la cellule au tempo courant
+  pos: string;   // data-pos de la cellule
+  rowId: string; // data-row-id de la mesure (défilement)
+  sound: string; // accord réellement entendu (forme + capo effectif)
 }
 
-const START_WINDOW = 4;    // cellules scrutées au tout début pour se caler
+// Un bloc = suite de cellules consécutives que la détection ne distingue pas.
+interface ChordGroup {
+  sound: string;      // accord représentatif du bloc
+  positions: string[]; // data-pos de toutes les cellules du bloc
+  rowId: string;      // mesure de la première cellule (pour le défilement)
+  rowIds: string[];   // toutes les mesures du bloc (pour le clignotement des répétitions)
+}
+
+const START_WINDOW = 4;    // blocs scrutés au tout début pour se caler
 const NAVBAR_OFFSET = 104; // hauteur du bandeau fixe + marge de confort
 const TICK_MS = 100;       // fréquence du suivi
-const DWELL_RATIO = 0.85;  // fraction de la durée d'une cellule avant d'avancer sur un accord répété
 
 function clearClass(cls: string) {
   document.querySelectorAll<HTMLElement>('.' + cls).forEach((el) => el.classList.remove(cls));
 }
 
+function buildGroups(seq: FollowSeqItem[]): ChordGroup[] {
+  const groups: ChordGroup[] = [];
+  for (const it of seq) {
+    const last = groups[groups.length - 1];
+    // Rejoint le bloc courant si l'accord ne s'en distingue pas (même famille+fond.).
+    if (last && chordsMatch(last.sound, it.sound)) {
+      last.positions.push(it.pos);
+      if (!last.rowIds.includes(it.rowId)) last.rowIds.push(it.rowId);
+    } else {
+      groups.push({ sound: it.sound, positions: [it.pos], rowId: it.rowId, rowIds: [it.rowId] });
+    }
+  }
+  return groups;
+}
+
 export function LiveChordFollow({
   sequence,
   onListeningChange,
+  onActiveRowsChange,
   grooveActive = false,
 }: {
   sequence: FollowSeqItem[];
   onListeningChange?: (listening: boolean) => void;
+  onActiveRowsChange?: (rowIds: string[]) => void;
   grooveActive?: boolean;
 }) {
   // Annulation d'écho activée si la boîte à rythme joue (évite le repiquage).
   const { listening, chord, start, stop, error } = useChordListener(grooveActive);
 
-  const seqRef = useRef<FollowSeqItem[]>(sequence);
+  const groupsRef = useRef<ChordGroup[]>(buildGroups(sequence));
   const latestChordRef = useRef('');
-  const posRef = useRef(-1);
-  const enteredAtRef = useRef(0);
+  const posRef = useRef(-1); // index du bloc courant
 
   const [autoStopped, setAutoStopped] = useState(false);
   const prevGrooveRef = useRef(grooveActive);
 
-  useEffect(() => { seqRef.current = sequence; posRef.current = -1; }, [sequence]);
+  useEffect(() => { groupsRef.current = buildGroups(sequence); posRef.current = -1; }, [sequence]);
   useEffect(() => { latestChordRef.current = chord; }, [chord]);
   useEffect(() => { onListeningChange?.(listening); }, [listening, onListeningChange]);
+  // Plus d'écoute → plus de ligne active (arrête le clignotement des répétitions).
+  useEffect(() => { if (!listening) onActiveRowsChange?.([]); }, [listening, onActiveRowsChange]);
 
   // Si on active la boîte à rythme alors que le suivi tourne déjà, l'annulation
-  // d'écho n'a pas été appliquée (elle est décidée au démarrage). On coupe donc
-  // le suivi pour inviter à le relancer proprement (anti-repiquage).
+  // d'écho n'a pas été appliquée (décidée au démarrage). On coupe donc le suivi
+  // pour inviter à le relancer proprement (anti-repiquage).
   useEffect(() => {
     const grooveJustEnabled = grooveActive && !prevGrooveRef.current;
     prevGrooveRef.current = grooveActive;
@@ -69,18 +96,19 @@ export function LiveChordFollow({
   useEffect(() => {
     if (!listening) return;
     posRef.current = -1;
-    enteredAtRef.current = 0;
     clearClass('chord-current');
 
-    const advanceTo = (idx: number) => {
-      const seq = seqRef.current;
+    const goToGroup = (idx: number) => {
+      const groups = groupsRef.current;
       posRef.current = idx;
-      enteredAtRef.current = performance.now();
       clearClass('chord-current');
-      document
-        .querySelector<HTMLElement>(`[data-pos="${CSS.escape(seq[idx].pos)}"]`)
-        ?.classList.add('chord-current');
-      const row = document.querySelector<HTMLElement>(`[data-row-id="${CSS.escape(seq[idx].rowId)}"]`);
+      for (const p of groups[idx].positions) {
+        document
+          .querySelector<HTMLElement>(`[data-pos="${CSS.escape(p)}"]`)
+          ?.classList.add('chord-current');
+      }
+      onActiveRowsChange?.(groups[idx].rowIds);
+      const row = document.querySelector<HTMLElement>(`[data-row-id="${CSS.escape(groups[idx].rowId)}"]`);
       if (row) {
         window.scrollTo({
           top: window.scrollY + row.getBoundingClientRect().top - NAVBAR_OFFSET,
@@ -92,34 +120,24 @@ export function LiveChordFollow({
     const id = setInterval(() => {
       const c = latestChordRef.current;
       if (!c) return;
-      const seq = seqRef.current;
-      if (!seq.length) return;
-      const pos = posRef.current;
+      const groups = groupsRef.current;
+      if (!groups.length) return;
+      const gpos = posRef.current;
 
-      // Pas encore calé : chercher le premier accord correspondant au début.
-      if (pos < 0) {
-        for (let k = 0; k < START_WINDOW && k < seq.length; k++) {
-          if (chordsMatch(c, seq[k].sound)) { advanceTo(k); return; }
+      // Pas encore calé : chercher le premier bloc correspondant au début.
+      if (gpos < 0) {
+        for (let k = 0; k < START_WINDOW && k < groups.length; k++) {
+          if (chordsMatch(c, groups[k].sound)) { goToGroup(k); return; }
         }
         return;
       }
 
-      // L'accord courant sonne encore.
-      if (chordsMatch(c, seq[pos].sound)) {
-        const next = seq[pos + 1];
-        // Suite du même accord : avancer au tempo (durée de la cellule écoulée).
-        if (next && chordsMatch(c, next.sound) &&
-            performance.now() - enteredAtRef.current >= seq[pos].durationMs * DWELL_RATIO) {
-          advanceTo(pos + 1);
-        }
-        return;
-      }
+      // Toujours dans le bloc courant → rien à faire (déjà surligné en entier).
+      if (chordsMatch(c, groups[gpos].sound)) return;
 
-      // Changement d'accord : n'avancer QUE d'une cellule (jamais de saut).
-      // Sinon un accord détecté par erreur (ex. Am7 contient un do majeur → C)
-      // pourrait faire bondir vers un C beaucoup plus loin dans la grille.
-      const next = seq[pos + 1];
-      if (next && chordsMatch(c, next.sound)) advanceTo(pos + 1);
+      // Changement d'accord : avancer au bloc suivant s'il correspond (jamais de saut).
+      const next = groups[gpos + 1];
+      if (next && chordsMatch(c, next.sound)) goToGroup(gpos + 1);
       // Sinon on attend (l'accord courant ou le suivant finira par revenir).
     }, TICK_MS);
 
@@ -127,7 +145,7 @@ export function LiveChordFollow({
       clearInterval(id);
       clearClass('chord-current');
     };
-  }, [listening]);
+  }, [listening, onActiveRowsChange]);
 
   useEffect(() => () => clearClass('chord-current'), []);
 

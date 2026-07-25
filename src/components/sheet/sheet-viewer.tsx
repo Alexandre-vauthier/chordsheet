@@ -132,6 +132,8 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   // Écoute micro en cours (remontée par LiveChordFollow) : sert à démarrer la
   // boîte à rythme pendant le suivi si elle est activée.
   const [recListening, setRecListening] = useState(false);
+  // Lignes actives pendant le suivi micro (pour faire clignoter leurs badges de répétition).
+  const [recActiveRows, setRecActiveRows] = useState<string[]>([]);
   const [chordsEnabled, setChordsEnabled] = useState(() => user?.defaultChordsAudio ?? true);
   const [countInEnabled, setCountInEnabled] = useState(() => user?.defaultCountIn ?? false);
   const [countBeat, setCountBeat] = useState(0); // 0 = inactif, 1-4 = décompte
@@ -152,19 +154,16 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   const displayKey = transposeKey(sheet.key, transpose);
 
   // Séquence ordonnée pour le suivi micro : chaque cellule dans l'ordre de
-  // lecture, avec le son réellement entendu (forme transposée + capo effectif)
-  // et sa durée au tempo courant (pour avancer dans une suite d'accords
-  // identiques, où l'accord seul ne dit pas quand changer de cellule).
-  const followSequence = useMemo(() => {
-    const factor = localTempoUnit === 'eighth' ? 0.5 : 1;
-    const beatMs = (60 / parseTempo(localTempo)) * 1000 * factor;
-    return buildChordSequence(displaySections).map((it) => ({
-      pos: it.pos,
-      rowId: it.rowId,
-      sound: effectiveCapo > 0 ? transposeChord(it.chord, effectiveCapo) : it.chord,
-      durationMs: it.span * it.beats * beatMs,
-    }));
-  }, [displaySections, effectiveCapo, localTempo, localTempoUnit]);
+  // lecture, avec le son réellement entendu (forme transposée + capo effectif).
+  const followSequence = useMemo(
+    () =>
+      buildChordSequence(displaySections).map((it) => ({
+        pos: it.pos,
+        rowId: it.rowId,
+        sound: effectiveCapo > 0 ? transposeChord(it.chord, effectiveCapo) : it.chord,
+      })),
+    [displaySections, effectiveCapo],
+  );
 
   // Y a-t-il au moins une section en doublon ?
   const hasRepeatedSections = (() => {
@@ -801,6 +800,8 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                     : undefined;
                 const isRepeatBadgeActive = activeRepeatIdx !== undefined;
                 const isLastRepeat = isRepeatBadgeActive && activeRepeatIdx === rowRepeat - 1;
+                // Ligne active pendant le suivi micro (fait clignoter son badge de répétition).
+                const isRowRecActive = recActiveRows.includes(`${section.id}-${rowIndex}`);
 
                 return (
                   <div key={rowIndex} className="relative" data-row-id={`${section.id}-${rowIndex}`}>
@@ -851,7 +852,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                         right-0 translate-x-1/2 md:translate-x-[calc(100%+6px)]
                         print:right-0 print:translate-x-1/2
                         text-xs font-bold px-2 py-0.5 rounded-lg shadow-sm
-                        ${isRepeatBadgeActive ? 'animate-repeat-blink' : 'bg-[var(--accent)] text-white'}`}>
+                        ${isRepeatBadgeActive || isRowRecActive ? 'animate-repeat-blink' : 'bg-[var(--accent)] text-white'}`}>
                         ×{isRepeatBadgeActive ? rowRepeat - activeRepeatIdx! : rowRepeat}
                       </span>
                     )}
@@ -868,6 +869,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
         <LiveChordFollow
           sequence={followSequence}
           onListeningChange={setRecListening}
+          onActiveRowsChange={setRecActiveRows}
           grooveActive={grooveEnabled}
         />
       )}
