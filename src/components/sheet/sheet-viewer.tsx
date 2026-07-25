@@ -865,7 +865,11 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
 
       {/* Suivi micro (suivi de position + défilement) — bouton flottant */}
       {instrumentId !== 'voice' && (
-        <LiveChordFollow sequence={followSequence} onListeningChange={setRecListening} />
+        <LiveChordFollow
+          sequence={followSequence}
+          onListeningChange={setRecListening}
+          grooveActive={grooveEnabled}
+        />
       )}
 
       {/* Paroles — visibles uniquement en mode Voix */}

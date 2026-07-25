@@ -33,11 +33,14 @@ function clearClass(cls: string) {
 export function LiveChordFollow({
   sequence,
   onListeningChange,
+  grooveActive = false,
 }: {
   sequence: FollowSeqItem[];
   onListeningChange?: (listening: boolean) => void;
+  grooveActive?: boolean;
 }) {
-  const { listening, chord, start, stop, error } = useChordListener();
+  // Annulation d'écho activée si la boîte à rythme joue (évite le repiquage).
+  const { listening, chord, start, stop, error } = useChordListener(grooveActive);
 
   const seqRef = useRef<FollowSeqItem[]>(sequence);
   const latestChordRef = useRef('');

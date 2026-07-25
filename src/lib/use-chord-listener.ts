@@ -96,8 +96,14 @@ const F_MAX = 2000;           // Hz : on ignore l'aigu peu informatif pour l'acc
 const SCORE_GATE = 0.72;      // score cosinus minimal pour valider un accord
 const SMOOTH_WINDOW = 5;      // vote majoritaire sur N dernières analyses
 
-export function useChordListener() {
+// echoCancellation : à activer quand un son sort des enceintes pendant l'écoute
+// (ex. boîte à rythme). Le navigateur retire alors du micro ce qu'il joue lui-même,
+// ce qui limite le repiquage. Désactivé par défaut pour un signal brut (meilleure
+// détection quand rien ne sort des enceintes).
+export function useChordListener(echoCancellation = false) {
   const [state, setState] = useState<ChordListenerState>(INITIAL);
+  const echoRef = useRef(echoCancellation);
+  useEffect(() => { echoRef.current = echoCancellation; }, [echoCancellation]);
 
   const ctxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -126,7 +132,7 @@ export function useChordListener() {
   const start = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+        audio: { echoCancellation: echoRef.current, noiseSuppression: false, autoGainControl: false },
       });
       streamRef.current = stream;
 
