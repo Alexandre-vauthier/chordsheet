@@ -105,6 +105,9 @@ interface UsePlaybackOptions {
   tempo: string | undefined;
   tempoUnit?: TempoUnit;
   instrumentId: InstrumentId;
+  // Instruments joués simultanément à chaque accord (accompagnement). Défaut :
+  // le seul instrument principal. Vide = aucun son.
+  playbackInstruments?: InstrumentId[];
   customChords?: Record<string, unknown>;
   selectedChords?: Record<string, StringChord | PianoChord>;
   metronomeEnabled?: boolean;
@@ -112,7 +115,7 @@ interface UsePlaybackOptions {
   capo?: number;
 }
 
-export function usePlayback({ sections, tempo, tempoUnit, instrumentId, customChords, selectedChords, metronomeEnabled, chordsEnabled = true, capo = 0 }: UsePlaybackOptions) {
+export function usePlayback({ sections, tempo, tempoUnit, instrumentId, playbackInstruments, customChords, selectedChords, metronomeEnabled, chordsEnabled = true, capo = 0 }: UsePlaybackOptions) {
   const { overrides, additions } = useLibraryChords();
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeStep, setActiveStep] = useState<PlayStep | null>(null);
@@ -123,6 +126,11 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, customCh
   const beatMsRef = useRef<number>((60 / parseTempo(tempo)) * 1000 * factor);
   const bpMeasureRef = useRef<number>(sections[0]?.beatsPerMeasure || 4);
   const chordsEnabledRef = useRef(chordsEnabled);
+  // Instruments d'accompagnement, lus sans redémarrer la lecture en cours.
+  const playbackInstrumentsRef = useRef<InstrumentId[]>(playbackInstruments ?? [instrumentId]);
+  useEffect(() => {
+    playbackInstrumentsRef.current = playbackInstruments ?? [instrumentId];
+  }, [playbackInstruments, instrumentId]);
 
   // Mettre à jour les refs quand tempo/tempoUnit/sections changent
   useEffect(() => {
@@ -178,19 +186,19 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, customCh
     };
   }, []);
 
-  const resolveChord = useCallback((rawChordName: string): StringChord | PianoChord | undefined => {
+  const resolveChord = useCallback((rawChordName: string, inst: InstrumentId): StringChord | PianoChord | undefined => {
     const chordName = parseChordInput(rawChordName).chord;
     const selected = selectedChords?.[chordName] ?? selectedChords?.[rawChordName];
-    const customKey = `${chordName.toLowerCase()}-${instrumentId}`;
+    const customKey = `${chordName.toLowerCase()}-${inst}`;
     const custom = customChords?.[customKey];
     const enh = enharmonicEquivalent(chordName);
     const adminOverride =
-      overrides.get(libraryKey(chordName, instrumentId))?.chord ??
-      (enh ? overrides.get(libraryKey(enh, instrumentId))?.chord : undefined);
+      overrides.get(libraryKey(chordName, inst))?.chord ??
+      (enh ? overrides.get(libraryKey(enh, inst))?.chord : undefined);
     const nameLower = chordName.trim().toLowerCase();
     const enhLower = enh?.trim().toLowerCase();
     const adminAddition = additions.find(
-      a => a.instrumentId === instrumentId &&
+      a => a.instrumentId === inst &&
         (a.chord.name.trim().toLowerCase() === nameLower ||
          (enhLower && a.chord.name.trim().toLowerCase() === enhLower))
     )?.chord;
@@ -199,9 +207,9 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, customCh
       (custom as StringChord | PianoChord | undefined) ??
       adminOverride ??
       adminAddition ??
-      findChordVariants(chordName, instrumentId)[0]
+      findChordVariants(chordName, inst)[0]
     );
-  }, [instrumentId, customChords, selectedChords, overrides, additions]);
+  }, [customChords, selectedChords, overrides, additions]);
 
   const runSteps = useCallback((steps: PlayStep[], getCellFn: (step: PlayStep) => Cell | undefined) => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -216,14 +224,17 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, customCh
       if (i === 0 && metronomeEnabledRef.current) playMetronomeTick(true);
       const cell = getCellFn(step);
       if (cell?.chord && chordsEnabledRef.current) {
-        const chordData = resolveChord(cell.chord);
-        if (chordData) playChord(chordData, instrumentId, capo);
+        // Jouer l'accord sur chaque instrument d'accompagnement (voix indépendantes)
+        for (const inst of playbackInstrumentsRef.current) {
+          const chordData = resolveChord(cell.chord, inst);
+          if (chordData) playChord(chordData, inst, capo);
+        }
       }
       i++;
       timeoutRef.current = setTimeout(advance, step.durationMs);
     };
     advance();
-  }, [resolveChord, instrumentId, capo]);
+  }, [resolveChord, capo]);
 
   const playSequence = useCallback((targetSections: Section[]) => {
     const bpm = parseTempo(tempo);

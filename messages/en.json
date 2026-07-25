@@ -267,6 +267,7 @@
     "enableGrooveBox": "Enable drum machine",
     "disableChordAudio": "Disable chord playback",
     "enableChordAudio": "Enable chord playback",
+    "chordAudioInstruments": "Instruments played",
     "changeTempoUnit": "Change tempo unit (quarter → eighth)",
     "editTempo": "Edit tempo",
     "disableCountIn": "Disable count-in",

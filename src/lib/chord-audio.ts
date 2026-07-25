@@ -145,31 +145,43 @@ export function playNote(freq: number, isPiano = false, instrumentId?: Instrumen
   osc.stop(ctx.currentTime + 1.4);
 }
 
-// Références aux oscillateurs en cours pour pouvoir les couper
-let activeNodes: { osc: OscillatorNode; gain: GainNode }[] = [];
-// Références aux voix échantillonnées en cours (instrument-sounds.ts)
-let activeStopFns: (() => void)[] = [];
+// Voix en cours, indexées PAR INSTRUMENT : ainsi jouer un accord sur plusieurs
+// instruments simultanément (guitare + basse + piano) ne les coupe pas entre eux
+// — chaque instrument ne coupe que sa propre voix précédente.
+interface ActiveVoice {
+  nodes: { osc: OscillatorNode; gain: GainNode }[]; // repli oscillateur
+  stopFns: (() => void)[];                          // voix échantillonnées (instrument-sounds.ts)
+}
+const activeByInstrument = new Map<InstrumentId, ActiveVoice>();
 
-// Couper le son en cours (fade out rapide)
-function stopActiveChord() {
+// Couper le son en cours (fade out rapide). Sans argument : coupe tous les
+// instruments ; avec un instrument : ne coupe que celui-ci.
+function stopActiveChord(instrumentId?: InstrumentId) {
   const ctx = audioContext;
-  if (ctx) {
-    const now = ctx.currentTime;
-    for (const { osc, gain } of activeNodes) {
-      try {
-        gain.gain.cancelScheduledValues(now);
-        gain.gain.setValueAtTime(gain.gain.value, now);
-        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
-        osc.stop(now + 0.06);
-      } catch { /* already stopped */ }
+  const stopOne = (v: ActiveVoice) => {
+    if (ctx) {
+      const now = ctx.currentTime;
+      for (const { osc, gain } of v.nodes) {
+        try {
+          gain.gain.cancelScheduledValues(now);
+          gain.gain.setValueAtTime(gain.gain.value, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.05);
+          osc.stop(now + 0.06);
+        } catch { /* already stopped */ }
+      }
     }
-  }
-  activeNodes = [];
+    for (const stop of v.stopFns) {
+      try { stop(); } catch { /* already stopped */ }
+    }
+  };
 
-  for (const stop of activeStopFns) {
-    try { stop(); } catch { /* already stopped */ }
+  if (instrumentId) {
+    const v = activeByInstrument.get(instrumentId);
+    if (v) { stopOne(v); activeByInstrument.delete(instrumentId); }
+  } else {
+    for (const v of activeByInstrument.values()) stopOne(v);
+    activeByInstrument.clear();
   }
-  activeStopFns = [];
 }
 
 // Jouer un tick de métronome (click court et sec)
@@ -226,8 +238,8 @@ export function playChord(
   const ctx = getAudioContext();
   const isPiano = instrumentId === 'piano';
 
-  // Couper l'accord précédent
-  stopActiveChord();
+  // Couper l'accord précédent DE CET INSTRUMENT uniquement (les autres continuent)
+  stopActiveChord(instrumentId);
 
   const freqs = isPianoChord(chord)
     ? getPianoChordFrequencies(chord, capo)
@@ -238,9 +250,10 @@ export function playChord(
   const vol = isPiano ? 0.22 : 0.28;
 
   if (isInstrumentSoundReady(instrumentId)) {
-    activeStopFns = freqs
+    const stopFns = freqs
       .map((freq, i) => playSampledNote(instrumentId, freqToMidi(freq), ctx.currentTime + i * strumDelay, decay))
       .filter((stop): stop is () => void => stop !== null);
+    activeByInstrument.set(instrumentId, { nodes: [], stopFns });
     return;
   }
 
@@ -264,5 +277,5 @@ export function playChord(
     nodes.push({ osc, gain });
   });
 
-  activeNodes = nodes;
+  activeByInstrument.set(instrumentId, { nodes, stopFns: [] });
 }

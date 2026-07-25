@@ -267,6 +267,7 @@
     "enableGrooveBox": "Activer la boite à rythme",
     "disableChordAudio": "Désactiver la lecture des accords",
     "enableChordAudio": "Activer la lecture des accords",
+    "chordAudioInstruments": "Instruments joués",
     "changeTempoUnit": "Changer l'unité de tempo (noire → croche)",
     "editTempo": "Modifier le tempo",
     "disableCountIn": "Désactiver le décompte",

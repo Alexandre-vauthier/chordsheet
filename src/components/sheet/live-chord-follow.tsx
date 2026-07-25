@@ -58,22 +58,27 @@ export function LiveChordFollow({
   sequence,
   onListeningChange,
   onActiveRowsChange,
-  grooveActive = false,
+  onAdvance,
+  outputActive = false,
 }: {
   sequence: FollowSeqItem[];
   onListeningChange?: (listening: boolean) => void;
   onActiveRowsChange?: (rowIds: string[]) => void;
-  grooveActive?: boolean;
+  // Appelé au passage à un nouveau bloc, avec l'accord entendu (pour jouer un
+  // accompagnement suivant la position détectée).
+  onAdvance?: (sound: string) => void;
+  // Vrai si un son sort des enceintes pendant l'écoute (boîte à rythme et/ou
+  // accompagnement) : active l'annulation d'écho pour éviter le repiquage.
+  outputActive?: boolean;
 }) {
-  // Annulation d'écho activée si la boîte à rythme joue (évite le repiquage).
-  const { listening, chord, start, stop, error } = useChordListener(grooveActive);
+  const { listening, chord, start, stop, error } = useChordListener(outputActive);
 
   const groupsRef = useRef<ChordGroup[]>(buildGroups(sequence));
   const latestChordRef = useRef('');
   const posRef = useRef(-1); // index du bloc courant
 
   const [autoStopped, setAutoStopped] = useState(false);
-  const prevGrooveRef = useRef(grooveActive);
+  const prevOutputRef = useRef(outputActive);
 
   useEffect(() => { groupsRef.current = buildGroups(sequence); posRef.current = -1; }, [sequence]);
   useEffect(() => { latestChordRef.current = chord; }, [chord]);
@@ -81,17 +86,17 @@ export function LiveChordFollow({
   // Plus d'écoute → plus de ligne active (arrête le clignotement des répétitions).
   useEffect(() => { if (!listening) onActiveRowsChange?.([]); }, [listening, onActiveRowsChange]);
 
-  // Si on active la boîte à rythme alors que le suivi tourne déjà, l'annulation
-  // d'écho n'a pas été appliquée (décidée au démarrage). On coupe donc le suivi
-  // pour inviter à le relancer proprement (anti-repiquage).
+  // Si un son (boîte à rythme ou accompagnement) est activé alors que le suivi
+  // tourne déjà, l'annulation d'écho n'a pas été appliquée (décidée au démarrage).
+  // On coupe donc le suivi pour inviter à le relancer proprement (anti-repiquage).
   useEffect(() => {
-    const grooveJustEnabled = grooveActive && !prevGrooveRef.current;
-    prevGrooveRef.current = grooveActive;
-    if (grooveJustEnabled && listening) {
+    const outputJustEnabled = outputActive && !prevOutputRef.current;
+    prevOutputRef.current = outputActive;
+    if (outputJustEnabled && listening) {
       stop();
       setAutoStopped(true);
     }
-  }, [grooveActive, listening, stop]);
+  }, [outputActive, listening, stop]);
 
   useEffect(() => {
     if (!listening) return;
@@ -108,6 +113,7 @@ export function LiveChordFollow({
           ?.classList.add('chord-current');
       }
       onActiveRowsChange?.(groups[idx].rowIds);
+      onAdvance?.(groups[idx].sound);
       const row = document.querySelector<HTMLElement>(`[data-row-id="${CSS.escape(groups[idx].rowId)}"]`);
       if (row) {
         window.scrollTo({
@@ -145,7 +151,7 @@ export function LiveChordFollow({
       clearInterval(id);
       clearClass('chord-current');
     };
-  }, [listening, onActiveRowsChange]);
+  }, [listening, onActiveRowsChange, onAdvance]);
 
   useEffect(() => () => clearClass('chord-current'), []);
 
@@ -168,7 +174,7 @@ export function LiveChordFollow({
         )}
         {autoStopped && !listening && (
           <div className="absolute bottom-full mb-2 right-0 max-w-[220px] text-xs text-[var(--ink-light)] bg-[var(--cream)] border border-[var(--line)] rounded-lg px-2 py-1 shadow">
-            Suivi coupé : relance-le pour éviter que la boîte à rythme repique dans le micro.
+            Suivi coupé : relance-le pour éviter que le son joué repique dans le micro.
           </div>
         )}
         <button
