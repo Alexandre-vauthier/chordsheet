@@ -243,15 +243,17 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
 
   // Jouer un accord (par son nom déjà transposé + capo) sur les instruments
   // d'accompagnement — utilisé par le suivi micro à chaque changement d'accord.
+  // Pendant le REC, on ne joue l'accompagnement QUE si la boîte à rythme est
+  // cochée (sinon le suivi reste silencieux, purement visuel).
   const playAccompanimentChord = useCallback((chordName: string) => {
-    if (!accompaniment.length) return;
+    if (!grooveEnabled || !accompaniment.length) return;
     const parsed = parseChordInput(chordName).chord;
     for (const inst of accompaniment) {
       const custom = (sheet.customChords as Record<string, CustomChord> | undefined)?.[`${parsed.toLowerCase()}-${inst}`];
       const chordData = (custom as StringChord | PianoChord | undefined) ?? findChordVariants(parsed, inst)[0];
       if (chordData) playChord(chordData, inst, 0); // le nom inclut déjà transposition + capo
     }
-  }, [accompaniment, sheet.customChords]);
+  }, [grooveEnabled, accompaniment, sheet.customChords]);
 
   const bpm = parseTempo(sheet.tempo);
 
@@ -970,7 +972,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
           onListeningChange={setRecListening}
           onActiveRowsChange={setRecActiveRows}
           onAdvance={playAccompanimentChord}
-          outputActive={grooveEnabled || accompaniment.length > 0}
+          outputActive={grooveEnabled}
         />
       )}
 
