@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl';
 
 const CONTACT_EMAIL = 'alex.vauthier@gmail.com';
-const DISCORD_URL = 'https://discord.gg/SaH6dumEVg';
+const DISCORD_URL = 'https://discord.gg/vn3xVCCKFD';
 
 export default function ContactPage() {
   const t = useTranslations('Contact');
