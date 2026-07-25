@@ -256,6 +256,10 @@
   "SheetViewer": {
     "pauseSample": "Pause l'extrait",
     "playSample": "Écouter l'extrait",
+    "grooveBoxPattern": "Boîte à rythme",
+    "automaticByGenre": "Automatique (selon genre)",
+    "listenToPattern": "Écouter ce pattern",
+    "stopPreviewPattern": "Arrêter l'aperçu",
     "untitled": "Sans titre",
     "removeFromBook": "Retirer du book",
     "addToBook": "Ajouter au book",

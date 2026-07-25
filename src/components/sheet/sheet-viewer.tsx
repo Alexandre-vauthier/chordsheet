@@ -11,7 +11,7 @@ import { useChordNotation } from '@/lib/use-chord-notation';
 import { useChordColor } from '@/lib/use-chord-color';
 import { transposeChord } from '@/lib/transpose';
 import { usePlayback, parseTempo, buildChordSequence } from '@/lib/use-playback';
-import { useGrooveBox } from '@/lib/use-groove-box';
+import { useGrooveBox, PATTERN_DEFS } from '@/lib/use-groove-box';
 import type { PlayStep } from '@/lib/use-playback';
 import { useArtwork } from '@/lib/use-artwork';
 import { useAuth } from '@/lib/auth-context';
@@ -102,6 +102,7 @@ function sectionSignature(section: { rows: { chord: string; span: number }[][] }
 
 export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingBookmark, concertCellPath, printChordDiagramsOverride, printMinimizeRepeatedSectionsOverride }: SheetViewerProps) {
   const t = useTranslations('SheetViewer');
+  const tGroove = useTranslations('GroovePatterns');
   const genreLabel = useGenreLabel();
   const translate = useChordNotation();
   const getColor = useChordColor();
@@ -146,6 +147,14 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
 
   const [metronomeEnabled, setMetronomeEnabled] = useState(() => user?.defaultMetronome ?? false);
   const [grooveEnabled, setGrooveEnabled] = useState(() => user?.defaultGrooveBox ?? false);
+  // Pattern de boîte à rythme choisi pour la session (override live du pattern
+  // de la grille). undefined = automatique selon les genres.
+  const [livePattern, setLivePattern] = useState<string | undefined>(sheet.groovePattern);
+  const [grooveMenuOpen, setGrooveMenuOpen] = useState(false);
+  const grooveMenuRef = useRef<HTMLDivElement>(null);
+  // Prévisualisation d'un pattern : réutilise le même useGrooveBox (2 mesures puis stop).
+  const [previewPattern, setPreviewPattern] = useState<string | null>(null);
+  const previewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Écoute micro en cours (remontée par LiveChordFollow) : sert à démarrer la
   // boîte à rythme pendant le suivi si elle est activée.
   const [recListening, setRecListening] = useState(false);
@@ -317,15 +326,42 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [concertCellPath?.sectionIdx, concertCellPath?.rowIdx]);
 
+  const grooveBpm = (() => { const b = parseTempo(localTempo); return b > 100 ? Math.round(b / 2) : b; })();
+
+  // Prévisualiser un pattern : l'entend 2 mesures puis s'arrête (dé-mute le temps
+  // de l'aperçu). Recliquer le même pattern coupe l'aperçu.
+  const togglePreviewPattern = useCallback((patternId: string) => {
+    if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
+    setPreviewPattern((current) => {
+      if (current === patternId) return null;
+      const measureSeconds = (60 / grooveBpm) * (sheet.beatsPerMeasure ?? 4);
+      previewTimeoutRef.current = setTimeout(() => setPreviewPattern(null), measureSeconds * 2 * 1000);
+      return patternId;
+    });
+  }, [grooveBpm, sheet.beatsPerMeasure]);
+
+  useEffect(() => () => { if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current); }, []);
+  useEffect(() => { if (isPlaying) setPreviewPattern(null); }, [isPlaying]);
+  // Fermer le menu de pattern au clic extérieur
+  useEffect(() => {
+    if (!grooveMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (grooveMenuRef.current && !grooveMenuRef.current.contains(e.target as Node)) setGrooveMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [grooveMenuOpen]);
+
   useGrooveBox({
-    // Tourne pendant la lecture, ou pendant le suivi micro si la boîte à rythme
-    // est activée (jouer sur un rythme pendant que le REC suit la grille).
-    enabled: isPlaying || (recListening && grooveEnabled),
-    muted: !grooveEnabled,
-    bpm: (() => { const b = parseTempo(localTempo); return b > 100 ? Math.round(b / 2) : b; })(),
+    // Tourne pendant la lecture, pendant le suivi micro si la boîte à rythme est
+    // activée, ou pendant un aperçu de pattern.
+    enabled: isPlaying || (recListening && grooveEnabled) || previewPattern !== null,
+    muted: previewPattern !== null ? false : !grooveEnabled,
+    bpm: grooveBpm,
     beatsPerMeasure: sheet.beatsPerMeasure ?? 4,
     genres: sheet.genres ?? [],
-    groovePattern: sheet.groovePattern,
+    // L'aperçu prime, sinon le choix de session (livePattern).
+    groovePattern: previewPattern ?? livePattern,
   });
 
   const { artworkUrl, previewUrl } = useArtwork(sheet.artist, sheet.title);
@@ -487,6 +523,73 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   <path d="M5 16c0 1.38 3.13 2.5 7 2.5s7-1.12 7-2.5" strokeLinecap="round"/>
                 </svg>
               </button>
+
+              {/* Choix du pattern de boîte à rythme (+ prévisualisation) */}
+              <div className="relative" ref={grooveMenuRef}>
+                <button
+                  onClick={() => setGrooveMenuOpen(v => !v)}
+                  title={t('grooveBoxPattern')}
+                  className="flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all duration-150"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+                    <line x1="4" y1="7" x2="20" y2="7" strokeLinecap="round"/>
+                    <line x1="4" y1="12" x2="20" y2="12" strokeLinecap="round"/>
+                    <line x1="4" y1="17" x2="20" y2="17" strokeLinecap="round"/>
+                    <circle cx="9" cy="7" r="2" fill="currentColor" stroke="none"/>
+                    <circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/>
+                    <circle cx="8" cy="17" r="2" fill="currentColor" stroke="none"/>
+                  </svg>
+                </button>
+                {grooveMenuOpen && (
+                  <div className="absolute right-0 top-full mt-1 z-50 w-60 max-h-[70vh] overflow-y-auto bg-[var(--cream)] border border-[var(--line)] rounded-xl shadow-xl py-1">
+                    <p className="px-3 py-1.5 text-[11px] uppercase tracking-wide text-[var(--ink-faint)]">
+                      {t('grooveBoxPattern')}
+                    </p>
+                    <button
+                      onClick={() => setLivePattern(undefined)}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] transition-colors"
+                    >
+                      <span className={`w-3.5 h-3.5 rounded-full border ${!livePattern ? 'border-[var(--accent)] bg-[var(--accent)]' : 'border-[var(--line)]'} flex items-center justify-center`}>
+                        {!livePattern && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      </span>
+                      {t('automaticByGenre')}
+                    </button>
+                    {Array.from(new Set(PATTERN_DEFS.map(p => p.category))).map((category) => (
+                      <div key={category}>
+                        <p className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wide text-[var(--ink-faint)]">{category}</p>
+                        {PATTERN_DEFS.filter(p => p.category === category).map((p) => {
+                          const selected = livePattern === p.id;
+                          const previewing = previewPattern === p.id;
+                          return (
+                            <div key={p.id} className="flex items-center">
+                              <button
+                                onClick={() => setLivePattern(p.id)}
+                                className="flex-1 flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] transition-colors"
+                              >
+                                <span className={`w-3.5 h-3.5 rounded-full border ${selected ? 'border-[var(--accent)] bg-[var(--accent)]' : 'border-[var(--line)]'} flex items-center justify-center`}>
+                                  {selected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                                </span>
+                                {tGroove(p.id)}
+                              </button>
+                              <button
+                                onClick={() => togglePreviewPattern(p.id)}
+                                title={previewing ? t('stopPreviewPattern') : t('listenToPattern')}
+                                className={`shrink-0 w-8 h-8 mr-1 flex items-center justify-center rounded-lg transition-colors ${previewing ? 'text-[var(--accent)]' : 'text-[var(--ink-faint)] hover:text-[var(--accent)]'}`}
+                              >
+                                {previewing ? (
+                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><rect x="4" y="3" width="4" height="14" rx="1"/><rect x="12" y="3" width="4" height="14" rx="1"/></svg>
+                                ) : (
+                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+                                )}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Lecture des accords — menu des instruments d'accompagnement */}
               <div className="relative" ref={accompMenuRef}>

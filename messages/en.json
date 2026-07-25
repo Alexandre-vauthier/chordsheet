@@ -256,6 +256,10 @@
   "SheetViewer": {
     "pauseSample": "Pause preview",
     "playSample": "Play preview",
+    "grooveBoxPattern": "Drum pattern",
+    "automaticByGenre": "Automatic (by genre)",
+    "listenToPattern": "Preview this pattern",
+    "stopPreviewPattern": "Stop preview",
     "untitled": "Untitled",
     "removeFromBook": "Remove from book",
     "addToBook": "Add to book",
