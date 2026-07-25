@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { Section, Cell, InstrumentId, StringChord, PianoChord } from '@/types';
 import { findChordVariants, enharmonicEquivalent, parseChordInput } from '@/lib/chord-data';
-import { playChord, playArpeggio, playMetronomeTick } from '@/lib/chord-audio';
+import { playChord, playArpeggio, playMetronomeTick, getAudioContext } from '@/lib/chord-audio';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
 
 export interface PlayStep {
@@ -225,6 +225,12 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, playback
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     if (!steps.length) return;
     setIsPlaying(true);
+    // Ligne de temps sur l'horloge audio (comme la boîte à rythme) : chaque pas
+    // vise un instant absolu, et le délai du setTimeout est recalculé à partir de
+    // ctx.currentTime → la dérive du setTimeout est corrigée à chaque pas, donc
+    // les accords ne glissent plus par rapport à la batterie.
+    const ctx = getAudioContext();
+    let nextTime = ctx.currentTime;
     let i = 0;
     const advance = () => {
       if (i >= steps.length) { setIsPlaying(false); setActiveStep(null); return; }
@@ -249,7 +255,10 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, playback
         }
       }
       i++;
-      timeoutRef.current = setTimeout(advance, step.durationMs);
+      // Prochain pas calé sur l'horloge audio, avec correction de la dérive.
+      nextTime += step.durationMs / 1000;
+      const delayMs = Math.max(0, (nextTime - ctx.currentTime) * 1000);
+      timeoutRef.current = setTimeout(advance, delayMs);
     };
     advance();
   }, [resolveChord, capo]);
