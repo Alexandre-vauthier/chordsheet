@@ -10,7 +10,7 @@
 // L'écoute vit dans CE composant isolé (ses mises à jour ~10 Hz ne re-rendent pas
 // le sheet-viewer) ; le surlignage se fait par le DOM (toggle de classe).
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useChordListener } from '@/lib/use-chord-listener';
 import { chordsMatch } from '@/lib/chord-match';
 
@@ -47,9 +47,24 @@ export function LiveChordFollow({
   const posRef = useRef(-1);
   const enteredAtRef = useRef(0);
 
+  const [autoStopped, setAutoStopped] = useState(false);
+  const prevGrooveRef = useRef(grooveActive);
+
   useEffect(() => { seqRef.current = sequence; posRef.current = -1; }, [sequence]);
   useEffect(() => { latestChordRef.current = chord; }, [chord]);
   useEffect(() => { onListeningChange?.(listening); }, [listening, onListeningChange]);
+
+  // Si on active la boîte à rythme alors que le suivi tourne déjà, l'annulation
+  // d'écho n'a pas été appliquée (elle est décidée au démarrage). On coupe donc
+  // le suivi pour inviter à le relancer proprement (anti-repiquage).
+  useEffect(() => {
+    const grooveJustEnabled = grooveActive && !prevGrooveRef.current;
+    prevGrooveRef.current = grooveActive;
+    if (grooveJustEnabled && listening) {
+      stop();
+      setAutoStopped(true);
+    }
+  }, [grooveActive, listening, stop]);
 
   useEffect(() => {
     if (!listening) return;
@@ -133,15 +148,20 @@ export function LiveChordFollow({
             Micro indisponible
           </div>
         )}
+        {autoStopped && !listening && (
+          <div className="absolute bottom-full mb-2 right-0 max-w-[220px] text-xs text-[var(--ink-light)] bg-[var(--cream)] border border-[var(--line)] rounded-lg px-2 py-1 shadow">
+            Suivi coupé : relance-le pour éviter que la boîte à rythme repique dans le micro.
+          </div>
+        )}
         <button
-          onClick={listening ? stop : start}
+          onClick={listening ? stop : () => { setAutoStopped(false); start(); }}
           title={listening ? 'Arrêter le suivi micro' : 'Suivre au micro — surligne l’accord joué et fait défiler'}
           className={`flex items-center gap-2 h-12 px-4 rounded-full shadow-lg font-semibold text-white transition-colors ${
             listening ? 'bg-red-600 hover:bg-red-700' : 'bg-[var(--accent)] hover:bg-[#a83d25]'
           }`}
         >
           <span className={`w-3 h-3 rounded-full bg-white ${listening ? 'animate-pulse' : ''}`} />
-          <span className="text-sm">{listening ? 'Stop' : 'REC'}</span>
+          <span className="text-sm">{listening ? 'Stop' : 'Suivre'}</span>
         </button>
       </div>
     </div>
