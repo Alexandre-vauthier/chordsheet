@@ -159,19 +159,29 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, playback
     chordsEnabledRef.current = chordsEnabled;
   }, [chordsEnabled]);
 
-  // Le métronome tourne dès que isPlaying — le toggle ne fait que mute/unmute
-  // Beat 0 est joué directement dans advance() pour être synchronisé avec le premier accord
+  // Le métronome tourne dès que isPlaying — le toggle ne fait que mute/unmute.
+  // Beat 0 est joué directement dans advance() pour être synchronisé avec le premier accord.
+  // Planifié sur l'horloge audio (comme la boîte à rythme et les accords) pour
+  // ne pas dériver : chaque beat vise un instant absolu, look-ahead de 100 ms.
   useEffect(() => {
     if (metronomeRef.current) {
       clearInterval(metronomeRef.current);
       metronomeRef.current = null;
     }
     if (isPlaying) {
-      let beat = 1; // beat 0 déjà joué dans advance()
-      metronomeRef.current = setInterval(() => {
-        if (metronomeEnabledRef.current) playMetronomeTick(beat === 0);
-        beat = (beat + 1) % bpMeasureRef.current;
-      }, beatMsRef.current);
+      const ctx = getAudioContext();
+      let beat = 1;                                  // beat 0 déjà joué dans advance()
+      let nextBeat = ctx.currentTime + beatMsRef.current / 1000; // premier tick un temps après le départ
+      const tick = () => {
+        const beatSec = beatMsRef.current / 1000;
+        while (nextBeat < ctx.currentTime + 0.1) {
+          if (metronomeEnabledRef.current) playMetronomeTick(beat === 0, nextBeat);
+          beat = (beat + 1) % bpMeasureRef.current;
+          nextBeat += beatSec;
+        }
+      };
+      tick();
+      metronomeRef.current = setInterval(tick, 25);
     }
     return () => {
       if (metronomeRef.current) {
