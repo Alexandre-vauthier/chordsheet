@@ -55,11 +55,13 @@ export interface ChordSeqItem {
   sectionId: string;
   rowIndex: number;
   cellIndex: number;
-  rowId: string; // data-row-id de la mesure (pour le défilement)
-  pos: string;   // data-pos de la cellule (pour le surlignage ciblé)
+  rowId: string;       // data-row-id de la mesure (pour le défilement)
+  pos: string;         // data-pos de la cellule (pour le surlignage ciblé)
   chord: string;
-  span: number;  // durée en mesures (pour calculer la durée d'une cellule)
-  beats: number; // temps par mesure de la section (3 ou 4)
+  span: number;        // durée en mesures (pour calculer la durée d'une cellule)
+  beats: number;       // temps par mesure de la section (3 ou 4)
+  repeatIndex: number; // passage courant de la mesure répétée (0-based)
+  rowRepeat: number;   // nombre total de passages de la mesure
 }
 
 // Séquence ordonnée des cellules porteuses d'accord, dans l'ordre de lecture
@@ -84,6 +86,8 @@ export function buildChordSequence(sections: Section[]): ChordSeqItem[] {
               chord,
               span: row[c].span,
               beats: section.beatsPerMeasure || 4,
+              repeatIndex: rr,
+              rowRepeat,
             });
           }
         }

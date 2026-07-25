@@ -18,17 +18,26 @@ import { useChordListener } from '@/lib/use-chord-listener';
 import { chordsMatch } from '@/lib/chord-match';
 
 export interface FollowSeqItem {
-  pos: string;   // data-pos de la cellule
-  rowId: string; // data-row-id de la mesure (défilement)
-  sound: string; // accord réellement entendu (forme + capo effectif)
+  pos: string;         // data-pos de la cellule
+  rowId: string;       // data-row-id de la mesure (défilement)
+  sound: string;       // accord réellement entendu (forme + capo effectif)
+  repeatIndex: number; // passage courant de la mesure répétée (0-based)
+  rowRepeat: number;   // nombre total de passages de la mesure
+}
+
+// Ligne active pendant le suivi, avec le passage de répétition courant.
+export interface ActiveRow {
+  rowId: string;
+  repeatIndex: number;
+  rowRepeat: number;
 }
 
 // Un bloc = suite de cellules consécutives que la détection ne distingue pas.
 interface ChordGroup {
-  sound: string;      // accord représentatif du bloc
+  sound: string;       // accord représentatif du bloc
   positions: string[]; // data-pos de toutes les cellules du bloc
-  rowId: string;      // mesure de la première cellule (pour le défilement)
-  rowIds: string[];   // toutes les mesures du bloc (pour le clignotement des répétitions)
+  rowId: string;       // mesure de la première cellule (pour le défilement)
+  rows: ActiveRow[];   // mesures du bloc + passage de répétition (badges)
 }
 
 const START_WINDOW = 4;    // blocs scrutés au tout début pour se caler
@@ -41,14 +50,23 @@ function clearClass(cls: string) {
 
 function buildGroups(seq: FollowSeqItem[]): ChordGroup[] {
   const groups: ChordGroup[] = [];
+  const addRow = (g: ChordGroup, it: FollowSeqItem) => {
+    const existing = g.rows.find((r) => r.rowId === it.rowId);
+    // Si la même mesure apparaît à plusieurs passages dans le bloc (ligne d'un
+    // seul accord répété), on garde le plus petit passage → badge non décrémenté.
+    if (existing) existing.repeatIndex = Math.min(existing.repeatIndex, it.repeatIndex);
+    else g.rows.push({ rowId: it.rowId, repeatIndex: it.repeatIndex, rowRepeat: it.rowRepeat });
+  };
   for (const it of seq) {
     const last = groups[groups.length - 1];
     // Rejoint le bloc courant si l'accord ne s'en distingue pas (même famille+fond.).
     if (last && chordsMatch(last.sound, it.sound)) {
       last.positions.push(it.pos);
-      if (!last.rowIds.includes(it.rowId)) last.rowIds.push(it.rowId);
+      addRow(last, it);
     } else {
-      groups.push({ sound: it.sound, positions: [it.pos], rowId: it.rowId, rowIds: [it.rowId] });
+      const g: ChordGroup = { sound: it.sound, positions: [it.pos], rowId: it.rowId, rows: [] };
+      addRow(g, it);
+      groups.push(g);
     }
   }
   return groups;
@@ -63,7 +81,7 @@ export function LiveChordFollow({
 }: {
   sequence: FollowSeqItem[];
   onListeningChange?: (listening: boolean) => void;
-  onActiveRowsChange?: (rowIds: string[]) => void;
+  onActiveRowsChange?: (rows: ActiveRow[]) => void;
   // Appelé au passage à un nouveau bloc, avec l'accord entendu (pour jouer un
   // accompagnement suivant la position détectée).
   onAdvance?: (sound: string) => void;
@@ -112,7 +130,7 @@ export function LiveChordFollow({
           .querySelector<HTMLElement>(`[data-pos="${CSS.escape(p)}"]`)
           ?.classList.add('chord-current');
       }
-      onActiveRowsChange?.(groups[idx].rowIds);
+      onActiveRowsChange?.(groups[idx].rows);
       onAdvance?.(groups[idx].sound);
       const row = document.querySelector<HTMLElement>(`[data-row-id="${CSS.escape(groups[idx].rowId)}"]`);
       if (row) {

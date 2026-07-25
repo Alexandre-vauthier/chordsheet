@@ -22,7 +22,7 @@ import { transposeSections, transposeKey } from '@/lib/transpose';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useGenreLabel } from '@/lib/use-genre-labels';
-import { LiveChordFollow } from './live-chord-follow';
+import { LiveChordFollow, type ActiveRow } from './live-chord-follow';
 
 const LS_KEY = 'chordsheet_instrument';
 
@@ -149,8 +149,9 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   // Écoute micro en cours (remontée par LiveChordFollow) : sert à démarrer la
   // boîte à rythme pendant le suivi si elle est activée.
   const [recListening, setRecListening] = useState(false);
-  // Lignes actives pendant le suivi micro (pour faire clignoter leurs badges de répétition).
-  const [recActiveRows, setRecActiveRows] = useState<string[]>([]);
+  // Lignes actives pendant le suivi micro (pour faire clignoter et décrémenter
+  // leurs badges de répétition).
+  const [recActiveRows, setRecActiveRows] = useState<ActiveRow[]>([]);
   // Instruments d'accompagnement joués (Play + suivi REC). Vide = pas de son.
   // Par défaut : l'instrument principal si la préférence "lire les accords" est active.
   const [accompaniment, setAccompaniment] = useState<InstrumentId[]>(() => {
@@ -209,6 +210,8 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
         pos: it.pos,
         rowId: it.rowId,
         sound: effectiveCapo > 0 ? transposeChord(it.chord, effectiveCapo) : it.chord,
+        repeatIndex: it.repeatIndex,
+        rowRepeat: it.rowRepeat,
       })),
     [displaySections, effectiveCapo],
   );
@@ -892,10 +895,12 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   : isRowConcertActive
                     ? (concertCellPath!.rowRepeatIndex ?? 0)
                     : undefined;
-                const isRepeatBadgeActive = activeRepeatIdx !== undefined;
-                const isLastRepeat = isRepeatBadgeActive && activeRepeatIdx === rowRepeat - 1;
-                // Ligne active pendant le suivi micro (fait clignoter son badge de répétition).
-                const isRowRecActive = recActiveRows.includes(`${section.id}-${rowIndex}`);
+                // Passage courant remonté par le suivi micro pour cette mesure (décompte des répétitions).
+                const recRow = recActiveRows.find(r => r.rowId === `${section.id}-${rowIndex}`);
+                // Passage courant : lecture (solo/concert) OU suivi micro.
+                const currentRepeatIdx = activeRepeatIdx ?? recRow?.repeatIndex;
+                const isRepeatBadgeActive = currentRepeatIdx !== undefined;
+                const isLastRepeat = isRepeatBadgeActive && currentRepeatIdx === rowRepeat - 1;
 
                 return (
                   <div key={rowIndex} className="relative" data-row-id={`${section.id}-${rowIndex}`}>
@@ -946,8 +951,8 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                         right-0 translate-x-1/2 md:translate-x-[calc(100%+6px)]
                         print:right-0 print:translate-x-1/2
                         text-xs font-bold px-2 py-0.5 rounded-lg shadow-sm
-                        ${isRepeatBadgeActive || isRowRecActive ? 'animate-repeat-blink' : 'bg-[var(--accent)] text-white'}`}>
-                        ×{isRepeatBadgeActive ? rowRepeat - activeRepeatIdx! : rowRepeat}
+                        ${isRepeatBadgeActive ? 'animate-repeat-blink' : 'bg-[var(--accent)] text-white'}`}>
+                        ×{isRepeatBadgeActive ? rowRepeat - currentRepeatIdx! : rowRepeat}
                       </span>
                     )}
                   </div>
