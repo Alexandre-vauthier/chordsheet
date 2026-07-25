@@ -11,7 +11,7 @@ import { getChordsByInstrument, getAllExtendedChords } from '@/lib/chord-data';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
 import { useAuth } from '@/lib/auth-context';
 import { useInstrumentLabel } from '@/lib/use-genre-labels';
-import { useRouter } from '@/i18n/navigation';
+import { useRouter, Link } from '@/i18n/navigation';
 
 // Catégories étendues (correspondent aux catégories de chord-data.ts)
 type CategoryGroup = 'major' | 'minor' | 'dom7' | 'maj7' | 'min7' | 'dim' | 'aug' | 'sus' | 'other';
@@ -334,13 +334,25 @@ function ChordsPageContent() {
           </div>
           <button
             onClick={() => setFinderOpen(true)}
+            title={t('identifyByNotesTitle')}
             className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm font-medium transition-colors bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h2l1 3m0 0l1.5 4h9L18 7H6m0 0H4m14 0l1 3H5m0 0l-1 3h14"/>
             </svg>
-            {t('identifyButton')}
+            {t('identifyByNotes')}
           </button>
+          <Link
+            href="/chord-detect"
+            title={t('identifyByMicTitle')}
+            className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm font-medium transition-colors bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15a3 3 0 003-3V6a3 3 0 00-6 0v6a3 3 0 003 3z"/>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 10v2a7 7 0 01-14 0v-2M12 19v3"/>
+            </svg>
+            {t('identifyByMic')}
+          </Link>
           {isAdmin && (
             <button
               onClick={openNewModal}

@@ -1,9 +1,7 @@
 'use client';
 
-// Page prototype (spike) — non reliée à la navigation.
-// Sert à évaluer la précision de la détection d'accords au micro avant de
-// décider d'un éventuel défilement automatique dans le sheet-viewer.
-// Accès direct : /chord-detect
+// Identification d'un accord au micro (accessible depuis la bibliothèque d'accords).
+// Micro → chromagramme → comparaison aux templates (cf. use-chord-listener).
 
 import { useChordListener } from '@/lib/use-chord-listener';
 
@@ -15,10 +13,10 @@ export default function ChordDetectPage() {
   return (
     <div className="max-w-lg mx-auto px-4 py-10">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[var(--ink)]">Détection d&apos;accords (prototype)</h1>
+        <h1 className="text-2xl font-bold text-[var(--ink)]">Identifier un accord au micro</h1>
         <p className="text-sm text-[var(--ink-light)] mt-1">
-          Test de faisabilité : le micro écoute, l&apos;accord détecté s&apos;affiche en direct.
-          Aucun défilement pour l&apos;instant, on évalue d&apos;abord la précision.
+          Joue un accord : le micro écoute et l&apos;accord détecté s&apos;affiche en direct,
+          avec les meilleurs candidats.
         </p>
       </div>
 
@@ -107,8 +105,7 @@ export default function ChordDetectPage() {
 
       <p className="text-xs text-[var(--ink-faint)] mt-8 text-center">
         Reconnaît 12 familles : maj, min, 7, m7, maj7, 6, m6, sus2, sus4, dim, aug, m7b5.
-        Notation américaine. Rappel : les accords faits des mêmes notes sont indiscernables (ex. C6 = Am7).
-        Prototype isolé, non relié à la consultation des grilles.
+        Notation américaine. À noter : les accords faits des mêmes notes sont indiscernables (ex. C6 = Am7).
       </p>
     </div>
   );
