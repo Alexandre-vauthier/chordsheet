@@ -21,7 +21,7 @@ export interface FollowSeqItem {
   durationMs: number; // durée de la cellule au tempo courant
 }
 
-const LOOKAHEAD = 4;       // cellules à venir scrutées pour un changement d'accord
+const START_WINDOW = 4;    // cellules scrutées au tout début pour se caler
 const NAVBAR_OFFSET = 104; // hauteur du bandeau fixe + marge de confort
 const TICK_MS = 100;       // fréquence du suivi
 const DWELL_RATIO = 0.85;  // fraction de la durée d'une cellule avant d'avancer sur un accord répété
@@ -80,7 +80,7 @@ export function LiveChordFollow({
 
       // Pas encore calé : chercher le premier accord correspondant au début.
       if (pos < 0) {
-        for (let k = 0; k < LOOKAHEAD && k < seq.length; k++) {
+        for (let k = 0; k < START_WINDOW && k < seq.length; k++) {
           if (chordsMatch(c, seq[k].sound)) { advanceTo(k); return; }
         }
         return;
@@ -97,13 +97,12 @@ export function LiveChordFollow({
         return;
       }
 
-      // Changement d'accord : avancer vers la prochaine cellule qui correspond.
-      for (let k = 1; k <= LOOKAHEAD; k++) {
-        const idx = pos + k;
-        if (idx >= seq.length) break;
-        if (chordsMatch(c, seq[idx].sound)) { advanceTo(idx); return; }
-      }
-      // Rien devant ne correspond → on attend (pas de recul).
+      // Changement d'accord : n'avancer QUE d'une cellule (jamais de saut).
+      // Sinon un accord détecté par erreur (ex. Am7 contient un do majeur → C)
+      // pourrait faire bondir vers un C beaucoup plus loin dans la grille.
+      const next = seq[pos + 1];
+      if (next && chordsMatch(c, next.sound)) advanceTo(pos + 1);
+      // Sinon on attend (l'accord courant ou le suivant finira par revenir).
     }, TICK_MS);
 
     return () => {
