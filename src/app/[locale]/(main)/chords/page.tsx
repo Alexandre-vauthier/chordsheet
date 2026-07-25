@@ -312,6 +312,13 @@ function ChordsPageContent() {
           <p className="text-[var(--ink-light)] mt-1 text-sm">
             {t('pageSubtitle')}
           </p>
+          <p className="text-[var(--ink-faint)] mt-2 text-xs leading-relaxed max-w-2xl">
+            {t.rich('libraryNote', {
+              contact: (chunks) => (
+                <Link href="/contact" className="text-[var(--accent)] hover:underline">{chunks}</Link>
+              ),
+            })}
+          </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {/* Recherche par nom */}
@@ -324,7 +331,7 @@ function ChordsPageContent() {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder={t('searchPlaceholder')}
-              className="pl-9 pr-8 py-2 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink)] text-sm placeholder:text-[var(--ink-faint)] focus:outline-none focus:border-[var(--accent)] w-48"
+              className="pl-9 pr-8 py-2 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink)] text-sm placeholder:text-[var(--ink-faint)] focus:outline-none focus:border-[var(--accent)] w-56 sm:w-64"
             />
             {searchQuery && (
               <button onClick={() => setSearchQuery('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--ink-faint)] hover:text-[var(--ink)]">
@@ -337,8 +344,13 @@ function ChordsPageContent() {
             title={t('identifyByNotesTitle')}
             className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg border text-sm font-medium transition-colors bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h2l1 3m0 0l1.5 4h9L18 7H6m0 0H4m14 0l1 3H5m0 0l-1 3h14"/>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.6">
+              <rect x="6" y="3" width="12" height="18" rx="1"/>
+              <line x1="10" y1="3" x2="10" y2="21"/>
+              <line x1="14" y1="3" x2="14" y2="21"/>
+              <line x1="6" y1="9" x2="18" y2="9"/>
+              <line x1="6" y1="15" x2="18" y2="15"/>
+              <circle cx="10" cy="12" r="1.4" fill="currentColor" stroke="none"/>
             </svg>
             {t('identifyByNotes')}
           </button>

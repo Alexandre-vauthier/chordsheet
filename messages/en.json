@@ -859,6 +859,12 @@
     "bastienBody": "A guitarist and a developer — the dream combination for this project. Bastien understands both sides of it: what a musician expects from a tool, and how to build it properly. His help means a lot.",
     "closing": "And to everyone who uses ChordSheet, shares their chord sheets, and sends feedback — thank you. You're the best reason to keep going."
   },
+  "Contact": {
+    "pageTitle": "Contact",
+    "intro": "A question, an error spotted in the chord library, a suggestion or a request to add something? Write to us — we read every message.",
+    "byEmail": "By email",
+    "reasons": "Fixing or adding a chord, reporting a bug, an improvement idea: all welcome."
+  },
   "Faq": {
     "pageTitle": "Frequently asked questions",
     "pageSubtitle": "Everything you need to get started with ChordSheet.",
@@ -938,6 +944,7 @@
   "Chords": {
     "pageTitle": "Chord library",
     "pageSubtitle": "All chords in the library, by instrument and category.",
+    "libraryNote": "These chords are generated automatically and deliberately limited to the main positions, not every possible variation. Spotted an error or a missing chord? <contact>Get in touch</contact> and we'll fix or add it. You can also create your own fingerings right in the sheet editor.",
     "searchPlaceholder": "Search for a chord…",
     "identifyByNotes": "By notes",
     "identifyByNotesTitle": "Identify a chord by selecting the notes",

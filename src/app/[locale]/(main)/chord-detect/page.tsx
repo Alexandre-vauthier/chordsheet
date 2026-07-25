@@ -4,6 +4,7 @@
 // Micro → chromagramme → comparaison aux templates (cf. use-chord-listener).
 
 import { useChordListener } from '@/lib/use-chord-listener';
+import { Link } from '@/i18n/navigation';
 
 const NOTE_LABELS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
@@ -12,6 +13,15 @@ export default function ChordDetectPage() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-10">
+      <Link
+        href="/chords"
+        className="inline-flex items-center gap-1.5 text-sm text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors mb-6"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+        Bibliothèque d&apos;accords
+      </Link>
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-[var(--ink)]">Identifier un accord au micro</h1>
         <p className="text-sm text-[var(--ink-light)] mt-1">

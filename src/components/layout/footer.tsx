@@ -34,9 +34,9 @@ export function Footer() {
             <Link href="/legal/cgv" className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-light)] transition-colors">
               {t('salesTerms')}
             </Link>
-            <a href="mailto:alex.vauthier@gmail.com" className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-light)] transition-colors">
+            <Link href="/contact" className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-light)] transition-colors">
               {t('contact')}
-            </a>
+            </Link>
           </nav>
         </div>
       </div>

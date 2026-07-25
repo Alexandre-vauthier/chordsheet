@@ -859,6 +859,12 @@
     "bastienBody": "Guitariste et développeur — la combinaison rêvée pour ce projet. Bastien comprend les deux côtés de la chose : ce qu'un musicien attend d'un outil, et comment le construire proprement. Son aide compte beaucoup.",
     "closing": "Et à tous ceux qui utilisent ChordSheet, partagent leurs grilles, font remonter leurs retours — merci. Vous êtes la meilleure raison de continuer."
   },
+  "Contact": {
+    "pageTitle": "Contact",
+    "intro": "Une question, une erreur repérée dans la bibliothèque d'accords, une suggestion ou une demande d'ajout ? Écrivez-nous, on lit tous les messages.",
+    "byEmail": "Par e-mail",
+    "reasons": "Correction ou ajout d'un accord, signalement d'un bug, idée d'amélioration : tout est le bienvenu."
+  },
   "Faq": {
     "pageTitle": "Questions fréquentes",
     "pageSubtitle": "Tout ce qu'il faut savoir pour bien démarrer sur ChordSheet.",
@@ -938,6 +944,7 @@
   "Chords": {
     "pageTitle": "Bibliothèque d'accords",
     "pageSubtitle": "Tous les accords de la bibliothèque, par instrument et catégorie.",
+    "libraryNote": "Ces accords sont générés automatiquement et volontairement limités aux positions principales, pas à toutes les variantes possibles. Une erreur ou un accord manquant ? <contact>Écrivez-nous</contact>, on corrige ou on ajoute. Vous pouvez aussi créer vos propres doigtés directement dans l'édition d'une grille.",
     "searchPlaceholder": "Rechercher un accord…",
     "identifyByNotes": "Par notes",
     "identifyByNotesTitle": "Identifier un accord en sélectionnant les notes",

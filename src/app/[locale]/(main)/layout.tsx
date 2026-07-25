@@ -13,7 +13,7 @@ import { EmailVerificationGate } from '@/components/layout/email-verification-ga
 import { usePathname, useRouter } from '@/i18n/navigation';
 
 // Routes accessibles sans authentification (contenu public en lecture seule)
-const PUBLIC_EXACT = ['/explore', '/chords', '/chord-detect', '/pricing'];
+const PUBLIC_EXACT = ['/explore', '/chords', '/chord-detect', '/pricing', '/contact'];
 const PUBLIC_PREFIXES = ['/legal'];
 // /sheet/:id (mais pas /sheet/new ni /sheet/:id/edit), /artist/:name, /user/:id,
 // /session/:code (rejoindre une session éphémère sans compte — pas /session lui-même,
