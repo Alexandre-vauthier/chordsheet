@@ -113,7 +113,9 @@ function playVoiceFallback(ctx: AudioContext, dest: AudioNode, voice: Voice, t: 
   // les échantillons ne sont pas prêts (quelques centaines de ms au premier play).
 }
 
-// ─── Patterns (16 pas = une mesure 4/4, 8 premiers = 3/4 tronqué) ───────────
+// ─── Patterns (32 pas = 2 mesures en 4/4 ; pas 0-15 = mesure 1, 16-31 = mesure 2) ───
+// Grooves écrits sur 2 mesures : la 2e varie (turnaround, ghosts, clave) pour éviter
+// la boucle d'1 mesure. En 3/4, seul le début du motif est lu (approximation).
 
 type Pattern = Partial<Record<Voice, number[]>>;
 
@@ -124,74 +126,57 @@ interface PatternDef {
   pattern: Pattern;
 }
 
+// Repères de pas sur 2 mesures (4/4)
+const BEATS = [0, 4, 8, 12, 16, 20, 24, 28];                                  // les 8 temps
+const BACKBEAT = [4, 12, 20, 28];                                             // temps 2 et 4
+const OFFBEATS = [2, 6, 10, 14, 18, 22, 26, 30];                              // contretemps (croches off)
+const EIGHTHS = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30];  // croches
+const EIGHTHS_NO_LAST = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28];
+const SIXTEENTHS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31];
+const SHUFFLE = [0, 3, 4, 7, 8, 11, 12, 15, 16, 19, 20, 23, 24, 27, 28, 31];  // feel ternaire (1 · a)
+
 export const PATTERN_DEFS: PatternDef[] = [
-  {
-    id: 'rock', label: 'Rock', category: 'Rock / Pop',
-    pattern: { kick: [0, 8], snare: [4, 12], hihatClosed: [0, 2, 4, 6, 8, 10, 12, 14] },
-  },
-  {
-    id: 'rockDriving', label: 'Rock (dynamique)', category: 'Rock / Pop',
-    pattern: { kick: [0, 3, 8, 11], snare: [4, 12], hihatClosed: [0, 2, 4, 6, 8, 10, 12, 14] },
-  },
-  {
-    id: 'pop', label: 'Pop', category: 'Rock / Pop',
-    pattern: { kick: [0, 4, 8, 12], snare: [4, 12], hihatClosed: [0, 2, 4, 6, 8, 10, 12, 14] },
-  },
-  {
-    id: 'popBallad', label: 'Pop (ballade)', category: 'Rock / Pop',
-    pattern: { kick: [0, 8], rimshot: [4, 12], hihatClosed: [2, 6, 10, 14] },
-  },
-  {
-    id: 'jazz', label: 'Jazz (ride)', category: 'Jazz / Blues',
-    pattern: { kick: [0], snare: [4, 8], ride: [0, 4, 6, 8, 12, 14] },
-  },
-  {
-    id: 'jazzBrush', label: 'Jazz (balais)', category: 'Jazz / Blues',
-    pattern: { kick: [0], snareGhost: [2, 6, 10, 14], ride: [0, 8] },
-  },
-  {
-    id: 'blues', label: 'Blues', category: 'Jazz / Blues',
-    pattern: { kick: [0, 8], snare: [4, 12], hihatClosed: [0, 3, 6, 8, 11, 14] },
-  },
-  {
-    id: 'bluesShuffle', label: 'Blues (shuffle)', category: 'Jazz / Blues',
-    pattern: { kick: [0, 3, 8, 11], snare: [4, 12], hihatClosed: [0, 3, 6, 8, 11, 14] },
-  },
-  {
-    id: 'reggae', label: 'Reggae', category: 'Reggae / Latin',
-    pattern: { kick: [8], snare: [4, 12], hihatClosed: [1, 3, 5, 7, 9, 11, 13, 15] },
-  },
-  {
-    id: 'reggaeSkank', label: 'Reggae (skank)', category: 'Reggae / Latin',
-    pattern: { kick: [8], rimshot: [4, 12], hihatClosed: [1, 3, 5, 7, 9, 11, 13, 15] },
-  },
-  {
-    id: 'bossa', label: 'Bossa nova', category: 'Reggae / Latin',
-    pattern: { kick: [0, 3, 8, 11], rimshot: [4, 12], congaLow: [2, 6, 10, 14], hihatClosed: [0, 2, 4, 6, 8, 10, 12, 14] },
-  },
-  {
-    id: 'samba', label: 'Samba', category: 'Reggae / Latin',
-    pattern: { kick: [0, 8], congaHigh: [0, 2, 4, 6, 8, 10, 12, 14], congaLow: [3, 7, 11, 15], cowbell: [2, 6, 10, 14] },
-  },
-  {
-    id: 'funk', label: 'Funk', category: 'Funk / Soul',
-    pattern: { kick: [0, 3, 8, 11], snare: [4, 7, 12], hihatClosed: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15] },
-  },
-  {
-    id: 'funkGhost', label: 'Funk (ghost notes)', category: 'Funk / Soul',
-    pattern: {
-      kick: [0, 3, 6, 8, 11], snare: [4, 7, 12], snareGhost: [1, 5, 9, 13, 15],
-      cowbell: [2, 6, 10, 14], hihatClosed: [0, 2, 4, 6, 8, 10, 12, 14], hihatOpen: [15],
-    },
-  },
-  {
-    id: 'country', label: 'Country', category: 'Country / Folk',
-    pattern: { kick: [0, 8], rimshot: [4, 12], hihatClosed: [0, 2, 4, 6, 8, 10, 12, 14] },
-  },
-  {
-    id: 'countryTrain', label: 'Country (train beat)', category: 'Country / Folk',
-    pattern: { kick: [0, 4, 8, 12], rimshot: [2, 6, 10, 14], hihatClosed: [0, 2, 4, 6, 8, 10, 12, 14] },
-  },
+  // ── Rock / Pop ──
+  { id: 'rock', label: 'Rock', category: 'Rock / Pop',
+    pattern: { kick: [0, 8, 16, 24, 30], snare: BACKBEAT, hihatClosed: EIGHTHS_NO_LAST, hihatOpen: [30] } },
+  { id: 'rockDriving', label: 'Rock (dynamique)', category: 'Rock / Pop',
+    pattern: { kick: [0, 3, 8, 11, 16, 19, 24, 27], snare: BACKBEAT, hihatClosed: EIGHTHS, crash: [0] } },
+  { id: 'pop', label: 'Pop', category: 'Rock / Pop',
+    pattern: { kick: BEATS, snare: BACKBEAT, clap: BACKBEAT, hihatClosed: EIGHTHS_NO_LAST, hihatOpen: [30] } },
+  { id: 'popBallad', label: 'Pop (ballade)', category: 'Rock / Pop',
+    pattern: { kick: [0, 8, 16, 24], rimshot: BACKBEAT, hihatClosed: OFFBEATS } },
+
+  // ── Jazz / Blues ──
+  { id: 'jazz', label: 'Jazz (swing)', category: 'Jazz / Blues',
+    pattern: { ride: [0, 4, 6, 8, 12, 14, 16, 20, 22, 24, 28, 30], hihatClosed: BACKBEAT, kick: [0, 8, 16, 24], snareGhost: [10, 26] } },
+  { id: 'jazzBrush', label: 'Jazz (balais)', category: 'Jazz / Blues',
+    pattern: { ride: [0, 8, 16, 24], snareGhost: [2, 6, 10, 14, 18, 22, 26, 30], kick: [0, 16] } },
+  { id: 'blues', label: 'Blues (shuffle)', category: 'Jazz / Blues',
+    pattern: { kick: [0, 8, 16, 24], snare: BACKBEAT, hihatClosed: SHUFFLE } },
+  { id: 'bluesShuffle', label: 'Blues (shuffle appuyé)', category: 'Jazz / Blues',
+    pattern: { kick: [0, 3, 8, 11, 16, 19, 24, 27], snare: BACKBEAT, hihatClosed: SHUFFLE } },
+
+  // ── Reggae / Latin ──
+  { id: 'reggae', label: 'Reggae (one drop)', category: 'Reggae / Latin',
+    pattern: { kick: [8, 24], snare: [8, 24], hihatClosed: EIGHTHS } },
+  { id: 'reggaeSkank', label: 'Reggae (steppers)', category: 'Reggae / Latin',
+    pattern: { kick: BEATS, rimshot: [8, 24], hihatClosed: OFFBEATS } },
+  { id: 'bossa', label: 'Bossa nova', category: 'Reggae / Latin',
+    pattern: { kick: [0, 6, 8, 14, 16, 22, 24, 30], rimshot: [0, 6, 12, 20, 26], hihatClosed: EIGHTHS } },
+  { id: 'samba', label: 'Samba', category: 'Reggae / Latin',
+    pattern: { kick: [0, 4, 12, 16, 20, 28], congaHigh: EIGHTHS, congaLow: [3, 7, 11, 15, 19, 23, 27, 31], cowbell: [0, 3, 6, 10, 13, 16, 19, 22, 26, 29] } },
+
+  // ── Funk / Soul ──
+  { id: 'funk', label: 'Funk', category: 'Funk / Soul',
+    pattern: { kick: [0, 6, 10, 16, 22, 26], snare: BACKBEAT, snareGhost: [2, 9, 14, 18, 25, 30], hihatClosed: SIXTEENTHS } },
+  { id: 'funkGhost', label: 'Funk (ghost notes)', category: 'Funk / Soul',
+    pattern: { kick: [0, 3, 6, 10, 16, 19, 22, 26], snare: BACKBEAT, snareGhost: [1, 5, 7, 9, 13, 17, 21, 23, 25, 29], hihatClosed: EIGHTHS, hihatOpen: [15, 31], cowbell: OFFBEATS } },
+
+  // ── Country / Folk ──
+  { id: 'country', label: 'Country', category: 'Country / Folk',
+    pattern: { kick: [0, 8, 16, 24], rimshot: BACKBEAT, hihatClosed: EIGHTHS } },
+  { id: 'countryTrain', label: 'Country (train beat)', category: 'Country / Folk',
+    pattern: { kick: [0, 8, 16, 24], snare: BACKBEAT, snareGhost: [0, 2, 6, 8, 10, 14, 16, 18, 22, 24, 26, 30] } },
 ];
 
 const PATTERNS: Record<string, Pattern> = Object.fromEntries(PATTERN_DEFS.map((p) => [p.id, p.pattern]));
@@ -313,29 +298,16 @@ export function useGrooveBox({
       const stepsPerMeasure = bpmPerMeasureRef.current * 4;
       const pattern = patternRef.current;
 
-      const cycle = stepsPerMeasure * 2; // phrase de 2 mesures (la 2e ajoute un turnaround)
+      const cycle = stepsPerMeasure * 2; // phrase de 2 mesures (le motif est écrit sur 2 mesures)
       while (nextTimeRef.current < ctx.currentTime + 0.1) {
         const t = nextTimeRef.current;
-        const pos = stepRef.current;
-        const m = pos % stepsPerMeasure;
-        const bar = Math.floor(pos / stepsPerMeasure);
+        const step = stepRef.current;
 
         if (!mutedRef.current) {
           for (const voice of ALL_VOICES) {
-            if (pattern[voice]?.includes(m)) {
+            if (pattern[voice]?.includes(step)) {
               playVoice(ctx, dest, voice, t);
             }
-          }
-          // 2e mesure : léger turnaround, dans le caractère du pattern, pour que le
-          // groove évolue sur 2 mesures au lieu de reboucler à l'identique chaque mesure.
-          if (bar === 1) {
-            const preLast = stepsPerMeasure - 2; // avant-dernière croche
-            const last = stepsPerMeasure - 1;    // dernière double-croche
-            if (pattern.kick && m === preLast) playVoice(ctx, dest, 'kick', t);
-            if ((pattern.hihatClosed || pattern.hihatOpen) && m === preLast) playVoice(ctx, dest, 'hihatOpen', t);
-            if (pattern.ride && m === preLast) playVoice(ctx, dest, 'ride', t);
-            if (pattern.snare && m === last) playVoice(ctx, dest, 'snare', t);
-            else if (pattern.snareGhost && m === last) playVoice(ctx, dest, 'snareGhost', t);
           }
         }
 
