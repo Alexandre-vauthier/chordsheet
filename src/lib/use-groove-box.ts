@@ -313,9 +313,12 @@ export function useGrooveBox({
       const stepsPerMeasure = bpmPerMeasureRef.current * 4;
       const pattern = patternRef.current;
 
+      const cycle = stepsPerMeasure * 2; // phrase de 2 mesures (la 2e ajoute un turnaround)
       while (nextTimeRef.current < ctx.currentTime + 0.1) {
         const t = nextTimeRef.current;
-        const m = stepRef.current % stepsPerMeasure;
+        const pos = stepRef.current;
+        const m = pos % stepsPerMeasure;
+        const bar = Math.floor(pos / stepsPerMeasure);
 
         if (!mutedRef.current) {
           for (const voice of ALL_VOICES) {
@@ -323,10 +326,21 @@ export function useGrooveBox({
               playVoice(ctx, dest, voice, t);
             }
           }
+          // 2e mesure : léger turnaround, dans le caractère du pattern, pour que le
+          // groove évolue sur 2 mesures au lieu de reboucler à l'identique chaque mesure.
+          if (bar === 1) {
+            const preLast = stepsPerMeasure - 2; // avant-dernière croche
+            const last = stepsPerMeasure - 1;    // dernière double-croche
+            if (pattern.kick && m === preLast) playVoice(ctx, dest, 'kick', t);
+            if ((pattern.hihatClosed || pattern.hihatOpen) && m === preLast) playVoice(ctx, dest, 'hihatOpen', t);
+            if (pattern.ride && m === preLast) playVoice(ctx, dest, 'ride', t);
+            if (pattern.snare && m === last) playVoice(ctx, dest, 'snare', t);
+            else if (pattern.snareGhost && m === last) playVoice(ctx, dest, 'snareGhost', t);
+          }
         }
 
         nextTimeRef.current += s16;
-        stepRef.current = (stepRef.current + 1) % stepsPerMeasure;
+        stepRef.current = (stepRef.current + 1) % cycle;
       }
     };
 
