@@ -1,0 +1,10 @@
+# Ne pas envoyer ces fichiers à Cloud Build (image construite depuis le Dockerfile).
+.venv/
+__pycache__/
+stems_*/
+*.wav
+*.mp3
+.gitignore
+README.md
+analyze.py
+requirements.txt
