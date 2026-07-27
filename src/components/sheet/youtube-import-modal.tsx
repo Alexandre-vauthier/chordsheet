@@ -21,25 +21,56 @@ interface SheetResult {
   referenceUrl?: string;
 }
 
-function snapSpan(measures: number): CellSpan {
-  const snapped = Math.round(measures / 0.25) * 0.25;
+function snapSpan(fraction: number): CellSpan {
+  const snapped = Math.round(fraction / 0.25) * 0.25;
   return Math.max(0.25, Math.min(4, snapped)) as CellSpan;
 }
 
-// Même conversion que l'analyse photo (beats → mesures → lignes de 4).
+// Conversion cohérente : chaque mesure est re-découpée sur exactement N temps,
+// les accords identiques consécutifs d'une mesure sont fusionnés, et chaque
+// mesure occupe pile 1 unité (span total 1.0 = 4 colonnes) → 4 mesures par ligne
+// tombent exactement sur 16 colonnes, plus de cellules qui débordent.
+function buildMeasure(slice: string[], beatsPerMeasure: number): Cell[] {
+  // Fusionne les temps consécutifs de même accord → groupes {chord, beats}
+  const groups: { chord: string; beats: number }[] = [];
+  for (const ch of slice) {
+    const last = groups[groups.length - 1];
+    if (last && last.chord === ch) last.beats += 1;
+    else groups.push({ chord: ch, beats: 1 });
+  }
+  // Spans en fraction de mesure ; la dernière cellule absorbe le reste pour que
+  // la mesure totalise exactement 1.0 (corrige les arrondis, ex. 3/4).
+  const cells: Cell[] = [];
+  let acc = 0;
+  groups.forEach((g, gi) => {
+    let span: number;
+    if (gi === groups.length - 1) {
+      span = Math.max(0.25, Math.round((1 - acc) / 0.25) * 0.25);
+    } else {
+      span = snapSpan(g.beats / beatsPerMeasure);
+      acc += span;
+    }
+    cells.push({ chord: g.chord, span: span as CellSpan });
+  });
+  return cells;
+}
+
 function resultToSections(data: SheetResult): Section[] {
   const beatsPerMeasure: 3 | 4 = data.timeSignature?.startsWith('3') ? 3 : 4;
   return data.sections.map((s, i) => {
-    const cells: Cell[] = s.chords.map((c) => ({ chord: c.chord ?? '', span: snapSpan(c.beats / beatsPerMeasure) }));
-    const measures: Cell[][] = [];
-    let measure: Cell[] = [];
-    let total = 0;
-    for (const cell of cells) {
-      measure.push(cell);
-      total += cell.span;
-      if (total >= 0.99) { measures.push(measure); measure = []; total = 0; }
+    // 1) Aplatir en une suite de temps (accord répété `beats` fois)
+    const beats: string[] = [];
+    for (const c of s.chords) {
+      const n = Math.max(1, Math.round(Number(c.beats) || 1));
+      for (let k = 0; k < n; k++) beats.push((c.chord ?? '').trim());
     }
-    if (measure.length) measures.push(measure);
+    if (!beats.length) beats.push('');
+    // 2) Re-découper en mesures de exactement N temps
+    const measures: Cell[][] = [];
+    for (let m = 0; m < beats.length; m += beatsPerMeasure) {
+      measures.push(buildMeasure(beats.slice(m, m + beatsPerMeasure), beatsPerMeasure));
+    }
+    // 3) Lignes de 4 mesures (16 colonnes)
     const rows: Cell[][] = [];
     for (let j = 0; j < measures.length; j += 4) rows.push(measures.slice(j, j + 4).flat());
     if (!rows.length) rows.push([]);
