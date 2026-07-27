@@ -107,6 +107,7 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
   const finishingRef = useRef(false);
   const uploadedRef = useRef<StorageReference | null>(null);
   const realRef = useRef(0);
+  const bandStartRef = useRef(0);
 
   const cleanupUpload = () => {
     // Fichier déposé pour l'analyse : supprimé dès qu'il n'est plus utile
@@ -123,25 +124,34 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
     return () => clearInterval(id);
   }, [status]);
 
-  // Progression réelle -> on ne recule jamais l'affichage, et on note la valeur réelle
+  // À chaque nouveau palier réel du worker : on note la valeur, l'instant de
+  // début de l'étape, et on ne recule jamais l'affichage.
   useEffect(() => {
     realRef.current = progress;
+    bandStartRef.current = Date.now();
     setDisplay((d) => Math.max(d, progress));
   }, [progress]);
 
-  // Faux chargement : entre deux paliers réels, la barre rampe doucement vers le
-  // prochain plafond (sans l'atteindre) pour montrer que ça travaille pendant les
-  // étapes longues (séparation ~20%, détection ~80%).
+  // Faux chargement calé sur la durée attendue de chaque étape : la barre approche
+  // le plafond de l'étape de façon asymptotique (tau = constante de temps). Plus
+  // tau est grand, plus l'avance est lente et continue (cas de la séparation, la
+  // plus longue), sans jamais stagner ni atteindre le plafond avant le worker.
   useEffect(() => {
     if (status !== 'loading') { setDisplay(0); return; }
     const id = setInterval(() => {
       setDisplay((d) => {
         const real = realRef.current;
-        const ceil = real >= 100 ? 100 : real < 20 ? 19 : real < 70 ? 68 : real < 80 ? 79 : 99;
-        if (d >= ceil) return d;
-        return Math.min(ceil, d + Math.max(0.15, (ceil - d) * 0.035));
+        if (real >= 100) return 100;
+        const band =
+          real < 20 ? { floor: 5, ceil: 19, tau: 4 } :        // récupération
+          real < 70 ? { floor: 20, ceil: 68, tau: 50 } :      // séparation (longue)
+          real < 80 ? { floor: 70, ceil: 79, tau: 3 } :       // mixage
+                      { floor: 80, ceil: 99, tau: 18 };        // détection
+        const elapsed = (Date.now() - bandStartRef.current) / 1000;
+        const target = band.ceil - (band.ceil - band.floor) * Math.exp(-elapsed / band.tau);
+        return Math.min(band.ceil, Math.max(d, target));
       });
-    }, 400);
+    }, 300);
     return () => clearInterval(id);
   }, [status]);
 
