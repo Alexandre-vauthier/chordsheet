@@ -64,7 +64,8 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
   const [result, setResult] = useState<SheetResult | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [elapsed, setElapsed] = useState(0);
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState(0); // progression réelle (worker)
+  const [display, setDisplay] = useState(0);   // progression affichée (lissée)
   const [step, setStep] = useState('');
 
   const remainingOcr = getRemainingOcr(user?.subscription);
@@ -74,6 +75,7 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
   const unsubRef = useRef<null | (() => void)>(null);
   const finishingRef = useRef(false);
   const uploadedRef = useRef<StorageReference | null>(null);
+  const realRef = useRef(0);
 
   const cleanupUpload = () => {
     // Fichier déposé pour l'analyse : supprimé dès qu'il n'est plus utile
@@ -87,6 +89,28 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
     if (status !== 'loading') { setElapsed(0); return; }
     const t0 = Date.now();
     const id = setInterval(() => setElapsed(Math.round((Date.now() - t0) / 1000)), 500);
+    return () => clearInterval(id);
+  }, [status]);
+
+  // Progression réelle -> on ne recule jamais l'affichage, et on note la valeur réelle
+  useEffect(() => {
+    realRef.current = progress;
+    setDisplay((d) => Math.max(d, progress));
+  }, [progress]);
+
+  // Faux chargement : entre deux paliers réels, la barre rampe doucement vers le
+  // prochain plafond (sans l'atteindre) pour montrer que ça travaille pendant les
+  // étapes longues (séparation ~20%, détection ~80%).
+  useEffect(() => {
+    if (status !== 'loading') { setDisplay(0); return; }
+    const id = setInterval(() => {
+      setDisplay((d) => {
+        const real = realRef.current;
+        const ceil = real >= 100 ? 100 : real < 20 ? 19 : real < 70 ? 68 : real < 80 ? 79 : 99;
+        if (d >= ceil) return d;
+        return Math.min(ceil, d + Math.max(0.15, (ceil - d) * 0.035));
+      });
+    }, 400);
     return () => clearInterval(id);
   }, [status]);
 
@@ -296,7 +320,7 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
               <div className="h-2 rounded-full bg-[var(--line)] overflow-hidden">
                 <div
                   className="h-full bg-[var(--accent)] transition-[width] duration-500 ease-out"
-                  style={{ width: `${Math.max(3, progress)}%` }}
+                  style={{ width: `${Math.max(3, Math.round(display))}%` }}
                 />
               </div>
               <p className="text-xs text-[var(--ink-faint)] text-center">
