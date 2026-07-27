@@ -170,10 +170,10 @@ export default function NewSheetPage() {
             </div>
             <div className="text-center">
               <div className="font-semibold text-[var(--ink)] text-sm group-hover:text-[var(--accent)] transition-colors">
-                Depuis un lien YouTube
+                Depuis un audio
               </div>
               <div className="text-xs text-[var(--ink-faint)] mt-1">
-                Accords détectés depuis l&apos;audio (brouillon)
+                Lien YouTube ou fichier — accords détectés (brouillon)
               </div>
             </div>
           </button>

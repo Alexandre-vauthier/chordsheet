@@ -143,16 +143,21 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => null);
     const youtubeUrl: string = body?.youtubeUrl ?? '';
-    if (!/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//.test(youtubeUrl)) {
-      return NextResponse.json({ error: 'Lien YouTube invalide.' }, { status: 400 });
+    const audioUrl: string = body?.audioUrl ?? '';           // URL d'un fichier uploadé (Storage)
+    const providedTitle: string = body?.title ?? '';
+
+    const isYoutube = /^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\//.test(youtubeUrl);
+    if (!isYoutube && !audioUrl) {
+      return NextResponse.json({ error: 'Fournir un lien YouTube ou un fichier.' }, { status: 400 });
     }
 
-    // 1) Métadonnées (titre/artiste) via oEmbed — autorisé, pas de téléchargement
-    const meta = await fetchOEmbed(youtubeUrl);
+    // 1) Métadonnées : oEmbed pour YouTube, sinon le titre fourni (nom du fichier)
+    const meta = isYoutube ? await fetchOEmbed(youtubeUrl) : { title: providedTitle, author: '' };
 
     // 2) Analyse audio (service Cloud Run)
     const fd = new FormData();
-    fd.append('youtube_url', youtubeUrl);
+    if (isYoutube) fd.append('youtube_url', youtubeUrl);
+    else fd.append('audio_url', audioUrl);
     const detRes = await fetch(`${process.env.CHORD_DETECTOR_URL}/analyze`, {
       method: 'POST',
       headers: { 'X-API-Key': process.env.CHORD_DETECTOR_API_KEY ?? '' },
@@ -200,10 +205,10 @@ export async function POST(req: NextRequest) {
         }
       }
     }
-    // Repli titre/artiste depuis oEmbed
+    // Repli titre/artiste
     if (!parsed.title && meta.title) parsed.title = meta.title;
     if (!parsed.artist && meta.author) parsed.artist = meta.author;
-    parsed.referenceUrl = youtubeUrl;
+    if (isYoutube) parsed.referenceUrl = youtubeUrl; // le lien YouTube reste la référence
 
     // Incrément quota (free)
     try {

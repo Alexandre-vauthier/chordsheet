@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { getAuth, getDb } from '@/lib/firebase';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getAuth, getDb, getStorage } from '@/lib/firebase';
 import { toFirestore } from '@/lib/firestore-helpers';
 import { useAuth } from '@/lib/auth-context';
 import { getRemainingOcr, isPro } from '@/lib/plan-limits';
@@ -56,6 +57,8 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
   const { user } = useAuth();
   const router = useRouter();
   const [url, setUrl] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error' | 'upgrade'>('idle');
   const [error, setError] = useState('');
   const [result, setResult] = useState<SheetResult | null>(null);
@@ -65,10 +68,24 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
   const userIsPro = isPro(user?.subscription);
 
   const analyze = async () => {
-    if (!url.trim()) return;
+    if (!url.trim() && !file) return;
+    if (!user) return;
     setStatus('loading');
     setError('');
     try {
+      let payload: Record<string, string>;
+      if (file) {
+        // Upload vers Firebase Storage → URL de téléchargement passée au service
+        // (évite la limite de taille des fonctions Vercel).
+        const clean = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const path = `analyze-uploads/${user.id}/${Date.now()}-${clean}`;
+        const snap = await uploadBytes(storageRef(getStorage(), path), file);
+        const audioUrl = await getDownloadURL(snap.ref);
+        payload = { audioUrl, title: file.name.replace(/\.[^.]+$/, '') };
+      } else {
+        payload = { youtubeUrl: url.trim() };
+      }
+
       const headers: Record<string, string> = { 'Content-Type': 'application/json' };
       const idToken = await getAuth().currentUser?.getIdToken().catch(() => null);
       if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
@@ -76,7 +93,7 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
       const res = await fetch('/api/analyze-audio', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ youtubeUrl: url.trim() }),
+        body: JSON.stringify(payload),
       });
       const text = await res.text();
       let data: SheetResult & { error?: string; upgradeRequired?: boolean } = {} as never;
@@ -132,8 +149,8 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
       <div className="bg-[var(--cream)] rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[var(--line)]">
           <div>
-            <h2 className="font-playfair text-lg font-bold text-[var(--ink)]">Depuis un lien YouTube</h2>
-            <p className="text-xs text-[var(--ink-faint)] mt-0.5">L&apos;audio est analysé pour en extraire les accords.</p>
+            <h2 className="font-playfair text-lg font-bold text-[var(--ink)]">Depuis un audio</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-0.5">Lien YouTube ou fichier : les accords sont extraits de l&apos;audio.</p>
           </div>
           <div className="flex items-center gap-3">
             {!userIsPro && remainingOcr !== Infinity && (
@@ -149,9 +166,31 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
           <input
             type="url"
             value={url}
-            onChange={(e) => { setUrl(e.target.value); setStatus('idle'); setResult(null); }}
+            onChange={(e) => { setUrl(e.target.value); setFile(null); setStatus('idle'); setResult(null); }}
             placeholder="https://www.youtube.com/watch?v=…"
             className="w-full px-3 py-2 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink)] text-sm placeholder:text-[var(--ink-faint)] focus:outline-none focus:border-[var(--accent)]"
+          />
+
+          <div className="flex items-center gap-3 text-xs text-[var(--ink-faint)]">
+            <div className="flex-1 h-px bg-[var(--line)]" /> ou <div className="flex-1 h-px bg-[var(--line)]" />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-dashed border-[var(--line)] text-sm text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 18V5l12-2v13M9 13l12-2M6 21a3 3 0 100-6 3 3 0 000 6z" />
+            </svg>
+            {file ? file.name : 'Choisir un fichier audio (MP3, WAV…)'}
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="audio/*"
+            className="hidden"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) { setFile(f); setUrl(''); setStatus('idle'); setResult(null); } e.target.value = ''; }}
           />
 
           <p className="text-xs text-[var(--ink-faint)] leading-relaxed">
@@ -224,7 +263,7 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
           <div className="flex gap-3">
             <button
               onClick={analyze}
-              disabled={!url.trim() || status === 'loading'}
+              disabled={(!url.trim() && !file) || status === 'loading'}
               className="px-5 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-40 cursor-pointer"
             >
               {status === 'loading' ? 'Analyse…' : status === 'done' ? 'Ré-analyser' : 'Analyser'}

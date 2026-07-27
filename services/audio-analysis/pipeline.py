@@ -15,18 +15,34 @@ import tempfile
 
 
 def get_audio(src: str, workdir: str) -> str:
-    """Chemin d'un fichier audio local (télécharge via yt-dlp si c'est une URL)."""
-    if src.startswith("http://") or src.startswith("https://"):
+    """Chemin d'un fichier audio local.
+    - URL YouTube → yt-dlp (avec cookies si YT_COOKIES_FILE est défini).
+    - Autre URL (fichier hébergé, ex. Firebase Storage) → téléchargement direct.
+    - Chemin local → tel quel.
+    """
+    import urllib.request
+
+    is_url = src.startswith("http://") or src.startswith("https://")
+    if is_url and ("youtube.com" in src or "youtu.be" in src):
         out_tmpl = os.path.join(workdir, "input.%(ext)s")
-        subprocess.run(
-            ["yt-dlp", "-x", "--audio-format", "mp3", "--audio-quality", "0",
-             "-o", out_tmpl, src],
-            check=True,
-        )
+        cmd = ["yt-dlp", "-x", "--audio-format", "mp3", "--audio-quality", "0", "-o", out_tmpl]
+        cookies = os.environ.get("YT_COOKIES_FILE")
+        if cookies and os.path.isfile(cookies):
+            cmd += ["--cookies", cookies]
+        cmd.append(src)
+        subprocess.run(cmd, check=True)
         files = glob.glob(os.path.join(workdir, "input.*"))
         if not files:
             raise RuntimeError("yt-dlp n'a produit aucun fichier.")
         return files[0]
+
+    if is_url:
+        dest = os.path.join(workdir, "input_audio")
+        req = urllib.request.Request(src, headers={"User-Agent": "chordsheet-audio/1.0"})
+        with urllib.request.urlopen(req, timeout=120) as r, open(dest, "wb") as f:
+            shutil.copyfileobj(r, f)
+        return dest
+
     if not os.path.isfile(src):
         raise FileNotFoundError(src)
     return src
