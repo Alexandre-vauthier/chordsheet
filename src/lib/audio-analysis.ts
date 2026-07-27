@@ -71,17 +71,11 @@ export function toBars(tl: Timeline): { bars: Bar[]; beatsPerBar: 3 | 4 } {
 // étant bruitée), avec au plus 2 accords par mesure.
 export type Measure = { chord: string; beats: number }[];
 
-// Chaîne d'accords temps par temps, calée sur le premier temps fort.
-function chordPerBeat(tl: Timeline): string[] {
-  const beats = [...tl.downbeats].sort((a, b) => a[0] - b[0]);
-  if (!beats.length) return [];
-  const perBeat = beats.map(([t], i) => {
-    const next = beats[i + 1]?.[0] ?? t + 0.5;
-    return madmomToChord(chordAt(tl.chords, t + (next - t) * 0.4));
-  });
-  let start = beats.findIndex((b) => b[1] === 1);
-  if (start < 0) start = 0;
-  return perBeat.slice(start);
+function median(xs: number[]): number {
+  if (!xs.length) return 0;
+  const s = [...xs].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 
 type Segment = { chord: string; start: number; end: number };
@@ -98,56 +92,93 @@ function mergeSegments(chords: Timeline['chords']): Segment[] {
   return out;
 }
 
-// Supprime les segments trop courts (bruit / accords parasites) en les absorbant
-// dans le précédent, puis re-fusionne. Évite qu'un parasite décale la période.
-function dropShortSegments(segs: Segment[], minDur: number): Segment[] {
-  const kept: Segment[] = [];
-  for (const s of segs) {
-    if (s.end - s.start < minDur && kept.length) kept[kept.length - 1].end = s.end;
-    else kept.push({ ...s });
+// Accord qui couvre le plus de temps dans l'intervalle [t0, t1[.
+function dominantChordInInterval(chords: Timeline['chords'], t0: number, t1: number): string {
+  const cover: Record<string, number> = {};
+  for (const c of chords) {
+    const s = Math.max(c.start, t0);
+    const e = Math.min(c.end, t1);
+    if (e > s) {
+      const ch = madmomToChord(c.label);
+      cover[ch] = (cover[ch] ?? 0) + (e - s);
+    }
   }
-  const merged: Segment[] = [];
-  for (const s of kept) {
-    const last = merged[merged.length - 1];
-    if (last && last.chord === s.chord) last.end = s.end;
-    else merged.push({ ...s });
-  }
-  return merged;
+  let best = '', bestV = 0;
+  for (const [ch, v] of Object.entries(cover)) if (v > bestV) { bestV = v; best = ch; }
+  return best;
 }
 
-// Plus petite période (en nombre d'accords) de la séquence de labels, ou null.
-function detectLabelPeriod(labels: string[]): number | null {
-  const n = labels.length;
-  if (n < 4) return null;
-  for (let p = 1; p <= Math.floor(n / 2); p++) {
-    let ok = 0, tot = 0;
-    for (let i = 0; i + p < n; i++) { tot++; if (labels[i] === labels[i + p]) ok++; }
-    if (tot && ok / tot >= 0.8) return p;
+// Cale la PHASE de la grille métronomique pour que les changements d'accords
+// tombent au plus près des temps (essaie plusieurs décalages, garde le meilleur).
+function bestPhase(changeTimes: number[], beatDur: number, base: number): number {
+  if (!changeTimes.length) return base;
+  let best = base, bestErr = Infinity;
+  for (let s = 0; s < 8; s++) {
+    const phi = base + ((s / 8) - 0.5) * beatDur;
+    let err = 0;
+    for (const ct of changeTimes) {
+      const k = Math.round((ct - phi) / beatDur);
+      err += Math.abs(ct - (phi + k * beatDur));
+    }
+    if (err < bestErr) { bestErr = err; best = phi; }
+  }
+  return best;
+}
+
+// Suite d'accords sur une grille de temps RÉGULIÈRE (métronome à beatDur),
+// calée en phase → chaque changement d'accord tombe sur un temps.
+function chordPerBeatSteady(chords: Timeline['chords'], t0: number, endT: number, beatDur: number): string[] {
+  const perBeat: string[] = [];
+  for (let t = t0; t < endT - beatDur * 0.5; t += beatDur) {
+    perBeat.push(dominantChordInInterval(chords, t, t + beatDur));
+  }
+  return perBeat;
+}
+
+// Replie les répétitions sur une période et vote à la majorité par position.
+function majorityFold(seq: string[], period: number): string[] {
+  const canon: string[] = [];
+  for (let j = 0; j < period; j++) {
+    const counts: Record<string, number> = {};
+    for (let i = j; i < seq.length; i += period) counts[seq[i] ?? ''] = (counts[seq[i] ?? ''] ?? 0) + 1;
+    let best = '', bestN = -1;
+    for (const [c, cnt] of Object.entries(counts)) if (cnt > bestN) { bestN = cnt; best = c; }
+    canon.push(best);
+  }
+  return canon;
+}
+
+// Accords "fréquents" (présents dans la boucle, pas des parasites d'un seul tour).
+function frequentChords(seq: string[]): Set<string> {
+  const freq: Record<string, number> = {};
+  for (const c of seq) if (c) freq[c] = (freq[c] ?? 0) + 1;
+  const min = Math.max(3, seq.length * 0.06);
+  return new Set(Object.entries(freq).filter(([, n]) => n >= min).map(([c]) => c));
+}
+
+// Période de la boucle (en temps, multiple de la mesure) + motif canonique, en
+// n'acceptant une période QUE si le canonique garde tous les accords fréquents.
+function selectLoop(seq: string[], beatsPerBar: number): { period: number; canon: string[] } | null {
+  const n = seq.length;
+  if (n < 2 * beatsPerBar) return null;
+  const freq = frequentChords(seq);
+  if (freq.size === 0) return null;
+  const maxP = Math.min(16 * beatsPerBar, Math.floor(n / 2));
+  const scoreAt = (p: number): number => {
+    let match = 0, total = 0;
+    for (let i = 0; i + p < n; i++) { total++; if (seq[i] && seq[i] === seq[i + p]) match++; }
+    return total ? match / total : 0;
+  };
+  let bestScore = 0;
+  for (let p = beatsPerBar; p <= maxP; p += beatsPerBar) bestScore = Math.max(bestScore, scoreAt(p));
+  if (bestScore < 0.6) return null;
+  for (let p = beatsPerBar; p <= maxP; p += beatsPerBar) {
+    if (scoreAt(p) < bestScore - 0.03) continue;
+    const canon = majorityFold(seq, p);
+    const canonSet = new Set(canon.filter(Boolean));
+    if ([...freq].every((c) => canonSet.has(c))) return { period: p, canon };
   }
   return null;
-}
-
-function median(xs: number[]): number {
-  if (!xs.length) return 0;
-  const s = [...xs].sort((a, b) => a - b);
-  const m = Math.floor(s.length / 2);
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
-}
-
-// Répartit `total` unités entières entre des poids (proportionnel), min par part,
-// somme garantie = total. Sert à quantifier des durées en nombres de temps.
-function allocate(weights: number[], total: number, min: number): number[] {
-  const k = weights.length;
-  if (k === 0) return [];
-  if (total <= k * min) return weights.map(() => min);
-  const rem = total - k * min;
-  const sum = weights.reduce((a, b) => a + b, 0) || 1;
-  const raw = weights.map((w) => (w / sum) * rem);
-  const base = raw.map((r) => Math.floor(r));
-  const left = rem - base.reduce((a, b) => a + b, 0);
-  const order = raw.map((r, i) => ({ i, f: r - Math.floor(r) })).sort((a, b) => b.f - a.f);
-  for (let j = 0; j < left && j < order.length; j++) base[order[j].i]++;
-  return base.map((b) => b + min);
 }
 
 // Regroupe une tranche de temps en cellules {chord, beats} (temps consécutifs
@@ -174,8 +205,8 @@ function reduceMeasure(perBeat: string[], beatsPerBar: number): Measure {
 }
 
 export function toMeasures(tl: Timeline, beatsPerBar: number): Measure[] {
-  const raw = mergeSegments(tl.chords).filter((s) => s.end > s.start);
-  if (!raw.length) return [];
+  const segs = mergeSegments(tl.chords).filter((s) => s.end > s.start);
+  if (!segs.length) return [];
 
   // Durée d'un temps : médiane des intervalles entre temps (plus fiable que le BPM brut).
   const beatTimes = tl.downbeats.map((d) => d[0]).sort((a, b) => a - b);
@@ -185,51 +216,44 @@ export function toMeasures(tl: Timeline, beatsPerBar: number): Measure[] {
     if (d > 0.05 && d < 3) diffs.push(d);
   }
   const beatDur = diffs.length ? median(diffs) : (tl.bpm > 0 ? 60 / tl.bpm : 0.5);
-  const measureDur = beatsPerBar * beatDur;
-  const songDur = tl.duration || raw[raw.length - 1].end;
+  const songDur = tl.duration || segs[segs.length - 1].end;
 
-  // Nettoie les micro-segments (parasites) puis cherche la période sur la suite d'accords.
-  const segs = dropShortSegments(raw, beatDur * 0.5);
-  const period = measureDur > 0 ? detectLabelPeriod(segs.map((s) => s.chord)) : null;
+  // Grille métronomique régulière, calée en phase sur les changements d'accords
+  // (→ les accords tombent sur les temps), puis échantillonnée temps par temps.
+  const dbSorted = [...tl.downbeats].sort((a, b) => a[0] - b[0]);
+  const firstDown = dbSorted.find((d) => d[1] === 1)?.[0] ?? dbSorted[0]?.[0] ?? segs[0].start;
+  const changes = segs.map((s) => s.start).filter((t) => t > firstDown - beatDur && t < songDur);
+  let t0 = bestPhase(changes, beatDur, firstDown);
+  while (t0 - beatDur >= segs[0].start) t0 -= beatDur; // recule jusqu'au début utile
+  const perBeat = chordPerBeatSteady(tl.chords, t0, songDur, beatDur);
+  if (!perBeat.length) return [];
 
-  if (period) {
-    // Motif canonique : accord majoritaire + durée médiane par position dans la boucle.
-    const pattern: { chord: string; dur: number }[] = [];
-    for (let j = 0; j < period; j++) {
-      const durs: number[] = [];
-      const counts: Record<string, number> = {};
-      for (let i = j; i < segs.length; i += period) {
-        durs.push(segs[i].end - segs[i].start);
-        counts[segs[i].chord] = (counts[segs[i].chord] ?? 0) + 1;
+  // Si boucle nette (et sûre) : canonise → rythme régulier + parasites effacés.
+  const loop = selectLoop(perBeat, beatsPerBar);
+  let canon = loop?.canon ?? null;
+  if (loop && canon) {
+    // Cale le DÉPART des mesures : choisit le décalage qui évite qu'un accord soit
+    // coupé par une barre de mesure (minimise les accords qui traversent une barre).
+    const period = loop.period;
+    let bestO = 0, bestPen = Infinity;
+    for (let o = 0; o < beatsPerBar; o++) {
+      let pen = 0;
+      for (let b = o; b < period; b += beatsPerBar) {
+        const cur = canon[b % period];
+        const prev = canon[(b - 1 + period) % period];
+        if (cur && cur === prev) pen++;
       }
-      const chord = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
-      pattern.push({ chord, dur: median(durs) });
+      if (pen < bestPen) { bestPen = pen; bestO = o; }
     }
-    // Longueur de la boucle en mesures pleines, puis durées quantifiées en temps.
-    const loopDur = pattern.reduce((a, c) => a + c.dur, 0);
-    const measuresInLoop = Math.max(1, Math.round(loopDur / measureDur));
-    const totalBeats = measuresInLoop * beatsPerBar;
-    const beatsArr = allocate(pattern.map((p) => Math.max(1e-3, p.dur)), totalBeats, 1);
-    const loopPerBeat: string[] = [];
-    pattern.forEach((p, i) => { for (let k = 0; k < beatsArr[i]; k++) loopPerBeat.push(p.chord); });
-
-    // Répète le motif régulier sur toute la durée du morceau.
-    const totalMeasures = Math.max(measuresInLoop, Math.round(songDur / measureDur));
-    const measures: Measure[] = [];
-    for (let m = 0; m < totalMeasures; m++) {
-      const s = (m % measuresInLoop) * beatsPerBar;
-      measures.push(groupBeats(loopPerBeat.slice(s, s + beatsPerBar), beatsPerBar));
-    }
-    return measures;
+    canon = canon.slice(bestO).concat(canon.slice(0, bestO));
   }
+  const seq = canon ? perBeat.map((_, i) => canon[i % canon.length]) : perBeat;
 
-  // Repli : pas de boucle nette → échantillonnage temps par temps + nettoyage.
-  const perBeat = chordPerBeat(tl);
   const measures: Measure[] = [];
-  for (let i = 0; i < perBeat.length; i += beatsPerBar) {
-    const slice = perBeat.slice(i, i + beatsPerBar);
+  for (let i = 0; i < seq.length; i += beatsPerBar) {
+    const slice = seq.slice(i, i + beatsPerBar);
     if (!slice.length) break;
-    measures.push(reduceMeasure(slice, beatsPerBar));
+    measures.push(loop ? groupBeats(slice, beatsPerBar) : reduceMeasure(slice, beatsPerBar));
   }
   return measures;
 }
