@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject, type StorageReference } from 'firebase/storage';
 import { getAuth, getDb, getStorage } from '@/lib/firebase';
@@ -63,9 +63,27 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState('');
   const [result, setResult] = useState<SheetResult | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
 
   const remainingOcr = getRemainingOcr(user?.subscription);
   const userIsPro = isPro(user?.subscription);
+
+  // Chrono pendant l'analyse (progression estimée, le service ne renvoie rien avant la fin)
+  useEffect(() => {
+    if (status !== 'loading') { setElapsed(0); return; }
+    const t0 = Date.now();
+    const id = setInterval(() => setElapsed(Math.round((Date.now() - t0) / 1000)), 500);
+    return () => clearInterval(id);
+  }, [status]);
+
+  const ESTIMATE = 240; // ~4 min pour un morceau moyen
+  const progress = Math.min(95, Math.round((elapsed / ESTIMATE) * 100));
+  const stage = elapsed < 6
+    ? (file ? 'Envoi de l’audio…' : 'Récupération de l’audio…')
+    : elapsed < 150
+      ? 'Séparation des pistes (voix, batterie, harmonie)…'
+      : 'Détection des accords et du tempo…';
+  const mmss = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`;
 
   const analyze = async () => {
     if (!url.trim() && !file) return;
@@ -207,9 +225,20 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
           </p>
 
           {status === 'loading' && (
-            <div className="text-center py-6 space-y-3">
-              <div className="animate-spin rounded-full h-7 w-7 border-2 border-[var(--accent)] border-t-transparent mx-auto" />
-              <p className="text-sm text-[var(--ink-light)]">Analyse en cours… (séparation audio + accords)</p>
+            <div className="py-4 space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-[var(--ink-light)]">{stage}</span>
+                <span className="font-mono text-xs text-[var(--ink-faint)]">{mmss}</span>
+              </div>
+              <div className="h-2 rounded-full bg-[var(--line)] overflow-hidden">
+                <div
+                  className="h-full bg-[var(--accent)] transition-[width] duration-500 ease-linear"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <p className="text-xs text-[var(--ink-faint)] text-center">
+                L’analyse tourne sur le serveur (~3-4 min). Tu peux laisser cette fenêtre ouverte.
+              </p>
             </div>
           )}
 
