@@ -83,17 +83,33 @@ Contexte :
 - Tempo : ${Math.round(tl.bpm)} BPM
 - Mesure : ${beatsPerBar}/4
 
-Séquence détectée, une entrée par mesure. Format : Mn:accord(durée_en_temps) accord(durée)…
-"-" = temps sans accord clair. La somme des durées d'une mesure vaut environ ${beatsPerBar}.
+Séquence détectée par l'algorithme, une entrée par mesure. Format : Mn:accord(durée_en_temps)…
+"-" = temps sans accord clair.
 ${seq}
 
+IMPORTANT — la détection ci-dessus est APPROXIMATIVE et bruitée : durées imprécises,
+petits fragments parasites (1 temps isolé), accords qui vacillent. La musique, elle,
+est RÉGULIÈRE. Ton rôle est d'en déduire la structure propre sous-jacente, pas de
+recopier le bruit. Raisonne comme un musicien qui relève une grille à l'oreille.
+
 Ta tâche :
-1. Regroupe ces mesures en SECTIONS musicales (Intro, Couplet, Refrain, Pont…) en repérant les répétitions.
-2. Utilise "repeat" quand une section se répète telle quelle à la suite (ne recopie pas 4 fois, mets repeat=4).
-3. Respelle les accords selon la tonalité (ex. en tonalité bémol : A#→Bb, D#→Eb, G#→Ab).
-4. Reste FIDÈLE à la détection : conserve les changements d'accords en cours de mesure et leurs durées (ex. Am(2) G(2) → deux accords dans la mesure). Ne rajoute pas d'accords, ne "corrige" pas la progression. La détection ne donne que majeurs/mineurs ; n'invente pas de 7e/sus.
-5. Nettoie le bruit léger : une durée de 1 temps isolée entre deux fois le même accord est probablement du bruit, tu peux la fusionner ; mais garde les vrais changements (2 temps ou plus).
-6. Une mesure fait ${beatsPerBar} temps et au plus ${beatsPerBar} accords. Chaque accord garde sa durée détectée (beats). Un seul accord sur toute la mesure → beats=${beatsPerBar}.
+1. Régularise le rythme harmonique. Dans la grande majorité des morceaux, un accord tient
+   une mesure entière (beats=${beatsPerBar}) ou une demi-mesure (beats=${Math.round(beatsPerBar / 2)}).
+   Les changements tombent sur les temps forts (1er temps, éventuellement mi-mesure).
+   Quantifie les durées détectées vers ces valeurs. Élimine les fragments parasites
+   (durée de 1 temps isolée, accord qui n'apparaît qu'une fois entre deux autres) en les
+   absorbant dans l'accord voisin dominant. Vise 1 à 2 accords par mesure, rarement plus.
+2. Exploite la RÉPÉTITION, clé de la structure musicale : repère les mesures et les blocs
+   qui reviennent à l'identique. Regroupe en SECTIONS (Intro, Couplet, Refrain, Pont…) et
+   utilise "repeat" au lieu de recopier (une section de 4 mesures jouée 2 fois → repeat=2).
+   Une section fait typiquement 4, 8 ou 16 mesures. Cherche activement ces régularités.
+3. Chaque mesure fait EXACTEMENT ${beatsPerBar} temps : la somme des "beats" des accords
+   consécutifs doit se regrouper en mesures pleines de ${beatsPerBar} temps (ex. en 4/4 :
+   un accord de 4, ou 2+2, ou 4×1 ; jamais 3+2 ou 1+2).
+4. Reste fidèle aux ACCORDS eux-mêmes (n'invente pas d'accords hors de ceux détectés,
+   respelle selon la tonalité : A#→Bb, D#→Eb, G#→Ab). La détection ne donne que majeurs
+   et mineurs ; n'ajoute pas de 7e/sus. Tu régularises le RYTHME et la STRUCTURE, pas
+   l'harmonie.
 
 Réponds UNIQUEMENT avec ce JSON (sans texte autour) :
 {
@@ -103,11 +119,13 @@ Réponds UNIQUEMENT avec ce JSON (sans texte autour) :
   "timeSignature": "${beatsPerBar}/4",
   "tempo": "${Math.round(tl.bpm)}",
   "sections": [
-    { "label": "Couplet", "repeat": 1, "chords": [ { "chord": "Am", "beats": 2 }, { "chord": "G", "beats": 2 } ] }
+    { "label": "Couplet", "repeat": 2, "chords": [ { "chord": "Am", "beats": ${beatsPerBar} }, { "chord": "G", "beats": ${beatsPerBar} } ] }
   ]
 }
 
-Règles JSON : tout accord commence par A-G (majuscule) + éventuellement # ou b + suffixe (m). Temps sans accord → {"chord": "", "beats": N}.`;
+Règles JSON : tout accord commence par A-G (majuscule) + éventuellement # ou b + suffixe (m).
+Chaque "beats" est un entier de 1 à ${beatsPerBar}, et les accords d'une section se
+regroupent en mesures pleines de ${beatsPerBar} temps.`;
 }
 
 // Normalise les accords produits par l'IA (comme analyze-sheet).
