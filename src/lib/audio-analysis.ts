@@ -84,31 +84,6 @@ function chordPerBeat(tl: Timeline): string[] {
   return perBeat.slice(start);
 }
 
-// Détecte la période de la boucle (en temps, multiple de la mesure). Renvoie la
-// plus petite période dont la corrélation dépasse le seuil, ou null si le morceau
-// n'est pas nettement répétitif.
-function detectPeriod(seq: string[], beatsPerBar: number): number | null {
-  const n = seq.length;
-  if (n < 2 * beatsPerBar) return null;
-  const maxP = Math.min(16 * beatsPerBar, Math.floor(n / 2));
-  const scoreAt = (p: number): number => {
-    let match = 0, total = 0;
-    for (let i = 0; i + p < n; i++) {
-      total++;
-      if (seq[i] && seq[i] === seq[i + p]) match++;
-    }
-    return total ? match / total : 0;
-  };
-  let bestScore = 0;
-  for (let p = beatsPerBar; p <= maxP; p += beatsPerBar) bestScore = Math.max(bestScore, scoreAt(p));
-  if (bestScore < 0.6) return null;
-  // Plus petite période quasi optimale (privilégie la boucle la plus courte)
-  for (let p = beatsPerBar; p <= maxP; p += beatsPerBar) {
-    if (scoreAt(p) >= bestScore - 0.03) return p;
-  }
-  return null;
-}
-
 // Replie toutes les répétitions sur une période et vote à la majorité par position
 // (efface les accords inventés : une erreur ponctuelle est minoritaire).
 function majorityFold(seq: string[], period: number): string[] {
@@ -124,6 +99,44 @@ function majorityFold(seq: string[], period: number): string[] {
     canon.push(best);
   }
   return canon;
+}
+
+// Ensemble des accords "fréquents" (présents dans la boucle, pas des parasites d'un seul tour).
+function frequentChords(seq: string[]): Set<string> {
+  const freq: Record<string, number> = {};
+  for (const c of seq) if (c) freq[c] = (freq[c] ?? 0) + 1;
+  const min = Math.max(3, seq.length * 0.06);
+  return new Set(Object.entries(freq).filter(([, n]) => n >= min).map(([c]) => c));
+}
+
+// Cherche la période de la boucle ET son motif canonique, mais N'ACCEPTE une période
+// QUE si le canonique contient tous les accords fréquents (sinon le repliement perd
+// un accord de la boucle). Renvoie null si aucune période sûre → on ne replie pas.
+function selectLoop(seq: string[], beatsPerBar: number): { period: number; canon: string[] } | null {
+  const n = seq.length;
+  if (n < 2 * beatsPerBar) return null;
+  const freq = frequentChords(seq);
+  if (freq.size === 0) return null;
+  const maxP = Math.min(16 * beatsPerBar, Math.floor(n / 2));
+  const scoreAt = (p: number): number => {
+    let match = 0, total = 0;
+    for (let i = 0; i + p < n; i++) {
+      total++;
+      if (seq[i] && seq[i] === seq[i + p]) match++;
+    }
+    return total ? match / total : 0;
+  };
+  let bestScore = 0;
+  for (let p = beatsPerBar; p <= maxP; p += beatsPerBar) bestScore = Math.max(bestScore, scoreAt(p));
+  if (bestScore < 0.6) return null;
+  // Plus petite période quasi optimale dont le canonique garde TOUS les accords fréquents.
+  for (let p = beatsPerBar; p <= maxP; p += beatsPerBar) {
+    if (scoreAt(p) < bestScore - 0.03) continue;
+    const canon = majorityFold(seq, p);
+    const canonSet = new Set(canon.filter(Boolean));
+    if ([...freq].every((c) => canonSet.has(c))) return { period: p, canon };
+  }
+  return null;
 }
 
 // Regroupe une tranche de temps en cellules {chord, beats} (temps consécutifs
@@ -153,18 +166,17 @@ export function toMeasures(tl: Timeline, beatsPerBar: number): Measure[] {
   const perBeat = chordPerBeat(tl);
   if (!perBeat.length) return [];
 
-  // Si le morceau est une boucle nette : canonise (période + vote majoritaire),
-  // ce qui régularise le rythme ET efface les accords parasites.
-  const period = detectPeriod(perBeat, beatsPerBar);
-  const canon = period ? majorityFold(perBeat, period) : null;
-  const seq = canon ? perBeat.map((_, i) => canon[i % period!]) : perBeat;
+  // Si le morceau est une boucle nette (et sûre : aucun accord fréquent perdu),
+  // on canonise (période + vote majoritaire) → rythme régulier + parasites effacés.
+  const loop = selectLoop(perBeat, beatsPerBar);
+  const seq = loop ? perBeat.map((_, i) => loop.canon[i % loop.period]) : perBeat;
 
   const measures: Measure[] = [];
   for (let i = 0; i < seq.length; i += beatsPerBar) {
     const slice = seq.slice(i, i + beatsPerBar);
     if (!slice.length) break;
     // Boucle canonisée → on garde la structure réelle ; sinon on nettoie le bruit.
-    measures.push(canon ? groupBeats(slice, beatsPerBar) : reduceMeasure(slice, beatsPerBar));
+    measures.push(loop ? groupBeats(slice, beatsPerBar) : reduceMeasure(slice, beatsPerBar));
   }
   return measures;
 }
