@@ -9,11 +9,12 @@ import { toFirestore, fromFirestore } from '@/lib/firestore-helpers';
 import { SheetEditor } from '@/components/sheet/sheet-editor';
 import { ImportSheetModal } from '@/components/sheet/import-sheet-modal';
 import { AnalyzeSheetModal } from '@/components/sheet/analyze-sheet-modal';
+import { YoutubeImportModal } from '@/components/sheet/youtube-import-modal';
 import { createEmptySheet } from '@/types';
 import type { NewSheet, Sheet } from '@/types';
 import { useRouter } from '@/i18n/navigation';
 
-type Mode = 'choose' | 'blank' | 'import' | 'analyze';
+type Mode = 'choose' | 'blank' | 'import' | 'analyze' | 'youtube';
 
 export default function NewSheetPage() {
   const router = useRouter();
@@ -82,7 +83,7 @@ export default function NewSheetPage() {
           <p className="text-[var(--ink-light)] text-sm">Comment veux-tu créer ta grille ?</p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Grille vierge */}
           <button
             onClick={() => setMode('blank')}
@@ -154,6 +155,28 @@ export default function NewSheetPage() {
               </div>
             </div>
           </button>
+
+          {/* Depuis un lien YouTube */}
+          <button
+            onClick={() => setMode('youtube')}
+            className="group flex flex-col items-center gap-4 p-7 rounded-2xl border-2 border-[var(--line)]
+              hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] transition-all cursor-pointer"
+          >
+            <div className="w-14 h-14 rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center group-hover:bg-[var(--accent)] group-hover:text-white transition-all duration-200 shrink-0">
+              <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="5" width="20" height="14" rx="3"/>
+                <path d="M10 9l5 3-5 3z" fill="currentColor" strokeWidth="0"/>
+              </svg>
+            </div>
+            <div className="text-center">
+              <div className="font-semibold text-[var(--ink)] text-sm group-hover:text-[var(--accent)] transition-colors">
+                Depuis un lien YouTube
+              </div>
+              <div className="text-xs text-[var(--ink-faint)] mt-1">
+                Accords détectés depuis l&apos;audio (brouillon)
+              </div>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -162,6 +185,9 @@ export default function NewSheetPage() {
       )}
       {mode === 'analyze' && (
         <AnalyzeSheetModal onClose={() => setMode('choose')} />
+      )}
+      {mode === 'youtube' && (
+        <YoutubeImportModal onClose={() => setMode('choose')} />
       )}
     </>
   );
