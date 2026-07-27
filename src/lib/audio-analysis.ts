@@ -128,6 +128,45 @@ Chaque "beats" est un entier de 1 à ${beatsPerBar}, et les accords d'une sectio
 regroupent en mesures pleines de ${beatsPerBar} temps.`;
 }
 
+// Deuxième passe : relecture/critique de la grille assemblée (générateur → critique).
+export function buildReviewPrompt(
+  gridJson: string,
+  beatsPerBar: number,
+  tl: Timeline,
+  meta: { title: string; author: string },
+): string {
+  const half = Math.round(beatsPerBar / 2);
+  return `Tu es un relecteur musical exigeant. Voici une grille d'accords BROUILLON, issue
+d'une détection audio approximative puis d'une première structuration automatique. Elle
+contient probablement des irrégularités. Corrige-la pour qu'elle soit MUSICALEMENT
+COHÉRENTE et RÉGULIÈRE, comme la relèverait un musicien expérimenté.
+
+Contexte : ${meta.title || 'morceau'}${meta.author ? ' — ' + meta.author : ''}, tonalité ${tl.key || 'inconnue'}, ${Math.round(tl.bpm)} BPM, mesure ${beatsPerBar}/4.
+
+Grille à relire (JSON) :
+${gridJson}
+
+Vérifie et corrige, dans cet ordre :
+1. MESURES RÉGULIÈRES : dans chaque section, les "beats" consécutifs doivent se regrouper
+   en mesures pleines de EXACTEMENT ${beatsPerBar} temps (ex. en 4/4 : 4, ou 2+2, ou 4×1 ;
+   jamais 3+2). Un accord tient le plus souvent une mesure (${beatsPerBar}) ou une demi-mesure (${half}).
+   Supprime les durées bizarres et les fragments parasites (accord d'1 temps qui n'apparaît
+   qu'une fois entre deux autres) en les absorbant dans l'accord voisin dominant.
+2. RÉPÉTITION ET STRUCTURE : une vraie chanson a PEU de motifs distincts qui reviennent.
+   Les sections font typiquement 4, 8 ou 16 mesures. Repère les progressions qui se répètent,
+   factorise-les avec "repeat", et nomme les sections (Intro, Couplet, Refrain, Pont…).
+   Si deux sections voisines sont identiques, fusionne-les avec un repeat.
+3. COHÉRENCE HARMONIQUE : en tonalité ${tl.key || '?'}, un accord isolé qui casse une boucle
+   par ailleurs répétée est très probablement une erreur de détection → aligne-le sur le motif.
+   Ne touche pas aux accords clairement établis et récurrents.
+4. Accords majeurs/mineurs uniquement, respellés selon la tonalité (A#→Bb, D#→Eb, G#→Ab).
+   N'invente pas de 7e/sus. Tu régularises le RYTHME et la STRUCTURE, tu ne réharmonises pas.
+
+Réponds UNIQUEMENT avec le même schéma JSON, sans texte autour :
+{ "title": "${meta.title ? meta.title.replace(/"/g, '\\"') : ''}", "artist": "${meta.author ? meta.author.replace(/"/g, '\\"') : ''}", "key": "", "timeSignature": "${beatsPerBar}/4", "tempo": "${Math.round(tl.bpm)}", "sections": [ { "label": "Couplet", "repeat": 2, "chords": [ { "chord": "Am", "beats": ${beatsPerBar} } ] } ] }
+Chaque "beats" est un entier de 1 à ${beatsPerBar} et les accords d'une section se regroupent en mesures pleines de ${beatsPerBar} temps.`;
+}
+
 // Normalise les accords produits par l'IA (comme analyze-sheet).
 export function normalizeSections(parsed: { sections?: unknown[] }, beatsPerBar: number): void {
   const validRoot = /^[A-G][#b]?/;

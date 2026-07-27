@@ -5,12 +5,34 @@ import {
   Timeline,
   toBars,
   buildPrompt,
+  buildReviewPrompt,
   normalizeSections,
   consumeAnalysis,
 } from '@/lib/audio-analysis';
 
 export const runtime = 'nodejs';
-export const maxDuration = 60;
+export const maxDuration = 120;
+
+// Extrait le premier objet JSON d'une réponse texte du modèle.
+function extractJson(text: string): Record<string, unknown> | null {
+  const m = text.match(/\{[\s\S]*\}(?=[^}]*$)/);
+  if (!m) return null;
+  try {
+    return JSON.parse(m[0].trim());
+  } catch {
+    return null;
+  }
+}
+
+async function askModel(client: Anthropic, prompt: string): Promise<Record<string, unknown> | null> {
+  const message = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 8192,
+    messages: [{ role: 'user', content: [{ type: 'text', text: prompt }] }],
+  });
+  const text = message.content[0].type === 'text' ? message.content[0].text : '';
+  return extractJson(text);
+}
 
 export async function POST(req: NextRequest) {
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -70,17 +92,26 @@ export async function POST(req: NextRequest) {
     const meta = data.meta ?? { title: '', author: '' };
 
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const message = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 8192,
-      messages: [{ role: 'user', content: [{ type: 'text', text: buildPrompt(bars, beatsPerBar, timeline, meta) }] }],
-    });
-    const text = message.content[0].type === 'text' ? message.content[0].text : '';
-    const jsonMatch = text.match(/\{[\s\S]*\}(?=[^}]*$)/);
-    if (!jsonMatch) {
+
+    // Passe 1 : structuration de la séquence détectée en grille.
+    const pass1 = await askModel(client, buildPrompt(bars, beatsPerBar, timeline, meta));
+    if (!pass1) {
       return NextResponse.json({ error: 'Structuration impossible (réponse du modèle invalide).' }, { status: 500 });
     }
-    const parsed = JSON.parse(jsonMatch[0].trim());
+
+    // Passe 2 : relecture/critique musicale de la grille assemblée (durcissement).
+    // Best-effort : si elle échoue ou renvoie une grille vide, on garde la passe 1.
+    let parsed = pass1;
+    try {
+      const gridJson = JSON.stringify({ sections: pass1.sections });
+      const pass2 = await askModel(client, buildReviewPrompt(gridJson, beatsPerBar, timeline, meta));
+      if (pass2 && Array.isArray(pass2.sections) && pass2.sections.length > 0) {
+        parsed = pass2;
+      }
+    } catch (e) {
+      console.error('[analyze-audio/finish] passe 2 (relecture) ignorée:', e);
+    }
+
     normalizeSections(parsed, beatsPerBar);
     if (!parsed.title && meta.title) parsed.title = meta.title;
     if (!parsed.artist && meta.author) parsed.artist = meta.author;
