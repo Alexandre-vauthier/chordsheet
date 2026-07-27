@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject, type StorageReference } from 'firebase/storage';
 import { getAuth, getDb, getStorage } from '@/lib/firebase';
 import { toFirestore } from '@/lib/firestore-helpers';
 import { useAuth } from '@/lib/auth-context';
@@ -72,6 +72,9 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
     if (!user) return;
     setStatus('loading');
     setError('');
+    // Fichier déposé temporairement pour l'analyse : on le supprime dès que le
+    // service l'a traité (aucun stockage durable des audios côté serveur).
+    let uploadedRef: StorageReference | null = null;
     try {
       let payload: Record<string, string>;
       if (file) {
@@ -80,7 +83,8 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
         const clean = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
         const path = `analyze-uploads/${user.id}/${Date.now()}-${clean}`;
         const snap = await uploadBytes(storageRef(getStorage(), path), file);
-        const audioUrl = await getDownloadURL(snap.ref);
+        uploadedRef = snap.ref;
+        const audioUrl = await getDownloadURL(uploadedRef);
         payload = { audioUrl, title: file.name.replace(/\.[^.]+$/, '') };
       } else {
         payload = { youtubeUrl: url.trim() };
@@ -107,6 +111,10 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur inconnue.');
       setStatus((e as { upgradeRequired?: boolean }).upgradeRequired ? 'upgrade' : 'error');
+    } finally {
+      // Le service a téléchargé le fichier au tout début de son traitement : à ce
+      // stade (réponse reçue ou erreur), on peut le supprimer sans risque.
+      if (uploadedRef) deleteObject(uploadedRef).catch(() => {});
     }
   };
 
