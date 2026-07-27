@@ -3,20 +3,25 @@
  * La tâche appelle le worker Cloud Run (/analyze-async) et tient la requête
  * ouverte pendant tout le traitement (jusqu'à 30 min), avec retries.
  * Réutilise les credentials du compte de service firebase-admin.
+ *
+ * @google-cloud/tasks est chargé en `require()` paresseux (comme firebase-admin)
+ * pour éviter que Next tente de le bundler et plante au chargement du module.
  */
-import { CloudTasksClient } from '@google-cloud/tasks';
+import type { CloudTasksClient } from '@google-cloud/tasks';
 
 let client: CloudTasksClient | null = null;
 
 function getClient(): CloudTasksClient {
   if (!client) {
-    client = new CloudTasksClient({
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { CloudTasksClient: Ctor } = require('@google-cloud/tasks');
+    client = new Ctor({
       projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
       credentials: {
         client_email: process.env.FIREBASE_ADMIN_CLIENT_EMAIL ?? '',
         private_key: process.env.FIREBASE_ADMIN_PRIVATE_KEY?.replace(/\\n/g, '\n') ?? '',
       },
-    });
+    }) as CloudTasksClient;
   }
   return client;
 }
@@ -36,8 +41,9 @@ export async function enqueueAnalysis(params: {
   if (params.audioUrl) form.set('audio_url', params.audioUrl);
   if (params.youtubeUrl) form.set('youtube_url', params.youtubeUrl);
 
-  const parent = getClient().queuePath(project, location, queue);
-  await getClient().createTask({
+  const cli = getClient();
+  const parent = cli.queuePath(project, location, queue);
+  await cli.createTask({
     parent,
     task: {
       dispatchDeadline: { seconds: 1800 },
