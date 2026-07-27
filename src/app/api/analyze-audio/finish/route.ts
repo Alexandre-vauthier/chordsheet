@@ -3,9 +3,10 @@ import Anthropic from '@anthropic-ai/sdk';
 import { getAdminDb, getAdminAuth } from '@/lib/firebase-admin';
 import {
   Timeline,
-  toBars,
-  buildPrompt,
-  buildReviewPrompt,
+  toMeasures,
+  respellChord,
+  keyPrefersSharps,
+  buildSectionPrompt,
   normalizeSections,
   consumeAnalysis,
 } from '@/lib/audio-analysis';
@@ -84,37 +85,75 @@ export async function POST(req: NextRequest) {
 
   try {
     const timeline = JSON.parse(data.timelineJson) as Timeline;
-    const { bars, beatsPerBar } = toBars(timeline);
-    if (!bars.some((bar) => bar.cells.some((c) => c.chord))) {
+    const beatsPerBar: 3 | 4 = timeline.downbeats.reduce((m, d) => Math.max(m, d[1]), 4) === 3 ? 3 : 4;
+    const meta = data.meta ?? { title: '', author: '' };
+
+    // 1) DÉCOUPAGE DÉTERMINISTE en mesures régulières (le code, pas l'IA, fixe le métrique)
+    const sharps = keyPrefersSharps(timeline.key);
+    const measures = toMeasures(timeline, beatsPerBar).map((mez) =>
+      mez.map((c) => ({ chord: respellChord(c.chord, sharps), beats: c.beats })),
+    );
+    if (!measures.some((mez) => mez.some((c) => c.chord))) {
       await jobRef.set({ status: 'error', error: 'Aucun accord exploitable.' }, { merge: true });
       return NextResponse.json({ error: 'Aucun accord exploitable détecté sur ce morceau.' }, { status: 422 });
     }
-    const meta = data.meta ?? { title: '', author: '' };
 
+    // 2) L'IA ne décide QUE du découpage en sections + répétitions (best-effort)
     const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-    // Passe 1 : structuration de la séquence détectée en grille.
-    const pass1 = await askModel(client, buildPrompt(bars, beatsPerBar, timeline, meta));
-    if (!pass1) {
-      return NextResponse.json({ error: 'Structuration impossible (réponse du modèle invalide).' }, { status: 500 });
-    }
-
-    // Passe 2 : relecture/critique musicale de la grille assemblée (durcissement).
-    // Best-effort : si elle échoue ou renvoie une grille vide, on garde la passe 1.
-    let parsed = pass1;
+    const labels = measures.map((mez) => mez.map((c) => c.chord || '-').join(' '));
+    let boundaries: { label: string; count: number; repeat: number }[] = [];
     try {
-      const gridJson = JSON.stringify({ sections: pass1.sections });
-      const pass2 = await askModel(client, buildReviewPrompt(gridJson, beatsPerBar, timeline, meta));
-      if (pass2 && Array.isArray(pass2.sections) && pass2.sections.length > 0) {
-        parsed = pass2;
+      const secResp = await askModel(client, buildSectionPrompt(labels, beatsPerBar, meta));
+      const secs = secResp?.sections;
+      if (Array.isArray(secs)) {
+        boundaries = secs
+          .map((s) => {
+            const o = s as { label?: string; count?: number; repeat?: number };
+            return { label: String(o.label ?? ''), count: Math.max(1, Math.round(Number(o.count) || 0)), repeat: Math.max(1, Math.round(Number(o.repeat) || 1)) };
+          })
+          .filter((s) => s.count > 0);
       }
     } catch (e) {
-      console.error('[analyze-audio/finish] passe 2 (relecture) ignorée:', e);
+      console.error('[analyze-audio/finish] découpage sections ignoré:', e);
     }
 
+    // 3) ASSEMBLAGE : on découpe NOS mesures selon les frontières de l'IA (validées).
+    //    Les mesures répétées (repeat) sont supposées identiques → on n'en garde qu'une.
+    type Section = { label: string; repeat: number; chords: { chord: string; beats: number }[] };
+    const sig = (s: number, e: number) =>
+      measures.slice(s, e).map((mez) => mez.map((c) => `${c.chord}:${c.beats}`).join(',')).join('|');
+    const sections: Section[] = [];
+    let idx = 0;
+    for (const b of boundaries) {
+      if (idx >= measures.length) break;
+      const count = Math.min(b.count, measures.length - idx);
+      // N'honore le repeat que si les blocs suivants sont réellement identiques
+      const base = sig(idx, idx + count);
+      let rep = 1;
+      while (rep < b.repeat && idx + (rep + 1) * count <= measures.length && sig(idx + rep * count, idx + (rep + 1) * count) === base) {
+        rep++;
+      }
+      const block = measures.slice(idx, idx + count).flat();
+      sections.push({ label: b.label || `Partie ${sections.length + 1}`, repeat: rep, chords: block });
+      idx += count * rep;
+    }
+    if (idx < measures.length) {
+      // Mesures restantes (IA incomplète ou absente) → section de repli
+      sections.push({ label: sections.length ? 'Suite' : 'Grille', repeat: 1, chords: measures.slice(idx).flat() });
+    }
+    if (!sections.length) {
+      sections.push({ label: 'Grille', repeat: 1, chords: measures.flat() });
+    }
+
+    const parsed: Record<string, unknown> = {
+      title: meta.title || '',
+      artist: meta.author || '',
+      key: '',
+      timeSignature: `${beatsPerBar}/4`,
+      tempo: String(Math.round(timeline.bpm)),
+      sections,
+    };
     normalizeSections(parsed, beatsPerBar);
-    if (!parsed.title && meta.title) parsed.title = meta.title;
-    if (!parsed.artist && meta.author) parsed.artist = meta.author;
     if (data.isYoutube && data.referenceUrl) parsed.referenceUrl = data.referenceUrl;
 
     await consumeAnalysis(userId);

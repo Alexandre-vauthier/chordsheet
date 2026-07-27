@@ -65,6 +65,103 @@ export function toBars(tl: Timeline): { bars: Bar[]; beatsPerBar: 3 | 4 } {
   return { bars, beatsPerBar };
 }
 
+// ── Découpage DÉTERMINISTE en mesures régulières ────────────────────────────
+// Une mesure = un tableau de cellules {chord, beats} dont la somme des beats vaut
+// exactement beatsPerBar. Garantit un métrique uniforme (la détection des temps
+// étant bruitée), avec au plus 2 accords par mesure.
+export type Measure = { chord: string; beats: number }[];
+
+function reduceMeasure(perBeat: string[], beatsPerBar: number): Measure {
+  // Regroupe les temps consécutifs identiques
+  const groups: { chord: string; beats: number }[] = [];
+  for (const ch of perBeat) {
+    const last = groups[groups.length - 1];
+    if (last && last.chord === ch) last.beats += 1;
+    else groups.push({ chord: ch, beats: 1 });
+  }
+  const dominant = () =>
+    groups.reduce((best, g) => (g.beats > best.beats ? g : best), groups[0]).chord;
+
+  if (groups.length <= 1) {
+    return [{ chord: groups[0]?.chord ?? '', beats: beatsPerBar }];
+  }
+  if (groups.length === 2) {
+    // Deux accords se partagent la mesure → répartition sur beatsPerBar temps
+    const total = groups[0].beats + groups[1].beats;
+    let b0 = Math.round((groups[0].beats / total) * beatsPerBar);
+    b0 = Math.max(1, Math.min(beatsPerBar - 1, b0));
+    return [
+      { chord: groups[0].chord, beats: b0 },
+      { chord: groups[1].chord, beats: beatsPerBar - b0 },
+    ];
+  }
+  // ≥3 changements dans une mesure = bruit de détection → accord dominant plein
+  return [{ chord: dominant(), beats: beatsPerBar }];
+}
+
+export function toMeasures(tl: Timeline, beatsPerBar: number): Measure[] {
+  const beats = [...tl.downbeats].sort((a, b) => a[0] - b[0]);
+  if (!beats.length) return [];
+  const perBeat = beats.map(([t], i) => {
+    const next = beats[i + 1]?.[0] ?? t + 0.5;
+    return madmomToChord(chordAt(tl.chords, t + (next - t) * 0.4));
+  });
+  // Cale le début sur le premier temps fort, puis découpe par blocs stricts de N temps
+  let start = beats.findIndex((b) => b[1] === 1);
+  if (start < 0) start = 0;
+  const measures: Measure[] = [];
+  for (let i = start; i < perBeat.length; i += beatsPerBar) {
+    const slice = perBeat.slice(i, i + beatsPerBar);
+    if (!slice.length) break;
+    measures.push(reduceMeasure(slice, beatsPerBar));
+  }
+  return measures;
+}
+
+// ── Respelling enharmonique selon la tonalité ───────────────────────────────
+const SHARP_TO_FLAT: Record<string, string> = { 'A#': 'Bb', 'C#': 'Db', 'D#': 'Eb', 'F#': 'Gb', 'G#': 'Ab' };
+const FLAT_TO_SHARP: Record<string, string> = { Bb: 'A#', Db: 'C#', Eb: 'D#', Gb: 'F#', Ab: 'G#' };
+// Tonalités qui s'écrivent avec des dièses (le reste : bémols par défaut).
+const SHARP_KEYS = new Set(['g', 'd', 'a', 'e', 'b', 'f#', 'em', 'bm', 'f#m', 'c#m', 'g#m', 'd#m', 'a#m']);
+
+export function keyPrefersSharps(key: string): boolean {
+  const k = (key || '').toLowerCase().replace(/\s+(major|minor|maj|min)/, (_m, q) => (q.startsWith('mi') ? 'm' : '')).trim();
+  return SHARP_KEYS.has(k);
+}
+
+export function respellChord(chord: string, sharps: boolean): string {
+  const m = chord.match(/^([A-G][#b]?)(.*)$/);
+  if (!m) return chord;
+  const root = m[1];
+  const suffix = m[2];
+  const newRoot = sharps ? (FLAT_TO_SHARP[root] ?? root) : (SHARP_TO_FLAT[root] ?? root);
+  return newRoot + suffix;
+}
+
+// Prompt LÉGER : l'IA ne reçoit que la liste des mesures déjà régulières et ne
+// décide QUE du découpage en sections et des répétitions (jamais des mesures).
+export function buildSectionPrompt(
+  measureLabels: string[],
+  beatsPerBar: number,
+  meta: { title: string; author: string },
+): string {
+  const list = measureLabels.map((m, i) => `${i + 1}:${m}`).join('  ');
+  return `Voici les mesures d'un morceau, déjà découpées et régulières (une entrée = une mesure de ${beatsPerBar} temps).
+${meta.title ? `Titre : ${meta.title}${meta.author ? ' — ' + meta.author : ''}\n` : ''}Mesures (numéro:accords) :
+${list}
+
+Découpe ces ${measureLabels.length} mesures en SECTIONS musicales et repère les répétitions.
+Une vraie chanson a peu de motifs qui reviennent ; les sections font typiquement 4, 8 ou 16 mesures.
+
+Renvoie UNIQUEMENT ce JSON (aucun texte autour) :
+{ "sections": [ { "label": "Intro", "count": 4, "repeat": 1 }, { "label": "Couplet", "count": 8, "repeat": 2 } ] }
+- label : Intro, Couplet, Refrain, Pont, Outro…
+- count : nombre de mesures d'UNE occurrence de la section.
+- repeat : nombre de fois où cette section est jouée d'affilée.
+- La somme de (count × repeat) sur toutes les sections doit valoir EXACTEMENT ${measureLabels.length}.
+Ne modifie pas les accords, ne renvoie que le découpage.`;
+}
+
 export function buildPrompt(
   bars: Bar[],
   beatsPerBar: number,
