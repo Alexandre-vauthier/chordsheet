@@ -11,6 +11,7 @@ GET /health → { status: "ok" }
 """
 
 import os
+import json
 import shutil
 import tempfile
 import logging
@@ -26,6 +27,18 @@ app = FastAPI(title="ChordSheet — Analyse audio")
 
 API_KEY = os.environ.get("API_KEY", "")
 ALLOWED_ORIGINS = os.environ.get("ALLOWED_ORIGINS", "*").split(",")
+
+# Client Firestore (lazy) pour le mode asynchrone. Sur Cloud Run, l'auth passe
+# par le compte de service de l'instance (ADC) — aucune clé à fournir.
+_db = None
+
+
+def _firestore():
+    global _db
+    if _db is None:
+        from google.cloud import firestore
+        _db = firestore.Client()
+    return _db
 
 app.add_middleware(
     CORSMiddleware,
@@ -75,6 +88,46 @@ async def analyze_endpoint(
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         shutil.rmtree(workdir, ignore_errors=True)
+
+
+@app.post("/analyze-async")
+def analyze_async_endpoint(
+    job_id: str = Form(...),
+    audio_url: str = Form(default=""),
+    youtube_url: str = Form(default=""),
+    x_api_key: str = Header(default=""),
+):
+    """Mode asynchrone (déclenché par Cloud Tasks).
+
+    Écrit la progression puis le résultat (`timelineJson`) dans le doc Firestore
+    `analysisJobs/{job_id}`. La structuration IA + création se font ensuite côté app.
+    Idempotent : si le job est déjà analysé, ne relance pas l'analyse.
+    """
+    _check_key(x_api_key)
+    if not audio_url and not youtube_url:
+        raise HTTPException(status_code=400, detail="Fournir audio_url ou youtube_url.")
+
+    ref = _firestore().collection("analysisJobs").document(job_id)
+    snap = ref.get()
+    if snap.exists and (snap.to_dict() or {}).get("status") in ("analyzed", "done"):
+        return {"status": "already"}  # retry Cloud Tasks : ne pas refaire le travail
+
+    def on_progress(pct, step):
+        ref.set({"progress": int(pct), "step": step}, merge=True)
+
+    ref.set({"status": "processing", "progress": 0, "step": "Démarrage"}, merge=True)
+    source = audio_url or youtube_url
+    try:
+        timeline = pipeline.analyze(source, on_progress)
+        ref.set(
+            {"status": "analyzed", "progress": 100, "timelineJson": json.dumps(timeline)},
+            merge=True,
+        )
+        return {"status": "ok"}
+    except Exception as e:
+        logging.exception("Échec analyse async")
+        ref.set({"status": "error", "error": str(e)[:300]}, merge=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/health")

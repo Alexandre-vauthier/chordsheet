@@ -184,5 +184,13 @@ service cloud.firestore {
                                    'pushedBy', 'pushedByName', 'updatedAt']);
       allow delete: if request.auth != null && resource.data.hostId == request.auth.uid;
     }
+
+    // Jobs d'analyse audio : lecture par le propriétaire (suivi de progression via
+    // onSnapshot). Toutes les écritures passent par le serveur (admin/worker), le
+    // client n'écrit jamais directement.
+    match /analysisJobs/{jobId} {
+      allow read: if request.auth != null && resource.data.ownerId == request.auth.uid;
+      allow write: if false;
+    }
   }
 }

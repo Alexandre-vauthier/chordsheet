@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, doc, onSnapshot } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject, type StorageReference } from 'firebase/storage';
 import { getAuth, getDb, getStorage } from '@/lib/firebase';
 import { toFirestore } from '@/lib/firestore-helpers';
@@ -64,11 +64,25 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
   const [result, setResult] = useState<SheetResult | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [step, setStep] = useState('');
 
   const remainingOcr = getRemainingOcr(user?.subscription);
   const userIsPro = isPro(user?.subscription);
 
-  // Chrono pendant l'analyse (progression estimée, le service ne renvoie rien avant la fin)
+  // Références de nettoyage (écoute du job + fichier uploadé temporaire)
+  const unsubRef = useRef<null | (() => void)>(null);
+  const finishingRef = useRef(false);
+  const uploadedRef = useRef<StorageReference | null>(null);
+
+  const cleanupUpload = () => {
+    // Fichier déposé pour l'analyse : supprimé dès qu'il n'est plus utile
+    // (aucun stockage durable des audios côté serveur).
+    if (uploadedRef.current) { deleteObject(uploadedRef.current).catch(() => {}); uploadedRef.current = null; }
+  };
+  const cleanupSub = () => { unsubRef.current?.(); unsubRef.current = null; };
+
+  // Chrono d'affichage (mm:ss) pendant l'analyse
   useEffect(() => {
     if (status !== 'loading') { setElapsed(0); return; }
     const t0 = Date.now();
@@ -76,63 +90,112 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
     return () => clearInterval(id);
   }, [status]);
 
-  const ESTIMATE = 240; // ~4 min pour un morceau moyen
-  const progress = Math.min(95, Math.round((elapsed / ESTIMATE) * 100));
-  const stage = elapsed < 6
-    ? (file ? 'Envoi de l’audio…' : 'Récupération de l’audio…')
-    : elapsed < 150
-      ? 'Séparation des pistes (voix, batterie, harmonie)…'
-      : 'Détection des accords et du tempo…';
+  // Nettoyage à la fermeture / démontage
+  useEffect(() => () => { cleanupSub(); cleanupUpload(); }, []);
+
   const mmss = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`;
+
+  const authHeaders = async (): Promise<Record<string, string>> => {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const idToken = await getAuth().currentUser?.getIdToken().catch(() => null);
+    if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
+    return headers;
+  };
+
+  // Structuration IA (déclenchée quand le worker a fini la détection)
+  const finish = async (jobId: string) => {
+    if (finishingRef.current) return;
+    finishingRef.current = true;
+    cleanupUpload(); // le worker a déjà lu le fichier
+    setStep('Structuration de la grille…');
+    setProgress(100);
+    try {
+      const res = await fetch('/api/analyze-audio/finish', {
+        method: 'POST',
+        headers: await authHeaders(),
+        body: JSON.stringify({ jobId }),
+      });
+      const data = await res.json().catch(() => ({} as { error?: string; result?: SheetResult }));
+      if (!res.ok) throw new Error(data.error ?? 'Erreur de structuration.');
+      setResult(data.result as SheetResult);
+      setStatus('done');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Erreur inconnue.');
+      setStatus('error');
+    } finally {
+      cleanupSub();
+    }
+  };
+
+  // Écoute du job Firestore → progression temps réel
+  const subscribeToJob = (jobId: string) => {
+    cleanupSub();
+    unsubRef.current = onSnapshot(
+      doc(getDb(), 'analysisJobs', jobId),
+      (snap) => {
+        const d = snap.data() as { status?: string; progress?: number; step?: string; error?: string } | undefined;
+        if (!d) return;
+        if (typeof d.progress === 'number') setProgress(d.progress);
+        if (d.step) setStep(d.step);
+        if (d.status === 'error') {
+          setError(d.error ?? 'L\'analyse a échoué.');
+          setStatus('error');
+          cleanupSub();
+          cleanupUpload();
+        } else if (d.status === 'analyzed') {
+          finish(jobId);
+        }
+      },
+      () => {
+        setError('Perte de connexion au suivi de l\'analyse.');
+        setStatus('error');
+        cleanupUpload();
+      },
+    );
+  };
 
   const analyze = async () => {
     if (!url.trim() && !file) return;
     if (!user) return;
     setStatus('loading');
     setError('');
-    // Fichier déposé temporairement pour l'analyse : on le supprime dès que le
-    // service l'a traité (aucun stockage durable des audios côté serveur).
-    let uploadedRef: StorageReference | null = null;
+    setResult(null);
+    setProgress(0);
+    setStep(file ? 'Envoi de l\'audio…' : 'Préparation…');
+    finishingRef.current = false;
     try {
       let payload: Record<string, string>;
       if (file) {
-        // Upload vers Firebase Storage → URL de téléchargement passée au service
-        // (évite la limite de taille des fonctions Vercel).
+        // Upload vers Firebase Storage → URL passée au worker (évite la limite Vercel).
         const clean = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
         const path = `analyze-uploads/${user.id}/${Date.now()}-${clean}`;
         const snap = await uploadBytes(storageRef(getStorage(), path), file);
-        uploadedRef = snap.ref;
-        const audioUrl = await getDownloadURL(uploadedRef);
+        uploadedRef.current = snap.ref;
+        const audioUrl = await getDownloadURL(snap.ref);
         payload = { audioUrl, title: file.name.replace(/\.[^.]+$/, '') };
       } else {
         payload = { youtubeUrl: url.trim() };
       }
 
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      const idToken = await getAuth().currentUser?.getIdToken().catch(() => null);
-      if (idToken) headers['Authorization'] = `Bearer ${idToken}`;
-
-      const res = await fetch('/api/analyze-audio', {
+      const res = await fetch('/api/analyze-audio/start', {
         method: 'POST',
-        headers,
+        headers: await authHeaders(),
         body: JSON.stringify(payload),
       });
-      const text = await res.text();
-      let data: SheetResult & { error?: string; upgradeRequired?: boolean } = {} as never;
-      try { data = JSON.parse(text); } catch {
-        throw new Error(`Erreur serveur (${res.status}).`);
+      const data = await res.json().catch(() => ({} as { error?: string; upgradeRequired?: boolean; jobId?: string }));
+      if (res.status === 429 && data.upgradeRequired) {
+        setError(data.error ?? '');
+        setStatus('upgrade');
+        cleanupUpload();
+        return;
       }
-      if (res.status === 429 && data.upgradeRequired) throw Object.assign(new Error(data.error ?? ''), { upgradeRequired: true });
-      if (!res.ok) throw new Error(data.error ?? 'Erreur inconnue.');
-      setResult(data);
-      setStatus('done');
+      if (!res.ok || !data.jobId) throw new Error(data.error ?? 'Erreur inconnue.');
+      setStep('En file d\'attente…');
+      subscribeToJob(data.jobId);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Erreur inconnue.');
-      setStatus((e as { upgradeRequired?: boolean }).upgradeRequired ? 'upgrade' : 'error');
-    } finally {
-      // Le service a téléchargé le fichier au tout début de son traitement : à ce
-      // stade (réponse reçue ou erreur), on peut le supprimer sans risque.
-      if (uploadedRef) deleteObject(uploadedRef).catch(() => {});
+      setStatus('error');
+      cleanupUpload();
     }
   };
 
@@ -227,13 +290,13 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
           {status === 'loading' && (
             <div className="py-4 space-y-3">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-[var(--ink-light)]">{stage}</span>
+                <span className="text-[var(--ink-light)]">{step || 'Analyse…'}</span>
                 <span className="font-mono text-xs text-[var(--ink-faint)]">{mmss}</span>
               </div>
               <div className="h-2 rounded-full bg-[var(--line)] overflow-hidden">
                 <div
-                  className="h-full bg-[var(--accent)] transition-[width] duration-500 ease-linear"
-                  style={{ width: `${progress}%` }}
+                  className="h-full bg-[var(--accent)] transition-[width] duration-500 ease-out"
+                  style={{ width: `${Math.max(3, progress)}%` }}
                 />
               </div>
               <p className="text-xs text-[var(--ink-faint)] text-center">

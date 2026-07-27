@@ -8,4 +8,5 @@ scipy
 soundfile
 yt-dlp
 demucs
+google-cloud-firestore==2.19.0
 madmom @ git+https://github.com/CPJKU/madmom.git@main

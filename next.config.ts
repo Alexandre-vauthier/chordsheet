@@ -5,7 +5,7 @@ import createNextIntlPlugin from 'next-intl/plugin';
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['firebase-admin', '@google-cloud/firestore', 'grpc', '@grpc/grpc-js', '@sparticuz/chromium', 'puppeteer-core'],
+  serverExternalPackages: ['firebase-admin', '@google-cloud/firestore', '@google-cloud/tasks', 'grpc', '@grpc/grpc-js', '@sparticuz/chromium', 'puppeteer-core'],
   turbopack: {
     root: __dirname,
   },

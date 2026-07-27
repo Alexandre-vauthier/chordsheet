@@ -111,13 +111,30 @@ def recognize(harmonic_wav: str) -> dict:
     }
 
 
-def analyze(source: str) -> dict:
-    """Bout en bout : source (fichier ou URL) -> dict {bpm, key, duration, downbeats, chords}."""
+def analyze(source: str, on_progress=None) -> dict:
+    """Bout en bout : source (fichier ou URL) -> dict {bpm, key, duration, downbeats, chords}.
+
+    on_progress(percent:int, step:str) est appelé aux grandes étapes (pour un suivi
+    en temps réel côté client via le doc Firestore du job).
+    """
+    def prog(pct, step):
+        if on_progress:
+            try:
+                on_progress(pct, step)
+            except Exception:
+                pass
+
     workdir = tempfile.mkdtemp(prefix="chords_")
     try:
+        prog(5, "Récupération de l'audio")
         audio = get_audio(source, workdir)
+        prog(20, "Séparation des pistes (voix, batterie, harmonie)")
         other, bass = separate(audio, workdir)
+        prog(70, "Mixage harmonique")
         harmonic = mix_harmonic(other, bass, os.path.join(workdir, "harmonic.wav"))
-        return recognize(harmonic)
+        prog(80, "Détection des accords et du tempo")
+        result = recognize(harmonic)
+        prog(100, "Terminé")
+        return result
     finally:
         shutil.rmtree(workdir, ignore_errors=True)

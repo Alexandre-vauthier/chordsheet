@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.102.0",
+    "@google-cloud/tasks": "^6.2.3",
     "@sentry/nextjs": "^10.65.0",
     "@sparticuz/chromium": "^149.0.0",
     "firebase": "^11.3.0",
