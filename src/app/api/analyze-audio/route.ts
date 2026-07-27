@@ -41,11 +41,41 @@ function chordAt(chords: Timeline['chords'], t: number): string {
   return 'N';
 }
 
-function toBarSequence(tl: Timeline): { bars: string[]; beatsPerBar: 3 | 4 } {
-  const maxBeat = tl.downbeats.reduce((m, d) => Math.max(m, d[1]), 4);
+// Une cellule = un accord tenu sur `beats` temps consécutifs dans la mesure.
+interface BarCell { chord: string; beats: number }
+interface Bar { cells: BarCell[] }
+
+// Découpe la timeline temps par temps : pour chaque temps on lit l'accord dominant
+// (échantillon pris à 40% de l'intervalle, pour éviter les frontières), puis on
+// regroupe les temps consécutifs de même accord dans chaque mesure.
+function toBars(tl: Timeline): { bars: Bar[]; beatsPerBar: 3 | 4 } {
+  const beats = [...tl.downbeats].sort((a, b) => a[0] - b[0]); // [temps, position 1..4]
+  const maxBeat = beats.reduce((m, d) => Math.max(m, d[1]), 4);
   const beatsPerBar: 3 | 4 = maxBeat === 3 ? 3 : 4;
-  const barStarts = tl.downbeats.filter((d) => d[1] === 1).map((d) => d[0]);
-  const bars = barStarts.map((t) => madmomToChord(chordAt(tl.chords, t)));
+
+  const perBeat = beats.map(([t, pos], i) => {
+    const next = beats[i + 1]?.[0] ?? t + 0.5;
+    const sample = t + (next - t) * 0.4;
+    return { pos, chord: madmomToChord(chordAt(tl.chords, sample)) };
+  });
+
+  const makeBar = (bts: { chord: string }[]): Bar => {
+    const cells: BarCell[] = [];
+    for (const b of bts) {
+      const last = cells[cells.length - 1];
+      if (last && last.chord === b.chord) last.beats += 1;
+      else cells.push({ chord: b.chord, beats: 1 });
+    }
+    return { cells };
+  };
+
+  const bars: Bar[] = [];
+  let cur: { pos: number; chord: string }[] = [];
+  for (const b of perBeat) {
+    if (b.pos === 1 && cur.length) { bars.push(makeBar(cur)); cur = []; }
+    cur.push(b);
+  }
+  if (cur.length) bars.push(makeBar(cur));
   return { bars, beatsPerBar };
 }
 
@@ -60,8 +90,11 @@ async function fetchOEmbed(url: string): Promise<{ title: string; author: string
   }
 }
 
-function buildPrompt(bars: string[], beatsPerBar: number, tl: Timeline, meta: { title: string; author: string }): string {
-  const seq = bars.map((c, i) => `M${i + 1}:${c || '-'}`).join(' | ');
+function buildPrompt(bars: Bar[], beatsPerBar: number, tl: Timeline, meta: { title: string; author: string }): string {
+  // Chaque mesure liste ses accords avec leur durée en temps : "Am(2) G(2)".
+  const seq = bars
+    .map((bar, i) => `M${i + 1}:${bar.cells.map((c) => `${c.chord || '-'}(${c.beats})`).join(' ')}`)
+    .join(' | ');
   return `Tu structures une grille d'accords à partir d'une détection automatique (audio → accords).
 
 Contexte :
@@ -71,15 +104,17 @@ Contexte :
 - Tempo : ${Math.round(tl.bpm)} BPM
 - Mesure : ${beatsPerBar}/4
 
-Séquence détectée, une entrée par mesure (M = mesure, accord "-" = mesure sans accord clair) :
+Séquence détectée, une entrée par mesure. Format : Mn:accord(durée_en_temps) accord(durée)…
+"-" = temps sans accord clair. La somme des durées d'une mesure vaut environ ${beatsPerBar}.
 ${seq}
 
 Ta tâche :
 1. Regroupe ces mesures en SECTIONS musicales (Intro, Couplet, Refrain, Pont…) en repérant les répétitions.
 2. Utilise "repeat" quand une section se répète telle quelle à la suite (ne recopie pas 4 fois, mets repeat=4).
 3. Respelle les accords selon la tonalité (ex. en tonalité bémol : A#→Bb, D#→Eb, G#→Ab).
-4. Reste FIDÈLE à la détection : ne rajoute pas d'accords, ne "corrige" pas la progression. La détection ne donne que majeurs/mineurs ; n'invente pas de 7e/sus.
-5. Une mesure = ${beatsPerBar} temps. Un accord par mesure → beats=${beatsPerBar}.
+4. Reste FIDÈLE à la détection : conserve les changements d'accords en cours de mesure et leurs durées (ex. Am(2) G(2) → deux accords dans la mesure). Ne rajoute pas d'accords, ne "corrige" pas la progression. La détection ne donne que majeurs/mineurs ; n'invente pas de 7e/sus.
+5. Nettoie le bruit léger : une durée de 1 temps isolée entre deux fois le même accord est probablement du bruit, tu peux la fusionner ; mais garde les vrais changements (2 temps ou plus).
+6. Une mesure fait ${beatsPerBar} temps. Chaque accord garde sa durée détectée (beats). Un seul accord sur toute la mesure → beats=${beatsPerBar}.
 
 Réponds UNIQUEMENT avec ce JSON (sans texte autour) :
 {
@@ -89,11 +124,11 @@ Réponds UNIQUEMENT avec ce JSON (sans texte autour) :
   "timeSignature": "${beatsPerBar}/4",
   "tempo": "${Math.round(tl.bpm)}",
   "sections": [
-    { "label": "Couplet", "repeat": 1, "chords": [ { "chord": "Am", "beats": ${beatsPerBar} } ] }
+    { "label": "Couplet", "repeat": 1, "chords": [ { "chord": "Am", "beats": 2 }, { "chord": "G", "beats": 2 } ] }
   ]
 }
 
-Règles JSON : tout accord commence par A-G (majuscule) + éventuellement # ou b + suffixe (m). Mesure sans accord → {"chord": "", "beats": ${beatsPerBar}}.`;
+Règles JSON : tout accord commence par A-G (majuscule) + éventuellement # ou b + suffixe (m). Temps sans accord → {"chord": "", "beats": N}.`;
 }
 
 export async function POST(req: NextRequest) {
@@ -172,8 +207,8 @@ export async function POST(req: NextRequest) {
       );
     }
     const timeline: Timeline = await detRes.json();
-    const { bars, beatsPerBar } = toBarSequence(timeline);
-    if (!bars.some((b) => b)) {
+    const { bars, beatsPerBar } = toBars(timeline);
+    if (!bars.some((bar) => bar.cells.some((c) => c.chord))) {
       return NextResponse.json({ error: 'Aucun accord exploitable détecté sur ce morceau.' }, { status: 422 });
     }
 
