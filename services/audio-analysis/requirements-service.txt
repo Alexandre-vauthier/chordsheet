@@ -1,0 +1,11 @@
+# Dépendances du service HTTP (Docker / Cloud Run).
+# numpy + cython sont installés AVANT dans le Dockerfile (madmom se compile contre).
+
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+python-multipart==0.0.9
+scipy
+soundfile
+yt-dlp
+demucs
+madmom @ git+https://github.com/CPJKU/madmom.git@main

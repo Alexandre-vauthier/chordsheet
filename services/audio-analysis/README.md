@@ -72,9 +72,48 @@ python analyze.py ma_chanson.mp3 --keep
 - Demucs sur **CPU** est lent (plusieurs minutes par morceau). Un GPU accélère fort.
 - `yt-dlp` = maillon fragile (CGU YouTube, blocages). L'upload de fichier l'évite.
 
-## Suite (si la qualité est jugée suffisante)
+## Service HTTP (production)
 
-1. Emballer la chaîne dans un service (Cloud Run GPU, ou worker/queue).
-2. **Structuration IA** : passer la timeline d'accords + downbeats à un LLM pour
-   découper en sections/mesures (comme l'analyse photo).
-3. Route API proxy + UI de création (lien YouTube **et** upload) dans l'app.
+`service.py` (FastAPI) emballe la chaîne. Endpoints :
+- `POST /analyze` : soit un fichier (`file`, multipart), soit `youtube_url` (form) ;
+  en-tête `X-API-Key` → `{ bpm, key, duration, downbeats, chords }`.
+- `GET /health`.
+
+### Tester le service en local
+
+```bash
+source .venv/bin/activate
+pip install fastapi "uvicorn[standard]" python-multipart
+uvicorn service:app --port 8080
+# autre terminal :
+curl -F "file=@/chemin/chanson.mp3" http://localhost:8080/analyze | head -c 800
+```
+
+### Déployer sur Cloud Run
+
+Depuis `services/audio-analysis/` (build via le Dockerfile, image lourde ~2-3 Go) :
+
+```bash
+gcloud run deploy chordsheet-audio \
+  --source . \
+  --region europe-west1 \
+  --memory 4Gi --cpu 4 \
+  --timeout 600 \
+  --concurrency 1 \
+  --max-instances 3 \
+  --set-env-vars API_KEY=<ta-cle>,ALLOWED_ORIGINS=https://<ton-domaine-vercel>
+```
+
+- **memory 4Gi / cpu 4** : Demucs + torch + madmom ont besoin de RAM et de CPU.
+- **timeout 600** : une analyse prend de quelques secondes (bon CPU) à quelques minutes.
+- **concurrency 1** : Demucs monopolise le CPU → une analyse par instance.
+- `API_KEY` = à réutiliser côté app (variable `CHORD_DETECTOR_API_KEY`), et
+  `CHORD_DETECTOR_URL` = l'URL Cloud Run renvoyée par le déploiement.
+
+## Suite (briques app, une fois le service déployé)
+
+2. **Structuration IA** : route Next.js qui passe la timeline + downbeats à un LLM
+   pour découper en sections/mesures (comme l'analyse photo), avec respelling par
+   tonalité (dièses → bémols) et fusion des mesures répétées.
+3. **UI de création** : dans `/sheet/new`, saisie d'un lien YouTube **ou** upload
+   d'un fichier → analyse → brouillon de grille ouvert dans l'éditeur.
