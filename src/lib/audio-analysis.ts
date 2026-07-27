@@ -71,49 +71,100 @@ export function toBars(tl: Timeline): { bars: Bar[]; beatsPerBar: 3 | 4 } {
 // étant bruitée), avec au plus 2 accords par mesure.
 export type Measure = { chord: string; beats: number }[];
 
-function reduceMeasure(perBeat: string[], beatsPerBar: number): Measure {
-  // Regroupe les temps consécutifs identiques
-  const groups: { chord: string; beats: number }[] = [];
-  for (const ch of perBeat) {
-    const last = groups[groups.length - 1];
-    if (last && last.chord === ch) last.beats += 1;
-    else groups.push({ chord: ch, beats: 1 });
-  }
-  const dominant = () =>
-    groups.reduce((best, g) => (g.beats > best.beats ? g : best), groups[0]).chord;
-
-  if (groups.length <= 1) {
-    return [{ chord: groups[0]?.chord ?? '', beats: beatsPerBar }];
-  }
-  if (groups.length === 2) {
-    // Deux accords se partagent la mesure → répartition sur beatsPerBar temps
-    const total = groups[0].beats + groups[1].beats;
-    let b0 = Math.round((groups[0].beats / total) * beatsPerBar);
-    b0 = Math.max(1, Math.min(beatsPerBar - 1, b0));
-    return [
-      { chord: groups[0].chord, beats: b0 },
-      { chord: groups[1].chord, beats: beatsPerBar - b0 },
-    ];
-  }
-  // ≥3 changements dans une mesure = bruit de détection → accord dominant plein
-  return [{ chord: dominant(), beats: beatsPerBar }];
-}
-
-export function toMeasures(tl: Timeline, beatsPerBar: number): Measure[] {
+// Chaîne d'accords temps par temps, calée sur le premier temps fort.
+function chordPerBeat(tl: Timeline): string[] {
   const beats = [...tl.downbeats].sort((a, b) => a[0] - b[0]);
   if (!beats.length) return [];
   const perBeat = beats.map(([t], i) => {
     const next = beats[i + 1]?.[0] ?? t + 0.5;
     return madmomToChord(chordAt(tl.chords, t + (next - t) * 0.4));
   });
-  // Cale le début sur le premier temps fort, puis découpe par blocs stricts de N temps
   let start = beats.findIndex((b) => b[1] === 1);
   if (start < 0) start = 0;
+  return perBeat.slice(start);
+}
+
+// Détecte la période de la boucle (en temps, multiple de la mesure). Renvoie la
+// plus petite période dont la corrélation dépasse le seuil, ou null si le morceau
+// n'est pas nettement répétitif.
+function detectPeriod(seq: string[], beatsPerBar: number): number | null {
+  const n = seq.length;
+  if (n < 2 * beatsPerBar) return null;
+  const maxP = Math.min(16 * beatsPerBar, Math.floor(n / 2));
+  const scoreAt = (p: number): number => {
+    let match = 0, total = 0;
+    for (let i = 0; i + p < n; i++) {
+      total++;
+      if (seq[i] && seq[i] === seq[i + p]) match++;
+    }
+    return total ? match / total : 0;
+  };
+  let bestScore = 0;
+  for (let p = beatsPerBar; p <= maxP; p += beatsPerBar) bestScore = Math.max(bestScore, scoreAt(p));
+  if (bestScore < 0.6) return null;
+  // Plus petite période quasi optimale (privilégie la boucle la plus courte)
+  for (let p = beatsPerBar; p <= maxP; p += beatsPerBar) {
+    if (scoreAt(p) >= bestScore - 0.03) return p;
+  }
+  return null;
+}
+
+// Replie toutes les répétitions sur une période et vote à la majorité par position
+// (efface les accords inventés : une erreur ponctuelle est minoritaire).
+function majorityFold(seq: string[], period: number): string[] {
+  const canon: string[] = [];
+  for (let j = 0; j < period; j++) {
+    const counts: Record<string, number> = {};
+    for (let i = j; i < seq.length; i += period) {
+      const c = seq[i] ?? '';
+      counts[c] = (counts[c] ?? 0) + 1;
+    }
+    let best = '', bestN = -1;
+    for (const [c, cnt] of Object.entries(counts)) if (cnt > bestN) { bestN = cnt; best = c; }
+    canon.push(best);
+  }
+  return canon;
+}
+
+// Regroupe une tranche de temps en cellules {chord, beats} (temps consécutifs
+// identiques fusionnés), complétée à beatsPerBar temps si la mesure est courte.
+function groupBeats(perBeat: string[], beatsPerBar: number): Measure {
+  const cells: Measure = [];
+  for (const ch of perBeat) {
+    const last = cells[cells.length - 1];
+    if (last && last.chord === ch) last.beats += 1;
+    else cells.push({ chord: ch, beats: 1 });
+  }
+  const total = cells.reduce((a, c) => a + c.beats, 0);
+  if (total < beatsPerBar && cells.length) cells[cells.length - 1].beats += beatsPerBar - total;
+  return cells;
+}
+
+// Variante « nettoyante » (morceaux non répétitifs) : au plus 2 accords/mesure,
+// une mesure trop agitée (≥3 changements) est ramenée à son accord dominant.
+function reduceMeasure(perBeat: string[], beatsPerBar: number): Measure {
+  const groups = groupBeats(perBeat, beatsPerBar);
+  if (groups.length <= 2) return groups;
+  const dom = groups.reduce((best, g) => (g.beats > best.beats ? g : best), groups[0]).chord;
+  return [{ chord: dom, beats: beatsPerBar }];
+}
+
+export function toMeasures(tl: Timeline, beatsPerBar: number): Measure[] {
+  const perBeat = chordPerBeat(tl);
+  if (!perBeat.length) return [];
+
+  // Si le morceau est une boucle nette : canonise (période + vote majoritaire),
+  // ce qui régularise le rythme ET efface les accords parasites.
+  const period = detectPeriod(perBeat, beatsPerBar);
+  const canon = period ? majorityFold(perBeat, period) : null;
+  const seq = canon ? perBeat.map((_, i) => canon[i % period!]) : perBeat;
+
   const measures: Measure[] = [];
-  for (let i = start; i < perBeat.length; i += beatsPerBar) {
-    const slice = perBeat.slice(i, i + beatsPerBar);
+  for (let i = 0; i < seq.length; i += beatsPerBar) {
+    const slice = seq.slice(i, i + beatsPerBar);
     if (!slice.length) break;
-    measures.push(reduceMeasure(slice, beatsPerBar));
+    // Boucle canonisée → on garde la structure réelle ; sinon on nettoie le bruit.
+    measures.push(canon ? groupBeats(slice, beatsPerBar) : reduceMeasure(slice, beatsPerBar));
   }
   return measures;
 }
