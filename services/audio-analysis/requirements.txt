@@ -1,0 +1,12 @@
+# Spike détection d'accords (Demucs + madmom).
+# IMPORTANT : installer dans un venv Python 3.10 (madmom se compile mal sur 3.11+).
+# Ordre d'installation : d'abord numpy/cython, PUIS madmom (voir README.md).
+
+numpy<2
+cython<3
+scipy
+soundfile
+yt-dlp
+demucs
+# madmom depuis GitHub : la version PyPI ne compile pas toujours avec les outils récents.
+madmom @ git+https://github.com/CPJKU/madmom.git@main
