@@ -90,9 +90,11 @@ export async function POST(req: NextRequest) {
 
     // 1) DÉCOUPAGE DÉTERMINISTE en mesures régulières (le code, pas l'IA, fixe le métrique)
     const sharps = keyPrefersSharps(timeline.key);
-    const measures = toMeasures(timeline, beatsPerBar).map((mez) =>
+    const debug: Record<string, unknown> = {};
+    const measures = toMeasures(timeline, beatsPerBar, debug).map((mez) =>
       mez.map((c) => ({ chord: respellChord(c.chord, sharps), beats: c.beats })),
     );
+    await jobRef.set({ debug: JSON.stringify(debug).slice(0, 8000) }, { merge: true }).catch(() => {});
     if (!measures.some((mez) => mez.some((c) => c.chord))) {
       await jobRef.set({ status: 'error', error: 'Aucun accord exploitable.' }, { merge: true });
       return NextResponse.json({ error: 'Aucun accord exploitable détecté sur ce morceau.' }, { status: 422 });

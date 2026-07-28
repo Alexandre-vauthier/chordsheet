@@ -280,7 +280,7 @@ function reduceMeasure(perBeat: string[], beatsPerBar: number): Measure {
   return [{ chord: dom, beats: beatsPerBar }];
 }
 
-export function toMeasures(tl: Timeline, beatsPerBar: number): Measure[] {
+export function toMeasures(tl: Timeline, beatsPerBar: number, debug?: Record<string, unknown>): Measure[] {
   const beatDur = medianBeatDur(tl);
   // Suite d'accords temps par temps (depuis la durée des segments, robuste au jitter).
   const perBeat = chordPerBeat(tl, beatDur);
@@ -319,6 +319,25 @@ export function toMeasures(tl: Timeline, beatsPerBar: number): Measure[] {
       if (!slice.length) break;
       measures.push(reduceMeasure(slice, beatsPerBar));
     }
+  }
+
+  if (debug) {
+    debug.bpm = tl.bpm;
+    debug.key = tl.key;
+    debug.tonic = keyTonic(tl.key);
+    debug.beatDurMedian = medianBeatDur(tl);
+    debug.period = loop?.period ?? null;
+    debug.hasLoop = !!loop;
+    debug.perBeatHead = perBeat.slice(0, 80).join(' ');
+    debug.canon = loop ? loop.canon.join(' ') : null;
+    debug.measuresHead = measures
+      .slice(0, 12)
+      .map((mz) => mz.map((c) => `${c.chord || '-'}${c.beats > 1 ? '·' + c.beats : ''}`).join(' '))
+      .join(' | ');
+    debug.segDurHead = tl.chords
+      .slice(0, 48)
+      .map((c) => `${madmomToChord(c.label) || '-'}:${(c.end - c.start).toFixed(2)}`)
+      .join(' ');
   }
 
   return measures;
