@@ -294,46 +294,46 @@ function reduceMeasure(perBeat: string[], beatsPerBar: number): Measure {
 }
 
 // Fraction de correspondance entre deux blocs de longueur `len` (positions a et b).
-function blockMatch(seq: string[], a: number, b: number, len: number): number {
-  let m = 0, t = 0;
-  for (let i = 0; i < len; i++) {
-    if (b + i >= seq.length) break;
-    t++;
-    if (seq[a + i] && seq[a + i] === seq[b + i]) m++;
-  }
-  return t ? m / t : 0;
+function median(xs: number[]): number {
+  if (!xs.length) return 0;
+  const s = [...xs].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 
-// Plus petite période P telle que le bloc démarrant en `pos` se répète juste après
-// (boucle LOCALE — permet à la boucle de changer d'une section à l'autre).
-function detectLocalLoop(seq: string[], pos: number, beatsPerBar: number): number | null {
-  // Période entre 1 et 8 mesures. En dessous d'une mesure, ou avec un seul accord
-  // (accord TENU, pas une boucle), on refuse : ça évite les micro-boucles parasites
-  // (ex. « A A » d'un accord tenu prises pour une boucle). Zones non bouclées → solo.
-  const maxP = Math.min(32, Math.floor((seq.length - pos) / 2));
-  for (let P = beatsPerBar; P <= maxP; P++) {
-    if (blockMatch(seq, pos, pos + P, P) < 0.75) continue;
-    if (new Set(seq.slice(pos, pos + P).filter(Boolean)).size < 2) continue;
-    // Cale la période sur un multiple de la mesure quand elle en est très proche
-    // (ex. 31 → 32) : une boucle fait un nombre entier de mesures ; ça évite qu'une
-    // même partie détectée à ±1 temps près (intro vs couplet) sorte en 2 sections.
-    const snapped = Math.round(P / beatsPerBar) * beatsPerBar;
-    if (snapped >= beatsPerBar && snapped !== P && snapped <= maxP && blockMatch(seq, pos, pos + snapped, snapped) >= 0.7) {
-      return snapped;
-    }
-    return P;
+// Regroupe la suite temps-par-temps en runs {chord, beats} (accords consécutifs).
+function mergeRuns(perBeat: string[]): { chord: string; beats: number }[] {
+  const runs: { chord: string; beats: number }[] = [];
+  for (const ch of perBeat) {
+    const l = runs[runs.length - 1];
+    if (l && l.chord === ch) l.beats++;
+    else runs.push({ chord: ch, beats: 1 });
+  }
+  return runs;
+}
+
+// Période (en nombre d'ACCORDS) de la boucle qui démarre en `pos` : plus petit P tel
+// que la SUITE d'accords se répète. Insensible aux variations de DURÉE (contrairement
+// à une comparaison temps par temps) — c'est ce qui rend un F tenu 4 ou 5 temps sans
+// effet. L'accord de tête doit vraiment revenir (exclut un pad d'intro).
+function detectLoopLabels(runs: { chord: string; beats: number }[], pos: number): number | null {
+  const maxP = Math.min(16, Math.floor((runs.length - pos) / 2));
+  for (let P = 2; P <= maxP; P++) {
+    if (runs[pos].chord !== runs[pos + P].chord) continue;
+    let ok = 0;
+    for (let k = 0; k < P; k++) if (runs[pos + k].chord === runs[pos + P + k].chord) ok++;
+    if (ok / P >= 0.8 && new Set(runs.slice(pos, pos + P).map((r) => r.chord).filter(Boolean)).size >= 2) return P;
   }
   return null;
 }
 
-// Construit les mesures d'une section bouclée : canon (période quelconque) calé sur
-// un nombre entier de mesures, redimensionné, rotations, puis répété `reps` fois.
-function buildLoopMeasures(canon: string[], reps: number, beatsPerBar: number, tonic: string): Measure[] {
-  const runs: { chord: string; beats: number }[] = [];
-  for (const ch of canon) { const l = runs[runs.length - 1]; if (l && l.chord === ch) l.beats++; else runs.push({ chord: ch, beats: 1 }); }
-  const solid = runs.filter((r) => r.chord);
+// Construit les mesures d'UNE occurrence de boucle depuis un motif {chord, beats}
+// (durées médianes) : calé sur un nombre entier de mesures, redimensionné, rotations.
+function buildPatternMeasures(pattern: { chord: string; beats: number }[], beatsPerBar: number, tonic: string): Measure[] {
+  const solid = pattern.filter((r) => r.chord && r.beats > 0);
   if (!solid.length) return [];
-  const measuresInLoop = Math.max(1, Math.round(canon.length / beatsPerBar));
+  const total = solid.reduce((a, r) => a + r.beats, 0);
+  const measuresInLoop = Math.max(1, Math.round(total / beatsPerBar));
   const target = measuresInLoop * beatsPerBar;
   const scaled = rescaleRuns(solid, target);
   let lpb: string[] = [];
@@ -341,9 +341,8 @@ function buildLoopMeasures(canon: string[], reps: number, beatsPerBar: number, t
   lpb = rotateForMeasurePhase(lpb, beatsPerBar);
   lpb = rotateToStableStart(lpb, beatsPerBar, tonic);
   const out: Measure[] = [];
-  for (let m = 0; m < reps * measuresInLoop; m++) {
-    const s = (m % measuresInLoop) * beatsPerBar;
-    out.push(groupBeats(lpb.slice(s, s + beatsPerBar), beatsPerBar));
+  for (let m = 0; m < measuresInLoop; m++) {
+    out.push(groupBeats(lpb.slice(m * beatsPerBar, m * beatsPerBar + beatsPerBar), beatsPerBar));
   }
   return out;
 }
@@ -371,34 +370,51 @@ export function toSections(tl: Timeline, beatsPerBar: number, debug?: Record<str
     if (perBeat[i] && !freqGlobal.has(perBeat[i])) perBeat[i] = i > 0 ? perBeat[i - 1] : '';
   }
   const tonic = keyTonic(tl.key);
+  const runs = mergeRuns(perBeat);
 
-  // Découpage EN SECTIONS : on avance, on détecte une boucle locale, on l'étend tant
-  // qu'elle se répète, puis on ouvre une nouvelle section quand le motif change. Les
-  // zones sans boucle nette sont accumulées en une section « libre » (mesures simples).
+  // Découpage EN SECTIONS sur la SUITE d'accords : on détecte la boucle qui démarre à
+  // la position courante (période en nombre d'accords), on l'étend tant qu'elle se
+  // répète, puis on ouvre une nouvelle section quand le motif change. Les runs isolés
+  // (intro/pont non bouclés) sortent en section « libre » (mesures simples).
   const raw: DetectedSection[] = [];
   const dbg: string[] = [];
   let soloBuf: Measure[] = [];
   const flushSolo = () => { if (soloBuf.length) { raw.push({ measures: soloBuf, repeat: 1, loop: false }); soloBuf = []; } };
   let pos = 0, guard = 100000;
-  while (pos < perBeat.length && guard-- > 0) {
-    const P = detectLocalLoop(perBeat, pos, beatsPerBar);
+  while (pos < runs.length && guard-- > 0) {
+    const P = detectLoopLabels(runs, pos);
     if (P) {
       let reps = 1;
-      while (pos + (reps + 1) * P <= perBeat.length && blockMatch(perBeat, pos, pos + reps * P, P) >= 0.65) reps++;
+      while (pos + (reps + 1) * P <= runs.length) {
+        let ok = 0;
+        for (let k = 0; k < P; k++) if (runs[pos + k].chord === runs[pos + reps * P + k].chord) ok++;
+        if (ok / P >= 0.75) reps++; else break;
+      }
       if (reps >= 2) {
         flushSolo();
-        const secSeq = perBeat.slice(pos, pos + reps * P);
-        const canon = repairBigrams(majorityFold(secSeq, P), secSeq, frequentChords(secSeq));
-        const instance = buildLoopMeasures(canon, 1, beatsPerBar, tonic); // une occurrence
-        raw.push({ measures: instance, repeat: reps, loop: true });
+        // Motif : accord majoritaire + durée MÉDIANE par position sur toutes les reps.
+        const pattern: { chord: string; beats: number }[] = [];
+        for (let j = 0; j < P; j++) {
+          const durs: number[] = [];
+          const counts: Record<string, number> = {};
+          for (let i = j; i < reps * P; i += P) {
+            durs.push(runs[pos + i].beats);
+            counts[runs[pos + i].chord] = (counts[runs[pos + i].chord] ?? 0) + 1;
+          }
+          pattern.push({ chord: Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0], beats: median(durs) });
+        }
+        raw.push({ measures: buildPatternMeasures(pattern, beatsPerBar, tonic), repeat: reps, loop: true });
         dbg.push(`loop P${P}x${reps}`);
         pos += reps * P;
         continue;
       }
     }
-    soloBuf.push(reduceMeasure(perBeat.slice(pos, pos + beatsPerBar), beatsPerBar));
+    // Run isolé (non bouclé) → mesures simples (durée arrondie au nombre de mesures).
+    const r = runs[pos];
+    const nm = Math.max(1, Math.round(r.beats / beatsPerBar));
+    for (let k = 0; k < nm; k++) soloBuf.push([{ chord: r.chord, beats: beatsPerBar }]);
     dbg.push('solo');
-    pos += beatsPerBar;
+    pos++;
   }
   flushSolo();
 
