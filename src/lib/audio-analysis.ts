@@ -119,38 +119,49 @@ function frequentChords(seq: string[]): Set<string> {
   return new Set(Object.entries(freq).filter(([, n]) => n >= min).map(([c]) => c));
 }
 
-// Période de la boucle (en temps, multiple de la mesure) + motif canonique, en
-// n'acceptant une période QUE si le canonique garde tous les accords fréquents.
-function selectLoop(seq: string[], beatsPerBar: number): { period: number; canon: string[] } | null {
+// Période de la boucle EN TEMPS QUELCONQUE (pas forcément un multiple de la mesure :
+// la détection de tempo étant instable, la vraie boucle peut tomber sur 15 temps ; on
+// la cale ensuite sur un nombre entier de mesures). N'accepte une période que si le
+// canonique garde tous les accords fréquents.
+function selectLoop(seq: string[]): { period: number; canon: string[] } | null {
   const n = seq.length;
-  if (n < 2 * beatsPerBar) return null;
+  if (n < 4) return null;
   const freq = frequentChords(seq);
   if (freq.size === 0) return null;
-  const maxP = Math.min(16 * beatsPerBar, Math.floor(n / 2));
+  const maxP = Math.min(64, Math.floor(n / 2));
   const scoreAt = (p: number): number => {
     let match = 0, total = 0;
     for (let i = 0; i + p < n; i++) { total++; if (seq[i] && seq[i] === seq[i + p]) match++; }
     return total ? match / total : 0;
   };
   // 1) Période FONDAMENTALE : la plus petite dont le score est solide (0.72) et qui
-  //    garde tous les accords fréquents. Évite de prendre un multiple (2×, 3×) de la
-  //    vraie boucle, qui donnerait un motif asymétrique.
-  for (let p = beatsPerBar; p <= maxP; p += beatsPerBar) {
+  //    garde tous les accords fréquents (évite un multiple 2×/3× de la vraie boucle).
+  for (let p = 2; p <= maxP; p++) {
     if (scoreAt(p) < 0.72) continue;
     const canon = majorityFold(seq, p);
     if ([...freq].every((c) => new Set(canon.filter(Boolean)).has(c))) return { period: p, canon };
   }
   // 2) Repli : meilleure période disponible si elle est correcte.
-  let bestScore = 0;
-  for (let p = beatsPerBar; p <= maxP; p += beatsPerBar) bestScore = Math.max(bestScore, scoreAt(p));
+  let bestScore = 0, bestP = 0;
+  for (let p = 2; p <= maxP; p++) { const s = scoreAt(p); if (s > bestScore) { bestScore = s; bestP = p; } }
   if (bestScore < 0.55) return null;
-  for (let p = beatsPerBar; p <= maxP; p += beatsPerBar) {
-    if (scoreAt(p) < bestScore - 0.03) continue;
-    const canon = majorityFold(seq, p);
-    const canonSet = new Set(canon.filter(Boolean));
-    if ([...freq].every((c) => canonSet.has(c))) return { period: p, canon };
-  }
+  const canon = majorityFold(seq, bestP);
+  if ([...freq].every((c) => new Set(canon.filter(Boolean)).has(c))) return { period: bestP, canon };
   return null;
+}
+
+// Redimensionne des durées de runs pour totaliser `target` temps (proportionnel,
+// min 1, somme exacte). Sert à caler la boucle sur un nombre entier de mesures.
+function rescaleRuns(runs: { chord: string; beats: number }[], target: number): number[] {
+  const sum = runs.reduce((a, r) => a + r.beats, 0) || 1;
+  const b = runs.map((r) => Math.max(1, Math.round((r.beats * target) / sum)));
+  let s = b.reduce((a, x) => a + x, 0);
+  let guard = 1000;
+  while (s !== target && guard-- > 0) {
+    if (s < target) { const i = b.indexOf(Math.max(...b)); b[i]++; s++; }
+    else { let i = b.indexOf(Math.max(...b)); if (b[i] <= 1) break; b[i]--; s--; void i; }
+  }
+  return b;
 }
 
 // Réparation par bigramme : apprend depuis la détection brute quel accord précède
@@ -275,23 +286,39 @@ export function toMeasures(tl: Timeline, beatsPerBar: number, debug?: Record<str
   const perBeat = chordPerBeat(tl, beatDur);
   if (!perBeat.length) return [];
 
-  // Boucle nette et sûre : période + vote majoritaire (parasites effacés, aucun
-  // accord fréquent perdu), puis calage du départ des mesures.
-  const loop = selectLoop(perBeat, beatsPerBar);
-  let canon = loop?.canon ?? null;
-  if (canon) {
-    canon = repairBigrams(canon, perBeat, frequentChords(perBeat));
-    canon = rotateForMeasurePhase(canon, beatsPerBar);
-    canon = rotateToStableStart(canon, beatsPerBar, keyTonic(tl.key));
-  }
-  // Motif propre répété sur toute la longueur (ou la suite brute si pas de boucle).
-  const seq = canon ? perBeat.map((_, i) => canon[i % canon.length]) : perBeat;
-
+  const loop = selectLoop(perBeat);
   const measures: Measure[] = [];
-  for (let i = 0; i < seq.length; i += beatsPerBar) {
-    const slice = seq.slice(i, i + beatsPerBar);
-    if (!slice.length) break;
-    measures.push(canon ? groupBeats(slice, beatsPerBar) : reduceMeasure(slice, beatsPerBar));
+
+  if (loop) {
+    // Motif canonique (parasites effacés, accords de liaison restaurés).
+    const canon = repairBigrams(loop.canon, perBeat, frequentChords(perBeat));
+    // Cale la longueur de la boucle sur un nombre ENTIER de mesures + redimensionne.
+    const runs = [] as { chord: string; beats: number }[];
+    for (const ch of canon) { const last = runs[runs.length - 1]; if (last && last.chord === ch) last.beats++; else runs.push({ chord: ch, beats: 1 }); }
+    const solid = runs.filter((r) => r.chord);
+    if (!solid.length) return [];
+    const measuresInLoop = Math.max(1, Math.round(canon.length / beatsPerBar));
+    const target = measuresInLoop * beatsPerBar;
+    const scaled = rescaleRuns(solid, target);
+    let loopPerBeat: string[] = [];
+    solid.forEach((r, i) => { for (let k = 0; k < scaled[i]; k++) loopPerBeat.push(r.chord); });
+    // Calage des mesures (aucun accord à cheval) + départ sur la tonique.
+    loopPerBeat = rotateForMeasurePhase(loopPerBeat, beatsPerBar);
+    loopPerBeat = rotateToStableStart(loopPerBeat, beatsPerBar, keyTonic(tl.key));
+    // Répète le motif propre sur toute la durée du morceau.
+    const numLoops = Math.max(1, Math.round(perBeat.length / loop.period));
+    const totalMeasures = numLoops * measuresInLoop;
+    for (let m = 0; m < totalMeasures; m++) {
+      const s = (m % measuresInLoop) * beatsPerBar;
+      measures.push(groupBeats(loopPerBeat.slice(s, s + beatsPerBar), beatsPerBar));
+    }
+  } else {
+    // Pas de boucle nette : chaque mesure nettoyée depuis la suite brute.
+    for (let i = 0; i < perBeat.length; i += beatsPerBar) {
+      const slice = perBeat.slice(i, i + beatsPerBar);
+      if (!slice.length) break;
+      measures.push(reduceMeasure(slice, beatsPerBar));
+    }
   }
 
   if (debug) {
@@ -305,7 +332,8 @@ export function toMeasures(tl: Timeline, beatsPerBar: number, debug?: Record<str
     debug.beatDurMedian = diffs.length ? diffs[Math.floor(diffs.length / 2)] : null;
     debug.period = loop?.period ?? null;
     debug.perBeatHead = perBeat.slice(0, 64).join(' ');
-    debug.canon = canon ? canon.join(' ') : null;
+    debug.canon = loop ? loop.canon.join(' ') : null;
+    debug.measuresHead = measures.slice(0, 8).map((mz) => mz.map((c) => `${c.chord || '-'}${c.beats > 1 ? '·' + c.beats : ''}`).join(' ')).join(' | ');
     // Durée réelle (en s) de chaque segment d'accord, pour voir Am vs D.
     debug.segDurHead = tl.chords
       .slice(0, 40)
