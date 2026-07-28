@@ -72,13 +72,18 @@ export function toBars(tl: Timeline): { bars: Bar[]; beatsPerBar: 3 | 4 } {
 export type Measure = { chord: string; beats: number }[];
 
 // Durée médiane d'un temps (intervalles entre temps détectés) — plus stable que le BPM.
+// Normalise l'octave de tempo : la détection se trompe souvent d'un facteur 2 (demi ou
+// double tempo, ex. 181 bpm au lieu de 90 en verrouillant sur les hi-hats) ; on ramène
+// le temps dans une plage musicale (~60-150 bpm) en doublant/divisant sa durée.
 function medianBeatDur(tl: Timeline): number {
   const times = tl.downbeats.map((d) => d[0]).sort((a, b) => a - b);
   const diffs: number[] = [];
   for (let i = 1; i < times.length; i++) { const d = times[i] - times[i - 1]; if (d > 0.05 && d < 3) diffs.push(d); }
-  if (!diffs.length) return tl.bpm > 0 ? 60 / tl.bpm : 0.5;
-  diffs.sort((a, b) => a - b);
-  return diffs[Math.floor(diffs.length / 2)];
+  let bd = diffs.length ? diffs.sort((a, b) => a - b)[Math.floor(diffs.length / 2)] : (tl.bpm > 0 ? 60 / tl.bpm : 0.5);
+  let n = 0;
+  while (bd > 0 && 60 / bd > 155 && n < 4) { bd *= 2; n++; }
+  while (bd > 0 && 60 / bd < 58 && n < 4) { bd /= 2; n++; }
+  return bd;
 }
 
 // Filtre anti-parasites : supprime les segments d'accord trop courts (blips de
