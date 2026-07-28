@@ -286,8 +286,15 @@ function detectLocalLoop(seq: string[], pos: number, beatsPerBar: number): numbe
   const maxP = Math.min(32, Math.floor((seq.length - pos) / 2));
   for (let P = beatsPerBar; P <= maxP; P++) {
     if (blockMatch(seq, pos, pos + P, P) < 0.75) continue;
-    const distinct = new Set(seq.slice(pos, pos + P).filter(Boolean));
-    if (distinct.size >= 2) return P;
+    if (new Set(seq.slice(pos, pos + P).filter(Boolean)).size < 2) continue;
+    // Cale la période sur un multiple de la mesure quand elle en est très proche
+    // (ex. 31 → 32) : une boucle fait un nombre entier de mesures ; ça évite qu'une
+    // même partie détectée à ±1 temps près (intro vs couplet) sorte en 2 sections.
+    const snapped = Math.round(P / beatsPerBar) * beatsPerBar;
+    if (snapped >= beatsPerBar && snapped !== P && snapped <= maxP && blockMatch(seq, pos, pos + snapped, snapped) >= 0.7) {
+      return snapped;
+    }
+    return P;
   }
   return null;
 }
