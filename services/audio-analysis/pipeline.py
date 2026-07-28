@@ -63,14 +63,21 @@ def separate(audio: str, workdir: str):
 
 
 def mix_harmonic(other: str, bass: str, out_wav: str) -> str:
-    """Mixe other + bass en mono normalisé — entrée de la détection d'accords."""
+    """Mixe other + un peu de bass en mono normalisé — entrée de la détection d'accords.
+
+    La basse aide à identifier la fondamentale (C vs Am), mais trop présente elle
+    ANTICIPE les changements d'accords (une montée de basse en fin de mesure vers la
+    fondamentale suivante décale l'accord détecté avant le temps fort). On la met
+    donc nettement en retrait (poids faible) : assez pour la fondamentale, pas assez
+    pour entraîner le timing.
+    """
     import numpy as np
     import soundfile as sf
 
     yo, sr = sf.read(other, always_2d=True)
     yb, _ = sf.read(bass, always_2d=True)
     n = min(len(yo), len(yb))
-    mono = yo[:n].mean(axis=1) + 0.7 * yb[:n].mean(axis=1)  # basse un peu en retrait
+    mono = yo[:n].mean(axis=1) + 0.3 * yb[:n].mean(axis=1)  # basse nettement en retrait
     peak = float(np.max(np.abs(mono))) or 1.0
     mono = (mono / peak) * 0.9
     sf.write(out_wav, mono, sr)
