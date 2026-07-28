@@ -148,6 +148,37 @@ function selectLoop(seq: string[], beatsPerBar: number): { period: number; canon
   return null;
 }
 
+// Réparation par bigramme : apprend depuis la détection brute quel accord précède
+// habituellement chaque accord, et le restaure dans le canonique là où le vote
+// majoritaire l'a effacé (ex. un Am d'un temps avant un D, mangé sur un tour).
+function repairBigrams(canon: string[], raw: string[], freq: Set<string>): string[] {
+  const predCount: Record<string, Record<string, number>> = {};
+  for (let i = 1; i < raw.length; i++) {
+    const y = raw[i], p = raw[i - 1];
+    if (!y || !p || y === p) continue;
+    (predCount[y] ??= {})[p] = (predCount[y][p] ?? 0) + 1;
+  }
+  const domPred: Record<string, { chord: string; frac: number }> = {};
+  for (const y in predCount) {
+    const entries = Object.entries(predCount[y]);
+    const total = entries.reduce((a, [, n]) => a + n, 0);
+    const [chord, n] = entries.sort((a, b) => b[1] - a[1])[0];
+    domPred[y] = { chord, frac: n / total };
+  }
+  const L = canon.length;
+  const out = [...canon];
+  for (let i = 0; i < L; i++) {
+    const y = out[i];
+    if (!y) continue;
+    const dp = domPred[y];
+    if (dp && dp.frac >= 0.5 && freq.has(dp.chord)) {
+      const pi = (i - 1 + L) % L;
+      if (out[pi] !== dp.chord && out[pi] !== y) out[pi] = dp.chord;
+    }
+  }
+  return out;
+}
+
 // Fait tourner le motif pour qu'aucun accord ne soit coupé par une barre de mesure
 // (minimise les accords à cheval sur une barre).
 function rotateForMeasurePhase(loopPerBeat: string[], beatsPerBar: number): string[] {
@@ -199,7 +230,10 @@ export function toMeasures(tl: Timeline, beatsPerBar: number): Measure[] {
   // accord fréquent perdu), puis calage du départ des mesures.
   const loop = selectLoop(perBeat, beatsPerBar);
   let canon = loop?.canon ?? null;
-  if (canon) canon = rotateForMeasurePhase(canon, beatsPerBar);
+  if (canon) {
+    canon = repairBigrams(canon, perBeat, frequentChords(perBeat));
+    canon = rotateForMeasurePhase(canon, beatsPerBar);
+  }
   // Motif propre répété sur toute la longueur (ou la suite brute si pas de boucle).
   const seq = canon ? perBeat.map((_, i) => canon[i % canon.length]) : perBeat;
 
