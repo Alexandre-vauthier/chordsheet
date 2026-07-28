@@ -197,10 +197,19 @@ function rotateForMeasurePhase(loopPerBeat: string[], beatsPerBar: number): stri
   return loopPerBeat.slice(bestO).concat(loopPerBeat.slice(0, bestO));
 }
 
-// Fait démarrer la boucle sur l'accord STABLE : le début de la plus longue série
-// de mesures « pleines » d'un même accord (la tonique tenue), plutôt que sur une
-// mesure de transition (ex. Am D). Ne tourne que par mesures entières.
-function rotateToStableStart(canon: string[], beatsPerBar: number): string[] {
+// Accord tonique déduit de la tonalité (ex. "e minor" → "Em"), en écriture dièse
+// pour comparer aux accords madmom.
+function keyTonic(key: string): string {
+  const m = (key || '').trim().match(/^([A-Ga-g])([#b]?)\s*(maj|min|major|minor)?/i);
+  if (!m) return '';
+  const root = FLAT_TO_SHARP[m[1].toUpperCase() + (m[2] || '')] ?? (m[1].toUpperCase() + (m[2] || ''));
+  return root + (/min/i.test(m[3] || '') ? 'm' : '');
+}
+
+// Fait démarrer la boucle sur l'accord STABLE : de préférence la TONIQUE (accord de
+// repos) tenue sur une mesure ; à défaut, le début de la plus longue série de mesures
+// d'un même accord. Ne tourne que par mesures entières (calage rythmique préservé).
+function rotateToStableStart(canon: string[], beatsPerBar: number, tonic: string): string[] {
   const mil = Math.floor(canon.length / beatsPerBar);
   if (mil < 2) return canon;
   const measureChord: (string | null)[] = [];
@@ -208,17 +217,27 @@ function rotateToStableStart(canon: string[], beatsPerBar: number): string[] {
     const sl = canon.slice(m * beatsPerBar, (m + 1) * beatsPerBar);
     measureChord.push(sl.every((c) => c && c === sl[0]) ? sl[0] : null);
   }
-  let bestStart = -1, bestLen = 0;
-  for (let s = 0; s < mil; s++) {
-    const c = measureChord[s];
-    if (!c) continue;
-    if (measureChord[(s - 1 + mil) % mil] === c) continue; // pas un vrai début de série
+  const isRunStart = (s: number): boolean => measureChord[(s - 1 + mil) % mil] !== measureChord[s];
+  const runLen = (s: number): number => {
     let len = 1;
-    while (len < mil && measureChord[(s + len) % mil] === c) len++;
-    if (len > bestLen) { bestLen = len; bestStart = s; }
-  }
-  if (bestStart <= 0) return canon;
-  const off = bestStart * beatsPerBar;
+    while (len < mil && measureChord[(s + len) % mil] === measureChord[s]) len++;
+    return len;
+  };
+  const pick = (filter: (c: string) => boolean): number => {
+    let best = -1, bestLen = 0;
+    for (let s = 0; s < mil; s++) {
+      const c = measureChord[s];
+      if (!c || !filter(c) || !isRunStart(s)) continue;
+      const len = runLen(s);
+      if (len > bestLen) { bestLen = len; best = s; }
+    }
+    return best;
+  };
+  // 1) démarrer sur la tonique si elle apparaît comme mesure tenue ; 2) sinon plus longue série.
+  let start = tonic ? pick((c) => c === tonic) : -1;
+  if (start < 0) start = pick(() => true);
+  if (start <= 0) return canon;
+  const off = start * beatsPerBar;
   return canon.slice(off).concat(canon.slice(0, off));
 }
 
@@ -258,7 +277,7 @@ export function toMeasures(tl: Timeline, beatsPerBar: number): Measure[] {
   if (canon) {
     canon = repairBigrams(canon, perBeat, frequentChords(perBeat));
     canon = rotateForMeasurePhase(canon, beatsPerBar);
-    canon = rotateToStableStart(canon, beatsPerBar);
+    canon = rotateToStableStart(canon, beatsPerBar, keyTonic(tl.key));
   }
   // Motif propre répété sur toute la longueur (ou la suite brute si pas de boucle).
   const seq = canon ? perBeat.map((_, i) => canon[i % canon.length]) : perBeat;
