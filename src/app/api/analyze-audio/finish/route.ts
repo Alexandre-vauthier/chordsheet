@@ -5,7 +5,7 @@ import {
   Timeline,
   toSections,
   respellChord,
-  keyPrefersSharps,
+  chordsPreferSharps,
   buildLabelPrompt,
   normalizeSections,
   consumeAnalysis,
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     const meta = data.meta ?? { title: '', author: '' };
 
     // 1) DÉCOUPAGE DÉTERMINISTE en sections (le code fixe le métrique ET les frontières)
-    const sharps = keyPrefersSharps(timeline.key);
+    const sharps = chordsPreferSharps(timeline.chords);
     const debug: Record<string, unknown> = {};
     const detected = toSections(timeline, beatsPerBar, debug).map((s) => ({
       repeat: s.repeat,

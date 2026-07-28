@@ -413,6 +413,27 @@ export function keyPrefersSharps(key: string): boolean {
   return SHARP_KEYS.has(k);
 }
 
+// Position de chaque fondamentale sur le cycle des quintes (négatif = côté bémol).
+const COF: Record<string, number> = {
+  C: 0, G: 1, D: 2, A: 3, E: 4, B: 5, F: -1,
+  'A#': -2, 'D#': -3, 'G#': -4, 'C#': -5, 'F#': 6,
+};
+
+// Décide dièses vs bémols d'après les ACCORDS RÉELLEMENT présents (pondérés par leur
+// durée) plutôt que la tonalité (souvent mal détectée) : centre de gravité sur le
+// cycle des quintes. Positif → dièses, négatif ou nul → bémols.
+export function chordsPreferSharps(chords: Timeline['chords']): boolean {
+  let sum = 0;
+  for (const c of chords) {
+    const ch = madmomToChord(c.label);
+    const m = ch.match(/^([A-G][#b]?)/);
+    if (!m) continue;
+    const pos = COF[m[1]];
+    if (pos !== undefined) sum += pos * Math.max(0, c.end - c.start);
+  }
+  return sum > 0;
+}
+
 export function respellChord(chord: string, sharps: boolean): string {
   const m = chord.match(/^([A-G][#b]?)(.*)$/);
   if (!m) return chord;
