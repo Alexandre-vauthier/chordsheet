@@ -314,7 +314,13 @@ function buildLoopMeasures(canon: string[], reps: number, beatsPerBar: number, t
   return out;
 }
 
-export function toMeasures(tl: Timeline, beatsPerBar: number, debug?: Record<string, unknown>): Measure[] {
+// Une section détectée : le motif d'UNE occurrence (measures) + le nombre de répétitions.
+export interface DetectedSection { measures: Measure[]; repeat: number; loop: boolean }
+
+const sectionSig = (s: DetectedSection): string =>
+  s.measures.map((mz) => mz.map((c) => `${c.chord}:${c.beats}`).join(',')).join('|');
+
+export function toSections(tl: Timeline, beatsPerBar: number, debug?: Record<string, unknown>): DetectedSection[] {
   const beatDur = medianBeatDur(tl);
   // Filtre parasites (blips < ~0.45 temps) puis suite d'accords temps par temps.
   const segs = dropShortChords(tl.chords, beatDur * 0.45);
@@ -322,11 +328,13 @@ export function toMeasures(tl: Timeline, beatsPerBar: number, debug?: Record<str
   if (!perBeat.length) return [];
   const tonic = keyTonic(tl.key);
 
-  // Découpage EN SECTIONS : on avance dans le morceau, on détecte une boucle locale,
-  // on l'étend tant qu'elle se répète, puis on recommence (nouvelle section) quand le
-  // motif change. Les zones sans boucle nette sortent en mesures simples.
-  const measures: Measure[] = [];
-  const sectionsDbg: string[] = [];
+  // Découpage EN SECTIONS : on avance, on détecte une boucle locale, on l'étend tant
+  // qu'elle se répète, puis on ouvre une nouvelle section quand le motif change. Les
+  // zones sans boucle nette sont accumulées en une section « libre » (mesures simples).
+  const raw: DetectedSection[] = [];
+  const dbg: string[] = [];
+  let soloBuf: Measure[] = [];
+  const flushSolo = () => { if (soloBuf.length) { raw.push({ measures: soloBuf, repeat: 1, loop: false }); soloBuf = []; } };
   let pos = 0, guard = 100000;
   while (pos < perBeat.length && guard-- > 0) {
     const P = detectLocalLoop(perBeat, pos, beatsPerBar);
@@ -334,38 +342,42 @@ export function toMeasures(tl: Timeline, beatsPerBar: number, debug?: Record<str
       let reps = 1;
       while (pos + (reps + 1) * P <= perBeat.length && blockMatch(perBeat, pos, pos + reps * P, P) >= 0.65) reps++;
       if (reps >= 2) {
+        flushSolo();
         const secSeq = perBeat.slice(pos, pos + reps * P);
         const canon = repairBigrams(majorityFold(secSeq, P), secSeq, frequentChords(secSeq));
-        const secMeasures = buildLoopMeasures(canon, reps, beatsPerBar, tonic);
-        measures.push(...secMeasures);
-        sectionsDbg.push(`loop P${P}x${reps}(${secMeasures.length}mes)`);
+        const instance = buildLoopMeasures(canon, 1, beatsPerBar, tonic); // une occurrence
+        raw.push({ measures: instance, repeat: reps, loop: true });
+        dbg.push(`loop P${P}x${reps}`);
         pos += reps * P;
         continue;
       }
     }
-    measures.push(reduceMeasure(perBeat.slice(pos, pos + beatsPerBar), beatsPerBar));
-    sectionsDbg.push('solo');
+    soloBuf.push(reduceMeasure(perBeat.slice(pos, pos + beatsPerBar), beatsPerBar));
+    dbg.push('solo');
     pos += beatsPerBar;
+  }
+  flushSolo();
+
+  // Fusionne les sections bouclées consécutives identiques (une boucle fragmentée par
+  // les variations de tempo se rassemble en une seule section avec repeat cumulé).
+  const sections: DetectedSection[] = [];
+  for (const s of raw) {
+    const last = sections[sections.length - 1];
+    if (last && last.loop && s.loop && sectionSig(last) === sectionSig(s)) last.repeat += s.repeat;
+    else sections.push({ ...s });
   }
 
   if (debug) {
-    debug.bpm = tl.bpm;
-    debug.key = tl.key;
-    debug.tonic = tonic;
-    debug.beatDurMedian = beatDur;
+    debug.bpm = tl.bpm; debug.key = tl.key; debug.tonic = tonic; debug.beatDurMedian = beatDur;
     debug.perBeatHead = perBeat.slice(0, 96).join(' ');
-    debug.sections = sectionsDbg.slice(0, 40).join(' | ');
-    debug.measuresHead = measures
-      .slice(0, 16)
-      .map((mz) => mz.map((c) => `${c.chord || '-'}${c.beats > 1 ? '·' + c.beats : ''}`).join(' '))
-      .join(' | ');
-    debug.segDurHead = segs
-      .slice(0, 48)
-      .map((c) => `${madmomToChord(c.label) || '-'}:${(c.end - c.start).toFixed(2)}`)
-      .join(' ');
+    debug.segments = dbg.slice(0, 40).join(' ');
+    debug.sections = sections
+      .map((s) => `[${s.loop ? 'x' + s.repeat : 'libre'}] ` + s.measures.slice(0, 8).map((mz) => mz.map((c) => `${c.chord || '-'}${c.beats > 1 ? '·' + c.beats : ''}`).join(' ')).join(' | '))
+      .join('  ||  ');
+    debug.segDurHead = segs.slice(0, 48).map((c) => `${madmomToChord(c.label) || '-'}:${(c.end - c.start).toFixed(2)}`).join(' ');
   }
 
-  return measures;
+  return sections;
 }
 
 // ── Respelling enharmonique selon la tonalité ───────────────────────────────
@@ -388,28 +400,22 @@ export function respellChord(chord: string, sharps: boolean): string {
   return newRoot + suffix;
 }
 
-// Prompt LÉGER : l'IA ne reçoit que la liste des mesures déjà régulières et ne
-// décide QUE du découpage en sections et des répétitions (jamais des mesures).
-export function buildSectionPrompt(
-  measureLabels: string[],
-  beatsPerBar: number,
+// Prompt LÉGER : les sections sont DÉJÀ découpées (frontières fiables). L'IA ne fait
+// que les NOMMER (Intro/Couplet/Refrain/Pont/Outro), sans toucher au découpage.
+export function buildLabelPrompt(
+  sectionLines: string[],
   meta: { title: string; author: string },
 ): string {
-  const list = measureLabels.map((m, i) => `${i + 1}:${m}`).join('  ');
-  return `Voici les mesures d'un morceau, déjà découpées et régulières (une entrée = une mesure de ${beatsPerBar} temps).
-${meta.title ? `Titre : ${meta.title}${meta.author ? ' — ' + meta.author : ''}\n` : ''}Mesures (numéro:accords) :
+  const list = sectionLines.map((s, i) => `${i + 1}. ${s}`).join('\n');
+  return `Voici les sections d'un morceau, DÉJÀ découpées (une ligne = une section, avec ses accords et son nombre de répétitions). Ne change NI le découpage NI les accords : donne juste un NOM à chaque section.
+${meta.title ? `Titre : ${meta.title}${meta.author ? ' — ' + meta.author : ''}\n` : ''}
 ${list}
 
-Découpe ces ${measureLabels.length} mesures en SECTIONS musicales et repère les répétitions.
-Une vraie chanson a peu de motifs qui reviennent ; les sections font typiquement 4, 8 ou 16 mesures.
+Attribue à chaque section un label parmi : Intro, Couplet, Refrain, Pont, Pré-refrain, Outro, Solo, Interlude.
+Raisonne sur la structure d'une chanson : l'intro ouvre, les couplets et refrains alternent (souvent mêmes accords → distingue-les par leur place et leur récurrence), le pont arrive une fois vers la fin, l'outro clôt. Une section très courte ou irrégulière au milieu est souvent une transition/un pont.
 
-Renvoie UNIQUEMENT ce JSON (aucun texte autour) :
-{ "sections": [ { "label": "Intro", "count": 4, "repeat": 1 }, { "label": "Couplet", "count": 8, "repeat": 2 } ] }
-- label : Intro, Couplet, Refrain, Pont, Outro…
-- count : nombre de mesures d'UNE occurrence de la section.
-- repeat : nombre de fois où cette section est jouée d'affilée.
-- La somme de (count × repeat) sur toutes les sections doit valoir EXACTEMENT ${measureLabels.length}.
-Ne modifie pas les accords, ne renvoie que le découpage.`;
+Renvoie UNIQUEMENT ce JSON, avec EXACTEMENT ${sectionLines.length} labels dans l'ordre :
+{ "labels": ["Intro", "Couplet", "Refrain", "…"] }`;
 }
 
 export function buildPrompt(
