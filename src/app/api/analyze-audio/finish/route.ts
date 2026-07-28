@@ -116,11 +116,22 @@ export async function POST(req: NextRequest) {
     }
 
     // 3) ASSEMBLAGE : sections détectées + labels de l'IA (une occurrence + repeat).
-    const sections = detected.map((s, i) => ({
-      label: labels[i] || `Partie ${i + 1}`,
-      repeat: s.repeat,
-      chords: s.measures.flat(),
-    }));
+    // Cohérence : deux sections de contenu identique portent le MÊME label (le
+    // premier attribué), pour qu'une partie récurrente ne change pas de nom.
+    const labelByContent = new Map<string, string>();
+    detected.forEach((s, i) => {
+      const sig = s.measures.map((mz) => mz.map((c) => `${c.chord}:${c.beats}`).join(',')).join('|');
+      const lbl = labels[i] || `Partie ${i + 1}`;
+      if (!labelByContent.has(sig)) labelByContent.set(sig, lbl);
+    });
+    const sections = detected.map((s, i) => {
+      const sig = s.measures.map((mz) => mz.map((c) => `${c.chord}:${c.beats}`).join(',')).join('|');
+      return {
+        label: labelByContent.get(sig) || labels[i] || `Partie ${i + 1}`,
+        repeat: s.repeat,
+        chords: s.measures.flat(),
+      };
+    });
 
     const parsed: Record<string, unknown> = {
       title: meta.title || '',
