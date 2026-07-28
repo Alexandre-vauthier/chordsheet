@@ -279,12 +279,15 @@ function blockMatch(seq: string[], a: number, b: number, len: number): number {
 
 // Plus petite période P telle que le bloc démarrant en `pos` se répète juste après
 // (boucle LOCALE — permet à la boucle de changer d'une section à l'autre).
-function detectLocalLoop(seq: string[], pos: number): number | null {
-  // Plafonné à 32 temps (≈ 8 mesures) : une boucle de section est courte ; au-delà
-  // c'est une fausse boucle (partie complexe non répétitive) → mieux vaut du solo.
+function detectLocalLoop(seq: string[], pos: number, beatsPerBar: number): number | null {
+  // Période entre 1 et 8 mesures. En dessous d'une mesure, ou avec un seul accord
+  // (accord TENU, pas une boucle), on refuse : ça évite les micro-boucles parasites
+  // (ex. « A A » d'un accord tenu prises pour une boucle). Zones non bouclées → solo.
   const maxP = Math.min(32, Math.floor((seq.length - pos) / 2));
-  for (let P = 2; P <= maxP; P++) {
-    if (blockMatch(seq, pos, pos + P, P) >= 0.75) return P;
+  for (let P = beatsPerBar; P <= maxP; P++) {
+    if (blockMatch(seq, pos, pos + P, P) < 0.75) continue;
+    const distinct = new Set(seq.slice(pos, pos + P).filter(Boolean));
+    if (distinct.size >= 2) return P;
   }
   return null;
 }
@@ -326,7 +329,7 @@ export function toMeasures(tl: Timeline, beatsPerBar: number, debug?: Record<str
   const sectionsDbg: string[] = [];
   let pos = 0, guard = 100000;
   while (pos < perBeat.length && guard-- > 0) {
-    const P = detectLocalLoop(perBeat, pos);
+    const P = detectLocalLoop(perBeat, pos, beatsPerBar);
     if (P) {
       let reps = 1;
       while (pos + (reps + 1) * P <= perBeat.length && blockMatch(perBeat, pos, pos + reps * P, P) >= 0.65) reps++;
