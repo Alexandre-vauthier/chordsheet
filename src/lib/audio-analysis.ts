@@ -322,10 +322,20 @@ const sectionSig = (s: DetectedSection): string =>
 
 export function toSections(tl: Timeline, beatsPerBar: number, debug?: Record<string, unknown>): DetectedSection[] {
   const beatDur = medianBeatDur(tl);
-  // Filtre parasites (blips < ~0.45 temps) puis suite d'accords temps par temps.
-  const segs = dropShortChords(tl.chords, beatDur * 0.45);
+  // Filtre parasites RELATIF à la durée typique des accords : un segment beaucoup plus
+  // court que la médiane est une erreur de détection à la jonction (ex. un D#/F d'un temps
+  // inséré entre deux accords tenus 5 s). Absorbé dans le voisin.
+  const realDurs = tl.chords.filter((c) => madmomToChord(c.label)).map((c) => c.end - c.start).sort((a, b) => a - b);
+  const medDur = realDurs.length ? realDurs[Math.floor(realDurs.length / 2)] : beatDur;
+  const segs = dropShortChords(tl.chords, Math.max(beatDur * 0.45, medDur * 0.35));
   const perBeat = chordPerBeat(segs, beatDur);
   if (!perBeat.length) return [];
+  // Nettoyage par fréquence : un accord RARE (hors des accords fréquents du morceau)
+  // est un parasite résiduel → on l'absorbe dans l'accord précédent.
+  const freqGlobal = frequentChords(perBeat);
+  for (let i = 0; i < perBeat.length; i++) {
+    if (perBeat[i] && !freqGlobal.has(perBeat[i])) perBeat[i] = i > 0 ? perBeat[i - 1] : '';
+  }
   const tonic = keyTonic(tl.key);
 
   // Découpage EN SECTIONS : on avance, on détecte une boucle locale, on l'étend tant
