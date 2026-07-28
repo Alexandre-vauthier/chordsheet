@@ -71,35 +71,31 @@ export function toBars(tl: Timeline): { bars: Bar[]; beatsPerBar: 3 | 4 } {
 // étant bruitée), avec au plus 2 accords par mesure.
 export type Measure = { chord: string; beats: number }[];
 
-// Accord qui couvre le plus de temps dans l'intervalle [t0, t1[.
-function dominantChordInInterval(chords: Timeline['chords'], t0: number, t1: number): string {
-  const cover: Record<string, number> = {};
-  for (const c of chords) {
-    const s = Math.max(c.start, t0);
-    const e = Math.min(c.end, t1);
-    if (e > s) {
-      const ch = madmomToChord(c.label);
-      cover[ch] = (cover[ch] ?? 0) + (e - s);
-    }
-  }
-  let best = '', bestV = 0;
-  for (const [ch, v] of Object.entries(cover)) if (v > bestV) { bestV = v; best = ch; }
-  return best;
+// Durée médiane d'un temps (intervalles entre temps détectés) — plus stable que le BPM.
+function medianBeatDur(tl: Timeline): number {
+  const times = tl.downbeats.map((d) => d[0]).sort((a, b) => a - b);
+  const diffs: number[] = [];
+  for (let i = 1; i < times.length; i++) { const d = times[i] - times[i - 1]; if (d > 0.05 && d < 3) diffs.push(d); }
+  if (!diffs.length) return tl.bpm > 0 ? 60 / tl.bpm : 0.5;
+  diffs.sort((a, b) => a - b);
+  return diffs[Math.floor(diffs.length / 2)];
 }
 
-// Suite d'accords sur les VRAIS temps détectés (chaque temps = intervalle entre
-// deux temps consécutifs). Suit le tempo qui respire, calée sur le premier temps fort.
-function chordPerBeat(tl: Timeline, songDur: number): string[] {
-  const beats = [...tl.downbeats].sort((a, b) => a[0] - b[0]);
-  if (beats.length < 2) return [];
+// Suite d'accords temps par temps, construite depuis la DURÉE de chaque segment
+// d'accord (fiable) quantifiée en temps. Robuste au jitter des temps individuels,
+// tout en conservant les accords tenus sur plusieurs mesures. Silence de tête/queue retiré.
+function chordPerBeat(tl: Timeline, beatDur: number): string[] {
   const perBeat: string[] = [];
-  for (let k = 0; k < beats.length - 1; k++) {
-    perBeat.push(dominantChordInInterval(tl.chords, beats[k][0], beats[k + 1][0]));
+  for (const c of tl.chords) {
+    const beats = Math.max(1, Math.round((c.end - c.start) / beatDur));
+    const ch = madmomToChord(c.label);
+    for (let k = 0; k < beats; k++) perBeat.push(ch);
   }
-  perBeat.push(dominantChordInInterval(tl.chords, beats[beats.length - 1][0], songDur));
-  let start = beats.findIndex((b) => b[1] === 1);
-  if (start < 0) start = 0;
-  return perBeat.slice(start);
+  let a = 0;
+  while (a < perBeat.length && !perBeat[a]) a++;
+  let b = perBeat.length;
+  while (b > a && !perBeat[b - 1]) b--;
+  return perBeat.slice(a, b);
 }
 
 // Replie les répétitions sur une période et vote à la majorité par position.
@@ -136,6 +132,15 @@ function selectLoop(seq: string[], beatsPerBar: number): { period: number; canon
     for (let i = 0; i + p < n; i++) { total++; if (seq[i] && seq[i] === seq[i + p]) match++; }
     return total ? match / total : 0;
   };
+  // 1) Période FONDAMENTALE : la plus petite dont le score est solide (0.72) et qui
+  //    garde tous les accords fréquents. Évite de prendre un multiple (2×, 3×) de la
+  //    vraie boucle, qui donnerait un motif asymétrique.
+  for (let p = beatsPerBar; p <= maxP; p += beatsPerBar) {
+    if (scoreAt(p) < 0.72) continue;
+    const canon = majorityFold(seq, p);
+    if ([...freq].every((c) => new Set(canon.filter(Boolean)).has(c))) return { period: p, canon };
+  }
+  // 2) Repli : meilleure période disponible si elle est correcte.
   let bestScore = 0;
   for (let p = beatsPerBar; p <= maxP; p += beatsPerBar) bestScore = Math.max(bestScore, scoreAt(p));
   if (bestScore < 0.55) return null;
@@ -265,9 +270,9 @@ function reduceMeasure(perBeat: string[], beatsPerBar: number): Measure {
 }
 
 export function toMeasures(tl: Timeline, beatsPerBar: number, debug?: Record<string, unknown>): Measure[] {
-  const songDur = tl.duration || (tl.chords.length ? tl.chords[tl.chords.length - 1].end : 0);
-  // Suite d'accords sur les vrais temps détectés (suit le tempo réel).
-  const perBeat = chordPerBeat(tl, songDur);
+  const beatDur = medianBeatDur(tl);
+  // Suite d'accords temps par temps (depuis la durée des segments, robuste au jitter).
+  const perBeat = chordPerBeat(tl, beatDur);
   if (!perBeat.length) return [];
 
   // Boucle nette et sûre : période + vote majoritaire (parasites effacés, aucun
