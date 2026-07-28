@@ -280,7 +280,7 @@ function reduceMeasure(perBeat: string[], beatsPerBar: number): Measure {
   return [{ chord: dom, beats: beatsPerBar }];
 }
 
-export function toMeasures(tl: Timeline, beatsPerBar: number, debug?: Record<string, unknown>): Measure[] {
+export function toMeasures(tl: Timeline, beatsPerBar: number): Measure[] {
   const beatDur = medianBeatDur(tl);
   // Suite d'accords temps par temps (depuis la durée des segments, robuste au jitter).
   const perBeat = chordPerBeat(tl, beatDur);
@@ -319,26 +319,6 @@ export function toMeasures(tl: Timeline, beatsPerBar: number, debug?: Record<str
       if (!slice.length) break;
       measures.push(reduceMeasure(slice, beatsPerBar));
     }
-  }
-
-  if (debug) {
-    const beatTimes = tl.downbeats.map((d) => d[0]).sort((a, b) => a - b);
-    const diffs: number[] = [];
-    for (let i = 1; i < beatTimes.length; i++) { const d = beatTimes[i] - beatTimes[i - 1]; if (d > 0.05 && d < 3) diffs.push(d); }
-    diffs.sort((a, b) => a - b);
-    debug.bpm = tl.bpm;
-    debug.key = tl.key;
-    debug.tonic = keyTonic(tl.key);
-    debug.beatDurMedian = diffs.length ? diffs[Math.floor(diffs.length / 2)] : null;
-    debug.period = loop?.period ?? null;
-    debug.perBeatHead = perBeat.slice(0, 64).join(' ');
-    debug.canon = loop ? loop.canon.join(' ') : null;
-    debug.measuresHead = measures.slice(0, 8).map((mz) => mz.map((c) => `${c.chord || '-'}${c.beats > 1 ? '·' + c.beats : ''}`).join(' ')).join(' | ');
-    // Durée réelle (en s) de chaque segment d'accord, pour voir Am vs D.
-    debug.segDurHead = tl.chords
-      .slice(0, 40)
-      .map((c) => `${madmomToChord(c.label) || '-'}:${(c.end - c.start).toFixed(2)}`)
-      .join(' ');
   }
 
   return measures;
