@@ -264,7 +264,7 @@ function reduceMeasure(perBeat: string[], beatsPerBar: number): Measure {
   return [{ chord: dom, beats: beatsPerBar }];
 }
 
-export function toMeasures(tl: Timeline, beatsPerBar: number): Measure[] {
+export function toMeasures(tl: Timeline, beatsPerBar: number, debug?: Record<string, unknown>): Measure[] {
   const songDur = tl.duration || (tl.chords.length ? tl.chords[tl.chords.length - 1].end : 0);
   // Suite d'accords sur les vrais temps détectés (suit le tempo réel).
   const perBeat = chordPerBeat(tl, songDur);
@@ -288,6 +288,26 @@ export function toMeasures(tl: Timeline, beatsPerBar: number): Measure[] {
     if (!slice.length) break;
     measures.push(canon ? groupBeats(slice, beatsPerBar) : reduceMeasure(slice, beatsPerBar));
   }
+
+  if (debug) {
+    const beatTimes = tl.downbeats.map((d) => d[0]).sort((a, b) => a - b);
+    const diffs: number[] = [];
+    for (let i = 1; i < beatTimes.length; i++) { const d = beatTimes[i] - beatTimes[i - 1]; if (d > 0.05 && d < 3) diffs.push(d); }
+    diffs.sort((a, b) => a - b);
+    debug.bpm = tl.bpm;
+    debug.key = tl.key;
+    debug.tonic = keyTonic(tl.key);
+    debug.beatDurMedian = diffs.length ? diffs[Math.floor(diffs.length / 2)] : null;
+    debug.period = loop?.period ?? null;
+    debug.perBeatHead = perBeat.slice(0, 64).join(' ');
+    debug.canon = canon ? canon.join(' ') : null;
+    // Durée réelle (en s) de chaque segment d'accord, pour voir Am vs D.
+    debug.segDurHead = tl.chords
+      .slice(0, 40)
+      .map((c) => `${madmomToChord(c.label) || '-'}:${(c.end - c.start).toFixed(2)}`)
+      .join(' ');
+  }
+
   return measures;
 }
 
