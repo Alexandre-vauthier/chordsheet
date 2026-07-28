@@ -6,6 +6,7 @@ import {
   toSections,
   respellChord,
   chordsPreferSharps,
+  seventhByChord,
   buildLabelPrompt,
   normalizeSections,
   consumeAnalysis,
@@ -90,6 +91,9 @@ export async function POST(req: NextRequest) {
 
     // 1) DÉCOUPAGE DÉTERMINISTE en sections (le code fixe le métrique ET les frontières)
     const sharps = chordsPreferSharps(timeline.chords);
+    // Suffixe de 7e par accord (enrichissement final ; la structure reste sur maj/min).
+    const seventh = seventhByChord(timeline.chords, sharps);
+    const enrich = (chord: string): string => (chord ? chord + (seventh.get(chord) ?? '') : chord);
     const debug: Record<string, unknown> = {};
     const detected = toSections(timeline, beatsPerBar, debug).map((s) => ({
       repeat: s.repeat,
@@ -129,7 +133,7 @@ export async function POST(req: NextRequest) {
       return {
         label: labelByContent.get(sig) || labels[i] || `Partie ${i + 1}`,
         repeat: s.repeat,
-        chords: s.measures.flat(),
+        chords: s.measures.flat().map((c) => ({ chord: enrich(c.chord), beats: c.beats })),
       };
     });
 

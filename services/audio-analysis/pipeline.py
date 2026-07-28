@@ -84,6 +84,53 @@ def mix_harmonic(other: str, bass: str, out_wav: str) -> str:
     return out_wav
 
 
+_PC = {"C": 0, "C#": 1, "D": 2, "D#": 3, "E": 4, "F": 5, "F#": 6,
+       "G": 7, "G#": 8, "A": 9, "A#": 10, "B": 11}
+
+
+def _chords_with_sevenths(raw_chords, chroma):
+    """Ajoute à chaque accord un suffixe de 7e ("", "7", "maj7") selon le chroma.
+
+    Sur un accord majeur : 7e mineure présente → "7" (dominante), 7e majeure → "maj7".
+    Sur un accord mineur : 7e mineure présente → "7" (donne m7). Conservateur (seuils
+    élevés) pour éviter les fausses 7e.
+    """
+    import numpy as np
+
+    total = max((float(e) for _s, e, _l in raw_chords), default=1.0)
+    fps = (len(chroma) / total) if total > 0 else 10.0
+    out = []
+    for s, e, l in raw_chords:
+        lab = str(l)
+        q7 = ""
+        if ":" in lab and lab != "N":
+            root_s, qual = lab.split(":")
+            r = _PC.get(root_s)
+            if r is not None:
+                i0 = int(float(s) * fps)
+                i1 = max(i0 + 1, int(float(e) * fps))
+                seg = chroma[i0:i1]
+                if len(seg) > 0:
+                    prof = seg.mean(axis=0).astype(float)
+                    mx = float(prof.max()) or 1.0
+                    prof = prof / mx
+                    min7 = prof[(r + 10) % 12]
+                    maj7 = prof[(r + 11) % 12]
+                    third = prof[(r + (3 if qual == "min" else 4)) % 12]
+                    fifth = prof[(r + 7) % 12]
+                    ref = max(third, fifth, 0.3)
+                    if qual == "maj":
+                        if maj7 >= 0.55 and maj7 >= min7 and maj7 >= 0.85 * ref:
+                            q7 = "maj7"
+                        elif min7 >= 0.55 and min7 > maj7 and min7 >= 0.85 * ref:
+                            q7 = "7"
+                    else:  # min
+                        if min7 >= 0.55 and min7 >= 0.85 * ref:
+                            q7 = "7"
+        out.append({"start": float(s), "end": float(e), "label": lab, "q7": q7})
+    return out
+
+
 def recognize(harmonic_wav: str, beat_wav: str = None) -> dict:
     """madmom : accords (mix harmonique) + downbeats (audio complet, avec batterie).
 
@@ -113,7 +160,10 @@ def recognize(harmonic_wav: str, beat_wav: str = None) -> dict:
     intervals = sorted(b - a for a, b in zip(times, times[1:]) if b > a)
     bpm = round(60.0 / intervals[len(intervals) // 2], 1) if intervals else 0.0
 
-    chords = [{"start": float(s), "end": float(e), "label": str(l)} for s, e, l in raw_chords]
+    # Détection de 7e PAR-DESSUS l'accord de base (maj/min reste fiable pour la
+    # structure) : on regarde l'énergie de la 7e mineure/majeure dans le chroma sur
+    # la durée de l'accord. q7 = suffixe à ajouter ("", "7", "maj7").
+    chords = _chords_with_sevenths(raw_chords, chroma)
     duration = chords[-1]["end"] if chords else (times[-1] if times else 0.0)
 
     return {

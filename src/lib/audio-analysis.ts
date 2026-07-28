@@ -12,7 +12,29 @@ export interface Timeline {
   key: string;
   duration: number;
   downbeats: [number, number][]; // [temps, position dans la mesure 1..4]
-  chords: { start: number; end: number; label: string }[];
+  chords: { start: number; end: number; label: string; q7?: string }[];
+}
+
+// Majorité du suffixe de 7e ("", "7", "maj7") par accord de base (respelé), pondérée
+// par la durée. Ne renvoie une 7e que si elle domine le « sans 7e » (conservateur).
+export function seventhByChord(chords: Timeline['chords'], sharps: boolean): Map<string, string> {
+  const votes = new Map<string, Map<string, number>>();
+  for (const c of chords) {
+    const base = respellChord(madmomToChord(c.label), sharps);
+    if (!base) continue;
+    const q7 = c.q7 ?? '';
+    const dur = Math.max(0, c.end - c.start);
+    if (!votes.has(base)) votes.set(base, new Map());
+    const m = votes.get(base)!;
+    m.set(q7, (m.get(q7) ?? 0) + dur);
+  }
+  const out = new Map<string, string>();
+  for (const [base, m] of votes) {
+    let best = '', bestW = 0;
+    for (const [q, w] of m) if (w > bestW) { bestW = w; best = q; }
+    out.set(base, best && bestW > (m.get('') ?? 0) ? best : '');
+  }
+  return out;
 }
 
 export function madmomToChord(label: string): string {
