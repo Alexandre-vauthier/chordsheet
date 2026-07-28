@@ -99,6 +99,8 @@ export async function POST(req: NextRequest) {
       repeat: s.repeat,
       measures: s.measures.map((mez) => mez.map((c) => ({ chord: respellChord(c.chord, sharps), beats: c.beats }))),
     }));
+    debug.q7count = `${timeline.chords.filter((c) => c.q7).length}/${timeline.chords.length}`;
+    debug.sevenths = [...seventh.entries()].filter(([, q]) => q).map(([b, q]) => `${b}${q}`).join(' ') || 'aucune';
     await jobRef.set({ debug: JSON.stringify(debug).slice(0, 8000) }, { merge: true }).catch(() => {});
     if (!detected.some((s) => s.measures.some((mez) => mez.some((c) => c.chord)))) {
       await jobRef.set({ status: 'error', error: 'Aucun accord exploitable.' }, { merge: true });

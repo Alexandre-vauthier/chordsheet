@@ -97,6 +97,9 @@ def _chords_with_sevenths(raw_chords, chroma):
     """
     import numpy as np
 
+    chroma = np.asarray(chroma, dtype=float)
+    if chroma.ndim != 2 or chroma.shape[1] != 12 or len(chroma) == 0:
+        return [{"start": float(s), "end": float(e), "label": str(l), "q7": ""} for s, e, l in raw_chords]
     total = max((float(e) for _s, e, _l in raw_chords), default=1.0)
     fps = (len(chroma) / total) if total > 0 else 10.0
     out = []
@@ -143,8 +146,18 @@ def recognize(harmonic_wav: str, beat_wav: str = None) -> dict:
     from madmom.features.downbeats import RNNDownBeatProcessor, DBNDownBeatTrackingProcessor
     from madmom.features.key import CNNKeyRecognitionProcessor, key_prediction_to_label
 
+    # DeepChroma : optimisé maj/min, sert à reconnaître les accords de BASE.
     chroma = DeepChromaProcessor()(harmonic_wav)
     raw_chords = DeepChromaChordRecognitionProcessor()(chroma)  # [(start, end, label), ...]
+
+    # Chroma BRUT (CLPChroma) : conserve toutes les notes (dont les 7e) -> sert à
+    # détecter les extensions. Le DeepChroma, lui, efface volontairement les 7e.
+    try:
+        from madmom.audio.chroma import CLPChroma
+        seventh_chroma = CLPChroma(harmonic_wav)
+    except Exception:
+        logging.exception("CLPChroma indisponible, repli sur DeepChroma pour les 7e")
+        seventh_chroma = chroma
 
     # Temps / mesures depuis l'audio complet (batterie) si fourni, sinon l'harmonique.
     beat_src = beat_wav if beat_wav else harmonic_wav
@@ -161,9 +174,8 @@ def recognize(harmonic_wav: str, beat_wav: str = None) -> dict:
     bpm = round(60.0 / intervals[len(intervals) // 2], 1) if intervals else 0.0
 
     # Détection de 7e PAR-DESSUS l'accord de base (maj/min reste fiable pour la
-    # structure) : on regarde l'énergie de la 7e mineure/majeure dans le chroma sur
-    # la durée de l'accord. q7 = suffixe à ajouter ("", "7", "maj7").
-    chords = _chords_with_sevenths(raw_chords, chroma)
+    # structure) sur le chroma BRUT. q7 = suffixe à ajouter ("", "7", "maj7").
+    chords = _chords_with_sevenths(raw_chords, seventh_chroma)
     duration = chords[-1]["end"] if chords else (times[-1] if times else 0.0)
 
     return {
