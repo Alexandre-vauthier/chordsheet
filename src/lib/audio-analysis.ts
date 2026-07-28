@@ -197,6 +197,31 @@ function rotateForMeasurePhase(loopPerBeat: string[], beatsPerBar: number): stri
   return loopPerBeat.slice(bestO).concat(loopPerBeat.slice(0, bestO));
 }
 
+// Fait démarrer la boucle sur l'accord STABLE : le début de la plus longue série
+// de mesures « pleines » d'un même accord (la tonique tenue), plutôt que sur une
+// mesure de transition (ex. Am D). Ne tourne que par mesures entières.
+function rotateToStableStart(canon: string[], beatsPerBar: number): string[] {
+  const mil = Math.floor(canon.length / beatsPerBar);
+  if (mil < 2) return canon;
+  const measureChord: (string | null)[] = [];
+  for (let m = 0; m < mil; m++) {
+    const sl = canon.slice(m * beatsPerBar, (m + 1) * beatsPerBar);
+    measureChord.push(sl.every((c) => c && c === sl[0]) ? sl[0] : null);
+  }
+  let bestStart = -1, bestLen = 0;
+  for (let s = 0; s < mil; s++) {
+    const c = measureChord[s];
+    if (!c) continue;
+    if (measureChord[(s - 1 + mil) % mil] === c) continue; // pas un vrai début de série
+    let len = 1;
+    while (len < mil && measureChord[(s + len) % mil] === c) len++;
+    if (len > bestLen) { bestLen = len; bestStart = s; }
+  }
+  if (bestStart <= 0) return canon;
+  const off = bestStart * beatsPerBar;
+  return canon.slice(off).concat(canon.slice(0, off));
+}
+
 // Regroupe une tranche de temps en cellules {chord, beats} (temps consécutifs
 // identiques fusionnés), complétée à beatsPerBar temps si la mesure est courte.
 function groupBeats(perBeat: string[], beatsPerBar: number): Measure {
@@ -233,6 +258,7 @@ export function toMeasures(tl: Timeline, beatsPerBar: number): Measure[] {
   if (canon) {
     canon = repairBigrams(canon, perBeat, frequentChords(perBeat));
     canon = rotateForMeasurePhase(canon, beatsPerBar);
+    canon = rotateToStableStart(canon, beatsPerBar);
   }
   // Motif propre répété sur toute la longueur (ou la suite brute si pas de boucle).
   const seq = canon ? perBeat.map((_, i) => canon[i % canon.length]) : perBeat;
