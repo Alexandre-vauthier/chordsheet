@@ -77,8 +77,13 @@ def mix_harmonic(other: str, bass: str, out_wav: str) -> str:
     return out_wav
 
 
-def recognize(harmonic_wav: str) -> dict:
-    """madmom : accords, downbeats, tonalité, BPM. Renvoie un dict prêt à sérialiser."""
+def recognize(harmonic_wav: str, beat_wav: str = None) -> dict:
+    """madmom : accords (mix harmonique) + downbeats (audio complet, avec batterie).
+
+    La détection des temps est bien plus fiable sur le mix COMPLET (la batterie donne
+    des onsets nets) que sur l'harmonique seul ; les accords, eux, sont plus propres
+    sur l'harmonique. On sépare donc les deux sources.
+    """
     from madmom.audio.chroma import DeepChromaProcessor
     from madmom.features.chords import DeepChromaChordRecognitionProcessor
     from madmom.features.downbeats import RNNDownBeatProcessor, DBNDownBeatTrackingProcessor
@@ -87,7 +92,9 @@ def recognize(harmonic_wav: str) -> dict:
     chroma = DeepChromaProcessor()(harmonic_wav)
     raw_chords = DeepChromaChordRecognitionProcessor()(chroma)  # [(start, end, label), ...]
 
-    act = RNNDownBeatProcessor()(harmonic_wav)
+    # Temps / mesures depuis l'audio complet (batterie) si fourni, sinon l'harmonique.
+    beat_src = beat_wav if beat_wav else harmonic_wav
+    act = RNNDownBeatProcessor()(beat_src)
     downbeats = DBNDownBeatTrackingProcessor(beats_per_bar=[3, 4], fps=100)(act)
 
     try:
@@ -133,7 +140,8 @@ def analyze(source: str, on_progress=None) -> dict:
         prog(70, "Mixage harmonique")
         harmonic = mix_harmonic(other, bass, os.path.join(workdir, "harmonic.wav"))
         prog(80, "Détection des accords et du tempo")
-        result = recognize(harmonic)
+        # Accords sur l'harmonique, temps/mesures sur l'audio complet (batterie).
+        result = recognize(harmonic, beat_wav=audio)
         prog(100, "Terminé")
         return result
     finally:
