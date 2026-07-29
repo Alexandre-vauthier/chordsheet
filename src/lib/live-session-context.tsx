@@ -185,8 +185,13 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
   const endSession = useCallback(async () => {
     if (!sessionCode) return;
     const db = getDb();
-    await deleteDoc(doc(db, 'liveSessions', sessionCode));
-    persistCode(null);
+    // On vide toujours l'état local (même si la suppression échoue) pour ne pas
+    // rester bloqué sur une session morte ; le doc résiduel expirera de lui-même.
+    try {
+      await deleteDoc(doc(db, 'liveSessions', sessionCode));
+    } finally {
+      persistCode(null);
+    }
   }, [sessionCode, persistCode]);
 
   const leaveSession = useCallback(() => {

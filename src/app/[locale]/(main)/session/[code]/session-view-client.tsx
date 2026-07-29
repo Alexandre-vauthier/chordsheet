@@ -41,6 +41,13 @@ export function SessionViewClient({ code }: { code: string }) {
     if (sessionStatus === 'not-found') leaveSession();
   }, [sessionStatus, leaveSession]);
 
+  // Session vidée (hôte qui termine, invité qui quitte) : le contexte repasse en
+  // 'idle'. Une fois la tentative de connexion finie, on ne doit pas rester sur le
+  // spinner indéfiniment → retour au hub.
+  useEffect(() => {
+    if (!joining && sessionStatus === 'idle') router.replace('/session');
+  }, [joining, sessionStatus, router]);
+
   const joinUrl = typeof window !== 'undefined' ? `${window.location.origin}/session/${normalizedCode}` : '';
 
   const handleEnd = () => {
