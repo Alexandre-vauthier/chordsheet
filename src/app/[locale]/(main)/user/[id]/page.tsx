@@ -34,6 +34,7 @@ export default function UserPage({ params }: UserPageProps) {
   const [sheets, setSheets] = useState<Sheet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [sortBy, setSortBy] = useState<SortOption>('recent');
+  const [filter, setFilter] = useState<'all' | 'bookmarked' | 'rated'>('all');
 
   useEffect(() => {
     async function load() {
@@ -132,6 +133,13 @@ export default function UserPage({ params }: UserPageProps) {
     return (b.updatedAt?.getTime?.() || 0) - (a.updatedAt?.getTime?.() || 0);
   });
 
+  // Filtre depuis les stats cliquables : favorisées (par d'autres) / notées.
+  const visibleSheets = sortedSheets.filter(s =>
+    filter === 'bookmarked' ? (s.bookmarkCount || 0) > 0 :
+    filter === 'rated' ? (s.ratingCount || 0) > 0 :
+    true
+  );
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -201,16 +209,28 @@ export default function UserPage({ params }: UserPageProps) {
           <div className="text-2xl font-bold text-[var(--ink)]">{sheets.length}</div>
           <div className="text-xs text-[var(--ink-light)] mt-0.5">grille{sheets.length > 1 ? 's' : ''}</div>
         </div>
-        <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-4 text-center">
+        <button
+          onClick={() => setFilter(f => f === 'bookmarked' ? 'all' : 'bookmarked')}
+          disabled={reputation.totalBookmarks === 0}
+          className={`rounded-xl border p-4 text-center transition-colors disabled:cursor-default enabled:cursor-pointer enabled:hover:border-[var(--accent)] ${
+            filter === 'bookmarked' ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-[var(--line)] bg-[var(--cell-bg)]'
+          }`}
+        >
           <div className="text-2xl font-bold text-[var(--ink)]">{reputation.totalBookmarks.toLocaleString('fr-FR')}</div>
           <div className="text-xs text-[var(--ink-light)] mt-0.5">favoris reçus</div>
-        </div>
-        <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-4 text-center">
+        </button>
+        <button
+          onClick={() => setFilter(f => f === 'rated' ? 'all' : 'rated')}
+          disabled={stats.weightedAvg === null}
+          className={`rounded-xl border p-4 text-center transition-colors disabled:cursor-default enabled:cursor-pointer enabled:hover:border-[var(--accent)] ${
+            filter === 'rated' ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-[var(--line)] bg-[var(--cell-bg)]'
+          }`}
+        >
           <div className="text-2xl font-bold text-[var(--ink)]">
             {stats.weightedAvg !== null ? `★ ${stats.weightedAvg.toFixed(1)}` : '—'}
           </div>
           <div className="text-xs text-[var(--ink-light)] mt-0.5">note moyenne</div>
-        </div>
+        </button>
         <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-4 text-center">
           {stats.topGenres.length > 0 ? (
             <>
@@ -252,8 +272,14 @@ export default function UserPage({ params }: UserPageProps) {
 
       {/* Tri + titre section */}
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">
-          Grilles publiées
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)] flex items-center gap-2">
+          {filter === 'bookmarked' ? 'Grilles favorisées' : filter === 'rated' ? 'Grilles notées' : 'Grilles publiées'}
+          {filter !== 'all' && (
+            <button onClick={() => setFilter('all')}
+              className="normal-case tracking-normal text-[var(--accent)] hover:underline font-normal">
+              (voir tout)
+            </button>
+          )}
         </h2>
         <div className="flex rounded-lg overflow-hidden border border-[var(--line)] text-xs">
           {([
@@ -277,7 +303,12 @@ export default function UserPage({ params }: UserPageProps) {
       </div>
 
       {/* Grilles */}
-      {sortedSheets.length === 0 ? (
+      {visibleSheets.length === 0 && filter !== 'all' ? (
+        <div className="py-12 text-center text-[var(--ink-faint)]">
+          {filter === 'bookmarked' ? 'Aucune grille favorisée pour le moment.' : 'Aucune grille notée pour le moment.'}
+          <button onClick={() => setFilter('all')} className="ml-2 text-[var(--accent)] hover:underline">voir tout</button>
+        </div>
+      ) : sortedSheets.length === 0 ? (
         user?.id === id ? (
           <div className="py-12 text-center bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl">
             <div className="w-14 h-14 rounded-2xl bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center mx-auto mb-4">
@@ -314,7 +345,7 @@ export default function UserPage({ params }: UserPageProps) {
         )
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {sortedSheets.map(sheet => (
+          {visibleSheets.map(sheet => (
             <SheetCard
               key={sheet.id}
               sheet={sheet}
