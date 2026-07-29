@@ -448,7 +448,9 @@
     "newSetPlaceholder": "Nouveau set…",
     "create": "Créer",
     "error": "Une erreur est survenue.",
-    "groupBadge": "Groupe"
+    "groupBadge": "Groupe",
+    "mySets": "Mes sets",
+    "alreadyIn": "Déjà ajoutée"
   },
   "Auth": {
     "loginTitle": "Connectez-vous à votre compte",

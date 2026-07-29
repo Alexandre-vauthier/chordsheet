@@ -68,6 +68,37 @@ export function AddToCollectionModal({ sheet, initialTab = 'set', onClose }: Pro
     return q ? groups.filter(g => g.name.toLowerCase().includes(q)) : groups;
   }, [groups, search]);
 
+  // Sets regroupés par groupe (en-tête unique) + sets perso.
+  const setsByGroup = useMemo(() => {
+    const acc: Record<string, typeof filteredSets> = {};
+    for (const s of filteredSets) if (s.groupId) (acc[s.groupId] ??= []).push(s);
+    return acc;
+  }, [filteredSets]);
+  const personalSets = filteredSets.filter(s => !s.groupId);
+  const hasGroupSets = Object.keys(setsByGroup).length > 0;
+
+  // La grille est-elle déjà quelque part ? (indicateur sur les onglets)
+  const inAnySet = sets.some(s => isInSet(s.id!, s.sheetIds));
+  const inAnyGroup = groups.some(g => isInGroup(g.id!, g.linkedSheetIds));
+
+  const renderSetItem = (s: (typeof sets)[number]) => {
+    const member = isInSet(s.id!, s.sheetIds);
+    return (
+      <li key={s.id}>
+        <button
+          onClick={() => toggleSet(s.id!, member)}
+          disabled={busy === s.id}
+          className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm text-[var(--ink)] transition-colors disabled:opacity-50 ${member ? 'bg-[var(--accent-soft)]' : 'hover:bg-[var(--accent-soft)]'}`}
+        >
+          <span className="truncate">{s.name}</span>
+          <span className={`shrink-0 text-sm font-semibold ${member ? 'text-[var(--accent)]' : 'text-[var(--ink-faint)]'}`}>
+            {busy === s.id ? '…' : member ? '✓' : '+'}
+          </span>
+        </button>
+      </li>
+    );
+  };
+
   const toggleSet = async (setId: string, member: boolean) => {
     setBusy(setId);
     setError(null);
@@ -167,19 +198,23 @@ export function AddToCollectionModal({ sheet, initialTab = 'set', onClose }: Pro
 
           {/* Onglets */}
           <div className="flex gap-1 mt-3 p-0.5 bg-[var(--cell-bg)] rounded-lg">
-            {(['set', 'group'] as Tab[]).map(v => (
-              <button
-                key={v}
-                onClick={() => { setTab(v); setSearch(''); }}
-                className={`flex-1 text-sm font-medium py-1.5 rounded-md transition-colors ${
-                  tab === v
-                    ? 'bg-[var(--accent-soft)] text-[var(--accent)] shadow-sm'
-                    : 'text-[var(--ink-light)] hover:text-[var(--ink)]'
-                }`}
-              >
-                {v === 'set' ? t('tabSet') : t('tabGroup')}
-              </button>
-            ))}
+            {(['set', 'group'] as Tab[]).map(v => {
+              const active = v === 'set' ? inAnySet : inAnyGroup;
+              return (
+                <button
+                  key={v}
+                  onClick={() => { setTab(v); setSearch(''); }}
+                  className={`flex-1 flex items-center justify-center gap-1.5 text-sm font-medium py-1.5 rounded-md transition-colors ${
+                    tab === v
+                      ? 'bg-[var(--accent-soft)] text-[var(--accent)] shadow-sm'
+                      : 'text-[var(--ink-light)] hover:text-[var(--ink)]'
+                  }`}
+                >
+                  {v === 'set' ? t('tabSet') : t('tabGroup')}
+                  {active && <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)]" title={t('alreadyIn')} />}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -204,33 +239,27 @@ export function AddToCollectionModal({ sheet, initialTab = 'set', onClose }: Pro
             filteredSets.length === 0 ? (
               <p className="text-sm text-[var(--ink-faint)] text-center py-6">{t('noSet')}</p>
             ) : (
-              <ul className="space-y-1">
-                {filteredSets.map(s => {
-                  const member = isInSet(s.id!, s.sheetIds);
-                  return (
-                    <li key={s.id}>
-                      <button
-                        onClick={() => toggleSet(s.id!, member)}
-                        disabled={busy === s.id}
-                        className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] transition-colors disabled:opacity-50"
-                      >
-                        <span className="min-w-0 flex items-center gap-1.5">
-                          <span className="truncate">{s.name}</span>
-                          {s.groupId && (
-                            <span className="shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] font-medium">
-                              <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path d="M13 8a3 3 0 10-2.83-2H9.83A3 3 0 107 8a3 3 0 00-3 3v3h12v-3a3 3 0 00-3-3z" /></svg>
-                              {groupNameById[s.groupId] ?? t('groupBadge')}
-                            </span>
-                          )}
-                        </span>
-                        <span className={`shrink-0 text-sm font-semibold ${member ? 'text-[var(--accent)]' : 'text-[var(--ink-faint)]'}`}>
-                          {busy === s.id ? '…' : member ? '✓' : '+'}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+              <div className="space-y-4">
+                {/* Sets de groupe, regroupés sous le nom du groupe */}
+                {Object.entries(setsByGroup).map(([gid, list]) => (
+                  <div key={gid}>
+                    <div className="flex items-center gap-1.5 px-1 mb-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--accent)]">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M13 8a3 3 0 10-2.83-2H9.83A3 3 0 107 8a3 3 0 00-3 3v3h12v-3a3 3 0 00-3-3z" /></svg>
+                      {groupNameById[gid] ?? t('groupBadge')}
+                    </div>
+                    <ul className="space-y-1">{list.map(renderSetItem)}</ul>
+                  </div>
+                ))}
+                {/* Sets perso */}
+                {personalSets.length > 0 && (
+                  <div>
+                    {hasGroupSets && (
+                      <div className="px-1 mb-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--ink-faint)]">{t('mySets')}</div>
+                    )}
+                    <ul className="space-y-1">{personalSets.map(renderSetItem)}</ul>
+                  </div>
+                )}
+              </div>
             )
           ) : (
             filteredGroups.length === 0 ? (
@@ -244,7 +273,7 @@ export function AddToCollectionModal({ sheet, initialTab = 'set', onClose }: Pro
                       <button
                         onClick={() => toggleGroup(g.id!, member)}
                         disabled={busy === g.id}
-                        className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] transition-colors disabled:opacity-50"
+                        className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm text-[var(--ink)] transition-colors disabled:opacity-50 ${member ? 'bg-[var(--accent-soft)]' : 'hover:bg-[var(--accent-soft)]'}`}
                       >
                         <span className="truncate">{g.name}</span>
                         <span className={`shrink-0 text-sm font-semibold ${member ? 'text-[var(--accent)]' : 'text-[var(--ink-faint)]'}`}>
