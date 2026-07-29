@@ -237,7 +237,9 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   const [capoActive, setCapoActive] = useState(true);
   const effectiveCapo = capoActive ? (sheet.capo ?? 0) : 0;
   const [selectedChords, setSelectedChords] = useState<Record<string, StringChord | PianoChord>>({});
-  const [localTempo, setLocalTempo] = useState<string>(sheet.tempo || '90');
+  // On stocke le BPM numérique pur : l'input type="number" affiche vide si la valeur
+  // contient du texte (ex. « 120 BPM »), d'où l'usage de parseTempo dès l'init.
+  const [localTempo, setLocalTempo] = useState<string>(String(parseTempo(sheet.tempo) || 90));
   const [localTempoUnit, setLocalTempoUnit] = useState<'quarter' | 'eighth'>(sheet.tempoUnit ?? 'quarter');
   const [minimizeRepeated, setMinimizeRepeated] = useState(() => user?.minimizeRepeatedSections ?? false);
 
