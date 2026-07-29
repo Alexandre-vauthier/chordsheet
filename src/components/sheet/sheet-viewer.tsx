@@ -1256,7 +1256,7 @@ function ViewerChordCell({
         <div
           className="absolute inset-0 origin-left pointer-events-none"
           style={{
-            background: color ? color.border.substring(0, 7) + '21' : 'rgba(200,75,47,0.13)',
+            background: color ? color.border.substring(0, 7) + '66' : 'rgba(200,75,47,0.13)',
             animation: `beatSweep ${activeStep.durationMs}ms linear forwards`,
           }}
         />
@@ -1266,7 +1266,7 @@ function ViewerChordCell({
         <div
           className="absolute inset-0 origin-left pointer-events-none"
           style={{
-            background: color ? color.border.substring(0, 7) + '21' : 'rgba(200,75,47,0.13)',
+            background: color ? color.border.substring(0, 7) + '66' : 'rgba(200,75,47,0.13)',
             animation: `beatSweep ${concertCellDurationMs}ms linear forwards`,
           }}
         />
