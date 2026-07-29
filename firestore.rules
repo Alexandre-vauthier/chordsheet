@@ -68,6 +68,25 @@ service cloud.firestore {
       );
     }
 
+    // Commentaires privés sous une grille : conversation à deux entre l'auteur de la
+    // grille (ownerId) et une personne qui commente (commenterId). Un « fil » = même
+    // (sheetId, commenterId). Lecture/écriture réservées à ces deux personnes ; aucun
+    // autre utilisateur ne peut lire le fil (confidentialité stricte).
+    match /sheetComments/{commentId} {
+      allow read: if request.auth != null &&
+                     (request.auth.uid == resource.data.commenterId ||
+                      request.auth.uid == resource.data.ownerId);
+      allow create: if request.auth != null &&
+                       request.resource.data.senderId == request.auth.uid &&
+                       request.resource.data.commenterId != request.resource.data.ownerId &&
+                       (request.auth.uid == request.resource.data.commenterId ||
+                        request.auth.uid == request.resource.data.ownerId) &&
+                       request.resource.data.ownerId ==
+                         get(/databases/$(database)/documents/sheets/$(request.resource.data.sheetId)).data.ownerId;
+      // Chacun peut retirer ses propres messages.
+      allow delete: if request.auth != null && request.auth.uid == resource.data.senderId;
+    }
+
     // Sets (setlists) — toujours privés (owner ou membres du groupe uniquement)
     match /sets/{setId} {
       allow read: if (request.auth != null && request.auth.uid == resource.data.ownerId) ||

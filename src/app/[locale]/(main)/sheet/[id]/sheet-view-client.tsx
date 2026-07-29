@@ -11,6 +11,7 @@ import { useRatings } from '@/lib/use-ratings';
 import { useSets } from '@/lib/use-sets';
 import { useLiveSession } from '@/lib/live-session-context';
 import { SheetViewer } from '@/components/sheet/sheet-viewer';
+import { SheetComments } from '@/components/sheet/sheet-comments';
 import { RatingStars } from '@/components/sheet/rating-stars';
 
 import type { Sheet } from '@/types';
@@ -30,6 +31,7 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isTogglingBookmark, setIsTogglingBookmark] = useState(false);
+  const [commentInvite, setCommentInvite] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [setPickerOpen, setSetPickerOpen] = useState(false);
   const [addedToSetIds, setAddedToSetIds] = useState<string[]>([]);
@@ -138,6 +140,11 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
           averageRating: Math.round(newAvg * 10) / 10,
           ratingCount: newCount,
         });
+      }
+      // Note < 5 : on invite (en privé) à expliquer pourquoi, ou à créer sa version.
+      if (rating < 5) {
+        setCommentInvite(true);
+        setTimeout(() => document.getElementById('sheet-comments')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
       }
     } catch (err) {
       console.error('Error rating sheet:', err);
@@ -327,6 +334,8 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
         onToggleBookmark={user ? handleToggleBookmark : undefined}
         isTogglingBookmark={isTogglingBookmark}
       />
+
+      {sheet.id && <SheetComments sheetId={sheet.id} ownerId={sheet.ownerId} invite={commentInvite} />}
     </>
   );
 }
