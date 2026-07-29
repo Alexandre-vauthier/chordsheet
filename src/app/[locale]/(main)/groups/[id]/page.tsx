@@ -427,7 +427,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-4">
+      <div className="max-w-[1270px] mx-auto px-4 sm:px-6 py-8 space-y-4">
         <div className="h-8 w-48 bg-[var(--cell-bg)] rounded animate-pulse" />
         <div className="h-32 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl animate-pulse" />
       </div>
@@ -436,7 +436,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
 
   if (!group) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-16 text-center">
+      <div className="max-w-[1270px] mx-auto px-4 sm:px-6 py-16 text-center">
         <p className="text-[var(--ink-light)]">{t('notFound')}</p>
         <Link href="/groups" className="mt-4 inline-block text-sm text-[var(--accent)]">← {t('backToGroups')}</Link>
       </div>
@@ -444,7 +444,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-[1270px] mx-auto px-4 sm:px-6 py-8 space-y-6">
       <div>
         <Link href="/groups" className="text-sm text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors">
           ← {t('backToGroups')}
@@ -498,6 +498,8 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
         <p className="text-sm text-red-500 bg-red-50 border border-red-100 px-3 py-2 rounded-lg">{actionError}</p>
       )}
 
+      <div className="grid lg:grid-cols-3 gap-6 lg:items-start">
+        <div className="lg:col-span-2 space-y-6">
       {/* Sets */}
       <section>
         <h2 className="text-sm font-semibold text-[var(--ink-light)] uppercase tracking-wide mb-3">
@@ -657,7 +659,9 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
           </div>
         )}
       </section>
+        </div>
 
+        <div className="space-y-6">
       {/* Membres */}
       <section>
         <h2 className="text-sm font-semibold text-[var(--ink-light)] uppercase tracking-wide mb-3">
@@ -734,6 +738,8 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
           </button>
         )}
       </section>
+        </div>
+      </div>
     </div>
   );
 }
