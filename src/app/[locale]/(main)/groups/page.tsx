@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { useGroups } from '@/lib/use-groups';
 import { useSets } from '@/lib/use-sets';
 import { useAuth } from '@/lib/auth-context';
+import { isPro } from '@/lib/plan-limits';
 import type { Group } from '@/types';
 import { Link } from '@/i18n/navigation';
 
@@ -71,12 +72,57 @@ function GroupCard({ group, setsCount }: { group: Group; setsCount: number }) {
   );
 }
 
+// Argumentaire Pro affiché aux utilisateurs sans abonnement : les groupes,
+// l'usage prof et les sessions live sont réservés au plan Pro.
+function ProUpsell() {
+  const t = useTranslations('Groups');
+  const benefits = [
+    { icon: '🎸', title: t('proBenefitGroupsTitle'), desc: t('proBenefitGroupsDesc') },
+    { icon: '🎓', title: t('proBenefitTeacherTitle'), desc: t('proBenefitTeacherDesc') },
+    { icon: '🔴', title: t('proBenefitLiveTitle'), desc: t('proBenefitLiveDesc') },
+  ];
+  return (
+    <div className="rounded-2xl border border-[var(--accent)]/30 bg-gradient-to-b from-[var(--accent-soft)] to-transparent p-6 sm:p-8 mb-8">
+      <div className="text-center max-w-md mx-auto">
+        <span className="inline-block text-xs font-semibold uppercase tracking-wider text-[var(--accent)] bg-[var(--accent-soft)] px-3 py-1 rounded-full">
+          Pro
+        </span>
+        <h2 className="font-playfair text-xl sm:text-2xl font-bold text-[var(--ink)] mt-3">{t('proUpsellTitle')}</h2>
+        <p className="text-sm text-[var(--ink-light)] mt-2">{t('proUpsellSubtitle')}</p>
+      </div>
+
+      <div className="mt-6 space-y-3 max-w-md mx-auto">
+        {benefits.map((b, i) => (
+          <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-[var(--paper)] border border-[var(--line)]">
+            <div className="w-9 h-9 rounded-full bg-[var(--accent-soft)] flex items-center justify-center text-lg shrink-0">{b.icon}</div>
+            <div className="min-w-0">
+              <p className="font-semibold text-sm text-[var(--ink)]">{b.title}</p>
+              <p className="text-sm text-[var(--ink-light)] mt-0.5">{b.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="text-center mt-6">
+        <Link
+          href="/pricing"
+          className="inline-block px-6 py-2.5 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm font-medium rounded-lg transition-colors"
+        >
+          {t('discoverPro')}
+        </Link>
+        <p className="text-xs text-[var(--ink-faint)] mt-3">{t('proPricing')}</p>
+      </div>
+    </div>
+  );
+}
+
 export default function GroupsPage() {
   const t = useTranslations('Groups');
   const tSession = useTranslations('LiveSession');
   const { user } = useAuth();
   const { groups, loading } = useGroups();
   const { sets } = useSets(user?.id);
+  const userIsPro = isPro(user?.subscription);
 
   // Compte les sets par groupId côté client (pas de requête supplémentaire)
   const setsCountByGroup = sets.reduce<Record<string, number>>((acc, s) => {
@@ -105,6 +151,8 @@ export default function GroupsPage() {
         </div>
       </div>
 
+      {!loading && !userIsPro && <ProUpsell />}
+
       {loading ? (
         <div className="space-y-3">
           {[1, 2].map(i => (
@@ -112,6 +160,8 @@ export default function GroupsPage() {
           ))}
         </div>
       ) : groups.length === 0 ? (
+        // Non-Pro : l'argumentaire ci-dessus tient lieu d'état vide
+        !userIsPro ? null : (
         <div className="text-center py-16 text-[var(--ink-faint)]">
           <div className="w-16 h-16 rounded-full bg-[var(--accent-soft)] flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -132,6 +182,7 @@ export default function GroupsPage() {
             })}
           </p>
         </div>
+        )
       ) : (
         <div className="space-y-3">
           {groups.map(group => (
