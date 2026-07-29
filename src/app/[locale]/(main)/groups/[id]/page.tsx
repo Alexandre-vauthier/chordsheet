@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, useRef, use } from 'react';
 import { useTranslations } from 'next-intl';
 import { useInstrumentLabel } from '@/lib/use-genre-labels';
+import { useAddToCollection } from '@/lib/add-to-collection-context';
 import { Link, useRouter } from '@/i18n/navigation';
 
 import {
@@ -40,17 +41,27 @@ function groupFromDoc(id: string, data: Record<string, unknown>): Group {
 
 function SheetRow({
   sheet,
-  type,
   canRemove,
   onRemove,
 }: {
   sheet: Sheet;
-  type: 'owned' | 'linked';
   canRemove: boolean;
   onRemove: () => void;
 }) {
   const t = useTranslations('Groups');
   const { artworkUrl } = useArtwork(sheet.artist, sheet.title);
+  const { openAddTo } = useAddToCollection();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
 
   return (
     <div className="flex items-center gap-3 px-3 py-2.5 bg-[var(--cell-bg)] border border-[var(--line)] rounded-lg">
@@ -69,20 +80,43 @@ function SheetRow({
         <div className="text-xs text-[var(--ink-faint)] truncate">{sheet.artist}</div>
       </Link>
 
-      {/* Badges + action */}
-      <div className="flex items-center gap-2 shrink-0">
-        {sheet.key && (
-          <span className="text-xs text-[var(--ink-faint)] bg-[var(--paper)] border border-[var(--line)] px-2 py-0.5 rounded-full">
-            {sheet.key}
-          </span>
-        )}
-        {canRemove && (
-          <button
-            onClick={onRemove}
-            className="text-xs text-[var(--ink-faint)] hover:text-red-500 transition-colors"
-          >
-            {t('remove')}
-          </button>
+      {/* Menu 3-points en bout de ligne */}
+      <div className="relative shrink-0" ref={menuRef}>
+        <button
+          onClick={() => setMenuOpen(v => !v)}
+          className="w-8 h-8 rounded-full flex items-center justify-center text-[var(--ink-faint)] hover:text-[var(--ink)] hover:bg-[var(--paper)] transition-colors"
+          aria-label="Options"
+        >
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <circle cx="10" cy="4.5" r="1.5" /><circle cx="10" cy="10" r="1.5" /><circle cx="10" cy="15.5" r="1.5" />
+          </svg>
+        </button>
+        {menuOpen && (
+          <div className="absolute right-0 top-9 z-20 w-48 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl shadow-xl overflow-hidden">
+            <button
+              onClick={() => { setMenuOpen(false); openAddTo(sheet, 'set'); }}
+              className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-[var(--ink)] hover:bg-[var(--paper)] transition-colors"
+            >
+              <svg className="w-3.5 h-3.5 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h10M4 18h10M18 14v6m3-3h-6" />
+              </svg>
+              {t('addToSet')}
+            </button>
+            {canRemove && (
+              <>
+                <div className="border-t border-[var(--line)]" />
+                <button
+                  onClick={() => { setMenuOpen(false); onRemove(); }}
+                  className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-red-500 hover:bg-red-50 transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  {t('remove')}
+                </button>
+              </>
+            )}
+          </div>
         )}
       </div>
     </div>
@@ -103,6 +137,11 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
   const [linkedSheets, setLinkedSheets] = useState<Sheet[]>([]);
   const [groupSets, setGroupSets] = useState<Set[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Édition de la description du groupe
+  const [editingDesc, setEditingDesc] = useState(false);
+  const [descDraft, setDescDraft] = useState('');
+  const [savingDesc, setSavingDesc] = useState(false);
 
   // Création de set
   const [newSetName, setNewSetName] = useState('');
@@ -283,6 +322,24 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
     }
   };
 
+  const startEditDesc = () => { setDescDraft(group?.description ?? ''); setEditingDesc(true); };
+
+  const saveDesc = async () => {
+    if (!group) return;
+    setSavingDesc(true);
+    try {
+      const db = getDb();
+      const value = descDraft.trim();
+      await updateDoc(doc(db, 'groups', groupId), { description: value || null, updatedAt: serverTimestamp() });
+      setGroup(prev => prev ? { ...prev, description: value || undefined } : prev);
+      setEditingDesc(false);
+    } catch {
+      setActionError(t('errorUpdate'));
+    } finally {
+      setSavingDesc(false);
+    }
+  };
+
   const handleCreateSet = async () => {
     if (!user || !newSetName.trim()) return;
     setIsCreatingSet(true);
@@ -394,7 +451,46 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
         </Link>
         <div className="mt-2">
           <h1 className="font-playfair text-2xl font-bold text-[var(--ink)]">{group.name}</h1>
-          {group.description && <p className="text-[var(--ink-light)] mt-1">{group.description}</p>}
+
+          {editingDesc ? (
+            <div className="mt-2 space-y-2">
+              <textarea
+                value={descDraft}
+                onChange={e => setDescDraft(e.target.value)}
+                placeholder={t('descriptionPlaceholder')}
+                rows={2}
+                autoFocus
+                className="w-full px-3 py-2 text-sm border border-[var(--line)] rounded-lg bg-[var(--cell-bg)] text-[var(--ink)] placeholder:text-[var(--ink-faint)] focus:outline-none focus:border-[var(--accent)] transition-colors resize-none"
+              />
+              <div className="flex gap-2">
+                <button onClick={saveDesc} disabled={savingDesc}
+                  className="px-3 py-1.5 text-xs bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50">
+                  {savingDesc ? '…' : t('save')}
+                </button>
+                <button onClick={() => setEditingDesc(false)}
+                  className="px-3 py-1.5 text-xs text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors">
+                  {t('cancel')}
+                </button>
+              </div>
+            </div>
+          ) : group.description ? (
+            <div className="flex items-start gap-2 mt-1">
+              <p className="text-[var(--ink-light)] flex-1">{group.description}</p>
+              {(isLeader || isOwner) && (
+                <button onClick={startEditDesc} title={t('editDescription')}
+                  className="shrink-0 text-[var(--ink-faint)] hover:text-[var(--accent)] transition-colors mt-0.5">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          ) : (isLeader || isOwner) ? (
+            <button onClick={startEditDesc}
+              className="mt-1 text-sm italic text-[var(--ink-faint)] hover:text-[var(--accent)] transition-colors">
+              + {t('addDescription')}
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -430,23 +526,36 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
         {groupSets.length === 0 ? (
           <p className="text-sm text-[var(--ink-faint)] py-3 text-center">{t('noSetsYet')}</p>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {groupSets.map(set => (
-              <div key={set.id} className="flex items-center justify-between px-4 py-3 bg-[var(--cell-bg)] border border-[var(--line)] rounded-lg">
-                <Link href={`/sets/${set.id}`} className="flex-1 min-w-0 hover:opacity-75 transition-opacity">
-                  <div className="text-sm font-medium text-[var(--ink)] truncate">{set.name}</div>
-                  <div className="text-xs text-[var(--ink-faint)]">
-                    {t('sheetsCount', { count: set.sheetIds.length })}
-                    {set.isPublic && <span className="ml-2 text-green-600">· {t('publicBadge')}</span>}
+              <div key={set.id}
+                className="group relative overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--cell-bg)] hover:border-[var(--accent)] hover:shadow-sm transition-all">
+                {/* Barre d'accent */}
+                <div className="absolute left-0 top-0 bottom-0 w-1 bg-[var(--accent)]" />
+                <Link href={`/sets/${set.id}`} className="block p-4 pl-5">
+                  <div className="flex items-center gap-2">
+                    <div className="w-9 h-9 rounded-lg bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center shrink-0">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6h11M4 10h11M4 14h7m6-4v8m0 0a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold text-[var(--ink)] truncate">{set.name}</div>
+                      <div className="text-xs text-[var(--ink-faint)]">
+                        {t('sheetsCount', { count: set.sheetIds.length })}
+                        {set.isPublic && <span className="ml-1.5 text-green-600">· {t('publicBadge')}</span>}
+                      </div>
+                    </div>
                   </div>
                 </Link>
-                <div className="flex items-center gap-3 ml-3 shrink-0">
-                  {set.sheetIds.length > 0 && (
+                <div className="flex items-center justify-between gap-2 px-4 pb-3 pl-5">
+                  {set.sheetIds.length > 0 ? (
                     <Link href={`/sets/${set.id}/play`}
-                      className="text-xs text-[var(--ink-faint)] hover:text-[var(--accent)] transition-colors">
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M6 4l10 6-10 6V4z" /></svg>
                       {t('play')}
                     </Link>
-                  )}
+                  ) : <span />}
                   {(isLeader || set.ownerId === user?.id) && (
                     <button onClick={() => handleDeleteSet(set.id!, set.name)}
                       className="text-xs text-[var(--ink-faint)] hover:text-red-500 transition-colors">
@@ -535,7 +644,6 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
               <SheetRow
                 key={sheet.id}
                 sheet={sheet}
-                type={type}
                 canRemove={
                   type === 'owned'
                     ? (isLeader || sheet.ownerId === user?.id) ?? false

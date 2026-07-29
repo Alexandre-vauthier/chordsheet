@@ -98,21 +98,54 @@
     "features": {
       "title": "Everything you need to play.",
       "subtitle": "From creation to the stage, without friction.",
-      "editor": { "title": "Visual editor", "text": "Build your sheet in minutes. Import from Ultimate Guitar or enter it cell by cell." },
-      "concert": { "title": "Concert mode", "text": "Full-screen auto-scroll, adjustable BPM. Play without ever looking away." },
-      "transpose": { "title": "Transposition", "text": "Change key in one click. Perfect for adapting to the singer or changing capo." },
-      "instruments": { "title": "Every instrument", "text": "Guitar, piano, ukulele, bass, mandolin — chord diagrams generated automatically." },
-      "sharing": { "title": "Sharing & setlists", "text": "Publish your sheets, share by link, organize your sets for gigs." },
-      "print": { "title": "Clean printing", "text": "Optimized A4 layout with diagrams, repeats and sections — ready in one click." },
-      "ai": { "title": "AI recognition", "text": "Snap a photo of sheet music or a paper chord chart — AI recognizes the chords and builds your sheet automatically." },
-      "dictionary": { "title": "Chord dictionary", "text": "Full library for guitar, piano, ukulele and more. Identify a chord by placing your fingers on the fretboard or keyboard." }
+      "editor": {
+        "title": "Visual editor",
+        "text": "Build your sheet in minutes. Import from Ultimate Guitar or enter it cell by cell."
+      },
+      "concert": {
+        "title": "Concert mode",
+        "text": "Full-screen auto-scroll, adjustable BPM. Play without ever looking away."
+      },
+      "transpose": {
+        "title": "Transposition",
+        "text": "Change key in one click. Perfect for adapting to the singer or changing capo."
+      },
+      "instruments": {
+        "title": "Every instrument",
+        "text": "Guitar, piano, ukulele, bass, mandolin — chord diagrams generated automatically."
+      },
+      "sharing": {
+        "title": "Sharing & setlists",
+        "text": "Publish your sheets, share by link, organize your sets for gigs."
+      },
+      "print": {
+        "title": "Clean printing",
+        "text": "Optimized A4 layout with diagrams, repeats and sections — ready in one click."
+      },
+      "ai": {
+        "title": "AI recognition",
+        "text": "Snap a photo of sheet music or a paper chord chart — AI recognizes the chords and builds your sheet automatically."
+      },
+      "dictionary": {
+        "title": "Chord dictionary",
+        "text": "Full library for guitar, piano, ukulele and more. Identify a chord by placing your fingers on the fretboard or keyboard."
+      }
     },
     "how": {
       "title": "Simple from the start.",
       "subtitle": "Three steps from zero to the stage.",
-      "step1": { "title": "Create or import", "text": "Enter it visually, paste chords from Ultimate Guitar, or snap a photo of sheet music — AI handles the rest." },
-      "step2": { "title": "Organize and share", "text": "Store it in your book, build setlists, transpose. Share with your band or hand it to a whole class in one click." },
-      "step3": { "title": "Get on stage", "text": "Turn on concert mode: full screen, BPM-synced scroll, drum machine. Keep the whole band in sync in real time." }
+      "step1": {
+        "title": "Create or import",
+        "text": "Enter it visually, paste chords from Ultimate Guitar, or snap a photo of sheet music — AI handles the rest."
+      },
+      "step2": {
+        "title": "Organize and share",
+        "text": "Store it in your book, build setlists, transpose. Share with your band or hand it to a whole class in one click."
+      },
+      "step3": {
+        "title": "Get on stage",
+        "text": "Turn on concert mode: full screen, BPM-synced scroll, drum machine. Keep the whole band in sync in real time."
+      }
     },
     "finalCta": {
       "title": "Ready to organize",
@@ -357,7 +390,12 @@
     "generating": "Generating…",
     "generateLink": "Generate a link",
     "leaveGroup": "Leave the band",
-    "deleteGroup": "Delete the band"
+    "deleteGroup": "Delete the band",
+    "addToSet": "Add to a set",
+    "save": "Save",
+    "addDescription": "Add a description",
+    "editDescription": "Edit description",
+    "errorUpdate": "Could not update the group."
   },
   "Artists": {
     "title": "Artists",

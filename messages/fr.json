@@ -98,21 +98,54 @@
     "features": {
       "title": "Tout ce qu'il faut pour jouer.",
       "subtitle": "De la création à la scène, sans friction.",
-      "editor": { "title": "Éditeur visuel", "text": "Crée ta grille en quelques minutes. Import depuis Ultimate Guitar ou saisie case par case." },
-      "concert": { "title": "Mode concert", "text": "Défilement automatique plein écran, BPM réglable. Joue sans jamais décrocher les yeux." },
-      "transpose": { "title": "Transposition", "text": "Change de tonalité en un clic. Parfait pour adapter au chanteur ou changer de capo." },
-      "instruments": { "title": "Tous les instruments", "text": "Guitare, piano, ukulélé, basse, mandoline — diagrammes d'accords générés automatiquement." },
-      "sharing": { "title": "Partage & setlists", "text": "Publie tes grilles, partage par lien, organise tes sets pour les concerts." },
-      "print": { "title": "Impression propre", "text": "Mise en page optimisée A4 avec diagrammes, répétitions et sections — prête en un clic." },
-      "ai": { "title": "Détection IA", "text": "Prends en photo une partition ou une grille papier — l'IA reconnaît les accords et crée ta grille automatiquement." },
-      "dictionary": { "title": "Dictionnaire d'accords", "text": "Bibliothèque complète pour guitare, piano, ukulélé et plus. Identifie un accord en plaçant tes doigts sur le manche ou le clavier." }
+      "editor": {
+        "title": "Éditeur visuel",
+        "text": "Crée ta grille en quelques minutes. Import depuis Ultimate Guitar ou saisie case par case."
+      },
+      "concert": {
+        "title": "Mode concert",
+        "text": "Défilement automatique plein écran, BPM réglable. Joue sans jamais décrocher les yeux."
+      },
+      "transpose": {
+        "title": "Transposition",
+        "text": "Change de tonalité en un clic. Parfait pour adapter au chanteur ou changer de capo."
+      },
+      "instruments": {
+        "title": "Tous les instruments",
+        "text": "Guitare, piano, ukulélé, basse, mandoline — diagrammes d'accords générés automatiquement."
+      },
+      "sharing": {
+        "title": "Partage & setlists",
+        "text": "Publie tes grilles, partage par lien, organise tes sets pour les concerts."
+      },
+      "print": {
+        "title": "Impression propre",
+        "text": "Mise en page optimisée A4 avec diagrammes, répétitions et sections — prête en un clic."
+      },
+      "ai": {
+        "title": "Détection IA",
+        "text": "Prends en photo une partition ou une grille papier — l'IA reconnaît les accords et crée ta grille automatiquement."
+      },
+      "dictionary": {
+        "title": "Dictionnaire d'accords",
+        "text": "Bibliothèque complète pour guitare, piano, ukulélé et plus. Identifie un accord en plaçant tes doigts sur le manche ou le clavier."
+      }
     },
     "how": {
       "title": "Simple dès le départ.",
       "subtitle": "Trois étapes pour passer de zéro à la scène.",
-      "step1": { "title": "Crée ou importe", "text": "Saisis visuellement, colle des accords depuis Ultimate Guitar, ou prends en photo une partition — l'IA s'occupe du reste." },
-      "step2": { "title": "Organise et partage", "text": "Range dans ton book, crée des setlists, transpose. Partage avec ton groupe ou distribue à toute une classe en un clic." },
-      "step3": { "title": "Monte sur scène", "text": "Active le mode concert : plein écran, défilement au BPM, boîte à rythmes. Synchronise tout le groupe en temps réel." }
+      "step1": {
+        "title": "Crée ou importe",
+        "text": "Saisis visuellement, colle des accords depuis Ultimate Guitar, ou prends en photo une partition — l'IA s'occupe du reste."
+      },
+      "step2": {
+        "title": "Organise et partage",
+        "text": "Range dans ton book, crée des setlists, transpose. Partage avec ton groupe ou distribue à toute une classe en un clic."
+      },
+      "step3": {
+        "title": "Monte sur scène",
+        "text": "Active le mode concert : plein écran, défilement au BPM, boîte à rythmes. Synchronise tout le groupe en temps réel."
+      }
     },
     "finalCta": {
       "title": "Prêt à organiser",
@@ -357,7 +390,12 @@
     "generating": "Génération…",
     "generateLink": "Générer un lien",
     "leaveGroup": "Quitter le groupe",
-    "deleteGroup": "Supprimer le groupe"
+    "deleteGroup": "Supprimer le groupe",
+    "addToSet": "Ajouter à un set",
+    "save": "Enregistrer",
+    "addDescription": "Ajouter une description",
+    "editDescription": "Modifier la description",
+    "errorUpdate": "Impossible de mettre à jour le groupe."
   },
   "Artists": {
     "title": "Artistes",
