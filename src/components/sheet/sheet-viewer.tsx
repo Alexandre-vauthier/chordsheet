@@ -507,7 +507,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             <button
               onClick={() => setCapoActive(v => !v)}
               title={capoActive ? 'Capo posé : accords piano transposés et suivi micro adaptés (cliquer si vous jouez sans le capo)' : 'Capo retiré : accords à leur hauteur réelle (cliquer pour le remettre)'}
-              className={`sm:hidden print:hidden absolute bottom-0 right-0 px-1.5 py-0.5 bg-[var(--cell-bg)] rounded text-xs border border-[var(--line)] transition-colors ${capoActive ? 'text-[var(--ink-light)]' : 'text-[var(--ink-faint)] line-through'}`}
+              className={`sm:hidden print:hidden absolute bottom-0 right-0 px-2 py-0.5 rounded-md text-xs font-bold border border-black/10 shadow-sm bg-[linear-gradient(90deg,#e74c3c,#f1c40f,#2ecc71,#3498db,#9b59b6)] text-black transition-opacity ${capoActive ? '' : 'line-through opacity-60'}`}
             >
               {t('capo', { n: sheet.capo })}
             </button>
@@ -515,8 +515,8 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
           </div>{/* fin artwork+titre */}
 
           {/* Contrôles : ligne pleine largeur sous le titre sur mobile, colonne droite sur desktop */}
-          <div className="print:hidden hidden sm:flex flex-col gap-2 sm:flex-shrink-0 sm:items-end">
-            <div className="flex items-center gap-2">
+          <div className="print:hidden flex flex-col gap-2 sm:flex-shrink-0 sm:items-end w-full sm:w-auto">
+            <div className="flex items-center gap-2 flex-wrap">
               {/* Toggle métronome */}
               <button
                 onClick={() => setMetronomeEnabled(v => !v)}
@@ -841,7 +841,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 <button
                   onClick={() => setCapoActive(v => !v)}
                   title={capoActive ? 'Capo posé : accords piano transposés et suivi micro adaptés (cliquer si vous jouez sans le capo)' : 'Capo retiré : accords à leur hauteur réelle (cliquer pour le remettre)'}
-                  className={`px-1.5 py-0.5 bg-[var(--cell-bg)] rounded text-xs border border-[var(--line)] transition-colors ${capoActive ? 'text-[var(--ink-light)]' : 'text-[var(--ink-faint)] line-through'}`}
+                  className={`px-2 py-0.5 rounded-md text-xs font-bold border border-black/10 shadow-sm bg-[linear-gradient(90deg,#e74c3c,#f1c40f,#2ecc71,#3498db,#9b59b6)] text-black transition-opacity ${capoActive ? '' : 'line-through opacity-60'}`}
                 >
                   {t('capo', { n: sheet.capo })}
                 </button>
