@@ -7,8 +7,8 @@ interface ArtistPageProps {
 }
 
 export async function generateMetadata({ params }: ArtistPageProps): Promise<Metadata> {
-  const { name } = await params;
-  const artistName = decodeURIComponent(name);
+  // Param déjà URL-décodé par Next : pas de decodeURIComponent (planterait sur un '%').
+  const { name: artistName } = await params;
 
   try {
     const snap = await getAdminDb()

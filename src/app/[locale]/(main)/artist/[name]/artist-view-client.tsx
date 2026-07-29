@@ -19,7 +19,9 @@ interface ArtistViewClientProps {
 
 export function ArtistViewClient({ name }: ArtistViewClientProps) {
   const t = useTranslations('ArtistView');
-  const artistName = decodeURIComponent(name);
+  // `name` vient d'un param de route déjà décodé par Next : pas de re-décodage
+  // (un double decodeURIComponent plante sur un '%' littéral).
+  const artistName = name;
   const { user, isAdmin, loading: authLoading } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
   const { artworkUrl } = useArtwork(artistName, undefined);

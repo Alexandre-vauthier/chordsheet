@@ -112,9 +112,9 @@ function VersionRow({ sheet, isBookmarked, onToggleBookmark }: {
 }
 
 export default function SongPage({ params }: { params: Promise<PageParams> }) {
-  const { title: encodedTitle, artist: encodedArtist } = use(params);
-  const title = decodeURIComponent(encodedTitle);
-  const artist = decodeURIComponent(encodedArtist);
+  // Next fournit déjà les params de route URL-décodés : ne PAS refaire de
+  // decodeURIComponent (un double décodage plante sur un '%' littéral, ex. « 50% »).
+  const { title, artist } = use(params);
 
   const { user, isAdmin, loading: authLoading } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
