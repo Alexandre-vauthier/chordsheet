@@ -329,6 +329,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
           <SheetViewer
             sheet={currentSheet}
             concertCellPath={concertCellPath ?? undefined}
+            concertMode
           />
         )}
       </div>

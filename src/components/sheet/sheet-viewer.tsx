@@ -86,6 +86,10 @@ interface SheetViewerProps {
   /** Surcharge des préférences d'impression de l'utilisateur (ex: rendu serveur pour export PDF, sans session Firebase) */
   printChordDiagramsOverride?: boolean;
   printMinimizeRepeatedSectionsOverride?: boolean;
+  /** Mode concert (page de lecture d'un set) : masque les options de lecture du
+   *  viewer (métronome, boîte à rythmes, instruments, tempo, décompte, Play), qui
+   *  sont pilotées par la page concert et inutiles par participant. */
+  concertMode?: boolean;
 }
 
 function getRefLabel(url: string, referenceFallback: string): string {
@@ -108,7 +112,7 @@ function sectionSignature(section: { rows: { chord: string; span: number }[][] }
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingBookmark, concertCellPath, printChordDiagramsOverride, printMinimizeRepeatedSectionsOverride }: SheetViewerProps) {
+export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingBookmark, concertCellPath, printChordDiagramsOverride, printMinimizeRepeatedSectionsOverride, concertMode }: SheetViewerProps) {
   const t = useTranslations('SheetViewer');
   const tGroove = useTranslations('GroovePatterns');
   const genreLabel = useGenreLabel();
@@ -518,6 +522,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
 
           {/* Contrôles : ligne pleine largeur sous le titre sur mobile, colonne droite sur desktop */}
           <div className="print:hidden flex flex-col gap-2 sm:flex-shrink-0 sm:items-end w-full sm:w-auto">
+            {!concertMode && (
             <div className="flex items-center gap-2 flex-wrap">
               {/* Toggle métronome */}
               <button
@@ -561,7 +566,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   </svg>
                 </button>
                 {grooveMenuOpen && (
-                  <div className="absolute right-0 top-full mt-1 z-50 w-60 max-h-[70vh] overflow-y-auto bg-[var(--cream)] border border-[var(--line)] rounded-xl shadow-xl py-1">
+                  <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-1 z-50 w-60 max-w-[calc(100vw-2rem)] max-h-[70vh] overflow-y-auto bg-[var(--cream)] border border-[var(--line)] rounded-xl shadow-xl py-1">
                     <p className="px-3 py-1.5 text-[11px] uppercase tracking-wide text-[var(--ink-faint)]">
                       {t('grooveBoxPattern')}
                     </p>
@@ -647,7 +652,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   )}
                 </button>
                 {accompMenuOpen && (
-                  <div className="absolute right-0 top-full mt-1 z-50 w-60 bg-[var(--cream)] border border-[var(--line)] rounded-xl shadow-xl overflow-hidden py-1">
+                  <div className="absolute left-0 sm:left-auto sm:right-0 top-full mt-1 z-50 w-60 max-w-[calc(100vw-2rem)] bg-[var(--cream)] border border-[var(--line)] rounded-xl shadow-xl overflow-hidden py-1">
                     <p className="px-3 py-1.5 text-[11px] uppercase tracking-wide text-[var(--ink-faint)]">
                       {t('chordAudioInstruments')}
                     </p>
@@ -800,6 +805,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 )}
               </button>
             </div>
+            )}
 
             {/* Métadonnées compactes sous les boutons */}
             <div className="hidden sm:flex flex-wrap items-center gap-1.5 sm:justify-end">
