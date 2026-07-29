@@ -17,11 +17,11 @@ interface SetPlayPageProps {
   params: Promise<{ id: string }>;
 }
 
-// Compensation réseau pour les invités : avance leur affichage pour compenser la latence Firestore
-const GUEST_SYNC_COMPENSATION_MS = 300;
-
-// Calcule quelle cellule doit être mise en évidence à l'instant T
-// compensationMs > 0 avance l'affichage (compense un retard de réception)
+// Calcule quelle cellule doit être mise en évidence à l'instant T.
+// compensationMs = offset horloge locale ↔ serveur : ajouté au temps local pour
+// obtenir serverNow, la base de temps commune à tous les appareils (voir
+// use-concert-session). startTimeMs étant écrit en temps serveur, plus besoin de
+// constante de latence fixe.
 function calculateConcertCell(
   sections: Section[],
   startTimeMs: number,
@@ -77,7 +77,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
   // Il porte le décompte + métronome et fait autorité sur le temps ; les autres suivent.
   const [isDriver, setIsDriver] = useState(false);
 
-  const { currentIndex: syncedIndex, isSynced, goToSheet, autoScroll, startAutoScroll, stopAutoScroll } = useConcertSession(
+  const { currentIndex: syncedIndex, isSynced, goToSheet, autoScroll, startAutoScroll, stopAutoScroll, serverOffset } = useConcertSession(
     isGroupSet ? id : undefined,
     isGroupSet ? set?.groupId : undefined
   );
@@ -188,7 +188,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
         autoScroll.startTimeMs,
         autoScroll.bpm,
         currentSheet.tempoUnit,
-        isDriver ? 0 : GUEST_SYNC_COMPENSATION_MS
+        serverOffset
       );
       if (!result) {
         setConcertCellPath(null);
@@ -212,7 +212,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
 
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [autoScroll, currentIndex, currentSheet, isDriver, stopMetronome, stopAutoScroll]);
+  }, [autoScroll, currentIndex, currentSheet, isDriver, serverOffset, stopMetronome, stopAutoScroll]);
 
   // ── Navigation clavier ──────────────────────────────────────────────────────
   const hasPrevious = currentIndex > 0;
