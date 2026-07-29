@@ -127,7 +127,7 @@ export function SheetComments({ sheetId, invite = false, state }: { sheetId: str
         // Vue commentateur : son fil unique
         <div className="mt-4 space-y-3">
           {invite && (
-            <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 space-y-2">
+            <div className="p-4 rounded-xl bg-[var(--accent-soft)] border border-[var(--accent)]/30 space-y-2">
               <p className="text-sm font-semibold text-[var(--ink)]">Cette version ne te convient pas complètement, et c&apos;est ok 👍</p>
               <p className="text-sm text-[var(--ink-light)]">
                 Une grille se construit à plusieurs : plutôt qu&apos;une note en passant, aide l&apos;auteur à progresser.
