@@ -395,7 +395,10 @@
     "save": "Save",
     "addDescription": "Add a description",
     "editDescription": "Edit description",
-    "errorUpdate": "Could not update the group."
+    "errorUpdate": "Could not update the group.",
+    "edit": "Edit",
+    "adaptForGroup": "Adapt for the group",
+    "confirmDeleteSheet": "Delete \"{title}\"? This group grid will be permanently removed."
   },
   "Artists": {
     "title": "Artists",

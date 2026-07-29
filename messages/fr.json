@@ -395,7 +395,10 @@
     "save": "Enregistrer",
     "addDescription": "Ajouter une description",
     "editDescription": "Modifier la description",
-    "errorUpdate": "Impossible de mettre à jour le groupe."
+    "errorUpdate": "Impossible de mettre à jour le groupe.",
+    "edit": "Modifier",
+    "adaptForGroup": "Adapter pour le groupe",
+    "confirmDeleteSheet": "Supprimer « {title} » ? Cette grille du groupe sera définitivement supprimée."
   },
   "Artists": {
     "title": "Artistes",

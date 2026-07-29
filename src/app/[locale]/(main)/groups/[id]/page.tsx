@@ -7,15 +7,15 @@ import { useAddToCollection } from '@/lib/add-to-collection-context';
 import { Link, useRouter } from '@/i18n/navigation';
 
 import {
-  doc, getDoc, collection, query, where, getDocs, orderBy, updateDoc, deleteField, serverTimestamp, limit,
+  doc, getDoc, collection, query, where, getDocs, orderBy, updateDoc, serverTimestamp, limit,
   addDoc, deleteDoc,
 } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
-import { fromFirestore } from '@/lib/firestore-helpers';
+import { fromFirestore, toFirestore } from '@/lib/firestore-helpers';
 import { useAuth } from '@/lib/auth-context';
 import { useGroups } from '@/lib/use-groups';
 import { useArtwork } from '@/lib/use-artwork';
-import type { Group, GroupRole, Sheet, Set, InstrumentId } from '@/types';
+import type { Group, GroupRole, Sheet, NewSheet, Set, InstrumentId } from '@/types';
 
 interface MemberInfo {
   id: string;
@@ -41,12 +41,16 @@ function groupFromDoc(id: string, data: Record<string, unknown>): Group {
 
 function SheetRow({
   sheet,
+  type,
   canRemove,
   onRemove,
+  onAdapt,
 }: {
   sheet: Sheet;
+  type: 'owned' | 'linked';
   canRemove: boolean;
   onRemove: () => void;
+  onAdapt: () => void;
 }) {
   const t = useTranslations('Groups');
   const { artworkUrl } = useArtwork(sheet.artist, sheet.title);
@@ -93,6 +97,28 @@ function SheetRow({
         </button>
         {menuOpen && (
           <div className="absolute right-0 top-9 z-20 w-48 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl shadow-xl overflow-hidden">
+            {type === 'owned' ? (
+              <Link
+                href={`/sheet/${sheet.id}/edit`}
+                onClick={() => setMenuOpen(false)}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-[var(--ink)] hover:bg-[var(--paper)] transition-colors"
+              >
+                <svg className="w-3.5 h-3.5 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                {t('edit')}
+              </Link>
+            ) : (
+              <button
+                onClick={() => { setMenuOpen(false); onAdapt(); }}
+                className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-[var(--ink)] hover:bg-[var(--paper)] transition-colors"
+              >
+                <svg className="w-3.5 h-3.5 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                </svg>
+                {t('adaptForGroup')}
+              </button>
+            )}
             <button
               onClick={() => { setMenuOpen(false); openAddTo(sheet, 'set'); }}
               className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-[var(--ink)] hover:bg-[var(--paper)] transition-colors"
@@ -112,7 +138,7 @@ function SheetRow({
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
-                  {t('remove')}
+                  {type === 'owned' ? t('delete') : t('remove')}
                 </button>
               </>
             )}
@@ -128,7 +154,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
   const instrumentLabel = useInstrumentLabel();
   const { id: groupId } = use(params);
   const { user } = useAuth();
-  const { generateInviteToken, leaveGroup, removeMember, deleteGroup, linkSheet, unlinkSheet } = useGroups();
+  const { generateInviteToken, leaveGroup, removeMember, deleteGroup, unlinkSheet } = useGroups();
   const router = useRouter();
 
   const [group, setGroup] = useState<Group | null>(null);
@@ -243,6 +269,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
     const db = getDb();
     const excludeIds = new Set([
       ...ownedSheets.map(s => s.id!),
+      ...ownedSheets.map(s => s.forkedFrom).filter(Boolean) as string[], // originaux déjà copiés
       ...(group?.linkedSheetIds ?? []),
     ]);
 
@@ -278,20 +305,36 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
     loadAttachPool();
   };
 
-  // Rattacher : groupId si c'est ma grille, linkedSheetIds sinon
+  // Crée une COPIE de la grille appartenant au groupe (éditable par tous les membres,
+  // indépendante de l'originale). Renvoie l'id de la copie.
+  const forkToGroup = async (sheet: Sheet): Promise<{ id: string; sheet: Sheet }> => {
+    const db = getDb();
+    const { id: _id, viewCount: _v, averageRating: _a, ratingCount: _r, createdAt: _c, updatedAt: _u, ...rest } = sheet;
+    void _id; void _v; void _a; void _r; void _c; void _u;
+    const copy: NewSheet = {
+      ...rest,
+      ownerId: user!.id,
+      ownerName: user!.displayName,
+      isPublic: false,
+      groupId,
+      forkedFrom: sheet.id,
+    };
+    const ref = await addDoc(collection(db, 'sheets'), {
+      ...toFirestore(copy),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      viewCount: 0,
+    });
+    return { id: ref.id, sheet: { ...(copy as Sheet), id: ref.id, viewCount: 0 } };
+  };
+
+  // Rattacher = TOUJOURS une copie du groupe (aucune ambiguïté : indépendante et éditable).
   const handleAttach = async (sheet: Sheet) => {
-    if (!sheet.id) return;
+    if (!sheet.id || !user) return;
     setAttachLoading(sheet.id);
     try {
-      if (sheet.ownerId === user?.id) {
-        const db = getDb();
-        await updateDoc(doc(db, 'sheets', sheet.id), { groupId, updatedAt: serverTimestamp() });
-        setOwnedSheets(prev => [{ ...sheet, groupId }, ...prev]);
-      } else {
-        await linkSheet(groupId, sheet.id);
-        setLinkedSheets(prev => [sheet, ...prev]);
-        setGroup(prev => prev ? { ...prev, linkedSheetIds: [...prev.linkedSheetIds, sheet.id!] } : prev);
-      }
+      const { sheet: copy } = await forkToGroup(sheet);
+      setOwnedSheets(prev => [copy, ...prev]);
       setAttachPool(prev => prev.filter(s => s.id !== sheet.id));
     } catch {
       setActionError(t('errorAttach'));
@@ -300,11 +343,26 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
     }
   };
 
+  // Convertit un ancien lien (grille publique en lecture seule) en copie du groupe.
+  const handleAdapt = async (sheet: Sheet) => {
+    if (!sheet.id || !user) return;
+    try {
+      const { id: newId } = await forkToGroup(sheet);
+      await unlinkSheet(groupId, sheet.id);
+      setLinkedSheets(prev => prev.filter(s => s.id !== sheet.id));
+      setGroup(prev => prev ? { ...prev, linkedSheetIds: prev.linkedSheetIds.filter(sid => sid !== sheet.id) } : prev);
+      router.push(`/sheet/${newId}/edit`);
+    } catch {
+      setActionError(t('errorAttach'));
+    }
+  };
+
+  // Grille du groupe (copie) : la retirer = la supprimer (elle n'a pas de vie hors du groupe).
   const handleDetachOwned = async (sheet: Sheet) => {
-    if (!sheet.id || !confirm(t('confirmDetachOwned', { title: sheet.title }))) return;
+    if (!sheet.id || !confirm(t('confirmDeleteSheet', { title: sheet.title }))) return;
     try {
       const db = getDb();
-      await updateDoc(doc(db, 'sheets', sheet.id), { groupId: deleteField(), updatedAt: serverTimestamp() });
+      await deleteDoc(doc(db, 'sheets', sheet.id));
       setOwnedSheets(prev => prev.filter(s => s.id !== sheet.id));
     } catch {
       setActionError(t('errorRemove'));
@@ -646,14 +704,12 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
               <SheetRow
                 key={sheet.id}
                 sheet={sheet}
-                canRemove={
-                  type === 'owned'
-                    ? (isLeader || sheet.ownerId === user?.id) ?? false
-                    : isMember ?? false
-                }
+                type={type}
+                canRemove={type === 'owned' ? isMember : (isMember ?? false)}
                 onRemove={() =>
                   type === 'owned' ? handleDetachOwned(sheet) : handleUnlink(sheet)
                 }
+                onAdapt={() => handleAdapt(sheet)}
               />
             ))}
           </div>

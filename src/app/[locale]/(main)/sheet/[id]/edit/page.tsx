@@ -37,8 +37,15 @@ export default function EditSheetPage({ params }: EditSheetPageProps) {
 
         const data = docSnap.data();
 
-        // Vérifier que l'utilisateur est le propriétaire
-        if (data.ownerId !== user?.id && !isAdmin) {
+        // Autorisé : propriétaire, admin, ou membre du groupe si la grille appartient
+        // à un groupe (les grilles de groupe sont éditables par tous les membres).
+        let authorized = data.ownerId === user?.id || isAdmin;
+        if (!authorized && data.groupId && user) {
+          const groupSnap = await getDoc(doc(db, 'groups', data.groupId));
+          const memberIds = (groupSnap.data()?.memberIds as string[]) || [];
+          authorized = memberIds.includes(user.id);
+        }
+        if (!authorized) {
           setError('Vous n\'êtes pas autorisé à modifier cette grille');
           return;
         }

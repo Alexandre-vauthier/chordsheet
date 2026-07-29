@@ -60,9 +60,12 @@ service cloud.firestore {
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['averageRating', 'ratingCount']))
       );
 
-      // Suppression : propriétaire ou admin
-      allow delete: if request.auth != null &&
-                       (request.auth.uid == resource.data.ownerId || isAdmin());
+      // Suppression : propriétaire, admin, ou membre du groupe (grilles de groupe)
+      allow delete: if request.auth != null && (
+        request.auth.uid == resource.data.ownerId ||
+        isAdmin() ||
+        (resource.data.groupId != null && isGroupMember(resource.data.groupId))
+      );
     }
 
     // Sets (setlists) — toujours privés (owner ou membres du groupe uniquement)
