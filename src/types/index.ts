@@ -219,6 +219,9 @@ export interface Subscription {
   ocrUsedThisMonth: number;
   ocrResetAt?: Date;
   earnedOcrCredits?: number; // crédits OCR gagnés par les contributions (non réinitialisés)
+  // Session live offerte (amorce) : date d'utilisation de l'unique session gratuite
+  // pour un compte non-Pro. Posée par le serveur (API), non réinitialisable côté client.
+  freeLiveSessionUsedAt?: Date;
 }
 
 // ─── Système de réputation créateur ─────────────────────────────────────────

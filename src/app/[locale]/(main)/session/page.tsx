@@ -45,8 +45,9 @@ export default function SessionHubPage() {
     try {
       const code = await startSession();
       router.push(`/session/${code}`);
-    } catch {
-      setError(t('startError'));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : '';
+      setError(msg === 'FREE_USED' ? t('freeSessionUsedError') : t('startError'));
       setStarting(false);
     }
   };
@@ -70,18 +71,41 @@ export default function SessionHubPage() {
   }
 
   if (!userIsPro) {
+    const freeUsed = !!user?.subscription?.freeLiveSessionUsedAt;
     return (
       <div className="max-w-lg mx-auto px-4 py-8">
-        <h1 className="font-playfair text-2xl font-bold text-[var(--ink)] mb-6">{t('hubTitle')}</h1>
+        <h1 className="font-playfair text-2xl font-bold text-[var(--ink)] mb-4">{t('hubTitle')}</h1>
 
-        <LiveSessionUpsell t={t} />
-
+        {/* Rejoindre avec un code : en haut pour les non-Pro (accès invité prioritaire) */}
         <JoinWithCodeForm
           t={t}
           joinCode={joinCode}
           setJoinCode={setJoinCode}
           onSubmit={handleJoin}
+          className="mb-6"
         />
+
+        {/* Session offerte (amorce) : une fois pour un compte non-Pro */}
+        {!freeUsed && (
+          <div className="rounded-xl border border-[var(--accent)] bg-[var(--accent-soft)] p-6 text-center space-y-3 mb-6">
+            <div className="text-3xl">🎁</div>
+            <div>
+              <p className="font-semibold text-[var(--ink)]">{t('freeSessionTitle')}</p>
+              <p className="text-sm text-[var(--ink-light)] mt-1">{t('freeSessionDesc')}</p>
+            </div>
+            {error && <p className="text-sm text-red-500">{error}</p>}
+            <button
+              onClick={handleStart}
+              disabled={starting}
+              className="px-6 py-2.5 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              {starting ? t('starting') : t('freeSessionCta')}
+            </button>
+          </div>
+        )}
+
+        {/* Arguments Pro */}
+        <LiveSessionUpsell t={t} />
       </div>
     );
   }
@@ -166,14 +190,16 @@ function JoinWithCodeForm({
   joinCode,
   setJoinCode,
   onSubmit,
+  className = 'mt-6',
 }: {
   t: ReturnType<typeof useTranslations>;
   joinCode: string;
   setJoinCode: (v: string) => void;
   onSubmit: (e: React.FormEvent) => void;
+  className?: string;
 }) {
   return (
-    <form onSubmit={onSubmit} className="mt-6 flex items-center gap-2">
+    <form onSubmit={onSubmit} className={`${className} flex items-center gap-2`}>
       <input
         type="text"
         value={joinCode}

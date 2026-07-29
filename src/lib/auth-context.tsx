@@ -87,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             ocrUsedThisMonth: rawSub.ocrUsedThisMonth ?? 0,
             ocrResetAt: rawSub.ocrResetAt?.toDate?.() || undefined,
             earnedOcrCredits: rawSub.earnedOcrCredits ?? 0,
+            freeLiveSessionUsedAt: rawSub.freeLiveSessionUsedAt?.toDate?.() || undefined,
           } : undefined;
 
           const rawRep = userData.reputation;

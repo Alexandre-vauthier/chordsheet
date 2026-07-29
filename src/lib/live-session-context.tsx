@@ -2,24 +2,14 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from 'react';
 import { signInAnonymously } from 'firebase/auth';
-import { doc, onSnapshot, setDoc, updateDoc, deleteDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { getAuth, getDb } from './firebase';
 import { useAuth } from './auth-context';
 import { useRouter } from '@/i18n/navigation';
-import type { LiveSession, NewLiveSession } from '@/types';
+import type { LiveSession } from '@/types';
 
 const STORAGE_KEY = 'chordsheet:liveSessionCode';
 const NICKNAME_KEY = 'chordsheet:liveSessionNickname';
-// Charset sans caractères ambigus (0/O, 1/I) pour la saisie manuelle du code
-const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
-function generateCode(): string {
-  let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
-  }
-  return code;
-}
 
 function sessionFromDoc(id: string, data: Record<string, unknown>): LiveSession {
   return {
@@ -150,33 +140,19 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
     if (!user) throw new Error('Non connecté');
     setLoading(true);
     try {
-      const db = getDb();
-      let code = generateCode();
-      // Retry en cas de collision (improbable avec un charset de 32 caractères sur 6 positions)
-      for (let attempt = 0; attempt < 5; attempt++) {
-        const existing = await getDoc(doc(db, 'liveSessions', code));
-        if (!existing.exists()) break;
-        code = generateCode();
-      }
-      const newSession: NewLiveSession = {
-        hostId: user.id,
-        hostName: user.displayName,
-        createdAt: new Date(),
-        expiresAt: new Date(Date.now() + 6 * 60 * 60 * 1000),
-        currentSheetId: null,
-        currentSheetTitle: null,
-        currentSheetArtist: null,
-        pushedBy: null,
-        pushedByName: null,
-        updatedAt: new Date(),
-      };
-      await setDoc(doc(db, 'liveSessions', code), {
-        ...newSession,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+      // Création côté serveur (admin) : gère le droit Pro (illimité) OU la session
+      // offerte unique des comptes non-Pro. L'erreur 'FREE_USED' est remontée telle
+      // quelle pour que l'UI propose le passage à Pro.
+      const token = await getAuth().currentUser?.getIdToken();
+      if (!token) throw new Error('Non connecté');
+      const res = await fetch('/api/session/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       });
-      persistCode(code);
-      return code;
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data?.code) throw new Error(data?.error || 'START_FAILED');
+      persistCode(data.code as string);
+      return data.code as string;
     } finally {
       setLoading(false);
     }
