@@ -27,7 +27,17 @@ export interface CommentThread {
   messages: SheetCommentMessage[];
 }
 
-export function useSheetComments(sheetId: string | undefined, ownerId: string | undefined) {
+export interface UseSheetCommentsResult {
+  isOwner: boolean;
+  threads: CommentThread[];
+  loading: boolean;
+  send: (text: string, targetCommenterId?: string, targetCommenterName?: string) => Promise<void>;
+  canComment: boolean;
+  // L'utilisateur courant a-t-il déjà posté au moins un message sur cette grille ?
+  hasCommented: boolean;
+}
+
+export function useSheetComments(sheetId: string | undefined, ownerId: string | undefined): UseSheetCommentsResult {
   const { user } = useAuth();
   const [messages, setMessages] = useState<SheetCommentMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,5 +110,7 @@ export function useSheetComments(sheetId: string | undefined, ownerId: string | 
     });
   }, [messages]);
 
-  return { isOwner, threads, loading, send, canComment: !!user };
+  const hasCommented = !!user && messages.some((m) => m.senderId === user.id);
+
+  return { isOwner, threads, loading, send, canComment: !!user, hasCommented };
 }

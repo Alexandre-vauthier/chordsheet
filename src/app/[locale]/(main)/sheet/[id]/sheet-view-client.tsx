@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 import { doc, getDoc, updateDoc, increment, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
@@ -12,6 +12,7 @@ import { useSets } from '@/lib/use-sets';
 import { useLiveSession } from '@/lib/live-session-context';
 import { SheetViewer } from '@/components/sheet/sheet-viewer';
 import { SheetComments } from '@/components/sheet/sheet-comments';
+import { useSheetComments } from '@/lib/use-sheet-comments';
 import { RatingStars } from '@/components/sheet/rating-stars';
 
 import type { Sheet } from '@/types';
@@ -32,11 +33,13 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
   const [error, setError] = useState<string | null>(null);
   const [isTogglingBookmark, setIsTogglingBookmark] = useState(false);
   const [commentInvite, setCommentInvite] = useState(false);
+  const [pendingRating, setPendingRating] = useState<1 | 2 | 3 | 4 | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [setPickerOpen, setSetPickerOpen] = useState(false);
   const [addedToSetIds, setAddedToSetIds] = useState<string[]>([]);
   const menuRef = useRef<HTMLDivElement>(null);
   const { sets, addSheetToSet } = useSets(user?.id);
+  const comments = useSheetComments(sheet?.id, sheet?.ownerId);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -123,33 +126,44 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
     }
   };
 
-  const handleRate = async (rating: 1 | 2 | 3 | 4 | 5) => {
+  const applyRating = useCallback(async (rating: 1 | 2 | 3 | 4 | 5) => {
     try {
       await rateSheet(rating);
-      // Mettre à jour l'état local du sheet
-      if (sheet) {
-        const newCount = userRating ? sheet.ratingCount : (sheet.ratingCount || 0) + 1;
-        const oldAvg = sheet.averageRating || 0;
+      setSheet((prev) => {
+        if (!prev) return prev;
+        const newCount = userRating ? prev.ratingCount : (prev.ratingCount || 0) + 1;
+        const oldAvg = prev.averageRating || 0;
         const oldRating = userRating || 0;
         const newAvg = userRating
-          ? (oldAvg * sheet.ratingCount - oldRating + rating) / sheet.ratingCount
-          : (oldAvg * (sheet.ratingCount || 0) + rating) / newCount;
-
-        setSheet({
-          ...sheet,
-          averageRating: Math.round(newAvg * 10) / 10,
-          ratingCount: newCount,
-        });
-      }
-      // Note < 5 : on invite (en privé) à expliquer pourquoi, ou à créer sa version.
-      if (rating < 5) {
-        setCommentInvite(true);
-        setTimeout(() => document.getElementById('sheet-comments')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
-      }
+          ? (oldAvg * prev.ratingCount - oldRating + rating) / prev.ratingCount
+          : (oldAvg * (prev.ratingCount || 0) + rating) / newCount;
+        return { ...prev, averageRating: Math.round(newAvg * 10) / 10, ratingCount: newCount };
+      });
     } catch (err) {
       console.error('Error rating sheet:', err);
     }
+  }, [rateSheet, userRating]);
+
+  const handleRate = async (rating: 1 | 2 | 3 | 4 | 5) => {
+    // Une note < 5 n'est acceptée que si l'utilisateur a laissé un commentaire :
+    // sinon on met la note en attente et on invite à expliquer pourquoi (constructif).
+    if (rating < 5 && !comments.hasCommented) {
+      setPendingRating(rating as 1 | 2 | 3 | 4);
+      setCommentInvite(true);
+      setTimeout(() => document.getElementById('sheet-comments')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+      return;
+    }
+    await applyRating(rating);
   };
+
+  // Note < 5 mise en attente : appliquée dès que le commentaire est envoyé.
+  useEffect(() => {
+    if (comments.hasCommented && pendingRating != null) {
+      const r = pendingRating;
+      setPendingRating(null);
+      applyRating(r);
+    }
+  }, [comments.hasCommented, pendingRating, applyRating]);
 
   const sheetIsBookmarked = sheet?.id ? isBookmarked(sheet.id) : false;
 
@@ -335,7 +349,7 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
         isTogglingBookmark={isTogglingBookmark}
       />
 
-      {sheet.id && <SheetComments sheetId={sheet.id} ownerId={sheet.ownerId} invite={commentInvite} />}
+      {sheet.id && <SheetComments sheetId={sheet.id} invite={commentInvite} state={comments} />}
     </>
   );
 }

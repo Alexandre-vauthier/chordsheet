@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Link } from '@/i18n/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { useSheetComments, type CommentThread, type SheetCommentMessage } from '@/lib/use-sheet-comments';
+import type { CommentThread, SheetCommentMessage, UseSheetCommentsResult } from '@/lib/use-sheet-comments';
 
 function LockNote() {
   return (
@@ -74,9 +74,9 @@ function MessageBubble({ message, mine }: { message: SheetCommentMessage; mine: 
   );
 }
 
-export function SheetComments({ sheetId, ownerId, invite = false }: { sheetId: string; ownerId: string; invite?: boolean }) {
+export function SheetComments({ sheetId, invite = false, state }: { sheetId: string; invite?: boolean; state: UseSheetCommentsResult }) {
   const { user } = useAuth();
-  const { isOwner, threads, loading, send, canComment } = useSheetComments(sheetId, ownerId);
+  const { isOwner, threads, loading, send, canComment } = state;
 
   return (
     <section id="sheet-comments" className="max-w-4xl mx-auto px-4 sm:px-6 py-8 print:hidden border-t border-[var(--line)] mt-4">
@@ -127,9 +127,21 @@ export function SheetComments({ sheetId, ownerId, invite = false }: { sheetId: s
         // Vue commentateur : son fil unique
         <div className="mt-4 space-y-3">
           {invite && (
-            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-sm text-[var(--ink)]">
-              Merci pour ta note. Qu&apos;est-ce qui pourrait être amélioré ? Dis-le à l&apos;auteur ci-dessous (privé), ou{' '}
-              <Link href={`/sheet/new?forkFrom=${sheetId}`} className="text-[var(--accent)] font-medium hover:underline">crée ta propre version</Link>.
+            <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 space-y-2">
+              <p className="text-sm font-semibold text-[var(--ink)]">Cette version ne te convient pas complètement, et c&apos;est ok 👍</p>
+              <p className="text-sm text-[var(--ink-light)]">
+                Une grille se construit à plusieurs : plutôt qu&apos;une note en passant, aide l&apos;auteur à progresser.
+                Dis-lui en deux mots ce qui coince, par exemple : un accord qui sonne faux, une structure à revoir
+                (intro, pont, refrain), la tonalité ou le capo, le tempo, un passage manquant… C&apos;est privé, entre toi et lui.
+              </p>
+              <p className="text-sm text-[var(--ink-light)]">
+                Tu peux aussi{' '}
+                <Link href={`/sheet/new?forkFrom=${sheetId}`} className="text-[var(--accent)] font-medium hover:underline">créer ta propre version</Link>
+                {' '}pour l&apos;adapter exactement à ta main.
+              </p>
+              <p className="text-xs text-[var(--ink-faint)] pt-0.5">
+                Ta note en dessous de 5 sera enregistrée une fois ton commentaire envoyé.
+              </p>
             </div>
           )}
           {threads[0]?.messages.length ? (
