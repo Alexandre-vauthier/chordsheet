@@ -78,6 +78,10 @@ export function SheetComments({ sheetId, invite = false, state }: { sheetId: str
   const { user } = useAuth();
   const { isOwner, threads, loading, send, canComment } = state;
 
+  // Auteur sans aucun commentaire : on n'affiche pas la section (rien à lire/gérer).
+  // Le visiteur, lui, voit toujours la section pour pouvoir écrire.
+  if (isOwner && threads.length === 0) return null;
+
   return (
     <section id="sheet-comments" className="max-w-4xl mx-auto px-4 sm:px-6 py-8 print:hidden border-t border-[var(--line)] mt-4">
       <div className="flex items-center justify-between gap-3 flex-wrap mb-1">
