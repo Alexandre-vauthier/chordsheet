@@ -134,6 +134,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email,
             photoURL: fbUser.photoURL,
             role,
+            // Nouveaux comptes : coloration des accords activée par défaut.
+            chordColorCoding: true,
             createdAt: new Date(),
             updatedAt: new Date(),
           };
@@ -176,6 +178,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       photoURL: null,
       role,
+      // Nouveaux comptes : coloration des accords activée par défaut.
+      chordColorCoding: true,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
