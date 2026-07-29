@@ -1138,6 +1138,7 @@
     "scanToJoin": "Scan to join",
     "codeLabel": "Or enter the code:",
     "nicknamePlaceholder": "Your first name (optional)",
+    "participantsTitle": "Participants ({count})",
     "nowPlaying": "Now playing",
     "noSheetYet": "Waiting for a sheet…",
     "sessionNotFound": "Session not found or expired.",

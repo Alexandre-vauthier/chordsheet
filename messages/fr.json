@@ -1138,6 +1138,7 @@
     "scanToJoin": "Scanne pour rejoindre",
     "codeLabel": "Ou entre le code :",
     "nicknamePlaceholder": "Ton prénom (optionnel)",
+    "participantsTitle": "Participants ({count})",
     "nowPlaying": "En ce moment",
     "noSheetYet": "En attente d'une grille…",
     "sessionNotFound": "Session introuvable ou expirée.",

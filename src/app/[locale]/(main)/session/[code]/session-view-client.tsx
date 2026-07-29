@@ -11,10 +11,13 @@ export function SessionViewClient({ code }: { code: string }) {
   const t = useTranslations('LiveSession');
   const router = useRouter();
   const normalizedCode = code.toUpperCase();
-  const { session, sessionStatus, isHost, nickname, setNickname, joinSession, endSession, leaveSession } = useLiveSession();
+  const { session, sessionStatus, isHost, participants, nickname, setNickname, joinSession, endSession, leaveSession } = useLiveSession();
   const [joinError, setJoinError] = useState('');
   const [joining, setJoining] = useState(true);
   const [nicknameDraft, setNicknameDraft] = useState(nickname);
+  // Horloge rafraîchie périodiquement pour réévaluer les participants "présents"
+  // (Date.now() est interdit en plein render). 0 = pas encore initialisée.
+  const [now, setNow] = useState(0);
   // Mémorise le code déjà tenté pour CE montage — évite de retenter de rejoindre
   // à chaque fois que sessionCode dérive de normalizedCode (ex: l'hôte termine sa
   // propre session pendant qu'on est encore sur cette URL : sessionCode repasse à
@@ -34,6 +37,12 @@ export function SessionViewClient({ code }: { code: string }) {
     setNicknameDraft(nickname);
   }, [nickname]);
 
+  useEffect(() => {
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 20000);
+    return () => clearInterval(id);
+  }, []);
+
   // Session introuvable/expirée : nettoie le code du stockage local pour ne pas
   // rester bloqué dessus indéfiniment (ex: /session redirigerait sans fin vers
   // cette URL morte au lieu de proposer d'en démarrer une nouvelle).
@@ -49,6 +58,9 @@ export function SessionViewClient({ code }: { code: string }) {
   }, [joining, sessionStatus, router]);
 
   const joinUrl = typeof window !== 'undefined' ? `${window.location.origin}/session/${normalizedCode}` : '';
+
+  // Présents = participants ayant émis un battement récent (ou tout juste arrivés).
+  const present = participants.filter(p => !p.lastSeenAt || now === 0 || now - p.lastSeenAt.getTime() < 90_000);
 
   const handleEnd = () => {
     if (!confirm(t('endSessionConfirm'))) return;
@@ -122,6 +134,26 @@ export function SessionViewClient({ code }: { code: string }) {
           <p className="text-sm text-[var(--ink-light)]">{t('noSheetYet')}</p>
         )}
       </div>
+
+      {/* Participants présents (mise à jour en direct) */}
+      {present.length > 0 && (
+        <div className="rounded-xl border border-[var(--line)] bg-[var(--cell-bg)] p-4">
+          <p className="text-xs text-[var(--ink-faint)] uppercase tracking-wide mb-2">
+            {t('participantsTitle', { count: present.length })}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {present.map(p => (
+              <span
+                key={p.id}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--paper)] border border-[var(--line)] text-sm text-[var(--ink)]"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                {p.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {!isHost && (
         <div className="flex items-center gap-2">

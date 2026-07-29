@@ -50,7 +50,9 @@ export default function ExplorePage() {
   const [sortBy, setSortBy] = useState<SortOption>(() => (searchParams.get('sort') as SortOption) ?? 'recent');
   const [selectedGenre, setSelectedGenre] = useState<string>(() => searchParams.get('genre') ?? '');
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | null>(() => { const d = searchParams.get('difficulty'); return d ? (Number(d) as Difficulty) : null; });
-  const [selectedDecade, setSelectedDecade] = useState<number | null>(() => { const d = searchParams.get('decade'); return d ? Number(d) : null; });
+  // Décennie : filtre volontairement ÉPHÉMÈRE (pas dans l'URL) — il ne doit pas
+  // persister quand on revient sur Explore, contrairement au genre (liens externes).
+  const [selectedDecade, setSelectedDecade] = useState<number | null>(null);
   // Toggles admin : afficher/masquer les grilles publiques, privées et à valider (visible ⇒ true par défaut).
   // Défaut à true côté serveur pour éviter un écart d'hydratation ; la préférence
   // stockée est relue au montage juste après.
@@ -96,7 +98,7 @@ export default function ExplorePage() {
   const handleSortBy = (v: SortOption) => { setSortBy(v); updateUrl({ sort: v }); };
   const handleGenre = (v: string) => { setSelectedGenre(v); updateUrl({ genre: v }); };
   const handleDifficulty = (v: Difficulty | null) => { setSelectedDifficulty(v); updateUrl({ difficulty: v }); };
-  const handleDecade = (v: number | null) => { setSelectedDecade(v); updateUrl({ decade: v }); };
+  const handleDecade = (v: number | null) => setSelectedDecade(v);
 
   // Mettre à jour le genre si le param URL change (ex: depuis la navbar)
   useEffect(() => {
@@ -274,6 +276,7 @@ export default function ExplorePage() {
     setSearchQuery('');
     setSelectedGenre('');
     setSelectedDifficulty(null);
+    setSelectedDecade(null);
     setSortBy('recent');
     setShowPublic(true);
     setShowPrivate(true);

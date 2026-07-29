@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from 'react';
 import { signInAnonymously } from 'firebase/auth';
-import { doc, onSnapshot, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, collection, onSnapshot, setDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { getAuth, getDb } from './firebase';
 import { useAuth } from './auth-context';
 import { useRouter } from '@/i18n/navigation';
@@ -35,12 +35,19 @@ interface ViewedSheet {
   artist: string;
 }
 
+export interface SessionParticipant {
+  id: string;
+  name: string;
+  lastSeenAt: Date | null;
+}
+
 interface LiveSessionContextType {
   sessionCode: string | null;
   session: LiveSession | null;
   sessionStatus: SessionStatus;
   isHost: boolean;
   loading: boolean;
+  participants: SessionParticipant[];
   nickname: string;
   setNickname: (name: string) => void;
   // Grille publique actuellement affichée par CE participant (renseigné par
@@ -66,6 +73,7 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false);
   const [nickname, setNicknameState] = useState('');
   const [viewedSheet, setViewedSheetState] = useState<ViewedSheet | null>(null);
+  const [participants, setParticipants] = useState<SessionParticipant[]>([]);
   // Identifie le dernier push déjà traité (évite de re-naviguer si l'utilisateur
   // quitte la grille poussée manuellement ensuite, ou à chaque re-render)
   const lastProcessedPushRef = useRef<number | null>(null);
@@ -115,6 +123,43 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
     });
     return unsub;
   }, [sessionCode]);
+
+  // Liste des participants (présence live) : sous-collection participants/{uid}.
+  useEffect(() => {
+    if (!sessionCode) { setParticipants([]); return; }
+    const db = getDb();
+    const unsub = onSnapshot(
+      collection(db, 'liveSessions', sessionCode, 'participants'),
+      (snap) => {
+        setParticipants(snap.docs.map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            name: (data.name as string) || 'Invité',
+            lastSeenAt: (data.lastSeenAt as { toDate?: () => Date })?.toDate?.() ?? null,
+          };
+        }));
+      },
+      () => setParticipants([]),
+    );
+    return unsub;
+  }, [sessionCode]);
+
+  // Présence : chaque participant tient à jour son propre doc (heartbeat), et le
+  // supprime en quittant. Sert de base à la liste des présents affichée en direct.
+  useEffect(() => {
+    if (!sessionCode || !firebaseUser || sessionStatus !== 'found') return;
+    const db = getDb();
+    const ref = doc(db, 'liveSessions', sessionCode, 'participants', firebaseUser.uid);
+    const name = user?.displayName || nickname || 'Invité';
+    const beat = () => setDoc(ref, { name, lastSeenAt: serverTimestamp() }, { merge: true }).catch(() => {});
+    beat();
+    const id = setInterval(beat, 25000);
+    return () => {
+      clearInterval(id);
+      deleteDoc(ref).catch(() => {});
+    };
+  }, [sessionCode, firebaseUser, sessionStatus, user?.displayName, nickname]);
 
   // Auto-navigation : bascule sur la grille poussée par un autre participant.
   // Ne réagit qu'aux NOUVEAUX push (clé = updatedAt) — ne force pas la navigation
@@ -201,7 +246,7 @@ export function LiveSessionProvider({ children }: { children: ReactNode }) {
   const isHost = !!session && !!user && session.hostId === user.id;
 
   return (
-    <LiveSessionContext.Provider value={{ sessionCode, session, sessionStatus, isHost, loading, nickname, setNickname, viewedSheet, setViewedSheet, startSession, joinSession, pushSheet, endSession, leaveSession }}>
+    <LiveSessionContext.Provider value={{ sessionCode, session, sessionStatus, isHost, loading, participants, nickname, setNickname, viewedSheet, setViewedSheet, startSession, joinSession, pushSheet, endSession, leaveSession }}>
       {children}
     </LiveSessionContext.Provider>
   );
