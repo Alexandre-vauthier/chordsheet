@@ -929,7 +929,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             />
           </div>
         </div>
-        {showChordSummary && instrumentId !== 'voice' && instrumentId !== 'percussion' && (
+        {showChordSummary && instrumentId !== 'voice' && (
           <ChordSummary
             sections={displaySections}
             instrumentId={instrumentId}
@@ -944,7 +944,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
       </div>
 
       {/* Résumé accords — uniquement à l'impression, si option activée */}
-      {(printChordDiagramsOverride ?? user?.printChordDiagrams) && instrumentId !== 'voice' && instrumentId !== 'percussion' && (
+      {(printChordDiagramsOverride ?? user?.printChordDiagrams) && instrumentId !== 'voice' && (
         <div className="hidden print:block mb-8 print-chord-summary">
           <div className="flex items-center gap-3 mb-3">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">{t('chordsUsed')}</h2>
@@ -1227,7 +1227,6 @@ function ViewerChordCell({
   const minSpanForInline = instrumentId === 'piano' ? 1 : 0.5;
   const inlineDiagramChord = showInlineDiagram && span >= minSpanForInline ? displayChord : null;
   const numStrings = INSTRUMENT_CONFIG[instrumentId]?.strings ?? 6;
-  const diagramHorizontal = instrumentId === 'percussion';
 
   return (
     // Son réel entendu au micro = forme d'accord affichée + capo effectif
@@ -1287,7 +1286,7 @@ function ViewerChordCell({
             title={t('clickToListen')}
           >
             {!isPianoChord(inlineDiagramChord) ? (
-              <ChordDiagram chord={inlineDiagramChord} size="xs" numStrings={numStrings} horizontal={diagramHorizontal} />
+              <ChordDiagram chord={inlineDiagramChord} size="xs" numStrings={numStrings} />
             ) : (
               <PianoKeyboard chord={inlineDiagramChord} />
             )}
@@ -1318,7 +1317,7 @@ function ViewerChordCell({
               title={t('clickToListen')}
             >
               {!isPianoChord(displayChord) ? (
-                <ChordDiagram chord={displayChord} size="sm" numStrings={numStrings} horizontal={diagramHorizontal} />
+                <ChordDiagram chord={displayChord} size="sm" numStrings={numStrings} />
               ) : (
                 <PianoKeyboard chord={displayChord} />
               )}

@@ -349,7 +349,7 @@ export default function ProfilePage() {
           {t('defaultInstrumentDesc')}
         </p>
         <div className="flex flex-wrap gap-2">
-          {(['guitar', 'ukulele', 'piano', 'mandolin', 'banjo', 'bass', 'voice', 'percussion'] as InstrumentId[]).map((id) => (
+          {(['guitar', 'ukulele', 'piano', 'mandolin', 'banjo', 'bass', 'voice'] as InstrumentId[]).map((id) => (
             <button
               key={id}
               onClick={async () => {

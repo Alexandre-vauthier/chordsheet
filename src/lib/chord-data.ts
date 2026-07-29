@@ -11,7 +11,6 @@ export const INSTRUMENT_CONFIG: Record<InstrumentId, Instrument> = {
   piano: { id: 'piano', label: 'Piano', strings: 0 },
   bass: { id: 'bass', label: 'Basse', strings: 4 },
   voice: { id: 'voice', label: 'Voix', strings: 0 },
-  percussion: { id: 'percussion', label: 'Percussion', strings: 0 },
 };
 
 // ─── Catégories d'accords ─────────────────────────────────────────────────────
