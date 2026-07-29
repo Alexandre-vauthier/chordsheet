@@ -21,6 +21,7 @@ import { useAuth } from '@/lib/auth-context';
 import { usePublicArtistSuggestions } from '@/lib/use-search-suggestions';
 import { useGenreLabel } from '@/lib/use-genre-labels';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
+import { useArtwork } from '@/lib/use-artwork';
 import { SuggestionsDropdown } from '@/components/ui/suggestions-dropdown';
 import { Link } from '@/i18n/navigation';
 
@@ -288,6 +289,17 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
     setSheet((prev) => ({ ...prev, ...updates }));
     setHasChanges(true);
   }, []);
+
+  // Année : suggestion iTunes (releaseDate). Pré-remplit le champ s'il est vide et
+  // que l'utilisateur n'y a pas touché ; jamais d'écrasement d'une valeur saisie.
+  const yearTouchedRef = useRef(false);
+  const { year: suggestedYear } = useArtwork(sheet.artist, sheet.title);
+  useEffect(() => { yearTouchedRef.current = false; }, [sheet.title, sheet.artist]);
+  useEffect(() => {
+    if (!yearTouchedRef.current && sheet.year == null && suggestedYear != null) {
+      updateSheet({ year: suggestedYear });
+    }
+  }, [suggestedYear, sheet.year, updateSheet]);
 
   // Mettre à jour une section
   const updateSection = useCallback((sectionId: string, updates: Partial<Section>) => {
@@ -720,6 +732,24 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
               placeholder="90"
               className="font-sans text-sm text-[var(--ink-light)] bg-transparent border-none outline-none
                 placeholder:text-[var(--ink-faint)] w-12
+                [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            />
+          </span>
+          <span className="flex items-center gap-1 text-[var(--ink-faint)]" title={t('yearTooltip')}>
+            <span className="text-sm">📅</span>
+            <input
+              type="number"
+              min={1900}
+              max={2099}
+              value={sheet.year ?? ''}
+              onChange={(e) => {
+                yearTouchedRef.current = true;
+                const v = e.target.value.replace(/\D/g, '').slice(0, 4);
+                updateSheet({ year: v ? Number(v) : null });
+              }}
+              placeholder={t('yearPlaceholder')}
+              className="font-sans text-sm text-[var(--ink-light)] bg-transparent border-none outline-none
+                placeholder:text-[var(--ink-faint)] w-14
                 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
           </span>

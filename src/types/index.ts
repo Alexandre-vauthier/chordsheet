@@ -163,6 +163,8 @@ export interface Sheet {
   genres: string[];
   difficulty: Difficulty | null;
   capo: number | null;
+  // V14 - Année de sortie (suggérée depuis iTunes, éditable) — sert au filtre par décennie
+  year?: number | null;
   createdAt: Date;
   updatedAt: Date;
   viewCount: number;

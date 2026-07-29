@@ -50,6 +50,7 @@ export default function ExplorePage() {
   const [sortBy, setSortBy] = useState<SortOption>(() => (searchParams.get('sort') as SortOption) ?? 'recent');
   const [selectedGenre, setSelectedGenre] = useState<string>(() => searchParams.get('genre') ?? '');
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | null>(() => { const d = searchParams.get('difficulty'); return d ? (Number(d) as Difficulty) : null; });
+  const [selectedDecade, setSelectedDecade] = useState<number | null>(() => { const d = searchParams.get('decade'); return d ? Number(d) : null; });
   // Toggles admin : afficher/masquer les grilles publiques, privées et à valider (visible ⇒ true par défaut).
   // Défaut à true côté serveur pour éviter un écart d'hydratation ; la préférence
   // stockée est relue au montage juste après.
@@ -82,11 +83,12 @@ export default function ExplorePage() {
   };
 
   // Synchroniser l'URL quand les filtres changent
-  const updateUrl = (params: { sort?: SortOption; genre?: string; difficulty?: Difficulty | null; q?: string }) => {
+  const updateUrl = (params: { sort?: SortOption; genre?: string; difficulty?: Difficulty | null; decade?: number | null; q?: string }) => {
     const p = new URLSearchParams(searchParams.toString());
     if (params.sort !== undefined) { params.sort === 'recent' ? p.delete('sort') : p.set('sort', params.sort); }
     if (params.genre !== undefined) { params.genre ? p.set('genre', params.genre) : p.delete('genre'); }
     if (params.difficulty !== undefined) { params.difficulty ? p.set('difficulty', String(params.difficulty)) : p.delete('difficulty'); }
+    if (params.decade !== undefined) { params.decade ? p.set('decade', String(params.decade)) : p.delete('decade'); }
     if (params.q !== undefined) { params.q ? p.set('q', params.q) : p.delete('q'); }
     router.replace(`/explore?${p.toString()}`, { scroll: false });
   };
@@ -94,6 +96,7 @@ export default function ExplorePage() {
   const handleSortBy = (v: SortOption) => { setSortBy(v); updateUrl({ sort: v }); };
   const handleGenre = (v: string) => { setSelectedGenre(v); updateUrl({ genre: v }); };
   const handleDifficulty = (v: Difficulty | null) => { setSelectedDifficulty(v); updateUrl({ difficulty: v }); };
+  const handleDecade = (v: number | null) => { setSelectedDecade(v); updateUrl({ decade: v }); };
 
   // Mettre à jour le genre si le param URL change (ex: depuis la navbar)
   useEffect(() => {
@@ -215,6 +218,11 @@ export default function ExplorePage() {
       result = result.filter((sheet) => sheet.difficulty === selectedDifficulty);
     }
 
+    // Filtre par décennie (année dans [decade, decade+10[)
+    if (selectedDecade) {
+      result = result.filter((sheet) => sheet.year != null && sheet.year >= selectedDecade && sheet.year < selectedDecade + 10);
+    }
+
     // Tri
     switch (sortBy) {
       case 'rated':
@@ -235,7 +243,14 @@ export default function ExplorePage() {
     }
 
     return result;
-  }, [sheets, searchQuery, selectedGenre, selectedDifficulty, sortBy, isAdmin, showPublic, showPrivate, showPending]);
+  }, [sheets, searchQuery, selectedGenre, selectedDifficulty, selectedDecade, sortBy, isAdmin, showPublic, showPrivate, showPending]);
+
+  // Décennies effectivement présentes dans les grilles (pour ne pas encombrer le menu)
+  const availableDecades = useMemo(() => {
+    const set = new Set<number>();
+    for (const s of sheets) if (s.year != null) set.add(Math.floor(s.year / 10) * 10);
+    return Array.from(set).sort((a, b) => b - a);
+  }, [sheets]);
 
   // Grouper par titre+artiste → une seule entrée par musique
   const groupedResults = useMemo(() => {
@@ -271,7 +286,7 @@ export default function ExplorePage() {
     router.replace('/explore', { scroll: false });
   };
 
-  const hasActiveFilters = searchQuery || selectedGenre || selectedDifficulty || sortBy !== 'recent' || !showPublic || !showPrivate || !showPending;
+  const hasActiveFilters = searchQuery || selectedGenre || selectedDifficulty || selectedDecade || sortBy !== 'recent' || !showPublic || !showPrivate || !showPending;
 
   const handleRandom = () => {
     if (sheets.length === 0) return;
@@ -318,7 +333,6 @@ export default function ExplorePage() {
         <div className="flex flex-wrap items-center gap-3">
           {/* Tri */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-[var(--ink-light)]">{t('sortBy')}</span>
             <div className="flex rounded-lg border border-[var(--line)] overflow-hidden">
               <button
                 onClick={() => handleSortBy('recent')}
@@ -385,6 +399,21 @@ export default function ExplorePage() {
               ))}
             </select>
           </div>
+
+          {/* Décennie (affiché seulement s'il y a des années renseignées) */}
+          {availableDecades.length > 0 && (
+            <select
+              value={selectedDecade ?? ''}
+              onChange={(e) => handleDecade(e.target.value ? Number(e.target.value) : null)}
+              className="px-3 py-1.5 rounded-lg border border-[var(--line)] text-sm bg-[var(--cell-bg)]
+                text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            >
+              <option value="">{t('allYears')}</option>
+              {availableDecades.map((d) => (
+                <option key={d} value={d}>{`${d}s`}</option>
+              ))}
+            </select>
+          )}
 
           {/* Toggles admin : visibilité des grilles privées / à valider */}
           {isAdmin && (

@@ -2,63 +2,64 @@
 
 import { useState, useEffect } from 'react';
 
+type ArtworkData = { artworkUrl: string | null; previewUrl: string | null; year: number | null };
+
 // Cache mémoire (déduplique les requêtes dans la même session)
-const MEM_CACHE = new Map<string, { artworkUrl: string | null; previewUrl: string | null }>();
+const MEM_CACHE = new Map<string, ArtworkData>();
 
 // Cache localStorage (persiste entre sessions, TTL 7 jours)
-const LS_PREFIX = 'artwork6_';
+// v7 : ajout de l'année (releaseDate iTunes) — bump du préfixe pour re-fetch les entrées v6
+const LS_PREFIX = 'artwork7_';
 const TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 // Requêtes en vol — évite de tirer deux fois la même clé simultanément
-const IN_FLIGHT = new Map<string, Array<(r: { artworkUrl: string | null; previewUrl: string | null }) => void>>();
+const IN_FLIGHT = new Map<string, Array<(r: ArtworkData) => void>>();
 
-function lsGet(key: string): { artworkUrl: string | null; previewUrl: string | null } | undefined {
+function lsGet(key: string): ArtworkData | undefined {
   try {
     const raw = localStorage.getItem(LS_PREFIX + key);
     if (!raw) return undefined;
-    const { data, expires } = JSON.parse(raw) as {
-      data: { artworkUrl: string | null; previewUrl: string | null };
-      expires: number;
-    };
+    const { data, expires } = JSON.parse(raw) as { data: ArtworkData; expires: number };
     if (Date.now() > expires) { localStorage.removeItem(LS_PREFIX + key); return undefined; }
     return data;
   } catch { return undefined; }
 }
 
-function lsSet(key: string, data: { artworkUrl: string | null; previewUrl: string | null }) {
+function lsSet(key: string, data: ArtworkData) {
   // Ne persiste que les vrais résultats
-  if (!data.artworkUrl && !data.previewUrl) return;
+  if (!data.artworkUrl && !data.previewUrl && data.year == null) return;
   try {
     localStorage.setItem(LS_PREFIX + key, JSON.stringify({ data, expires: Date.now() + TTL_MS }));
   } catch { /* quota dépassé */ }
 }
 
-async function fetchArtwork(query: string): Promise<{ artworkUrl: string | null; previewUrl: string | null }> {
+async function fetchArtwork(query: string): Promise<ArtworkData> {
   try {
     const res = await fetch(`/api/artwork?q=${encodeURIComponent(query)}`);
-    if (!res.ok) return { artworkUrl: null, previewUrl: null };
+    if (!res.ok) return { artworkUrl: null, previewUrl: null, year: null };
     return await res.json();
   } catch {
-    return { artworkUrl: null, previewUrl: null };
+    return { artworkUrl: null, previewUrl: null, year: null };
   }
 }
 
 export function useArtwork(artist: string | undefined, title: string | undefined) {
   const [artworkUrl, setArtworkUrl] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [year, setYear] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!artist && !title) { setArtworkUrl(null); setPreviewUrl(null); return; }
+    if (!artist && !title) { setArtworkUrl(null); setPreviewUrl(null); setYear(null); return; }
 
     const query = [title, artist].filter(Boolean).join(' ').trim();
-    if (!query) { setArtworkUrl(null); setPreviewUrl(null); return; }
+    if (!query) { setArtworkUrl(null); setPreviewUrl(null); setYear(null); return; }
+
+    const apply = (d: ArtworkData) => { setArtworkUrl(d.artworkUrl); setPreviewUrl(d.previewUrl); setYear(d.year ?? null); };
 
     // 1. Cache mémoire
     if (MEM_CACHE.has(query)) {
-      const c = MEM_CACHE.get(query)!;
-      setArtworkUrl(c.artworkUrl);
-      setPreviewUrl(c.previewUrl);
+      apply(MEM_CACHE.get(query)!);
       return;
     }
 
@@ -66,8 +67,7 @@ export function useArtwork(artist: string | undefined, title: string | undefined
     const cached = lsGet(query);
     if (cached !== undefined) {
       MEM_CACHE.set(query, cached);
-      setArtworkUrl(cached.artworkUrl);
-      setPreviewUrl(cached.previewUrl);
+      apply(cached);
       return;
     }
 
@@ -77,7 +77,7 @@ export function useArtwork(artist: string | undefined, title: string | undefined
     // 3. Requête déjà en vol — s'y raccrocher
     if (IN_FLIGHT.has(query)) {
       IN_FLIGHT.get(query)!.push((result) => {
-        if (!cancelled) { setArtworkUrl(result.artworkUrl); setPreviewUrl(result.previewUrl); setLoading(false); }
+        if (!cancelled) { apply(result); setLoading(false); }
       });
       return () => { cancelled = true; };
     }
@@ -94,8 +94,7 @@ export function useArtwork(artist: string | undefined, title: string | undefined
       for (const cb of waiters) cb(result);
 
       if (!cancelled) {
-        setArtworkUrl(result.artworkUrl);
-        setPreviewUrl(result.previewUrl);
+        apply(result);
         setLoading(false);
       }
     });
@@ -103,5 +102,5 @@ export function useArtwork(artist: string | undefined, title: string | undefined
     return () => { cancelled = true; };
   }, [artist, title]);
 
-  return { artworkUrl, previewUrl, loading };
+  return { artworkUrl, previewUrl, year, loading };
 }

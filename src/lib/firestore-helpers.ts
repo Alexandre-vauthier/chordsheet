@@ -180,6 +180,10 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
   if (sheet.groovePattern) {
     (base as unknown as Record<string, unknown>).groovePattern = sheet.groovePattern;
   }
+  // V14 - Année de sortie (seulement si renseignée)
+  if (sheet.year != null) {
+    (base as unknown as Record<string, unknown>).year = sheet.year;
+  }
 
   return base;
 }
@@ -212,6 +216,7 @@ export function fromFirestore(
     genres: (data.genres as string[]) || [],
     difficulty: (data.difficulty as Difficulty) || null,
     capo: (data.capo as number) ?? null,
+    year: (data.year as number) ?? null,
     createdAt: (data.createdAt as { toDate: () => Date })?.toDate?.() || new Date(),
     updatedAt: (data.updatedAt as { toDate: () => Date })?.toDate?.() || new Date(),
     viewCount: (data.viewCount as number) || 0,
