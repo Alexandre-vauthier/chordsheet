@@ -142,7 +142,7 @@ export default function UserPage({ params }: UserPageProps) {
 
   if (!publicUser) {
     return (
-      <div className="max-w-4xl mx-auto px-4 py-16 text-center text-[var(--ink-faint)]">
+      <div className="max-w-[1270px] mx-auto px-4 sm:px-6 py-16 text-center text-[var(--ink-faint)]">
         Auteur introuvable ou aucune grille publiée.
       </div>
     );
@@ -151,7 +151,7 @@ export default function UserPage({ params }: UserPageProps) {
   const initial = publicUser.displayName.charAt(0).toUpperCase();
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+    <div className="max-w-[1270px] mx-auto px-4 sm:px-6 py-8">
       {/* Header auteur */}
       <div className="flex items-center gap-5 mb-8 pb-6 border-b-2 border-[var(--ink)]">
         <div className="w-16 h-16 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-2xl font-bold shrink-0 shadow-md">
@@ -313,7 +313,7 @@ export default function UserPage({ params }: UserPageProps) {
           </div>
         )
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {sortedSheets.map(sheet => (
             <SheetCard
               key={sheet.id}
