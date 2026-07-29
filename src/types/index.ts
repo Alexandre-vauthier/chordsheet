@@ -52,6 +52,7 @@ export const GENRES = [
   'Funk',
   'Soul',
   'R&B',
+  'Hip Hop / Rap',
   'Metal',
   'Punk',
   'Classique',

@@ -3,12 +3,11 @@
 import { useState, useEffect, use, useCallback, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 
-import { useAuth } from '@/lib/auth-context';
 import { useSet } from '@/lib/use-sets';
 import { useConcertSession } from '@/lib/use-concert-session';
 import { useGroups } from '@/lib/use-groups';
 import { parseTempo } from '@/lib/use-playback';
-import { playMetronomeTick, startScheduledMetronome } from '@/lib/chord-audio';
+import { startScheduledMetronome } from '@/lib/chord-audio';
 import { SheetViewer } from '@/components/sheet/sheet-viewer';
 import { Button } from '@/components/ui/button';
 import type { Section } from '@/types';
@@ -71,11 +70,12 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
   const t = useTranslations('Sets');
   const { id } = use(params);
   const router = useRouter();
-  const { user } = useAuth();
   const { set, sheets, isLoading, error } = useSet(id);
 
   const isGroupSet = !!set?.groupId;
-  const isDrummer = user?.preferredInstrument === 'percussion';
+  // Pilote = le membre qui a lancé la lecture (n'importe qui dans le groupe).
+  // Il porte le décompte + métronome et fait autorité sur le temps ; les autres suivent.
+  const [isDriver, setIsDriver] = useState(false);
 
   const { currentIndex: syncedIndex, isSynced, goToSheet, autoScroll, startAutoScroll, stopAutoScroll } = useConcertSession(
     isGroupSet ? id : undefined,
@@ -94,7 +94,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
 
   const currentSheet = sheets[currentIndex];
 
-  // ── Batteur : count-in + métronome ─────────────────────────────────────────
+  // ── Pilote : count-in + métronome ──────────────────────────────────────────
   const [countBeat, setCountBeat] = useState(0); // 0 = inactif, 1-8 = décompte
   const countTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -117,7 +117,8 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
   }, [stopMetronome]);
 
   const startCountIn = useCallback(() => {
-    if (!currentSheet || !isGroupSet || !isDrummer) return;
+    if (!currentSheet || !isGroupSet) return;
+    setIsDriver(true);
     cancelCountIn();
 
     const bpm = parseTempo(currentSheet.tempo || '90');
@@ -161,7 +162,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
       metronomeRef.current = startScheduledMetronome(finalBpm, beatsPerMeasure);
     }, 8 * msPerBeat);
     countTimersRef.current.push(endT);
-  }, [currentSheet, isGroupSet, isDrummer, currentIndex, startAutoScroll, cancelCountIn, stopMetronome]);
+  }, [currentSheet, isGroupSet, currentIndex, startAutoScroll, cancelCountIn, stopMetronome]);
 
   // Cleanup au démontage
   useEffect(() => () => cancelCountIn(), [cancelCountIn]);
@@ -187,15 +188,16 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
         autoScroll.startTimeMs,
         autoScroll.bpm,
         currentSheet.tempoUnit,
-        isDrummer ? 0 : GUEST_SYNC_COMPENSATION_MS
+        isDriver ? 0 : GUEST_SYNC_COMPENSATION_MS
       );
       if (!result) {
         setConcertCellPath(null);
         prevConcertPathRef.current = null;
-        // Fin de grille : arrêter le métronome et libérer l'état Firestore
-        if (isDrummer) {
+        // Fin de grille : le pilote arrête le métronome et libère l'état Firestore
+        if (isDriver) {
           stopMetronome();
           stopAutoScroll().catch(() => {});
+          setIsDriver(false);
         }
         return;
       }
@@ -210,7 +212,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
 
     rafRef.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [autoScroll, currentIndex, currentSheet, isDrummer, stopMetronome, stopAutoScroll]);
+  }, [autoScroll, currentIndex, currentSheet, isDriver, stopMetronome, stopAutoScroll]);
 
   // ── Navigation clavier ──────────────────────────────────────────────────────
   const hasPrevious = currentIndex > 0;
@@ -331,10 +333,10 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
         )}
       </div>
 
-      {/* Barre de navigation bas (sticky) — inclut les contrôles batteur */}
+      {/* Barre de navigation bas (sticky) — inclut les contrôles de lecture concert */}
       <div className="bg-[var(--cell-bg)] border-t border-[var(--line)] print:hidden sticky bottom-0 z-40">
-        {/* Rangée batteur */}
-        {isGroupSet && isDrummer && (
+        {/* Rangée lecture : disponible pour tout membre du groupe */}
+        {isGroupSet && (
           <div className="border-b border-[var(--line)] py-2 px-4 flex items-center justify-center gap-4">
             {countBeat > 0 ? (
               <>
@@ -363,7 +365,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
               </>
             ) : isAutoScrollActive ? (
               <button
-                onClick={() => { stopMetronome(); stopAutoScroll().catch(() => {}); }}
+                onClick={() => { stopMetronome(); stopAutoScroll().catch(() => {}); setIsDriver(false); }}
                 className="flex items-center gap-2 px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
               >
                 <span className="w-2 h-2 rounded bg-white" />

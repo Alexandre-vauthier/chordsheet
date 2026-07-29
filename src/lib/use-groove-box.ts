@@ -172,6 +172,12 @@ export const PATTERN_DEFS: PatternDef[] = [
   { id: 'funkGhost', label: 'Funk (ghost notes)', category: 'Funk / Soul',
     pattern: { kick: [0, 3, 6, 10, 16, 19, 22, 26], snare: BACKBEAT, snareGhost: [1, 5, 7, 9, 13, 17, 21, 23, 25, 29], hihatClosed: EIGHTHS, hihatOpen: [15, 31], cowbell: OFFBEATS } },
 
+  // ── Hip Hop / Urban ──
+  { id: 'hiphop', label: 'Hip Hop (boom bap)', category: 'Hip Hop / Urban',
+    pattern: { kick: [0, 6, 16, 22], snare: BACKBEAT, snareGhost: [10, 26], hihatClosed: EIGHTHS } },
+  { id: 'trap', label: 'Trap', category: 'Hip Hop / Urban',
+    pattern: { kick: [0, 3, 11, 16, 22], clap: [8, 24], hihatClosed: SIXTEENTHS } },
+
   // ── Country / Folk ──
   { id: 'country', label: 'Country', category: 'Country / Folk',
     pattern: { kick: [0, 8, 16, 24], rimshot: BACKBEAT, hihatClosed: EIGHTHS } },
@@ -188,6 +194,7 @@ const GENRE_MAP: Record<string, string> = {
   'Blues': 'blues',
   'Reggae': 'reggae',
   'Funk': 'funk', 'Soul': 'funk', 'R&B': 'funk',
+  'Hip Hop / Rap': 'hiphop',
   'Bossa Nova': 'bossa', 'Latino': 'bossa',
   'Country': 'country', 'Folk': 'country',
 };
