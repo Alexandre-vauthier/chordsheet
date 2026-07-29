@@ -39,7 +39,7 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
   const [addedToSetIds, setAddedToSetIds] = useState<string[]>([]);
   const menuRef = useRef<HTMLDivElement>(null);
   const { sets, addSheetToSet } = useSets(user?.id);
-  const comments = useSheetComments(sheet?.id, sheet?.ownerId);
+  const comments = useSheetComments(sheet?.id, sheet?.ownerId, sheet?.title);
 
   useEffect(() => {
     window.scrollTo(0, 0);

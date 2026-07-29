@@ -13,6 +13,7 @@ import { useDebouncedValue } from '@/lib/use-debounced-value';
 import type { Sheet } from '@/types';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { LanguageSwitcher } from './language-switcher';
+import { NotificationBell } from './notification-bell';
 
 type SearchResult =
   | { kind: 'sheet'; key: string; sheet: Sheet }
@@ -208,6 +209,7 @@ export function Navbar() {
                     </svg>
                   </button>
                 )}
+                <NotificationBell />
                 <Link
                   href="/sheet/new"
                   className="flex items-center gap-1 px-3 py-1.5 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm rounded-lg font-medium transition-colors"
@@ -352,6 +354,7 @@ export function Navbar() {
 
           {/* Mobile: Burger + Actions */}
           <div className="flex sm:hidden items-center gap-2">
+            {!loading && user && <NotificationBell />}
             {!loading && user && (
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

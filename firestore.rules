@@ -87,6 +87,16 @@ service cloud.firestore {
       allow delete: if request.auth != null && request.auth.uid == resource.data.senderId;
     }
 
+    // Notifications in-app : destinataire = userId. Lisibles/effaçables par lui seul ;
+    // il ne peut que passer read à true. Création par l'émetteur (fromId == uid).
+    match /notifications/{notifId} {
+      allow read: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && request.resource.data.fromId == request.auth.uid;
+      allow update: if request.auth != null && request.auth.uid == resource.data.userId &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
+    }
+
     // Sets (setlists) — toujours privés (owner ou membres du groupe uniquement)
     match /sets/{setId} {
       allow read: if (request.auth != null && request.auth.uid == resource.data.ownerId) ||

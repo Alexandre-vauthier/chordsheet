@@ -37,7 +37,7 @@ export interface UseSheetCommentsResult {
   hasCommented: boolean;
 }
 
-export function useSheetComments(sheetId: string | undefined, ownerId: string | undefined): UseSheetCommentsResult {
+export function useSheetComments(sheetId: string | undefined, ownerId: string | undefined, sheetTitle?: string): UseSheetCommentsResult {
   const { user } = useAuth();
   const [messages, setMessages] = useState<SheetCommentMessage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -91,7 +91,21 @@ export function useSheetComments(sheetId: string | undefined, ownerId: string | 
       text: text.trim(),
       createdAt: serverTimestamp(),
     });
-  }, [user, sheetId, ownerId, isOwner]);
+    // Notification pour le destinataire du message (l'auteur si c'est un visiteur qui
+    // écrit ; le visiteur du fil si c'est l'auteur qui répond). Jamais pour soi-même.
+    const recipientId = isOwner ? commenterId : ownerId;
+    if (recipientId && recipientId !== user.id) {
+      await addDoc(collection(db, 'notifications'), {
+        userId: recipientId,
+        fromId: user.id,
+        fromName: user.displayName || 'Utilisateur',
+        sheetId,
+        sheetTitle: sheetTitle || '',
+        createdAt: serverTimestamp(),
+        read: false,
+      }).catch(() => {});
+    }
+  }, [user, sheetId, ownerId, isOwner, sheetTitle]);
 
   const threads: CommentThread[] = useMemo(() => {
     const map = new Map<string, CommentThread>();
