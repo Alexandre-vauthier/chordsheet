@@ -74,21 +74,7 @@ export default function SessionHubPage() {
       <div className="max-w-lg mx-auto px-4 py-8">
         <h1 className="font-playfair text-2xl font-bold text-[var(--ink)] mb-6">{t('hubTitle')}</h1>
 
-        <div className="rounded-xl border border-[var(--line)] bg-[var(--cell-bg)] p-6 text-center space-y-4">
-          <div className="text-3xl">📡</div>
-          <div>
-            <p className="font-semibold text-[var(--ink)]">{t('proOnlyTitle')}</p>
-            <p className="text-sm text-[var(--ink-light)] mt-1.5">
-              {t('proOnlyDesc')}
-            </p>
-          </div>
-          <Link
-            href="/pricing"
-            className="inline-block px-6 py-2.5 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm font-medium rounded-lg transition-colors"
-          >
-            {t('discoverPro')}
-          </Link>
-        </div>
+        <LiveSessionUpsell t={t} />
 
         <JoinWithCodeForm
           t={t}
@@ -124,6 +110,48 @@ export default function SessionHubPage() {
         setJoinCode={setJoinCode}
         onSubmit={handleJoin}
       />
+    </div>
+  );
+}
+
+// Argumentaire Pro pour les sessions live (esprit feu de camp)
+function LiveSessionUpsell({ t }: { t: ReturnType<typeof useTranslations> }) {
+  const benefits = [
+    { icon: '🔴', title: t('proBenefitSyncTitle'), desc: t('proBenefitSyncDesc') },
+    { icon: '🎸', title: t('proBenefitInstrumentTitle'), desc: t('proBenefitInstrumentDesc') },
+    { icon: '🔥', title: t('proBenefitCampfireTitle'), desc: t('proBenefitCampfireDesc') },
+  ];
+  return (
+    <div className="rounded-2xl border border-[var(--accent)]/30 bg-gradient-to-b from-[var(--accent-soft)] to-transparent p-6 sm:p-8">
+      <div className="text-center max-w-md mx-auto">
+        <span className="inline-block text-xs font-semibold uppercase tracking-wider text-[var(--accent)] bg-[var(--accent-soft)] px-3 py-1 rounded-full">
+          Pro
+        </span>
+        <h2 className="font-playfair text-xl sm:text-2xl font-bold text-[var(--ink)] mt-3">{t('proUpsellTitle')}</h2>
+        <p className="text-sm text-[var(--ink-light)] mt-2">{t('proUpsellSubtitle')}</p>
+      </div>
+
+      <div className="mt-6 space-y-3 max-w-md mx-auto">
+        {benefits.map((b, i) => (
+          <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-[var(--paper)] border border-[var(--line)]">
+            <div className="w-9 h-9 rounded-full bg-[var(--accent-soft)] flex items-center justify-center text-lg shrink-0">{b.icon}</div>
+            <div className="min-w-0">
+              <p className="font-semibold text-sm text-[var(--ink)]">{b.title}</p>
+              <p className="text-sm text-[var(--ink-light)] mt-0.5">{b.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="text-center mt-6">
+        <Link
+          href="/pricing"
+          className="inline-block px-6 py-2.5 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm font-medium rounded-lg transition-colors"
+        >
+          {t('discoverPro')}
+        </Link>
+        <p className="text-xs text-[var(--ink-faint)] mt-3">{t('proPricing')}</p>
+      </div>
     </div>
   );
 }
