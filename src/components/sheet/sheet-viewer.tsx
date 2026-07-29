@@ -538,40 +538,24 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 </svg>
               </button>
 
-              {/* Toggle boite à rythme */}
-              <button
-                onClick={() => setGrooveEnabled(v => !v)}
-                title={grooveEnabled ? t('disableGrooveBox') : t('enableGrooveBox')}
-                className={`
-                  flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
-                  ${grooveEnabled
-                    ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
-                    : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
-                  }
-                `}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
-                  <ellipse cx="12" cy="9" rx="7" ry="2.5"/>
-                  <line x1="5" y1="9" x2="5" y2="16" strokeLinecap="round"/>
-                  <line x1="19" y1="9" x2="19" y2="16" strokeLinecap="round"/>
-                  <path d="M5 16c0 1.38 3.13 2.5 7 2.5s7-1.12 7-2.5" strokeLinecap="round"/>
-                </svg>
-              </button>
-
-              {/* Choix du pattern de boîte à rythme (+ prévisualisation) */}
+              {/* Boîte à rythme : bouton unique (activer + choisir le pattern), "Aucun" en tête */}
               <div className="relative" ref={grooveMenuRef}>
                 <button
                   onClick={() => setGrooveMenuOpen(v => !v)}
                   title={t('grooveBoxPattern')}
-                  className="flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all duration-150"
+                  className={`
+                    flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
+                    ${grooveEnabled
+                      ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                      : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                    }
+                  `}
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
-                    <line x1="4" y1="7" x2="20" y2="7" strokeLinecap="round"/>
-                    <line x1="4" y1="12" x2="20" y2="12" strokeLinecap="round"/>
-                    <line x1="4" y1="17" x2="20" y2="17" strokeLinecap="round"/>
-                    <circle cx="9" cy="7" r="2" fill="currentColor" stroke="none"/>
-                    <circle cx="15" cy="12" r="2" fill="currentColor" stroke="none"/>
-                    <circle cx="8" cy="17" r="2" fill="currentColor" stroke="none"/>
+                    <ellipse cx="12" cy="9" rx="7" ry="2.5"/>
+                    <line x1="5" y1="9" x2="5" y2="16" strokeLinecap="round"/>
+                    <line x1="19" y1="9" x2="19" y2="16" strokeLinecap="round"/>
+                    <path d="M5 16c0 1.38 3.13 2.5 7 2.5s7-1.12 7-2.5" strokeLinecap="round"/>
                   </svg>
                 </button>
                 {grooveMenuOpen && (
@@ -579,12 +563,23 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                     <p className="px-3 py-1.5 text-[11px] uppercase tracking-wide text-[var(--ink-faint)]">
                       {t('grooveBoxPattern')}
                     </p>
+                    {/* Aucun : coupe la boîte à rythme */}
                     <button
-                      onClick={() => setLivePattern(undefined)}
+                      onClick={() => setGrooveEnabled(false)}
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] transition-colors"
                     >
-                      <span className={`w-3.5 h-3.5 rounded-full border ${!livePattern ? 'border-[var(--accent)] bg-[var(--accent)]' : 'border-[var(--line)]'} flex items-center justify-center`}>
-                        {!livePattern && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      <span className={`w-3.5 h-3.5 rounded-full border ${!grooveEnabled ? 'border-[var(--accent)] bg-[var(--accent)]' : 'border-[var(--line)]'} flex items-center justify-center`}>
+                        {!grooveEnabled && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      </span>
+                      {t('accompNone')}
+                    </button>
+                    <div className="mx-3 my-1 h-px bg-[var(--line)]" />
+                    <button
+                      onClick={() => { setGrooveEnabled(true); setLivePattern(undefined); }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] transition-colors"
+                    >
+                      <span className={`w-3.5 h-3.5 rounded-full border ${grooveEnabled && !livePattern ? 'border-[var(--accent)] bg-[var(--accent)]' : 'border-[var(--line)]'} flex items-center justify-center`}>
+                        {grooveEnabled && !livePattern && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
                       </span>
                       {t('automaticByGenre')}
                     </button>
@@ -592,12 +587,12 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                       <div key={category}>
                         <p className="px-3 pt-2 pb-1 text-[10px] uppercase tracking-wide text-[var(--ink-faint)]">{category}</p>
                         {PATTERN_DEFS.filter(p => p.category === category).map((p) => {
-                          const selected = livePattern === p.id;
+                          const selected = grooveEnabled && livePattern === p.id;
                           const previewing = previewPattern === p.id;
                           return (
                             <div key={p.id} className="flex items-center">
                               <button
-                                onClick={() => setLivePattern(p.id)}
+                                onClick={() => { setGrooveEnabled(true); setLivePattern(p.id); }}
                                 className="flex-1 flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] transition-colors"
                               >
                                 <span className={`w-3.5 h-3.5 rounded-full border ${selected ? 'border-[var(--accent)] bg-[var(--accent)]' : 'border-[var(--line)]'} flex items-center justify-center`}>
