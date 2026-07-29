@@ -11,7 +11,7 @@ import { SectionBlock } from './section-block';
 import { Button } from '@/components/ui/button';
 import { InstrumentSelector, ChordSummary, ChordEditorModal } from '@/components/chord';
 import type { CustomChordMap } from '@/components/chord';
-import { usePlayback, parseTempo, ACCOMPANIMENT_INSTRUMENTS, type PlayStyle } from '@/lib/use-playback';
+import { usePlayback, parseTempo, ACCOMPANIMENT_INSTRUMENTS, type PlayStyle, type PlaybackVoice } from '@/lib/use-playback';
 import { useGrooveBox, PATTERN_DEFS } from '@/lib/use-groove-box';
 import { stopPreviewAudio } from '@/components/explore/sheet-card';
 import { CoachMark } from './coach-mark';
@@ -174,11 +174,23 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
   };
 
   // Playback
+  // Si l'auteur a défini une config de lecture, le Play de l'éditeur joue exactement
+  // ces voix (et réagit en direct : usePlayback relit les voix via une ref). Sinon,
+  // comportement par défaut = l'instrument principal, plaqué.
+  const playbackVoices = useMemo<PlaybackVoice[] | undefined>(
+    () => sheet.playbackConfig !== undefined
+      ? sheet.playbackConfig.filter((v) => ACCOMPANIMENT_INSTRUMENTS.includes(v.id))
+      : undefined,
+    [sheet.playbackConfig],
+  );
+
   const { isPlaying, activeStep, playSection, playRow, togglePlay, stop } = usePlayback({
     sections: sheet.sections,
     tempo: sheet.tempo,
     tempoUnit: sheet.tempoUnit,
     instrumentId: sheet.instrumentId || 'guitar',
+    playbackInstruments: playbackVoices,
+    chordsEnabled: playbackVoices ? playbackVoices.length > 0 : true,
     customChords: sheet.customChords as Record<string, unknown>,
     metronomeEnabled,
     capo: sheet.capo ?? 0,

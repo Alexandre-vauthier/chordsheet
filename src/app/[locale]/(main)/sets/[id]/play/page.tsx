@@ -287,7 +287,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
             )}
             {isGroupSet && activeConcert && (
               <button
-                onClick={() => endConcert(set!.groupId!).catch(() => {})}
+                onClick={() => { if (confirm(t('endConcertConfirm'))) endConcert(set!.groupId!).catch(() => {}); }}
                 className="flex items-center gap-1.5 px-2.5 py-1 bg-red-600 hover:bg-red-700 text-white rounded-md text-xs font-medium transition-colors"
                 title={t('endConcertTitle')}
               >

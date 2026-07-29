@@ -203,6 +203,24 @@ export default function UserPage({ params }: UserPageProps) {
         </div>
       </div>
 
+      {/* Accès rapides du propriétaire : le profil sert de hub vers grilles et sets */}
+      {user?.id === id && (
+        <div className="flex flex-wrap gap-2 mb-8">
+          <Link
+            href="/dashboard"
+            className="px-4 py-2 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)] text-sm text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+          >
+            Mes grilles
+          </Link>
+          <Link
+            href="/sets"
+            className="px-4 py-2 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)] text-sm text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+          >
+            Mes sets
+          </Link>
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
         <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-4 text-center">

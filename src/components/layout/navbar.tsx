@@ -452,8 +452,12 @@ export function Navbar() {
               {t('newSheetMobile')}
             </Link>
             <div className="border-t border-white/10 my-2" />
-            {/* Identité */}
-            <div className="flex items-center gap-2 px-3 py-2">
+            {/* Profil : un seul lien (le profil donne accès aux grilles et sets) */}
+            <Link
+              href={`/user/${user.id}`}
+              onClick={closeMobileMenu}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors"
+            >
               {user.photoURL ? (
                 <img src={user.photoURL} alt="" className="w-7 h-7 rounded-full object-cover" />
               ) : (
@@ -462,27 +466,9 @@ export function Navbar() {
                 </div>
               )}
               <span className="text-sm font-medium text-[var(--nav-text)]">{user.displayName || user.email}</span>
-            </div>
-            <Link
-              href={`/user/${user.id}`}
-              onClick={closeMobileMenu}
-              className="block px-3 py-2 text-sm text-[var(--nav-text)]/70 hover:text-[var(--nav-text)] hover:bg-white/10 rounded-lg transition-colors"
-            >
-              {t('publicProfile')}
-            </Link>
-            <Link
-              href="/dashboard"
-              onClick={closeMobileMenu}
-              className="block px-3 py-2 text-sm text-[var(--nav-text)]/70 hover:text-[var(--nav-text)] hover:bg-white/10 rounded-lg transition-colors"
-            >
-              {t('book')}
-            </Link>
-            <Link
-              href="/sets"
-              onClick={closeMobileMenu}
-              className="block px-3 py-2 text-sm text-[var(--nav-text)]/70 hover:text-[var(--nav-text)] hover:bg-white/10 rounded-lg transition-colors"
-            >
-              {t('mySets')}
+              <svg className="w-4 h-4 ml-auto text-[var(--nav-text)]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </Link>
             <Link
               href="/session"
