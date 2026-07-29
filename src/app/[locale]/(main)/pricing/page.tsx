@@ -24,6 +24,9 @@ export default function PricingPage() {
     t('proFeature3'),
     t('proFeature4'),
     t('proFeature5'),
+    t('proFeature6'),
+    t('proFeature7'),
+    t('proFeature8'),
   ];
   const { user } = useAuth();
   const router = useRouter();
