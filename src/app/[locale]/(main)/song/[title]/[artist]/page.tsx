@@ -11,6 +11,7 @@ import { useChordNotation } from '@/lib/use-chord-notation';
 import type { Sheet, Difficulty } from '@/types';
 import { DIFFICULTY_LABELS } from '@/types';
 import { Link } from '@/i18n/navigation';
+import { decodeParam } from '@/lib/decode-param';
 
 interface PageParams {
   title: string;
@@ -112,9 +113,11 @@ function VersionRow({ sheet, isBookmarked, onToggleBookmark }: {
 }
 
 export default function SongPage({ params }: { params: Promise<PageParams> }) {
-  // Next fournit déjà les params de route URL-décodés : ne PAS refaire de
-  // decodeURIComponent (un double décodage plante sur un '%' littéral, ex. « 50% »).
-  const { title, artist } = use(params);
+  // Les params de route arrivent URL-encodés (ex. « Save%20Tonight ») : on décode,
+  // de façon sûre (pas de plantage sur un '%' littéral, ex. « 50% »).
+  const { title: rawTitle, artist: rawArtist } = use(params);
+  const title = decodeParam(rawTitle);
+  const artist = decodeParam(rawArtist);
 
   const { user, isAdmin, loading: authLoading } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);

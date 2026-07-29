@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { getAdminDb } from '@/lib/firebase-admin';
+import { decodeParam } from '@/lib/decode-param';
 import { ArtistViewClient } from './artist-view-client';
 
 interface ArtistPageProps {
@@ -7,8 +8,9 @@ interface ArtistPageProps {
 }
 
 export async function generateMetadata({ params }: ArtistPageProps): Promise<Metadata> {
-  // Param déjà URL-décodé par Next : pas de decodeURIComponent (planterait sur un '%').
-  const { name: artistName } = await params;
+  // Param URL-encodé (ex. « Save%20Tonight ») : décodage sûr.
+  const { name } = await params;
+  const artistName = decodeParam(name);
 
   try {
     const snap = await getAdminDb()

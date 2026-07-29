@@ -6,6 +6,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
+import { decodeParam } from '@/lib/decode-param';
 import { useBookmarks } from '@/lib/use-bookmarks';
 import { useArtwork } from '@/lib/use-artwork';
 import { SheetCard } from '@/components/explore/sheet-card';
@@ -19,9 +20,8 @@ interface ArtistViewClientProps {
 
 export function ArtistViewClient({ name }: ArtistViewClientProps) {
   const t = useTranslations('ArtistView');
-  // `name` vient d'un param de route déjà décodé par Next : pas de re-décodage
-  // (un double decodeURIComponent plante sur un '%' littéral).
-  const artistName = name;
+  // Param URL-encodé (ex. « Save%20Tonight ») : décodage sûr (pas de plantage sur '%').
+  const artistName = decodeParam(name);
   const { user, isAdmin, loading: authLoading } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
   const { artworkUrl } = useArtwork(artistName, undefined);
