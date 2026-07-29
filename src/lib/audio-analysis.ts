@@ -353,7 +353,7 @@ export interface DetectedSection { measures: Measure[]; repeat: number; loop: bo
 const sectionSig = (s: DetectedSection): string =>
   s.measures.map((mz) => mz.map((c) => `${c.chord}:${c.beats}`).join(',')).join('|');
 
-export function toSections(tl: Timeline, beatsPerBar: number, debug?: Record<string, unknown>): DetectedSection[] {
+export function toSections(tl: Timeline, beatsPerBar: number): DetectedSection[] {
   const beatDur = medianBeatDur(tl);
   // Filtre parasites RELATIF à la durée typique des accords : un segment beaucoup plus
   // court que la médiane est une erreur de détection à la jonction (ex. un D#/F d'un temps
@@ -377,7 +377,6 @@ export function toSections(tl: Timeline, beatsPerBar: number, debug?: Record<str
   // répète, puis on ouvre une nouvelle section quand le motif change. Les runs isolés
   // (intro/pont non bouclés) sortent en section « libre » (mesures simples).
   const raw: DetectedSection[] = [];
-  const dbg: string[] = [];
   let soloBuf: Measure[] = [];
   const flushSolo = () => { if (soloBuf.length) { raw.push({ measures: soloBuf, repeat: 1, loop: false }); soloBuf = []; } };
   let pos = 0, guard = 100000;
@@ -404,7 +403,6 @@ export function toSections(tl: Timeline, beatsPerBar: number, debug?: Record<str
           pattern.push({ chord: Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0], beats: median(durs) });
         }
         raw.push({ measures: buildPatternMeasures(pattern, beatsPerBar, tonic), repeat: reps, loop: true });
-        dbg.push(`loop P${P}x${reps}`);
         pos += reps * P;
         continue;
       }
@@ -413,7 +411,6 @@ export function toSections(tl: Timeline, beatsPerBar: number, debug?: Record<str
     const r = runs[pos];
     const nm = Math.max(1, Math.round(r.beats / beatsPerBar));
     for (let k = 0; k < nm; k++) soloBuf.push([{ chord: r.chord, beats: beatsPerBar }]);
-    dbg.push('solo');
     pos++;
   }
   flushSolo();
@@ -425,16 +422,6 @@ export function toSections(tl: Timeline, beatsPerBar: number, debug?: Record<str
     const last = sections[sections.length - 1];
     if (last && last.loop && s.loop && sectionSig(last) === sectionSig(s)) last.repeat += s.repeat;
     else sections.push({ ...s });
-  }
-
-  if (debug) {
-    debug.bpm = tl.bpm; debug.key = tl.key; debug.tonic = tonic; debug.beatDurMedian = beatDur;
-    debug.perBeatHead = perBeat.slice(0, 96).join(' ');
-    debug.segments = dbg.slice(0, 40).join(' ');
-    debug.sections = sections
-      .map((s) => `[${s.loop ? 'x' + s.repeat : 'libre'}] ` + s.measures.slice(0, 8).map((mz) => mz.map((c) => `${c.chord || '-'}${c.beats > 1 ? '·' + c.beats : ''}`).join(' ')).join(' | '))
-      .join('  ||  ');
-    debug.segDurHead = segs.slice(0, 48).map((c) => `${madmomToChord(c.label) || '-'}:${(c.end - c.start).toFixed(2)}`).join(' ');
   }
 
   return sections;

@@ -94,14 +94,10 @@ export async function POST(req: NextRequest) {
     // Suffixe de 7e par accord (enrichissement final ; la structure reste sur maj/min).
     const seventh = seventhByChord(timeline.chords, sharps);
     const enrich = (chord: string): string => (chord ? chord + (seventh.get(chord) ?? '') : chord);
-    const debug: Record<string, unknown> = {};
-    const detected = toSections(timeline, beatsPerBar, debug).map((s) => ({
+    const detected = toSections(timeline, beatsPerBar).map((s) => ({
       repeat: s.repeat,
       measures: s.measures.map((mez) => mez.map((c) => ({ chord: respellChord(c.chord, sharps), beats: c.beats }))),
     }));
-    debug.q7count = `${timeline.chords.filter((c) => c.q7).length}/${timeline.chords.length}`;
-    debug.sevenths = [...seventh.entries()].filter(([, q]) => q).map(([b, q]) => `${b}${q}`).join(' ') || 'aucune';
-    await jobRef.set({ debug: JSON.stringify(debug).slice(0, 8000) }, { merge: true }).catch(() => {});
     if (!detected.some((s) => s.measures.some((mez) => mez.some((c) => c.chord)))) {
       await jobRef.set({ status: 'error', error: 'Aucun accord exploitable.' }, { merge: true });
       return NextResponse.json({ error: 'Aucun accord exploitable détecté sur ce morceau.' }, { status: 422 });
