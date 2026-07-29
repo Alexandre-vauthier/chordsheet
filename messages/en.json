@@ -447,7 +447,8 @@
     "noGroup": "You are not a member of any group.",
     "newSetPlaceholder": "New set…",
     "create": "Create",
-    "error": "Something went wrong."
+    "error": "Something went wrong.",
+    "groupBadge": "Group"
   },
   "Auth": {
     "loginTitle": "Sign in to your account",

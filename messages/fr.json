@@ -447,7 +447,8 @@
     "noGroup": "Vous ne faites partie d'aucun groupe.",
     "newSetPlaceholder": "Nouveau set…",
     "create": "Créer",
-    "error": "Une erreur est survenue."
+    "error": "Une erreur est survenue.",
+    "groupBadge": "Groupe"
   },
   "Auth": {
     "loginTitle": "Connectez-vous à votre compte",

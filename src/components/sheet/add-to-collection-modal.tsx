@@ -51,9 +51,16 @@ export function AddToCollectionModal({ sheet, initialTab = 'set', onClose }: Pro
   const isInGroup = (groupId: string, linkedSheetIds: string[]) =>
     groupOverrides[groupId] ?? (linkedSheetIds.includes(sheetId) || sheet.groupId === groupId);
 
+  const groupNameById = useMemo(
+    () => Object.fromEntries(groups.map(g => [g.id, g.name])) as Record<string, string>,
+    [groups],
+  );
+
+  // Les sets appartenant à un groupe remontent en haut de la liste.
   const filteredSets = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return q ? sets.filter(s => s.name.toLowerCase().includes(q)) : sets;
+    const list = q ? sets.filter(s => s.name.toLowerCase().includes(q)) : sets;
+    return [...list.filter(s => s.groupId), ...list.filter(s => !s.groupId)];
   }, [sets, search]);
 
   const filteredGroups = useMemo(() => {
@@ -207,7 +214,15 @@ export function AddToCollectionModal({ sheet, initialTab = 'set', onClose }: Pro
                         disabled={busy === s.id}
                         className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] transition-colors disabled:opacity-50"
                       >
-                        <span className="truncate">{s.name}</span>
+                        <span className="min-w-0 flex items-center gap-1.5">
+                          <span className="truncate">{s.name}</span>
+                          {s.groupId && (
+                            <span className="shrink-0 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] font-medium">
+                              <svg className="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 20 20"><path d="M13 8a3 3 0 10-2.83-2H9.83A3 3 0 107 8a3 3 0 00-3 3v3h12v-3a3 3 0 00-3-3z" /></svg>
+                              {groupNameById[s.groupId] ?? t('groupBadge')}
+                            </span>
+                          )}
+                        </span>
                         <span className={`shrink-0 text-sm font-semibold ${member ? 'text-[var(--accent)]' : 'text-[var(--ink-faint)]'}`}>
                           {busy === s.id ? '…' : member ? '✓' : '+'}
                         </span>
