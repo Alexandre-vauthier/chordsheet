@@ -143,6 +143,11 @@ function LiveSessionUpsell({ t }: { t: ReturnType<typeof useTranslations> }) {
         ))}
       </div>
 
+      <p className="mt-5 max-w-md mx-auto flex items-center justify-center gap-1.5 text-center text-sm font-medium text-[var(--accent)]">
+        <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+        {t('proOneAccount')}
+      </p>
+
       <div className="text-center mt-6">
         <Link
           href="/pricing"
