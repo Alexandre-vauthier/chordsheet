@@ -10,7 +10,7 @@ import { isPianoChord } from '@/types';
 import { useChordNotation } from '@/lib/use-chord-notation';
 import { useChordColor } from '@/lib/use-chord-color';
 import { transposeChord } from '@/lib/transpose';
-import { usePlayback, parseTempo, buildChordSequence } from '@/lib/use-playback';
+import { usePlayback, parseTempo, buildChordSequence, ACCOMPANIMENT_INSTRUMENTS } from '@/lib/use-playback';
 import { useGrooveBox, PATTERN_DEFS } from '@/lib/use-groove-box';
 import type { PlayStep, PlayStyle, PlaybackVoice } from '@/lib/use-playback';
 import { useArtwork } from '@/lib/use-artwork';
@@ -38,8 +38,6 @@ function hasLocalInstrument(): boolean {
   return !!(v && (INSTRUMENTS as readonly string[]).includes(v));
 }
 
-// Instruments d'accompagnement proposés (ceux qui ont un son jouable)
-const ACCOMPANIMENT_INSTRUMENTS: InstrumentId[] = ['guitar', 'bass', 'piano', 'mandolin', 'banjo', 'ukulele'];
 const ACCOMP_LS_KEY = 'chordsheet_accompaniment';
 
 // Map instrument -> style de jeu (plaqué / arpège). Une entrée = instrument activé.
@@ -173,7 +171,18 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   const [recActiveRows, setRecActiveRows] = useState<ActiveRow[]>([]);
   // Accompagnement joué (Play + suivi REC) : instrument -> style (plaqué / arpège).
   // Par défaut : l'instrument principal en plaqué si la préférence "lire les accords" est active.
+  // La grille porte-t-elle une config de lecture posée par l'auteur ?
+  // Si oui : point de départ pour le lecteur (modifiable en session, non mémorisé
+  // globalement pour ne pas polluer sa préférence perso). Si non : comportement habituel.
+  const hasAuthorPlayback = sheet.playbackConfig !== undefined;
   const [accompaniment, setAccompaniment] = useState<AccompMap>(() => {
+    if (sheet.playbackConfig !== undefined) {
+      const out: AccompMap = {};
+      for (const v of sheet.playbackConfig) {
+        if (ACCOMPANIMENT_INSTRUMENTS.includes(v.id)) out[v.id] = v.style;
+      }
+      return out; // peut être {} => aucun instrument (boîte à rythmes seule)
+    }
     const fallback: AccompMap = user?.defaultChordsAudio === false
       ? {}
       : { [hasLocalInstrument() ? getSavedInstrument('guitar') : (sheet.instrumentId ?? 'guitar')]: 'block' };
@@ -183,7 +192,8 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   const accompMenuRef = useRef<HTMLDivElement>(null);
 
   const persistAccompaniment = (next: AccompMap) => {
-    if (typeof window !== 'undefined') localStorage.setItem(ACCOMP_LS_KEY, JSON.stringify(next));
+    // On ne mémorise dans la préférence globale que si la grille n'impose pas de départ.
+    if (!hasAuthorPlayback && typeof window !== 'undefined') localStorage.setItem(ACCOMP_LS_KEY, JSON.stringify(next));
     return next;
   };
   const toggleAccompaniment = (inst: InstrumentId) => {
@@ -644,6 +654,21 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                     <p className="px-3 py-1.5 text-[11px] uppercase tracking-wide text-[var(--ink-faint)]">
                       {t('chordAudioInstruments')}
                     </p>
+                    {/* Aucun : coupe tous les instruments (seule la boîte à rythmes joue) */}
+                    <button
+                      onClick={() => setAccompaniment(persistAccompaniment({}))}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] transition-colors"
+                    >
+                      <span className={`shrink-0 flex items-center justify-center w-4 h-4 rounded-full border ${accompCount === 0 ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : 'border-[var(--line)]'}`}>
+                        {accompCount === 0 && (
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </span>
+                      <span className="truncate">{t('accompNone')}</span>
+                    </button>
+                    <div className="mx-3 my-1 h-px bg-[var(--line)]" />
                     {ACCOMPANIMENT_INSTRUMENTS.map((inst) => {
                       const style = accompaniment[inst];
                       const checked = style !== undefined;

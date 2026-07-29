@@ -110,6 +110,10 @@ export interface PlaybackVoice {
   style: PlayStyle;
 }
 
+// Instruments d'accompagnement proposés (ceux qui ont un son jouable).
+// Partagé entre le lecteur (sheet-viewer) et l'éditeur (config de lecture par défaut).
+export const ACCOMPANIMENT_INSTRUMENTS: InstrumentId[] = ['guitar', 'bass', 'piano', 'mandolin', 'banjo', 'ukulele'];
+
 interface UsePlaybackOptions {
   sections: Section[];
   tempo: string | undefined;

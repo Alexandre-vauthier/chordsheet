@@ -11,11 +11,11 @@ import { SectionBlock } from './section-block';
 import { Button } from '@/components/ui/button';
 import { InstrumentSelector, ChordSummary, ChordEditorModal } from '@/components/chord';
 import type { CustomChordMap } from '@/components/chord';
-import { usePlayback, parseTempo } from '@/lib/use-playback';
+import { usePlayback, parseTempo, ACCOMPANIMENT_INSTRUMENTS, type PlayStyle } from '@/lib/use-playback';
 import { useGrooveBox, PATTERN_DEFS } from '@/lib/use-groove-box';
 import { stopPreviewAudio } from '@/components/explore/sheet-card';
 import { CoachMark } from './coach-mark';
-import { getChordsByInstrument, getAllExtendedChords } from '@/lib/chord-data';
+import { getChordsByInstrument, getAllExtendedChords, INSTRUMENT_CONFIG } from '@/lib/chord-data';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
 import { useAuth } from '@/lib/auth-context';
 import { usePublicArtistSuggestions } from '@/lib/use-search-suggestions';
@@ -300,6 +300,27 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
       updateSheet({ year: suggestedYear });
     }
   }, [suggestedYear, sheet.year, updateSheet]);
+
+  // Config de lecture audio par défaut, posée par l'auteur (facultative).
+  // undefined = non définie (le lecteur garde son réglage) ; [] = aucun instrument.
+  const pbDefined = sheet.playbackConfig !== undefined;
+  const pbMap = useMemo<Record<string, PlayStyle>>(
+    () => Object.fromEntries((sheet.playbackConfig ?? []).map((v) => [v.id, v.style])),
+    [sheet.playbackConfig],
+  );
+  const setPbFromMap = (map: Record<string, PlayStyle>) =>
+    updateSheet({ playbackConfig: (Object.entries(map) as [InstrumentId, PlayStyle][]).map(([id, style]) => ({ id, style })) });
+  const togglePbDefined = () => {
+    if (pbDefined) { updateSheet({ playbackConfig: undefined }); return; }
+    const main = (sheet.instrumentId && ACCOMPANIMENT_INSTRUMENTS.includes(sheet.instrumentId)) ? sheet.instrumentId : 'guitar';
+    updateSheet({ playbackConfig: [{ id: main, style: 'block' }] });
+  };
+  const togglePbInstrument = (inst: InstrumentId) => {
+    const next = { ...pbMap };
+    if (inst in next) delete next[inst]; else next[inst] = 'block';
+    setPbFromMap(next);
+  };
+  const setPbStyle = (inst: InstrumentId, style: PlayStyle) => setPbFromMap({ ...pbMap, [inst]: style });
 
   // Mettre à jour une section
   const updateSection = useCallback((sectionId: string, updates: Partial<Section>) => {
@@ -779,6 +800,70 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
             value={sheet.instrumentId || 'guitar'}
             onChange={(instrumentId) => updateSheet({ instrumentId })}
           />
+        </div>
+
+        {/* Lecture audio par défaut (posée par l'auteur, facultative) */}
+        <div>
+          <label className="flex items-center gap-2 cursor-pointer w-fit">
+            <input
+              type="checkbox"
+              checked={pbDefined}
+              onChange={togglePbDefined}
+              className="accent-[var(--accent)]"
+            />
+            <span className="text-sm text-[var(--ink-light)]">{t('playbackDefaultLabel')}</span>
+          </label>
+          {!pbDefined ? (
+            <p className="text-xs text-[var(--ink-faint)] mt-1">{t('playbackDefaultOffHint')}</p>
+          ) : (
+            <>
+              <p className="text-xs text-[var(--ink-faint)] mt-1">{t('playbackDefaultOnHint')}</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {ACCOMPANIMENT_INSTRUMENTS.map((inst) => {
+                  const style = pbMap[inst];
+                  const checked = style !== undefined;
+                  return (
+                    <div
+                      key={inst}
+                      className={`flex items-center gap-1 rounded-lg border px-2 py-1 ${checked ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-[var(--line)] bg-[var(--paper)]'}`}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => togglePbInstrument(inst)}
+                        className="flex items-center gap-1.5 text-sm text-[var(--ink)]"
+                      >
+                        <span className={`shrink-0 flex items-center justify-center w-3.5 h-3.5 rounded border ${checked ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : 'border-[var(--line)]'}`}>
+                          {checked && (
+                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </span>
+                        {INSTRUMENT_CONFIG[inst]?.label ?? inst}
+                      </button>
+                      {checked && (
+                        <div className="flex rounded border border-[var(--line)] overflow-hidden text-[10px] ml-1">
+                          {(['block', 'arpeggio'] as PlayStyle[]).map((s) => (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() => setPbStyle(inst, s)}
+                              className={`px-1.5 py-0.5 transition-colors ${style === s ? 'bg-[var(--accent)] text-white' : 'text-[var(--ink-light)] hover:bg-[var(--accent-soft)]'}`}
+                            >
+                              {s === 'block' ? t('styleBlock') : t('styleArpeggio')}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              {Object.keys(pbMap).length === 0 && (
+                <p className="text-xs text-[var(--ink-faint)] mt-2">{t('playbackDefaultNoneHint')}</p>
+              )}
+            </>
+          )}
         </div>
 
         {/* Métrique, Capo & Difficulté */}
