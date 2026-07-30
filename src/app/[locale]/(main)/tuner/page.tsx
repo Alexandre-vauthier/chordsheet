@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { usePitchDetect } from '@/lib/use-pitch-detect';
 import { TUNINGS, analyzeFreq, matchString, type TunerInstrument } from '@/lib/tuner-data';
 
@@ -17,7 +17,18 @@ const MODES: { id: Mode; label: string }[] = [
 
 export default function TunerPage() {
   const [mode, setMode] = useState<Mode>('guitar');
-  const { freq, listening, error, start, stop } = usePitchDetect();
+
+  // Plage de détection bornée à l'instrument (±3 demi-tons autour des cordes) : élimine
+  // le ronflement secteur (~50 Hz) et les hautes fréquences parasites hors de l'instrument.
+  const range = useMemo(() => {
+    if (mode === 'chromatic') return { min: 40, max: 1500 };
+    const strs = TUNINGS[mode];
+    const lo = Math.min(...strs.map((s) => s.freq));
+    const hi = Math.max(...strs.map((s) => s.freq));
+    return { min: lo * Math.pow(2, -3 / 12), max: hi * Math.pow(2, 3 / 12) };
+  }, [mode]);
+
+  const { freq, listening, error, start, stop } = usePitchDetect(range.min, range.max);
 
   const strings = mode === 'chromatic' ? null : TUNINGS[mode];
   const info = freq ? analyzeFreq(freq) : null;

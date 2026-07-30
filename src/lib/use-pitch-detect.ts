@@ -6,7 +6,7 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 // robuste aux erreurs d'octave, avec un score de clarté pour rejeter le bruit.
 // Plage de recherche bornée (≈ 38–1400 Hz) pour limiter le coût et éviter les
 // fausses détections. Renvoie { freq, clarity } ou null si signal trop faible/flou.
-function detectPitch(buf: Float32Array, sampleRate: number): { freq: number; clarity: number } | null {
+function detectPitch(buf: Float32Array, sampleRate: number, minFreq: number, maxFreq: number): { freq: number; clarity: number } | null {
   const SIZE = buf.length;
 
   let rms = 0;
@@ -16,8 +16,6 @@ function detectPitch(buf: Float32Array, sampleRate: number): { freq: number; cla
   // le volume qui décide si c'est une vraie note, mais la CLARTÉ du NSDF (plus bas).
   if (rms < 0.0012) return null;
 
-  const minFreq = 38;   // ~ sous le Mi grave de la basse
-  const maxFreq = 1400; // au-dessus de l'aigu d'une mandoline
   const minLag = Math.max(2, Math.floor(sampleRate / maxFreq));
   const maxLag = Math.min(Math.floor(sampleRate / minFreq), SIZE - 1);
 
@@ -79,7 +77,12 @@ function detectPitch(buf: Float32Array, sampleRate: number): { freq: number; cla
   if (a) tauEst = chosen - b / (2 * a);
   if (tauEst <= 0) return null;
 
-  return { freq: sampleRate / tauEst, clarity: maxPeak };
+  const f = sampleRate / tauEst;
+  // Rejet hors de la plage de l'instrument : élimine le ronflement secteur (~50/60 Hz)
+  // et les hautes fréquences parasites (harmoniques, sifflements…).
+  if (f < minFreq || f > maxFreq) return null;
+
+  return { freq: f, clarity: maxPeak };
 }
 
 function median(arr: number[]): number {
@@ -87,10 +90,15 @@ function median(arr: number[]): number {
   return s[Math.floor(s.length / 2)];
 }
 
-export function usePitchDetect() {
+export function usePitchDetect(minFreq = 38, maxFreq = 1400) {
   const [freq, setFreq] = useState<number | null>(null);
   const [listening, setListening] = useState(false);
   const [error, setError] = useState<'denied' | 'error' | null>(null);
+
+  // Plage de détection (dépend de l'instrument) lue dans la boucle via une ref, pour
+  // qu'un changement d'instrument s'applique sans relancer le micro.
+  const rangeRef = useRef({ min: minFreq, max: maxFreq });
+  useEffect(() => { rangeRef.current = { min: minFreq, max: maxFreq }; }, [minFreq, maxFreq]);
 
   const ctxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -147,7 +155,8 @@ export function usePitchDetect() {
         const c = ctxRef.current;
         if (!a || !buf || !c) return;
         a.getFloatTimeDomainData(buf);
-        const d = detectPitch(buf, c.sampleRate);
+        const { min, max } = rangeRef.current;
+        const d = detectPitch(buf, c.sampleRate, min, max);
 
         if (d) {
           silentRef.current = 0;
