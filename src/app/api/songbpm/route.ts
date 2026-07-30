@@ -5,6 +5,13 @@ export const dynamic = 'force-dynamic';
 
 const API = 'https://api.getsongbpm.com';
 
+// GetSongBPM est derrière Cloudflare : une requête serveur sans User-Agent réaliste
+// est souvent bloquée (réponse HTML non-JSON). On en envoie un.
+const FETCH_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36',
+  Accept: 'application/json, text/plain, */*',
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function pick(obj: any, ...keys: string[]): unknown {
   if (!obj) return undefined;
@@ -31,8 +38,10 @@ export async function GET(req: NextRequest) {
   try {
     const lookup = `song:${title} artist:${artist}`;
     const searchUrl = `${API}/search/?api_key=${encodeURIComponent(apiKey)}&type=both&lookup=${encodeURIComponent(lookup)}`;
-    const res = await fetch(searchUrl, { next: { revalidate: 86400 } });
-    const searchRaw = await res.json().catch(() => null);
+    const res = await fetch(searchUrl, { headers: FETCH_HEADERS, next: { revalidate: 86400 } });
+    const searchText = await res.text().catch(() => '');
+    let searchRaw: unknown = null;
+    try { searchRaw = JSON.parse(searchText); } catch { /* corps non-JSON */ }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const first = Array.isArray((searchRaw as any)?.search) ? (searchRaw as any).search[0] : null;
@@ -42,7 +51,7 @@ export async function GET(req: NextRequest) {
 
     let detailRaw: unknown = null;
     if (id && (tempoRaw == null || keyRaw == null)) {
-      const dRes = await fetch(`${API}/song/?api_key=${encodeURIComponent(apiKey)}&id=${encodeURIComponent(String(id))}`, { next: { revalidate: 86400 } });
+      const dRes = await fetch(`${API}/song/?api_key=${encodeURIComponent(apiKey)}&id=${encodeURIComponent(String(id))}`, { headers: FETCH_HEADERS, next: { revalidate: 86400 } });
       detailRaw = await dRes.json().catch(() => null);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const song = pick(detailRaw as any, 'song') ?? detailRaw;
@@ -55,7 +64,12 @@ export async function GET(req: NextRequest) {
     const key = normalizeKey(keyRaw);
 
     if (debug) {
-      return NextResponse.json({ searchUrlSansCle: searchUrl.replace(apiKey, 'KEY'), id, tempoRaw, keyRaw, tempo, key, searchRaw, detailRaw });
+      return NextResponse.json({
+        searchStatus: res.status,
+        searchTextSnippet: searchText.slice(0, 400),
+        id, tempoRaw, keyRaw, tempo, key,
+        searchRaw, detailRaw,
+      });
     }
     return NextResponse.json(
       { tempo, key },
