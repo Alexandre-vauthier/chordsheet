@@ -21,7 +21,8 @@ export function NotificationBell() {
   const openItem = (n: AppNotification) => {
     markRead(n.id);
     setOpen(false);
-    router.push(`/sheet/${n.sheetId}#sheet-comments`);
+    // Note → la grille ; commentaire → ancre commentaires.
+    router.push(n.kind === 'rating' ? `/sheet/${n.sheetId}` : `/sheet/${n.sheetId}#sheet-comments`);
   };
 
   return (
@@ -63,7 +64,9 @@ export function NotificationBell() {
                   <span className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${n.read ? 'bg-transparent' : 'bg-[var(--accent)]'}`} />
                   <span className="min-w-0">
                     <span className="block text-sm text-[var(--ink)]">
-                      <b>{n.fromName}</b> a écrit un commentaire
+                      {n.kind === 'rating'
+                        ? <><b>{n.fromName}</b> a noté ta grille{n.rating ? ` ${'★'.repeat(n.rating)}` : ''}</>
+                        : <><b>{n.fromName}</b> a écrit un commentaire</>}
                     </span>
                     {n.sheetTitle && (
                       <span className="block text-xs text-[var(--ink-light)] truncate">« {n.sheetTitle} »</span>

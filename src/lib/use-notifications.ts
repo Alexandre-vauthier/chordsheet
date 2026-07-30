@@ -10,6 +10,8 @@ export interface AppNotification {
   fromName: string;
   sheetId: string;
   sheetTitle: string;
+  kind: 'comment' | 'rating';
+  rating?: number;
   createdAt: Date | null;
   read: boolean;
 }
@@ -32,6 +34,8 @@ export function useNotifications() {
           fromName: (data.fromName as string) || 'Quelqu’un',
           sheetId: (data.sheetId as string) || '',
           sheetTitle: (data.sheetTitle as string) || '',
+          kind: (data.kind as 'comment' | 'rating') || 'comment',
+          rating: typeof data.rating === 'number' ? data.rating : undefined,
           createdAt: (data.createdAt as { toDate?: () => Date })?.toDate?.() ?? null,
           read: !!data.read,
         } as AppNotification;

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-import { doc, getDoc, updateDoc, increment, deleteDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, increment, deleteDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
@@ -128,6 +128,7 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
 
   const applyRating = useCallback(async (rating: 1 | 2 | 3 | 4 | 5) => {
     try {
+      const isNew = !userRating; // ne notifie que la 1re note, pas les changements
       await rateSheet(rating);
       setSheet((prev) => {
         if (!prev) return prev;
@@ -139,10 +140,24 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
           : (oldAvg * (prev.ratingCount || 0) + rating) / newCount;
         return { ...prev, averageRating: Math.round(newAvg * 10) / 10, ratingCount: newCount };
       });
+      // Notifie l'auteur d'une nouvelle note reçue (jamais pour soi-même).
+      if (isNew && user && sheet && sheet.ownerId && sheet.ownerId !== user.id) {
+        await addDoc(collection(getDb(), 'notifications'), {
+          userId: sheet.ownerId,
+          fromId: user.id,
+          fromName: user.displayName || 'Utilisateur',
+          sheetId: sheet.id,
+          sheetTitle: sheet.title || '',
+          kind: 'rating',
+          rating,
+          createdAt: serverTimestamp(),
+          read: false,
+        }).catch(() => {});
+      }
     } catch (err) {
       console.error('Error rating sheet:', err);
     }
-  }, [rateSheet, userRating]);
+  }, [rateSheet, userRating, user, sheet]);
 
   const handleRate = async (rating: 1 | 2 | 3 | 4 | 5) => {
     // Une note < 5 n'est acceptée que si l'utilisateur a laissé un commentaire :
