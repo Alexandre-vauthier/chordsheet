@@ -48,6 +48,8 @@ export default function AdminPage() {
   const [backfillResult, setBackfillResult] = useState('');
   const [backfillingYears, setBackfillingYears] = useState(false);
   const [yearResult, setYearResult] = useState('');
+  const [backfillingGenres, setBackfillingGenres] = useState(false);
+  const [genreResult, setGenreResult] = useState('');
 
   // Rediriger si pas admin
   useEffect(() => {
@@ -255,6 +257,27 @@ export default function AdminPage() {
     }
   };
 
+  // Renseigne le genre (depuis iTunes) des grilles qui n'en ont pas encore.
+  const handleBackfillGenres = async () => {
+    setBackfillingGenres(true);
+    setGenreResult('');
+    try {
+      const idToken = await getAuth().currentUser?.getIdToken();
+      if (!idToken) throw new Error(t('notConnected'));
+      const res = await fetch('/api/admin/backfill-genres', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || t('backfillError'));
+      setGenreResult(t('genreBackfillSuccess', { updated: data.updated, notFound: data.notFound, remaining: data.remaining }));
+    } catch (e) {
+      setGenreResult(t('errorPrefix', { message: e instanceof Error ? e.message : t('unknownError') }));
+    } finally {
+      setBackfillingGenres(false);
+    }
+  };
+
   if (loading || loadingData) {
     return (
       <div className="max-w-[1270px] mx-auto px-4 py-8">
@@ -336,6 +359,24 @@ export default function AdminPage() {
             className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
           >
             {backfillingYears ? t('inProgress') : t('fillYears')}
+          </button>
+        </div>
+      </div>
+
+      {/* Genre (backfill iTunes) */}
+      <div className="mb-8 p-4 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <p className="text-sm font-medium text-[var(--ink)]">{t('genreBackfill')}</p>
+          <p className="text-xs text-[var(--ink-faint)]">{t('genreBackfillDesc')}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {genreResult && <span className="text-xs text-[var(--ink-light)]">{genreResult}</span>}
+          <button
+            onClick={handleBackfillGenres}
+            disabled={backfillingGenres}
+            className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+          >
+            {backfillingGenres ? t('inProgress') : t('fillGenres')}
           </button>
         </div>
       </div>

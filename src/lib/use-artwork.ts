@@ -2,15 +2,15 @@
 
 import { useState, useEffect } from 'react';
 
-type ArtworkData = { artworkUrl: string | null; previewUrl: string | null; year: number | null };
+type ArtworkData = { artworkUrl: string | null; previewUrl: string | null; year: number | null; genre: string | null };
 
 // Cache mémoire (déduplique les requêtes dans la même session)
 const MEM_CACHE = new Map<string, ArtworkData>();
 
 // Cache localStorage (persiste entre sessions, TTL 7 jours)
-// v8 : année = version la plus ancienne du titre (avant : 1er résultat, souvent une
-// réédition). Bump du préfixe pour re-fetch avec la logique corrigée.
-const LS_PREFIX = 'artwork8_';
+// v9 : ajout du genre (mappé depuis primaryGenreName iTunes). Bump du préfixe pour
+// re-fetch avec la nouvelle donnée.
+const LS_PREFIX = 'artwork9_';
 const TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 // Requêtes en vol — évite de tirer deux fois la même clé simultanément
@@ -28,7 +28,7 @@ function lsGet(key: string): ArtworkData | undefined {
 
 function lsSet(key: string, data: ArtworkData) {
   // Ne persiste que les vrais résultats
-  if (!data.artworkUrl && !data.previewUrl && data.year == null) return;
+  if (!data.artworkUrl && !data.previewUrl && data.year == null && !data.genre) return;
   try {
     localStorage.setItem(LS_PREFIX + key, JSON.stringify({ data, expires: Date.now() + TTL_MS }));
   } catch { /* quota dépassé */ }
@@ -37,10 +37,10 @@ function lsSet(key: string, data: ArtworkData) {
 async function fetchArtwork(query: string): Promise<ArtworkData> {
   try {
     const res = await fetch(`/api/artwork?q=${encodeURIComponent(query)}`);
-    if (!res.ok) return { artworkUrl: null, previewUrl: null, year: null };
+    if (!res.ok) return { artworkUrl: null, previewUrl: null, year: null, genre: null };
     return await res.json();
   } catch {
-    return { artworkUrl: null, previewUrl: null, year: null };
+    return { artworkUrl: null, previewUrl: null, year: null, genre: null };
   }
 }
 
@@ -48,15 +48,16 @@ export function useArtwork(artist: string | undefined, title: string | undefined
   const [artworkUrl, setArtworkUrl] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [year, setYear] = useState<number | null>(null);
+  const [genre, setGenre] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!artist && !title) { setArtworkUrl(null); setPreviewUrl(null); setYear(null); return; }
+    if (!artist && !title) { setArtworkUrl(null); setPreviewUrl(null); setYear(null); setGenre(null); return; }
 
     const query = [title, artist].filter(Boolean).join(' ').trim();
-    if (!query) { setArtworkUrl(null); setPreviewUrl(null); setYear(null); return; }
+    if (!query) { setArtworkUrl(null); setPreviewUrl(null); setYear(null); setGenre(null); return; }
 
-    const apply = (d: ArtworkData) => { setArtworkUrl(d.artworkUrl); setPreviewUrl(d.previewUrl); setYear(d.year ?? null); };
+    const apply = (d: ArtworkData) => { setArtworkUrl(d.artworkUrl); setPreviewUrl(d.previewUrl); setYear(d.year ?? null); setGenre(d.genre ?? null); };
 
     // 1. Cache mémoire
     if (MEM_CACHE.has(query)) {
@@ -103,5 +104,5 @@ export function useArtwork(artist: string | undefined, title: string | undefined
     return () => { cancelled = true; };
   }, [artist, title]);
 
-  return { artworkUrl, previewUrl, year, loading };
+  return { artworkUrl, previewUrl, year, genre, loading };
 }

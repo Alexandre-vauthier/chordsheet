@@ -305,13 +305,25 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
   // Année : suggestion iTunes (releaseDate). Pré-remplit le champ s'il est vide et
   // que l'utilisateur n'y a pas touché ; jamais d'écrasement d'une valeur saisie.
   const yearTouchedRef = useRef(false);
-  const { year: suggestedYear } = useArtwork(sheet.artist, sheet.title);
+  const { year: suggestedYear, genre: suggestedGenre } = useArtwork(sheet.artist, sheet.title);
   useEffect(() => { yearTouchedRef.current = false; }, [sheet.title, sheet.artist]);
   useEffect(() => {
     if (!yearTouchedRef.current && sheet.year == null && suggestedYear != null) {
       updateSheet({ year: suggestedYear });
     }
   }, [suggestedYear, sheet.year, updateSheet]);
+
+  // Genre : suggestion iTunes (primaryGenreName mappé). Coché automatiquement si le
+  // champ genres est vide et non modifié ; éditable ensuite (checkboxes de genre).
+  const genreTouchedRef = useRef(false);
+  useEffect(() => { genreTouchedRef.current = false; }, [sheet.title, sheet.artist]);
+  useEffect(() => {
+    if (!genreTouchedRef.current && (sheet.genres?.length ?? 0) === 0
+        && suggestedGenre && (GENRES as readonly string[]).includes(suggestedGenre)) {
+      genreTouchedRef.current = true;
+      updateSheet({ genres: [suggestedGenre] });
+    }
+  }, [suggestedGenre, sheet.genres, updateSheet]);
 
   // Config de lecture audio par défaut, posée par l'auteur (facultative).
   // undefined = non définie (le lecteur garde son réglage) ; [] = aucun instrument.
