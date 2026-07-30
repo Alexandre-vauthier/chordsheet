@@ -657,25 +657,25 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
               </svg>
             </button>
 
-            {/* Toggle boite à rythme */}
-            <button
-              onClick={() => setGrooveEnabled(v => !v)}
-              title={grooveEnabled ? t('disableGrooveBox') : t('enableGrooveBox')}
-              className={`
-                cursor-pointer flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
-                ${grooveEnabled
-                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
-                  : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
-                }
-              `}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
-                <ellipse cx="12" cy="9" rx="7" ry="2.5"/>
-                <line x1="5" y1="9" x2="5" y2="16" strokeLinecap="round"/>
-                <line x1="19" y1="9" x2="19" y2="16" strokeLinecap="round"/>
-                <path d="M5 16c0 1.38 3.13 2.5 7 2.5s7-1.12 7-2.5" strokeLinecap="round"/>
-              </svg>
-            </button>
+            {/* Boîte à rythmes (menu comme la consultation) */}
+            <GrooveBoxMenu
+              enabled={grooveEnabled}
+              pattern={sheet.groovePattern}
+              previewingId={previewPattern}
+              onNone={() => setGrooveEnabled(false)}
+              onAuto={() => { setGrooveEnabled(true); updateSheet({ groovePattern: undefined }); }}
+              onPattern={(id) => { setGrooveEnabled(true); updateSheet({ groovePattern: id }); }}
+              onTogglePreview={togglePreviewPattern}
+            />
+
+            {/* Instruments joués (menu comme la consultation) */}
+            <PlaybackInstrumentsMenu
+              value={pbDefined ? pbMap : null}
+              onSetListener={() => updateSheet({ playbackConfig: undefined })}
+              onSetNone={() => updateSheet({ playbackConfig: [] })}
+              onToggle={togglePbInstrument}
+              onSetStyle={setPbStyle}
+            />
 
             {/* Play / Stop */}
             <button
@@ -858,19 +858,6 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
           />
         </div>
 
-        {/* Lecture audio par défaut : même menu que la consultation (« Instruments joués »),
-            avec en tête « Réglage du lecteur » = l'auteur n'impose rien. */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm text-[var(--ink-light)]">{t('playbackDefaultLabel')}</span>
-          <PlaybackInstrumentsMenu
-            value={pbDefined ? pbMap : null}
-            onSetListener={() => updateSheet({ playbackConfig: undefined })}
-            onSetNone={() => updateSheet({ playbackConfig: [] })}
-            onToggle={togglePbInstrument}
-            onSetStyle={setPbStyle}
-          />
-        </div>
-
         {/* Métrique, Capo & Difficulté */}
         <div className="flex flex-wrap items-center gap-6">
           {/* Binaire / Ternaire */}
@@ -919,19 +906,6 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
                 <option key={n} value={n}>{t('capoN', { n })}</option>
               ))}
             </select>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-[var(--ink-light)]">{t('grooveBox')}</span>
-            <GrooveBoxMenu
-              enabled={grooveEnabled}
-              pattern={sheet.groovePattern}
-              previewingId={previewPattern}
-              onNone={() => setGrooveEnabled(false)}
-              onAuto={() => { setGrooveEnabled(true); updateSheet({ groovePattern: undefined }); }}
-              onPattern={(id) => { setGrooveEnabled(true); updateSheet({ groovePattern: id }); }}
-              onTogglePreview={togglePreviewPattern}
-            />
           </div>
 
         </div>
