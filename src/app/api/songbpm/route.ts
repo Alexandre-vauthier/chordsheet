@@ -2,27 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { normalizeKey } from '@/lib/songbpm-key';
 
 export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 
 const API = 'https://api.getsongbpm.com';
-
-// GetSongBPM est derrière Cloudflare. On envoie un jeu d'en-têtes de navigateur
-// complet pour tenter de passer (efficace contre « Bot Fight Mode » ; le challenge JS
-// managé, lui, n'est pas contournable côté serveur).
-const FETCH_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-  Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,application/json,*/*;q=0.8',
-  'Accept-Language': 'fr-FR,fr;q=0.9,en;q=0.8',
-  'Accept-Encoding': 'gzip, deflate, br',
-  'Upgrade-Insecure-Requests': '1',
-  'sec-ch-ua': '"Chromium";v="122", "Google Chrome";v="122", "Not:A-Brand";v="99"',
-  'sec-ch-ua-mobile': '?0',
-  'sec-ch-ua-platform': '"macOS"',
-  'Sec-Fetch-Dest': 'document',
-  'Sec-Fetch-Mode': 'navigate',
-  'Sec-Fetch-Site': 'none',
-  'Sec-Fetch-User': '?1',
-  Referer: 'https://getsongbpm.com/',
-};
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function pick(obj: any, ...keys: string[]): unknown {
@@ -31,9 +13,30 @@ function pick(obj: any, ...keys: string[]): unknown {
   return undefined;
 }
 
-// Récupère BPM + tonalité d'un morceau via GetSongBPM (clé serveur GETSONGBPM_API_KEY).
-// La recherche ne porte pas toujours le tempo/la clé : on complète par un appel détail
-// (/song/?id=). ?debug=1 renvoie les réponses brutes pour diagnostiquer le format.
+// GetSongBPM est derrière Cloudflare (bloque les IP datacenter/Vercel). On route donc
+// l'appel via ScrapingBee (IP résidentielle) : premium_proxy + render_js=false renvoie
+// le corps BRUT (le JSON de GetSongBPM), sans rendu navigateur à déballer.
+async function fetchJson(targetUrl: string): Promise<{ status: number; text: string; json: unknown }> {
+  const scraperKey = process.env.SCRAPER_API_KEY;
+  const fetchUrl = scraperKey
+    ? `https://app.scrapingbee.com/api/v1/?api_key=${encodeURIComponent(scraperKey)}&url=${encodeURIComponent(targetUrl)}&premium_proxy=true&render_js=false`
+    : targetUrl;
+
+  const res = await fetch(fetchUrl);
+  const text = await res.text().catch(() => '');
+  let json: unknown = null;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    // Corps non-JSON (page Cloudflare / HTML) : on tente d'extraire un objet JSON.
+    const m = text.match(/\{[\s\S]*\}/);
+    if (m) { try { json = JSON.parse(m[0]); } catch { /* pas de JSON exploitable */ } }
+  }
+  return { status: res.status, text, json };
+}
+
+// Récupère BPM + tonalité d'un morceau via GetSongBPM. ?debug=1 renvoie les réponses
+// brutes pour diagnostiquer.
 export async function GET(req: NextRequest) {
   const title = (req.nextUrl.searchParams.get('title') || '').trim();
   const artist = (req.nextUrl.searchParams.get('artist') || '').trim();
@@ -50,23 +53,19 @@ export async function GET(req: NextRequest) {
   try {
     const lookup = `song:${title} artist:${artist}`;
     const searchUrl = `${API}/search/?api_key=${encodeURIComponent(apiKey)}&type=both&lookup=${encodeURIComponent(lookup)}`;
-    const res = await fetch(searchUrl, { headers: FETCH_HEADERS, next: { revalidate: 86400 } });
-    const searchText = await res.text().catch(() => '');
-    let searchRaw: unknown = null;
-    try { searchRaw = JSON.parse(searchText); } catch { /* corps non-JSON */ }
+    const search = await fetchJson(searchUrl);
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const first = Array.isArray((searchRaw as any)?.search) ? (searchRaw as any).search[0] : null;
+    const first = Array.isArray((search.json as any)?.search) ? (search.json as any).search[0] : null;
     const id = pick(first, 'id', 'song_id');
     let tempoRaw = pick(first, 'tempo', 'song_tempo');
     let keyRaw = pick(first, 'key_of', 'key', 'song_key');
 
-    let detailRaw: unknown = null;
+    let detail: { status: number; text: string; json: unknown } | null = null;
     if (id && (tempoRaw == null || keyRaw == null)) {
-      const dRes = await fetch(`${API}/song/?api_key=${encodeURIComponent(apiKey)}&id=${encodeURIComponent(String(id))}`, { headers: FETCH_HEADERS, next: { revalidate: 86400 } });
-      detailRaw = await dRes.json().catch(() => null);
+      detail = await fetchJson(`${API}/song/?api_key=${encodeURIComponent(apiKey)}&id=${encodeURIComponent(String(id))}`);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const song = pick(detailRaw as any, 'song') ?? detailRaw;
+      const song = pick(detail.json as any, 'song') ?? detail.json;
       if (tempoRaw == null) tempoRaw = pick(song, 'tempo', 'song_tempo');
       if (keyRaw == null) keyRaw = pick(song, 'key_of', 'key', 'song_key');
     }
@@ -77,10 +76,12 @@ export async function GET(req: NextRequest) {
 
     if (debug) {
       return NextResponse.json({
-        searchStatus: res.status,
-        searchTextSnippet: searchText.slice(0, 400),
+        viaProxy: !!process.env.SCRAPER_API_KEY,
+        searchStatus: search.status,
+        searchTextSnippet: search.text.slice(0, 400),
         id, tempoRaw, keyRaw, tempo, key,
-        searchRaw, detailRaw,
+        searchJson: search.json,
+        detailJson: detail?.json ?? null,
       });
     }
     return NextResponse.json(
