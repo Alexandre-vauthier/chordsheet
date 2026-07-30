@@ -8,8 +8,9 @@ type ArtworkData = { artworkUrl: string | null; previewUrl: string | null; year:
 const MEM_CACHE = new Map<string, ArtworkData>();
 
 // Cache localStorage (persiste entre sessions, TTL 7 jours)
-// v7 : ajout de l'année (releaseDate iTunes) — bump du préfixe pour re-fetch les entrées v6
-const LS_PREFIX = 'artwork7_';
+// v8 : année = version la plus ancienne du titre (avant : 1er résultat, souvent une
+// réédition). Bump du préfixe pour re-fetch avec la logique corrigée.
+const LS_PREFIX = 'artwork8_';
 const TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 // Requêtes en vol — évite de tirer deux fois la même clé simultanément

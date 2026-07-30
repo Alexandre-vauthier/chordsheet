@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb, getAdminAuth } from '@/lib/firebase-admin';
+import { earliestYearForTitle } from '@/lib/itunes-year';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -14,13 +15,13 @@ async function fetchYear(title: string, artist: string): Promise<number | null> 
   if (!term) return null;
   try {
     const res = await fetch(
-      `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=1`
+      `https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=song&limit=25`
     );
     if (!res.ok) return null;
     const data = await res.json();
-    const releaseDate = data.results?.[0]?.releaseDate;
-    const y = typeof releaseDate === 'string' ? Number(releaseDate.slice(0, 4)) : NaN;
-    return Number.isFinite(y) ? y : null;
+    const results = Array.isArray(data.results) ? data.results : [];
+    // Année la plus ancienne parmi les versions du même titre (évite remaster/compil).
+    return earliestYearForTitle(results, results[0]?.trackName);
   } catch {
     return null;
   }
