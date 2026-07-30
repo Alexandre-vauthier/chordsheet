@@ -12,7 +12,9 @@ function detectPitch(buf: Float32Array, sampleRate: number): { freq: number; cla
   let rms = 0;
   for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
   rms = Math.sqrt(rms / SIZE);
-  if (rms < 0.0035) return null; // seuil bas : capte les sons doux
+  // Seuil très bas : on capte même les sons faibles / la fin d'une note. Ce n'est pas
+  // le volume qui décide si c'est une vraie note, mais la CLARTÉ du NSDF (plus bas).
+  if (rms < 0.0012) return null;
 
   const minFreq = 38;   // ~ sous le Mi grave de la basse
   const maxFreq = 1400; // au-dessus de l'aigu d'une mandoline
@@ -43,11 +45,29 @@ function detectPitch(buf: Float32Array, sampleRate: number): { freq: number; cla
       if (nsdf[tau] > maxPeak) maxPeak = nsdf[tau];
     }
   }
-  if (peaks.length === 0 || maxPeak < 0.5) return null; // pas assez clair
+  if (peaks.length === 0 || maxPeak < 0.4) return null; // pas assez clair (rejette le bruit)
 
-  const threshold = 0.9 * maxPeak;
+  const threshold = 0.92 * maxPeak;
   let chosen = peaks[0];
   for (const t of peaks) { if (nsdf[t] >= threshold) { chosen = t; break; } }
+
+  // Correction d'octave-haute : si la période DOUBLE (octave en dessous) correspond au
+  // moins aussi bien, c'est la vraie fondamentale — on avait attrapé une harmonique
+  // (typique à l'attaque : 160 Hz qui devrait être 80). Sans risque pour un son propre,
+  // où le pic à 2×période est nettement plus faible.
+  for (let k = 0; k < 2; k++) {
+    const lag2 = chosen * 2;
+    if (lag2 > maxLag) break;
+    const w = Math.max(2, Math.round(chosen * 0.06));
+    let best2 = -1;
+    let bestVal2 = -1;
+    for (let t = Math.max(minLag, lag2 - w); t <= Math.min(maxLag, lag2 + w); t++) {
+      if (nsdf[t] > bestVal2) { bestVal2 = nsdf[t]; best2 = t; }
+    }
+    // Seuil strict (>=) : un son propre a un pic plus faible à 2×période, donc pas de
+    // fausse correction ; une vraie fondamentale attrapée en harmonique, elle, matche au moins autant.
+    if (best2 > 0 && bestVal2 >= nsdf[chosen]) chosen = best2; else break;
+  }
 
   // Interpolation parabolique autour du pic pour la précision.
   const x1 = nsdf[chosen - 1] ?? 0;
@@ -137,8 +157,9 @@ export function usePitchDetect() {
           setFreq(median(h)); // médiane : rejette un saut d'octave isolé
         } else {
           silentRef.current += 1;
-          if (silentRef.current > 8) { historyRef.current = []; setFreq(null); }
-          // sinon on maintient la dernière note (évite le clignotement)
+          // Maintien plus long (~0.6 s) : ne pas repasser à « joue une note » pendant
+          // la fin d'une note qui décline ou un bref creux de clarté.
+          if (silentRef.current > 18) { historyRef.current = []; setFreq(null); }
         }
       };
       rafRef.current = requestAnimationFrame(loop);
