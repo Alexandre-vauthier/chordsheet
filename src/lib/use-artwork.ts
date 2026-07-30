@@ -8,9 +8,9 @@ type ArtworkData = { artworkUrl: string | null; previewUrl: string | null; year:
 const MEM_CACHE = new Map<string, ArtworkData>();
 
 // Cache localStorage (persiste entre sessions, TTL 7 jours)
-// v9 : ajout du genre (mappé depuis primaryGenreName iTunes). Bump du préfixe pour
-// re-fetch avec la nouvelle donnée.
-const LS_PREFIX = 'artwork9_';
+// v10 : table de correspondance des genres élargie (Alternative, Indie…). Bump pour
+// re-fetch et re-mapper les entrées en cache (sinon genre null conservé).
+const LS_PREFIX = 'artwork10_';
 const TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 // Requêtes en vol — évite de tirer deux fois la même clé simultanément

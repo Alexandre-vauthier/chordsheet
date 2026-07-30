@@ -791,7 +791,10 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
             />
           </span>
           <span className="flex items-center gap-1 text-[var(--ink-faint)]" title={t('yearTooltip')}>
-            <span className="text-sm">📅</span>
+            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+              <rect x="3" y="4.5" width="18" height="16" rx="2" />
+              <path d="M3 9.5h18M8 3v3M16 3v3" strokeLinecap="round" />
+            </svg>
             <input
               type="number"
               min={1900}
@@ -809,7 +812,9 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
             />
           </span>
           <div className="relative flex items-center gap-1 text-[var(--ink-faint)]" onMouseEnter={isFirstSheet ? handleRefHover : undefined}>
-            <span className="text-sm">🔗</span>
+            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 15l6-6M10.5 6.5l1-1a3.5 3.5 0 015 5l-2 2M13.5 17.5l-1 1a3.5 3.5 0 01-5-5l2-2" />
+            </svg>
             <input
               type="url"
               value={sheet.referenceUrl || ''}
