@@ -5,14 +5,26 @@ export const dynamic = 'force-dynamic';
 
 const API = 'https://api.getsongbpm.com';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function pick(obj: any, ...keys: string[]): unknown {
+  if (!obj) return undefined;
+  for (const k of keys) if (obj[k] != null) return obj[k];
+  return undefined;
+}
+
 // Récupère BPM + tonalité d'un morceau via GetSongBPM (clé serveur GETSONGBPM_API_KEY).
-// Renvoie { tempo, key } (null si clé absente / pas de résultat). Utilisé pour
-// pré-remplir l'éditeur (comme l'année/genre), éditable ensuite.
+// La recherche ne porte pas toujours le tempo/la clé : on complète par un appel détail
+// (/song/?id=). ?debug=1 renvoie les réponses brutes pour diagnostiquer le format.
 export async function GET(req: NextRequest) {
   const title = (req.nextUrl.searchParams.get('title') || '').trim();
   const artist = (req.nextUrl.searchParams.get('artist') || '').trim();
+  const debug = req.nextUrl.searchParams.get('debug') === '1';
   const apiKey = process.env.GETSONGBPM_API_KEY;
-  if (!apiKey || !title || !artist) {
+
+  if (!apiKey) {
+    return NextResponse.json(debug ? { error: 'GETSONGBPM_API_KEY absente' } : { tempo: null, key: null });
+  }
+  if (!title || !artist) {
     return NextResponse.json({ tempo: null, key: null });
   }
 
@@ -20,37 +32,37 @@ export async function GET(req: NextRequest) {
     const lookup = `song:${title} artist:${artist}`;
     const searchUrl = `${API}/search/?api_key=${encodeURIComponent(apiKey)}&type=both&lookup=${encodeURIComponent(lookup)}`;
     const res = await fetch(searchUrl, { next: { revalidate: 86400 } });
-    if (!res.ok) throw new Error(`getsongbpm ${res.status}`);
+    const searchRaw = await res.json().catch(() => null);
 
-    const data = await res.json();
-    const first = Array.isArray(data?.search) ? data.search[0] : null;
-    if (!first) return NextResponse.json({ tempo: null, key: null });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const first = Array.isArray((searchRaw as any)?.search) ? (searchRaw as any).search[0] : null;
+    const id = pick(first, 'id', 'song_id');
+    let tempoRaw = pick(first, 'tempo', 'song_tempo');
+    let keyRaw = pick(first, 'key_of', 'key', 'song_key');
 
-    let tempoRaw: unknown = first.tempo;
-    let keyRaw: unknown = first.key_of ?? first.key;
-
-    // La recherche ne renvoie pas toujours tempo/tonalité : détail par id si besoin.
-    if (first.id && (tempoRaw == null || keyRaw == null)) {
-      try {
-        const dRes = await fetch(`${API}/song/?api_key=${encodeURIComponent(apiKey)}&id=${encodeURIComponent(first.id)}`, { next: { revalidate: 86400 } });
-        if (dRes.ok) {
-          const d = await dRes.json();
-          const song = d?.song ?? d;
-          if (tempoRaw == null) tempoRaw = song?.tempo;
-          if (keyRaw == null) keyRaw = song?.key_of ?? song?.key;
-        }
-      } catch { /* détail indisponible */ }
+    let detailRaw: unknown = null;
+    if (id && (tempoRaw == null || keyRaw == null)) {
+      const dRes = await fetch(`${API}/song/?api_key=${encodeURIComponent(apiKey)}&id=${encodeURIComponent(String(id))}`, { next: { revalidate: 86400 } });
+      detailRaw = await dRes.json().catch(() => null);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const song = pick(detailRaw as any, 'song') ?? detailRaw;
+      if (tempoRaw == null) tempoRaw = pick(song, 'tempo', 'song_tempo');
+      if (keyRaw == null) keyRaw = pick(song, 'key_of', 'key', 'song_key');
     }
 
     const tempoNum = Number(tempoRaw);
     const tempo = Number.isFinite(tempoNum) && tempoNum >= 30 && tempoNum <= 320 ? Math.round(tempoNum) : null;
     const key = normalizeKey(keyRaw);
 
+    if (debug) {
+      return NextResponse.json({ searchUrlSansCle: searchUrl.replace(apiKey, 'KEY'), id, tempoRaw, keyRaw, tempo, key, searchRaw, detailRaw });
+    }
     return NextResponse.json(
       { tempo, key },
       { headers: { 'Cache-Control': 'public, max-age=86400, s-maxage=86400' } }
     );
-  } catch {
+  } catch (e) {
+    if (debug) return NextResponse.json({ error: String(e) });
     return NextResponse.json({ tempo: null, key: null });
   }
 }
