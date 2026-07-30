@@ -354,21 +354,25 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
     }
   }, [suggestedKey, sheet.key, updateSheet]);
 
-  // Config de lecture audio par défaut, posée par l'auteur (facultative).
-  // undefined = non définie (le lecteur garde son réglage) ; [] = aucun instrument.
+  // Instruments joués (lecture). Par défaut (config non posée par l'auteur), l'instrument
+  // ACTIF est celui choisi dans le sélecteur de diagrammes — d'où displayPbMap.
+  // [] = aucun (boîte à rythmes seule) ; [{id,style},…] = choix de l'auteur.
   const pbDefined = sheet.playbackConfig !== undefined;
   const pbMap = useMemo<Record<string, PlayStyle>>(
     () => Object.fromEntries((sheet.playbackConfig ?? []).map((v) => [v.id, v.style])),
     [sheet.playbackConfig],
   );
+  const defaultPbInst: InstrumentId = (sheet.instrumentId && ACCOMPANIMENT_INSTRUMENTS.includes(sheet.instrumentId))
+    ? sheet.instrumentId : 'guitar';
+  const displayPbMap: Record<string, PlayStyle> = pbDefined ? pbMap : { [defaultPbInst]: 'block' };
   const setPbFromMap = (map: Record<string, PlayStyle>) =>
     updateSheet({ playbackConfig: (Object.entries(map) as [InstrumentId, PlayStyle][]).map(([id, style]) => ({ id, style })) });
   const togglePbInstrument = (inst: InstrumentId) => {
-    const next = { ...pbMap };
+    const next = { ...displayPbMap };
     if (inst in next) delete next[inst]; else next[inst] = 'block';
     setPbFromMap(next);
   };
-  const setPbStyle = (inst: InstrumentId, style: PlayStyle) => setPbFromMap({ ...pbMap, [inst]: style });
+  const setPbStyle = (inst: InstrumentId, style: PlayStyle) => setPbFromMap({ ...displayPbMap, [inst]: style });
 
   // Mettre à jour une section
   const updateSection = useCallback((sectionId: string, updates: Partial<Section>) => {
@@ -635,7 +639,12 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
             className="font-playfair text-3xl font-bold bg-transparent border-none outline-none flex-1
               caret-[var(--accent)] placeholder:text-[var(--ink-faint)]"
           />
-          <div className="flex-shrink-0 flex items-center gap-2">
+          <div className="flex-shrink-0 flex items-center gap-2 flex-wrap justify-end">
+            {/* Instrument des diagrammes (comme la consultation, en haut) */}
+            <InstrumentSelector
+              value={sheet.instrumentId || 'guitar'}
+              onChange={(instrumentId) => updateSheet({ instrumentId })}
+            />
             {/* Toggle métronome */}
             <button
               onClick={() => setMetronomeEnabled(v => !v)}
@@ -670,8 +679,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
 
             {/* Instruments joués (menu comme la consultation) */}
             <PlaybackInstrumentsMenu
-              value={pbDefined ? pbMap : null}
-              onSetListener={() => updateSheet({ playbackConfig: undefined })}
+              value={displayPbMap}
               onSetNone={() => updateSheet({ playbackConfig: [] })}
               onToggle={togglePbInstrument}
               onSetStyle={setPbStyle}
@@ -849,15 +857,6 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
 
       {/* Métadonnées */}
       <div className="mb-6 p-4 bg-[var(--cell-bg)] rounded-lg border border-[var(--line)] space-y-4">
-        {/* Instrument pour les diagrammes — sélecteur compact avec picto (comme la consultation) */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm text-[var(--ink-light)]">{t('instrument')}</span>
-          <InstrumentSelector
-            value={sheet.instrumentId || 'guitar'}
-            onChange={(instrumentId) => updateSheet({ instrumentId })}
-          />
-        </div>
-
         {/* Métrique, Capo & Difficulté */}
         <div className="flex flex-wrap items-center gap-6">
           {/* Binaire / Ternaire */}
@@ -910,10 +909,10 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
 
         </div>
 
-        {/* Genres : select (en 1er) + tags supprimables, sur la même ligne */}
+        {/* Genres : label + select + tags supprimables, sur la même ligne */}
         <div>
-          <span className="text-sm text-[var(--ink-light)] block mb-2">{t('genres')}</span>
           <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-[var(--ink-light)]">{t('genres')}</span>
             <select
               value=""
               onChange={(e) => {
