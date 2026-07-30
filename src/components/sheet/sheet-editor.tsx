@@ -22,6 +22,7 @@ import { usePublicArtistSuggestions } from '@/lib/use-search-suggestions';
 import { useGenreLabel } from '@/lib/use-genre-labels';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import { useArtwork } from '@/lib/use-artwork';
+import { useSongBpm } from '@/lib/use-song-bpm';
 import { SuggestionsDropdown } from '@/components/ui/suggestions-dropdown';
 import { Link } from '@/i18n/navigation';
 
@@ -333,6 +334,25 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
       updateSheet({ genres: [suggestedGenre] });
     }
   }, [suggestedGenre, sheet.genres, updateSheet]);
+
+  // BPM + tonalité (GetSongBPM), même déclencheur (lookupKey au blur). Remplis
+  // automatiquement si le champ est vide et non modifié ; éditables ensuite.
+  const { tempo: suggestedTempo, songKey: suggestedKey } = useSongBpm(lookupKey?.artist, lookupKey?.title);
+  const tempoTouchedRef = useRef(false);
+  const keyTouchedRef = useRef(false);
+  useEffect(() => { tempoTouchedRef.current = false; keyTouchedRef.current = false; }, [sheet.title, sheet.artist]);
+  useEffect(() => {
+    if (!tempoTouchedRef.current && !sheet.tempo.trim() && suggestedTempo != null) {
+      tempoTouchedRef.current = true;
+      updateSheet({ tempo: String(suggestedTempo) });
+    }
+  }, [suggestedTempo, sheet.tempo, updateSheet]);
+  useEffect(() => {
+    if (!keyTouchedRef.current && !sheet.key.trim() && suggestedKey) {
+      keyTouchedRef.current = true;
+      updateSheet({ key: suggestedKey });
+    }
+  }, [suggestedKey, sheet.key, updateSheet]);
 
   // Config de lecture audio par défaut, posée par l'auteur (facultative).
   // undefined = non définie (le lecteur garde son réglage) ; [] = aucun instrument.
@@ -744,6 +764,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
               type="text"
               value={sheet.key}
               onChange={(e) => {
+                keyTouchedRef.current = true;
                 const raw = e.target.value;
                 // Bloquer les chiffres
                 if (/\d/.test(raw)) return;
@@ -781,6 +802,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
               max={300}
               value={sheet.tempo.replace(/\D/g, '') || ''}
               onChange={(e) => {
+                tempoTouchedRef.current = true;
                 const v = e.target.value.replace(/\D/g, '');
                 updateSheet({ tempo: v });
               }}
