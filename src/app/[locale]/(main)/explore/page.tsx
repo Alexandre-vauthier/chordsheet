@@ -389,19 +389,17 @@ export default function ExplorePage() {
           </select>
 
           {/* Difficulté */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-[var(--ink-light)]">{t('difficultyLabel')}</span>
-            <select
-              value={selectedDifficulty ?? ''}
-              onChange={(e) => handleDifficulty(e.target.value ? Number(e.target.value) as Difficulty : null)}
-              className="text-sm border border-[var(--line)] rounded-lg px-2 py-1 bg-[var(--cell-bg)] text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-            >
-              <option value="">{t('allDifficulties')}</option>
-              {DIFFICULTY_OPTIONS.map(({ value, label }) => (
-                <option key={value} value={value}>{difficultyLabel(label)}</option>
-              ))}
-            </select>
-          </div>
+          <select
+            value={selectedDifficulty ?? ''}
+            onChange={(e) => handleDifficulty(e.target.value ? Number(e.target.value) as Difficulty : null)}
+            className="px-3 py-1.5 rounded-lg border border-[var(--line)] text-sm bg-[var(--cell-bg)]
+              text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+          >
+            <option value="">{t('allDifficulties')}</option>
+            {DIFFICULTY_OPTIONS.map(({ value, label }) => (
+              <option key={value} value={value}>{difficultyLabel(label)}</option>
+            ))}
+          </select>
 
           {/* Décennie (affiché seulement s'il y a des années renseignées) */}
           {availableDecades.length > 0 && (

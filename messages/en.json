@@ -271,7 +271,7 @@
     "sortViewed": "Most viewed",
     "allGenres": "All genres",
     "difficultyLabel": "Difficulty:",
-    "allDifficulties": "All",
+    "allDifficulties": "All difficulties",
     "allYears": "All years",
     "reset": "Reset",
     "resultsCount": "{count, plural, one {# title} other {# titles}}",
