@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { usePitchDetect } from '@/lib/use-pitch-detect';
-import { TUNINGS, analyzeFreq, nearestString, type TunerInstrument } from '@/lib/tuner-data';
+import { TUNINGS, analyzeFreq, matchString, type TunerInstrument } from '@/lib/tuner-data';
 
 type Mode = TunerInstrument | 'chromatic';
 
@@ -21,7 +21,8 @@ export default function TunerPage() {
 
   const strings = mode === 'chromatic' ? null : TUNINGS[mode];
   const info = freq ? analyzeFreq(freq) : null;
-  const target = info && strings ? nearestString(strings, info.midiFloat) : null;
+  // Mode instrument : on replie la fréquence sur les cordes connues (anti-octave).
+  const target = freq && strings ? matchString(strings, freq) : null;
 
   const cents = mode === 'chromatic' ? (info?.cents ?? null) : (target?.cents ?? null);
   const noteLabel = mode === 'chromatic' ? (info?.note ?? null) : (target?.string.note ?? null);

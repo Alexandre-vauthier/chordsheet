@@ -55,12 +55,25 @@ export function analyzeFreq(freq: number): NoteInfo {
   return { midi, note, octave, label: `${note}${octave}`, cents, midiFloat };
 }
 
-// Corde cible la plus proche de la fréquence détectée (mode instrument).
-export function nearestString(strings: TunerString[], midiFloat: number): { index: number; string: TunerString; cents: number } {
-  let best = 0;
-  for (let i = 1; i < strings.length; i++) {
-    if (Math.abs(strings[i].midi - midiFloat) < Math.abs(strings[best].midi - midiFloat)) best = i;
+// Corde cible correspondant à la fréquence détectée, en REPLIANT par octaves sur les
+// cordes connues. Comme on connaît la fréquence/octave de chaque corde, une détection
+// à l'octave (ex. 160 Hz au lieu de 80) est ramenée sur la bonne corde → plus d'erreur
+// d'octave possible en mode instrument. On pénalise les grands sauts d'octave pour
+// lever l'ambiguïté quand deux cordes portent la même note à une octave d'écart.
+export function matchString(strings: TunerString[], freq: number): { index: number; string: TunerString; cents: number } {
+  const m = 69 + 12 * Math.log2(freq / A4);
+  let bestIdx = 0;
+  let bestScore = Infinity;
+  let bestFolded = m;
+  for (let i = 0; i < strings.length; i++) {
+    const sMidi = strings[i].midi;
+    let folded = m;
+    let shifts = 0;
+    while (folded - sMidi > 6) { folded -= 12; shifts++; }
+    while (sMidi - folded > 6) { folded += 12; shifts++; }
+    const score = Math.abs(folded - sMidi) + 0.5 * shifts;
+    if (score < bestScore) { bestScore = score; bestIdx = i; bestFolded = folded; }
   }
-  const cents = Math.round((midiFloat - strings[best].midi) * 100);
-  return { index: best, string: strings[best], cents };
+  const cents = Math.round((bestFolded - strings[bestIdx].midi) * 100);
+  return { index: bestIdx, string: strings[bestIdx], cents };
 }
