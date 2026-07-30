@@ -35,18 +35,13 @@ async function fetchJson(targetUrl: string): Promise<{ status: number; text: str
   return { status: res.status, text, json };
 }
 
-// Récupère BPM + tonalité d'un morceau via GetSongBPM. ?debug=1 renvoie les réponses
-// brutes pour diagnostiquer.
+// Récupère BPM + tonalité d'un morceau via GetSongBPM (proxifié par ScrapingBee).
 export async function GET(req: NextRequest) {
   const title = (req.nextUrl.searchParams.get('title') || '').trim();
   const artist = (req.nextUrl.searchParams.get('artist') || '').trim();
-  const debug = req.nextUrl.searchParams.get('debug') === '1';
   const apiKey = process.env.GETSONGBPM_API_KEY;
 
-  if (!apiKey) {
-    return NextResponse.json(debug ? { error: 'GETSONGBPM_API_KEY absente' } : { tempo: null, key: null });
-  }
-  if (!title || !artist) {
+  if (!apiKey || !title || !artist) {
     return NextResponse.json({ tempo: null, key: null });
   }
 
@@ -61,9 +56,9 @@ export async function GET(req: NextRequest) {
     let tempoRaw = pick(first, 'tempo', 'song_tempo');
     let keyRaw = pick(first, 'key_of', 'key', 'song_key');
 
-    let detail: { status: number; text: string; json: unknown } | null = null;
+    // La recherche porte déjà tempo/key_of en général ; détail par id sinon.
     if (id && (tempoRaw == null || keyRaw == null)) {
-      detail = await fetchJson(`${API}/song/?api_key=${encodeURIComponent(apiKey)}&id=${encodeURIComponent(String(id))}`);
+      const detail = await fetchJson(`${API}/song/?api_key=${encodeURIComponent(apiKey)}&id=${encodeURIComponent(String(id))}`);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const song = pick(detail.json as any, 'song') ?? detail.json;
       if (tempoRaw == null) tempoRaw = pick(song, 'tempo', 'song_tempo');
@@ -74,22 +69,11 @@ export async function GET(req: NextRequest) {
     const tempo = Number.isFinite(tempoNum) && tempoNum >= 30 && tempoNum <= 320 ? Math.round(tempoNum) : null;
     const key = normalizeKey(keyRaw);
 
-    if (debug) {
-      return NextResponse.json({
-        viaProxy: !!process.env.SCRAPER_API_KEY,
-        searchStatus: search.status,
-        searchTextSnippet: search.text.slice(0, 400),
-        id, tempoRaw, keyRaw, tempo, key,
-        searchJson: search.json,
-        detailJson: detail?.json ?? null,
-      });
-    }
     return NextResponse.json(
       { tempo, key },
       { headers: { 'Cache-Control': 'public, max-age=86400, s-maxage=86400' } }
     );
-  } catch (e) {
-    if (debug) return NextResponse.json({ error: String(e) });
+  } catch {
     return NextResponse.json({ tempo: null, key: null });
   }
 }
