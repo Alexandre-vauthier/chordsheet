@@ -116,6 +116,7 @@ export function Navbar() {
     { href: '/explore', label: t('explore') },
     { href: '/artists', label: t('artists') },
     { href: '/chords', label: t('chords') },
+    { href: '/tuner', label: t('tuner') },
   ];
 
   return (
