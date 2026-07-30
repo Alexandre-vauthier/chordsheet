@@ -2,47 +2,69 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 
-// Autocorrélation (méthode classique Chris Wilson) : renvoie la fréquence fondamentale
-// en Hz, ou -1 si le signal est trop faible / non tonal.
-function autoCorrelate(buf: Float32Array, sampleRate: number): number {
+// Détection de hauteur par NSDF (Normalized Square Difference, méthode McLeod) :
+// robuste aux erreurs d'octave, avec un score de clarté pour rejeter le bruit.
+// Plage de recherche bornée (≈ 38–1400 Hz) pour limiter le coût et éviter les
+// fausses détections. Renvoie { freq, clarity } ou null si signal trop faible/flou.
+function detectPitch(buf: Float32Array, sampleRate: number): { freq: number; clarity: number } | null {
   const SIZE = buf.length;
+
   let rms = 0;
   for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
   rms = Math.sqrt(rms / SIZE);
-  if (rms < 0.01) return -1; // pas assez de signal
+  if (rms < 0.0035) return null; // seuil bas : capte les sons doux
 
-  let r1 = 0;
-  let r2 = SIZE - 1;
-  const thres = 0.2;
-  for (let i = 0; i < SIZE / 2; i++) { if (Math.abs(buf[i]) < thres) { r1 = i; break; } }
-  for (let i = 1; i < SIZE / 2; i++) { if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; } }
+  const minFreq = 38;   // ~ sous le Mi grave de la basse
+  const maxFreq = 1400; // au-dessus de l'aigu d'une mandoline
+  const minLag = Math.max(2, Math.floor(sampleRate / maxFreq));
+  const maxLag = Math.min(Math.floor(sampleRate / minFreq), SIZE - 1);
 
-  const b = buf.slice(r1, r2);
-  const size2 = b.length;
-  const c = new Array(size2).fill(0);
-  for (let i = 0; i < size2; i++) {
-    for (let j = 0; j < size2 - i; j++) c[i] += b[j] * b[j + i];
+  // NSDF sur la plage de lags utile.
+  const nsdf = new Float32Array(maxLag + 2);
+  for (let tau = minLag; tau <= maxLag; tau++) {
+    let acf = 0;
+    let m = 0;
+    for (let i = 0; i < SIZE - tau; i++) {
+      const a = buf[i];
+      const b = buf[i + tau];
+      acf += a * b;
+      m += a * a + b * b;
+    }
+    nsdf[tau] = m > 0 ? (2 * acf) / m : 0;
   }
 
-  let d = 0;
-  while (c[d] > c[d + 1]) d++;
-  let maxval = -1;
-  let maxpos = -1;
-  for (let i = d; i < size2; i++) {
-    if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
+  // Pics locaux ; on retient le plus haut, puis le PREMIER pic ≥ 0.9×max
+  // (= fondamentale, ce qui évite de sauter à l'octave).
+  let maxPeak = 0;
+  const peaks: number[] = [];
+  for (let tau = minLag + 1; tau < maxLag; tau++) {
+    if (nsdf[tau] > nsdf[tau - 1] && nsdf[tau] >= nsdf[tau + 1] && nsdf[tau] > 0) {
+      peaks.push(tau);
+      if (nsdf[tau] > maxPeak) maxPeak = nsdf[tau];
+    }
   }
-  let t0 = maxpos;
-  if (t0 <= 0) return -1;
+  if (peaks.length === 0 || maxPeak < 0.5) return null; // pas assez clair
 
-  // Interpolation parabolique pour affiner.
-  const x1 = c[t0 - 1] || 0;
-  const x2 = c[t0] || 0;
-  const x3 = c[t0 + 1] || 0;
+  const threshold = 0.9 * maxPeak;
+  let chosen = peaks[0];
+  for (const t of peaks) { if (nsdf[t] >= threshold) { chosen = t; break; } }
+
+  // Interpolation parabolique autour du pic pour la précision.
+  const x1 = nsdf[chosen - 1] ?? 0;
+  const x2 = nsdf[chosen] ?? 0;
+  const x3 = nsdf[chosen + 1] ?? 0;
   const a = (x1 + x3 - 2 * x2) / 2;
-  const bb = (x3 - x1) / 2;
-  if (a) t0 = t0 - bb / (2 * a);
+  const b = (x3 - x1) / 2;
+  let tauEst = chosen;
+  if (a) tauEst = chosen - b / (2 * a);
+  if (tauEst <= 0) return null;
 
-  return sampleRate / t0;
+  return { freq: sampleRate / tauEst, clarity: maxPeak };
+}
+
+function median(arr: number[]): number {
+  const s = [...arr].sort((x, y) => x - y);
+  return s[Math.floor(s.length / 2)];
 }
 
 export function usePitchDetect() {
@@ -55,6 +77,9 @@ export function usePitchDetect() {
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number>(0);
   const bufRef = useRef<Float32Array<ArrayBuffer> | null>(null);
+  const historyRef = useRef<number[]>([]);
+  const silentRef = useRef(0);
+  const lastTickRef = useRef(0);
 
   const stop = useCallback(() => {
     cancelAnimationFrame(rafRef.current);
@@ -64,6 +89,8 @@ export function usePitchDetect() {
     analyserRef.current = null;
     streamRef.current = null;
     bufRef.current = null;
+    historyRef.current = [];
+    silentRef.current = 0;
     setListening(false);
     setFreq(null);
   }, []);
@@ -80,21 +107,39 @@ export function usePitchDetect() {
       ctxRef.current = ctx;
       const source = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
-      analyser.fftSize = 2048;
+      analyser.fftSize = 8192; // fenêtre longue (~185 ms) : meilleure tenue sur les graves
       source.connect(analyser);
       analyserRef.current = analyser;
       bufRef.current = new Float32Array(analyser.fftSize);
+      historyRef.current = [];
+      silentRef.current = 0;
+      lastTickRef.current = 0;
       setListening(true);
 
-      const loop = () => {
+      const loop = (now: number) => {
+        rafRef.current = requestAnimationFrame(loop);
+        // ~30 analyses/s (le NSDF sur 8192 est coûteux, inutile de le faire à 60 fps).
+        if (now - lastTickRef.current < 33) return;
+        lastTickRef.current = now;
+
         const a = analyserRef.current;
         const buf = bufRef.current;
         const c = ctxRef.current;
         if (!a || !buf || !c) return;
         a.getFloatTimeDomainData(buf);
-        const f = autoCorrelate(buf, c.sampleRate);
-        setFreq(f > 0 ? f : null);
-        rafRef.current = requestAnimationFrame(loop);
+        const d = detectPitch(buf, c.sampleRate);
+
+        if (d) {
+          silentRef.current = 0;
+          const h = historyRef.current;
+          h.push(d.freq);
+          if (h.length > 5) h.shift();
+          setFreq(median(h)); // médiane : rejette un saut d'octave isolé
+        } else {
+          silentRef.current += 1;
+          if (silentRef.current > 8) { historyRef.current = []; setFreq(null); }
+          // sinon on maintient la dernière note (évite le clignotement)
+        }
       };
       rafRef.current = requestAnimationFrame(loop);
     } catch (e) {
