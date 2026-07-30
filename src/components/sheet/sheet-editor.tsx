@@ -305,7 +305,10 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
   // Année : suggestion iTunes (releaseDate). Pré-remplit le champ s'il est vide et
   // que l'utilisateur n'y a pas touché ; jamais d'écrasement d'une valeur saisie.
   const yearTouchedRef = useRef(false);
-  const { year: suggestedYear, genre: suggestedGenre } = useArtwork(sheet.artist, sheet.title);
+  // Débounce la recherche iTunes : pas une requête à chaque lettre tapée du titre/artiste.
+  const debouncedArtworkTitle = useDebouncedValue(sheet.title, 600);
+  const debouncedArtworkArtist = useDebouncedValue(sheet.artist, 600);
+  const { year: suggestedYear, genre: suggestedGenre } = useArtwork(debouncedArtworkArtist, debouncedArtworkTitle);
   useEffect(() => { yearTouchedRef.current = false; }, [sheet.title, sheet.artist]);
   useEffect(() => {
     if (!yearTouchedRef.current && sheet.year == null && suggestedYear != null) {
