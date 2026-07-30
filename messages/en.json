@@ -704,6 +704,7 @@
     "stopPreviewPattern": "Stop preview",
     "listenToPattern": "Listen to this pattern",
     "genres": "Genres:",
+    "addGenre": "Add a genre…",
     "publicSheetLabel": "Public sheet (visible to everyone)",
     "confirmForkPublic": "This sheet is a duplicate.\n\nAre you sure you want to make it public?\n\nIf you haven't made significant changes, it's better to keep the original or contribute directly to the source sheet.",
     "pendingValidation": "Pending review",

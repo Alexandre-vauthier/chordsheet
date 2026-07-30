@@ -704,6 +704,7 @@
     "stopPreviewPattern": "Arrêter l'aperçu",
     "listenToPattern": "Écouter ce pattern",
     "genres": "Genres :",
+    "addGenre": "Ajouter un genre…",
     "publicSheetLabel": "Grille publique (visible par tous)",
     "confirmForkPublic": "Cette grille est une duplication.\n\nÊtes-vous sûr de vouloir la rendre publique ?\n\nSi vous n'avez pas apporté de modifications significatives, il vaut mieux garder l'original ou contribuer directement à la grille source.",
     "pendingValidation": "À valider",

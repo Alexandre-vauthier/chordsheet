@@ -854,9 +854,9 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
 
       {/* Métadonnées */}
       <div className="mb-6 p-4 bg-[var(--cell-bg)] rounded-lg border border-[var(--line)] space-y-4">
-        {/* Instrument pour les diagrammes */}
-        <div>
-          <span className="text-sm text-[var(--ink-light)] block mb-2">{t('instrument')}</span>
+        {/* Instrument pour les diagrammes — sélecteur compact avec picto (comme la consultation) */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm text-[var(--ink-light)]">{t('instrument')}</span>
           <InstrumentSelector
             value={sheet.instrumentId || 'guitar'}
             onChange={(instrumentId) => updateSheet({ instrumentId })}
@@ -1018,33 +1018,48 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
 
         </div>
 
-        {/* Genres */}
+        {/* Genres : tags sélectionnés + select pour en ajouter */}
         <div>
           <span className="text-sm text-[var(--ink-light)] block mb-2">{t('genres')}</span>
-          <div className="flex flex-wrap gap-2">
-            {GENRES.map((genre) => {
-              const isSelected = sheet.genres?.includes(genre);
-              return (
-                <button
+          {(sheet.genres?.length ?? 0) > 0 && (
+            <div className="flex flex-wrap gap-2 mb-2">
+              {(sheet.genres || []).map((genre) => (
+                <span
                   key={genre}
-                  type="button"
-                  onClick={() => {
-                    const newGenres = isSelected
-                      ? (sheet.genres || []).filter((g) => g !== genre)
-                      : [...(sheet.genres || []), genre];
-                    updateSheet({ genres: newGenres });
-                  }}
-                  className={`cursor-pointer px-2.5 py-1 text-xs rounded-full border transition-colors ${
-                    isSelected
-                      ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
-                      : 'bg-[var(--cell-bg)] text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)]'
-                  }`}
+                  className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 text-xs rounded-full bg-[var(--accent)] text-white"
                 >
                   {genreLabel(genre)}
-                </button>
-              );
-            })}
-          </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      genreTouchedRef.current = true;
+                      updateSheet({ genres: (sheet.genres || []).filter((g) => g !== genre) });
+                    }}
+                    title="Retirer"
+                    className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-white/25 transition-colors leading-none"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          <select
+            value=""
+            onChange={(e) => {
+              const g = e.target.value;
+              if (!g || (sheet.genres || []).includes(g)) return;
+              genreTouchedRef.current = true;
+              updateSheet({ genres: [...(sheet.genres || []), g] });
+            }}
+            className="cursor-pointer px-2 py-1.5 rounded border border-[var(--line)] text-sm bg-[var(--cell-bg)]
+              text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+          >
+            <option value="">{t('addGenre')}</option>
+            {GENRES.filter((genre) => !(sheet.genres || []).includes(genre)).map((genre) => (
+              <option key={genre} value={genre}>{genreLabel(genre)}</option>
+            ))}
+          </select>
         </div>
 
         {/* Visibilité */}
