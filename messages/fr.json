@@ -310,6 +310,7 @@
     "enableChordAudio": "Activer la lecture des accords",
     "chordAudioInstruments": "Instruments joués",
     "accompNone": "Aucun",
+    "playbackListenerDefault": "Réglage du lecteur",
     "styleBlock": "Plaqué",
     "styleArpeggio": "Arpège",
     "changeTempoUnit": "Changer l'unité de tempo (noire → croche)",

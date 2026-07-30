@@ -12,10 +12,11 @@ import { Button } from '@/components/ui/button';
 import { InstrumentSelector, ChordSummary, ChordEditorModal } from '@/components/chord';
 import type { CustomChordMap } from '@/components/chord';
 import { usePlayback, parseTempo, ACCOMPANIMENT_INSTRUMENTS, type PlayStyle, type PlaybackVoice } from '@/lib/use-playback';
-import { useGrooveBox, PATTERN_DEFS } from '@/lib/use-groove-box';
+import { useGrooveBox } from '@/lib/use-groove-box';
+import { PlaybackInstrumentsMenu, GrooveBoxMenu } from './playback-menus';
 import { stopPreviewAudio } from '@/components/explore/sheet-card';
 import { CoachMark } from './coach-mark';
-import { getChordsByInstrument, getAllExtendedChords, INSTRUMENT_CONFIG } from '@/lib/chord-data';
+import { getChordsByInstrument, getAllExtendedChords } from '@/lib/chord-data';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
 import { useAuth } from '@/lib/auth-context';
 import { usePublicArtistSuggestions } from '@/lib/use-search-suggestions';
@@ -129,7 +130,6 @@ function LyricsEditor({
 export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFetched }: SheetEditorProps) {
   const t = useTranslations('Editor');
   const tSection = useTranslations('SectionLabels');
-  const tPattern = useTranslations('GroovePatterns');
   const genreLabel = useGenreLabel();
   const { user, updateUser, isAdmin } = useAuth();
   const frenchDetectedRef = useRef(false);
@@ -363,11 +363,6 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
   );
   const setPbFromMap = (map: Record<string, PlayStyle>) =>
     updateSheet({ playbackConfig: (Object.entries(map) as [InstrumentId, PlayStyle][]).map(([id, style]) => ({ id, style })) });
-  const togglePbDefined = () => {
-    if (pbDefined) { updateSheet({ playbackConfig: undefined }); return; }
-    const main = (sheet.instrumentId && ACCOMPANIMENT_INSTRUMENTS.includes(sheet.instrumentId)) ? sheet.instrumentId : 'guitar';
-    updateSheet({ playbackConfig: [{ id: main, style: 'block' }] });
-  };
   const togglePbInstrument = (inst: InstrumentId) => {
     const next = { ...pbMap };
     if (inst in next) delete next[inst]; else next[inst] = 'block';
@@ -863,68 +858,17 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
           />
         </div>
 
-        {/* Lecture audio par défaut (posée par l'auteur, facultative) */}
-        <div>
-          <label className="flex items-center gap-2 cursor-pointer w-fit">
-            <input
-              type="checkbox"
-              checked={pbDefined}
-              onChange={togglePbDefined}
-              className="accent-[var(--accent)]"
-            />
-            <span className="text-sm text-[var(--ink-light)]">{t('playbackDefaultLabel')}</span>
-          </label>
-          {!pbDefined ? (
-            <p className="text-xs text-[var(--ink-faint)] mt-1">{t('playbackDefaultOffHint')}</p>
-          ) : (
-            <>
-              <p className="text-xs text-[var(--ink-faint)] mt-1">{t('playbackDefaultOnHint')}</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {ACCOMPANIMENT_INSTRUMENTS.map((inst) => {
-                  const style = pbMap[inst];
-                  const checked = style !== undefined;
-                  return (
-                    <div
-                      key={inst}
-                      className={`flex items-center gap-1 rounded-lg border px-2 py-1 ${checked ? 'border-[var(--accent)] bg-[var(--accent-soft)]' : 'border-[var(--line)] bg-[var(--paper)]'}`}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => togglePbInstrument(inst)}
-                        className="flex items-center gap-1.5 text-sm text-[var(--ink)]"
-                      >
-                        <span className={`shrink-0 flex items-center justify-center w-3.5 h-3.5 rounded border ${checked ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : 'border-[var(--line)]'}`}>
-                          {checked && (
-                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </span>
-                        {INSTRUMENT_CONFIG[inst]?.label ?? inst}
-                      </button>
-                      {checked && (
-                        <div className="flex rounded border border-[var(--line)] overflow-hidden text-[10px] ml-1">
-                          {(['block', 'arpeggio'] as PlayStyle[]).map((s) => (
-                            <button
-                              key={s}
-                              type="button"
-                              onClick={() => setPbStyle(inst, s)}
-                              className={`px-1.5 py-0.5 transition-colors ${style === s ? 'bg-[var(--accent)] text-white' : 'text-[var(--ink-light)] hover:bg-[var(--accent-soft)]'}`}
-                            >
-                              {s === 'block' ? t('styleBlock') : t('styleArpeggio')}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-              {Object.keys(pbMap).length === 0 && (
-                <p className="text-xs text-[var(--ink-faint)] mt-2">{t('playbackDefaultNoneHint')}</p>
-              )}
-            </>
-          )}
+        {/* Lecture audio par défaut : même menu que la consultation (« Instruments joués »),
+            avec en tête « Réglage du lecteur » = l'auteur n'impose rien. */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm text-[var(--ink-light)]">{t('playbackDefaultLabel')}</span>
+          <PlaybackInstrumentsMenu
+            value={pbDefined ? pbMap : null}
+            onSetListener={() => updateSheet({ playbackConfig: undefined })}
+            onSetNone={() => updateSheet({ playbackConfig: [] })}
+            onToggle={togglePbInstrument}
+            onSetStyle={setPbStyle}
+          />
         </div>
 
         {/* Métrique, Capo & Difficulté */}
@@ -979,87 +923,59 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
 
           <div className="flex items-center gap-2">
             <span className="text-sm text-[var(--ink-light)]">{t('grooveBox')}</span>
-            <select
-              value={sheet.groovePattern ?? ''}
-              onChange={(e) => updateSheet({ groovePattern: e.target.value || undefined })}
-              className="cursor-pointer px-2 py-1 rounded border border-[var(--line)] text-sm bg-[var(--cell-bg)]
-                focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-            >
-              <option value="">{t('automaticByGenre')}</option>
-              {Array.from(new Set(PATTERN_DEFS.map((p) => p.category))).map((category) => (
-                <optgroup key={category} label={category}>
-                  {PATTERN_DEFS.filter((p) => p.category === category).map((p) => (
-                    <option key={p.id} value={p.id}>{tPattern(p.id)}</option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => togglePreviewPattern(sheet.groovePattern ?? '')}
-              title={previewPattern !== null ? t('stopPreviewPattern') : t('listenToPattern')}
-              className={`cursor-pointer flex items-center justify-center w-7 h-7 rounded-full border-[1.5px] transition-all duration-150 ${
-                previewPattern !== null
-                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
-                  : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
-              }`}
-            >
-              {previewPattern !== null ? (
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                  <rect x="4" y="4" width="12" height="12" rx="1" />
-                </svg>
-              ) : (
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-                </svg>
-              )}
-            </button>
+            <GrooveBoxMenu
+              enabled={grooveEnabled}
+              pattern={sheet.groovePattern}
+              previewingId={previewPattern}
+              onNone={() => setGrooveEnabled(false)}
+              onAuto={() => { setGrooveEnabled(true); updateSheet({ groovePattern: undefined }); }}
+              onPattern={(id) => { setGrooveEnabled(true); updateSheet({ groovePattern: id }); }}
+              onTogglePreview={togglePreviewPattern}
+            />
           </div>
 
         </div>
 
-        {/* Genres : tags sélectionnés + select pour en ajouter */}
+        {/* Genres : select (en 1er) + tags supprimables, sur la même ligne */}
         <div>
           <span className="text-sm text-[var(--ink-light)] block mb-2">{t('genres')}</span>
-          {(sheet.genres?.length ?? 0) > 0 && (
-            <div className="flex flex-wrap gap-2 mb-2">
-              {(sheet.genres || []).map((genre) => (
-                <span
-                  key={genre}
-                  className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 text-xs rounded-full bg-[var(--accent)] text-white"
-                >
-                  {genreLabel(genre)}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      genreTouchedRef.current = true;
-                      updateSheet({ genres: (sheet.genres || []).filter((g) => g !== genre) });
-                    }}
-                    title="Retirer"
-                    className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-white/25 transition-colors leading-none"
-                  >
-                    ×
-                  </button>
-                </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value=""
+              onChange={(e) => {
+                const g = e.target.value;
+                if (!g || (sheet.genres || []).includes(g)) return;
+                genreTouchedRef.current = true;
+                updateSheet({ genres: [...(sheet.genres || []), g] });
+              }}
+              className="cursor-pointer px-2 py-1.5 rounded border border-[var(--line)] text-sm bg-[var(--cell-bg)]
+                text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+            >
+              <option value="">{t('addGenre')}</option>
+              {GENRES.filter((genre) => !(sheet.genres || []).includes(genre)).map((genre) => (
+                <option key={genre} value={genre}>{genreLabel(genre)}</option>
               ))}
-            </div>
-          )}
-          <select
-            value=""
-            onChange={(e) => {
-              const g = e.target.value;
-              if (!g || (sheet.genres || []).includes(g)) return;
-              genreTouchedRef.current = true;
-              updateSheet({ genres: [...(sheet.genres || []), g] });
-            }}
-            className="cursor-pointer px-2 py-1.5 rounded border border-[var(--line)] text-sm bg-[var(--cell-bg)]
-              text-[var(--ink)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
-          >
-            <option value="">{t('addGenre')}</option>
-            {GENRES.filter((genre) => !(sheet.genres || []).includes(genre)).map((genre) => (
-              <option key={genre} value={genre}>{genreLabel(genre)}</option>
+            </select>
+            {(sheet.genres || []).map((genre) => (
+              <span
+                key={genre}
+                className="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 text-xs rounded-full bg-[var(--accent)] text-white"
+              >
+                {genreLabel(genre)}
+                <button
+                  type="button"
+                  onClick={() => {
+                    genreTouchedRef.current = true;
+                    updateSheet({ genres: (sheet.genres || []).filter((g) => g !== genre) });
+                  }}
+                  title="Retirer"
+                  className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-white/25 transition-colors leading-none"
+                >
+                  ×
+                </button>
+              </span>
             ))}
-          </select>
+          </div>
         </div>
 
         {/* Visibilité */}

@@ -310,6 +310,7 @@
     "enableChordAudio": "Enable chord playback",
     "chordAudioInstruments": "Instruments played",
     "accompNone": "None",
+    "playbackListenerDefault": "Listener's setting",
     "styleBlock": "Block",
     "styleArpeggio": "Arpeggio",
     "changeTempoUnit": "Change tempo unit (quarter → eighth)",
