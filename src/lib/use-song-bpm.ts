@@ -22,7 +22,8 @@ export function useSongBpm(artist: string | undefined, title: string | undefined
     }
 
     let cancelled = false;
-    fetch(`/api/songbpm?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`)
+    // v=2 : buste les anciennes réponses vides mises en cache avant que le proxy marche.
+    fetch(`/api/songbpm?v=2&title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`)
       .then((r) => (r.ok ? r.json() : { tempo: null, key: null }))
       .then((d: { tempo: number | null; key: string | null }) => {
         MEM.set(cacheKey, { tempo: d.tempo ?? null, key: d.key ?? null });

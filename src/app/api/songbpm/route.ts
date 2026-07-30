@@ -69,11 +69,14 @@ export async function GET(req: NextRequest) {
     const tempo = Number.isFinite(tempoNum) && tempoNum >= 30 && tempoNum <= 320 ? Math.round(tempoNum) : null;
     const key = normalizeKey(keyRaw);
 
+    // On ne met en cache QUE les vrais résultats : cacher un échec (null) le figerait
+    // 24h (résultat vide resservi même après correction).
+    const found = tempo != null || key != null;
     return NextResponse.json(
       { tempo, key },
-      { headers: { 'Cache-Control': 'public, max-age=86400, s-maxage=86400' } }
+      { headers: { 'Cache-Control': found ? 'public, max-age=86400, s-maxage=86400' : 'no-store' } }
     );
   } catch {
-    return NextResponse.json({ tempo: null, key: null });
+    return NextResponse.json({ tempo: null, key: null }, { headers: { 'Cache-Control': 'no-store' } });
   }
 }
