@@ -496,10 +496,12 @@ export default function Home() {
 
       {/* ── Footer ──────────────────────────────────────────────── */}
       <footer className="text-center py-8 text-[var(--nav-text)]/25 text-xs border-t border-white/5">
-        <div className="flex justify-center gap-6 mb-2">
+        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-2">
           <Link href="/legal/cgu" className="hover:text-[var(--nav-text)]/50 transition-colors">{t('footer.terms')}</Link>
           <Link href="/legal/confidentialite" className="hover:text-[var(--nav-text)]/50 transition-colors">{t('footer.privacy')}</Link>
           <Link href="/legal/mentions-legales" className="hover:text-[var(--nav-text)]/50 transition-colors">{t('footer.legalNotice')}</Link>
+          {/* Backlink requis par GetSongBPM (source tempo & tonalité) — sur la page d'accueil aussi */}
+          <a href="https://getsongbpm.com" target="_blank" rel="noopener" className="hover:text-[var(--nav-text)]/50 transition-colors">Tempo &amp; tonalité : GetSongBPM</a>
         </div>
         {t('footer.copyright', { year: new Date().getFullYear() })}
       </footer>
