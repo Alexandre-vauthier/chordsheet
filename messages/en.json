@@ -295,7 +295,9 @@
     "adminTogglePrivate": "Private",
     "adminTogglePrivateTitle": "Show / hide private sheets",
     "adminTogglePending": "Pending",
-    "adminTogglePendingTitle": "Show / hide sheets pending review"
+    "adminTogglePendingTitle": "Show / hide sheets pending review",
+    "adminChordSearchPlaceholder": "Chord…",
+    "adminChordSearchTitle": "Admin: keep only sheets containing this chord. Exact match (\"Am\" does not match \"Am7\"), French notation accepted (\"Lam\")."
   },
   "SheetViewer": {
     "pauseSample": "Pause preview",

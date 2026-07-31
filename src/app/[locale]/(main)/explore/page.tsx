@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { collection, query, where, getDocs, limit, deleteDoc, doc } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
+import { sheetHasChord } from '@/lib/sheet-chords';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
 import { useBookmarks } from '@/lib/use-bookmarks';
@@ -59,6 +60,9 @@ export default function ExplorePage() {
   const [showPublic, setShowPublic] = useState(true);
   const [showPrivate, setShowPrivate] = useState(true);
   const [showPending, setShowPending] = useState(true);
+  // Recherche par accord (admin) : filtrage en mémoire, les accords n'étant pas
+  // indexés côté Firestore. Voir lib/sheet-chords.ts.
+  const [chordQuery, setChordQuery] = useState('');
 
   // Relire la préférence de visibilité admin au montage
   useEffect(() => {
@@ -208,6 +212,11 @@ export default function ExplorePage() {
       );
     }
 
+    // Filtre par accord (admin uniquement)
+    if (isAdmin && chordQuery.trim()) {
+      result = result.filter((sheet) => sheetHasChord(sheet, chordQuery));
+    }
+
     // Filtre par genre
     if (selectedGenre) {
       result = result.filter((sheet) =>
@@ -245,7 +254,7 @@ export default function ExplorePage() {
     }
 
     return result;
-  }, [sheets, searchQuery, selectedGenre, selectedDifficulty, selectedDecade, sortBy, isAdmin, showPublic, showPrivate, showPending]);
+  }, [sheets, searchQuery, selectedGenre, selectedDifficulty, selectedDecade, sortBy, isAdmin, showPublic, showPrivate, showPending, chordQuery]);
 
   // Décennies effectivement présentes dans les grilles (pour ne pas encombrer le menu)
   const availableDecades = useMemo(() => {
@@ -420,6 +429,14 @@ export default function ExplorePage() {
           {isAdmin && (
             <>
               <div className="hidden sm:block h-6 w-px bg-[var(--line)]" />
+              <input
+                type="search"
+                value={chordQuery}
+                onChange={(e) => setChordQuery(e.target.value)}
+                placeholder={t('adminChordSearchPlaceholder')}
+                title={t('adminChordSearchTitle')}
+                className="w-36 px-3 py-1.5 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)] text-sm font-mono text-[var(--ink)] placeholder:text-[var(--ink-faint)] placeholder:font-sans focus:outline-none focus:border-[var(--accent)]"
+              />
               <button
                 onClick={toggleShowPublic}
                 title={t('adminTogglePublicTitle')}
