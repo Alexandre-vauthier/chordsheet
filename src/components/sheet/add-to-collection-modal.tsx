@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTranslations } from 'next-intl';
-import { doc, updateDoc, deleteField, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, deleteField, serverTimestamp, addDoc, collection, deleteDoc, getDoc } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
+import { toFirestore, fromFirestore } from '@/lib/firestore-helpers';
 import { useAuth } from '@/lib/auth-context';
 import { useSets } from '@/lib/use-sets';
 import { useGroups } from '@/lib/use-groups';
-import type { Sheet } from '@/types';
+import type { Sheet, NewSheet } from '@/types';
 
 type Tab = 'set' | 'group';
 
@@ -21,7 +22,10 @@ export function AddToCollectionModal({ sheet, initialTab = 'set', onClose }: Pro
   const t = useTranslations('AddToCollection');
   const { user } = useAuth();
   const { sets, addSheetToSet, removeSheetFromSet, createSet } = useSets(user?.id);
-  const { groups, linkSheet, unlinkSheet } = useGroups();
+  const { groups, unlinkSheet } = useGroups();
+  // Copies de groupe créées dans cette session (groupId -> id de la copie), pour
+  // pouvoir les supprimer si on détache juste après.
+  const forkedCopiesRef = useRef<Record<string, string>>({});
 
   // Le provider n'ouvre la modale que pour une grille persistée.
   const sheetId = sheet.id!;
@@ -113,30 +117,47 @@ export function AddToCollectionModal({ sheet, initialTab = 'set', onClose }: Pro
     }
   };
 
-  // Rattacher/détacher : groupId si c'est ma grille, linkedSheetIds sinon
-  // (même logique que la page groupe).
+  // Rattacher au groupe = TOUJOURS une COPIE indépendante (comme la page groupe) :
+  // éditer la grille de groupe ne doit jamais toucher l'originale.
+  const forkToGroup = async (groupId: string): Promise<string> => {
+    const db = getDb();
+    // On repart du document source complet (le prop `sheet` peut être allégé).
+    const snap = await getDoc(doc(db, 'sheets', sheetId));
+    if (!snap.exists()) throw new Error('source introuvable');
+    const full = fromFirestore(snap.id, snap.data());
+    const { id: _id, viewCount: _v, averageRating: _a, ratingCount: _r, createdAt: _c, updatedAt: _u, ...rest } = full;
+    void _id; void _v; void _a; void _r; void _c; void _u;
+    const copy: NewSheet = { ...rest, ownerId: user!.id, ownerName: user!.displayName, isPublic: false, groupId, forkedFrom: sheetId };
+    const ref = await addDoc(collection(db, 'sheets'), {
+      ...toFirestore(copy),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      viewCount: 0,
+    });
+    return ref.id;
+  };
+
   const toggleGroup = async (groupId: string, member: boolean) => {
     if (!user) return;
     setBusy(groupId);
     setError(null);
-    const owned = sheet.ownerId === user.id;
     try {
       if (member) {
-        if (owned && sheet.groupId === groupId) {
-          await updateDoc(doc(getDb(), 'sheets', sheetId), {
-            groupId: deleteField(), updatedAt: serverTimestamp(),
-          });
+        // Détacher : supprimer la copie créée ici, sinon nettoyer un ancien état.
+        const copyId = forkedCopiesRef.current[groupId];
+        if (copyId) {
+          await deleteDoc(doc(getDb(), 'sheets', copyId));
+          delete forkedCopiesRef.current[groupId];
+        } else if (sheet.ownerId === user.id && sheet.groupId === groupId) {
+          // Ancien état (groupId posé sur l'originale) : on le retire.
+          await updateDoc(doc(getDb(), 'sheets', sheetId), { groupId: deleteField(), updatedAt: serverTimestamp() });
         } else {
-          await unlinkSheet(groupId, sheetId);
+          await unlinkSheet(groupId, sheetId); // ancien lien en lecture seule
         }
       } else {
-        if (owned) {
-          await updateDoc(doc(getDb(), 'sheets', sheetId), {
-            groupId, updatedAt: serverTimestamp(),
-          });
-        } else {
-          await linkSheet(groupId, sheetId);
-        }
+        // Ajouter = créer une copie du groupe (indépendante).
+        const copyId = await forkToGroup(groupId);
+        forkedCopiesRef.current[groupId] = copyId;
       }
       setGroupOverrides(prev => ({ ...prev, [groupId]: !member }));
     } catch {
