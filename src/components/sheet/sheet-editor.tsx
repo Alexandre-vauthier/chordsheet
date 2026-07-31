@@ -175,14 +175,27 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
   };
 
   // Playback
-  // Si l'auteur a défini une config de lecture, le Play de l'éditeur joue exactement
-  // ces voix (et réagit en direct : usePlayback relit les voix via une ref). Sinon,
-  // comportement par défaut = l'instrument principal, plaqué.
+  // Instruments de la préécoute de l'éditeur. Choix de session : il n'est plus
+  // enregistré dans la grille, la consultation repartant systématiquement de
+  // l'instrument du lecteur. `null` = pas encore touché, on suit le sélecteur.
+  const [pbOverride, setPbOverride] = useState<Record<string, PlayStyle> | null>(null);
+  const defaultPbInst: InstrumentId = (sheet.instrumentId && ACCOMPANIMENT_INSTRUMENTS.includes(sheet.instrumentId))
+    ? sheet.instrumentId : 'guitar';
+  const displayPbMap: Record<string, PlayStyle> = pbOverride ?? { [defaultPbInst]: 'block' };
+
+  const togglePbInstrument = (inst: InstrumentId) => {
+    const next = { ...displayPbMap };
+    if (inst in next) delete next[inst]; else next[inst] = 'block';
+    setPbOverride(next);
+  };
+  const setPbStyle = (inst: InstrumentId, style: PlayStyle) => setPbOverride({ ...displayPbMap, [inst]: style });
+
+  // usePlayback relit les voix via une ref : le Play réagit en direct au menu.
   const playbackVoices = useMemo<PlaybackVoice[] | undefined>(
-    () => sheet.playbackConfig !== undefined
-      ? sheet.playbackConfig.filter((v) => ACCOMPANIMENT_INSTRUMENTS.includes(v.id))
-      : undefined,
-    [sheet.playbackConfig],
+    () => (Object.entries(displayPbMap) as [InstrumentId, PlayStyle][])
+      .filter(([id]) => ACCOMPANIMENT_INSTRUMENTS.includes(id))
+      .map(([id, style]) => ({ id, style })),
+    [displayPbMap],
   );
 
   const { isPlaying, activeStep, playSection, playRow, togglePlay, stop } = usePlayback({
@@ -353,26 +366,6 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
       updateSheet({ key: suggestedKey });
     }
   }, [suggestedKey, sheet.key, updateSheet]);
-
-  // Instruments joués (lecture). Par défaut (config non posée par l'auteur), l'instrument
-  // ACTIF est celui choisi dans le sélecteur de diagrammes — d'où displayPbMap.
-  // [] = aucun (boîte à rythmes seule) ; [{id,style},…] = choix de l'auteur.
-  const pbDefined = sheet.playbackConfig !== undefined;
-  const pbMap = useMemo<Record<string, PlayStyle>>(
-    () => Object.fromEntries((sheet.playbackConfig ?? []).map((v) => [v.id, v.style])),
-    [sheet.playbackConfig],
-  );
-  const defaultPbInst: InstrumentId = (sheet.instrumentId && ACCOMPANIMENT_INSTRUMENTS.includes(sheet.instrumentId))
-    ? sheet.instrumentId : 'guitar';
-  const displayPbMap: Record<string, PlayStyle> = pbDefined ? pbMap : { [defaultPbInst]: 'block' };
-  const setPbFromMap = (map: Record<string, PlayStyle>) =>
-    updateSheet({ playbackConfig: (Object.entries(map) as [InstrumentId, PlayStyle][]).map(([id, style]) => ({ id, style })) });
-  const togglePbInstrument = (inst: InstrumentId) => {
-    const next = { ...displayPbMap };
-    if (inst in next) delete next[inst]; else next[inst] = 'block';
-    setPbFromMap(next);
-  };
-  const setPbStyle = (inst: InstrumentId, style: PlayStyle) => setPbFromMap({ ...displayPbMap, [inst]: style });
 
   // Mettre à jour une section
   const updateSection = useCallback((sectionId: string, updates: Partial<Section>) => {
@@ -680,7 +673,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
             {/* Instruments joués (menu comme la consultation) */}
             <PlaybackInstrumentsMenu
               value={displayPbMap}
-              onSetNone={() => updateSheet({ playbackConfig: [] })}
+              onSetNone={() => setPbOverride({})}
               onToggle={togglePbInstrument}
               onSetStyle={setPbStyle}
             />

@@ -174,9 +174,6 @@ export interface Sheet {
   // V3 - Diagrammes d'accords
   instrumentId?: InstrumentId;
   customChords?: Record<string, CustomChord>; // accords personnalisés par nom
-  // V15 - Config de lecture posée par l'auteur (point de départ pour le lecteur, modifiable).
-  // undefined = non défini (le lecteur garde sa préférence) ; [] = aucun instrument (boîte à rythmes seule).
-  playbackConfig?: { id: InstrumentId; style: 'block' | 'arpeggio' }[];
   // V4 - Lien de référence (YouTube, Spotify, etc.)
   referenceUrl?: string;
   // V5 - Métrique globale

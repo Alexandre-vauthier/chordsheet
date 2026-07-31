@@ -184,11 +184,6 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
   if (sheet.year != null) {
     (base as unknown as Record<string, unknown>).year = sheet.year;
   }
-  // V15 - Config de lecture posée par l'auteur (écrite même vide : [] = boîte à rythmes seule)
-  if (sheet.playbackConfig !== undefined) {
-    (base as unknown as Record<string, unknown>).playbackConfig = sheet.playbackConfig;
-  }
-
   return base;
 }
 
@@ -221,7 +216,6 @@ export function fromFirestore(
     difficulty: (data.difficulty as Difficulty) || null,
     capo: (data.capo as number) ?? null,
     year: (data.year as number) ?? null,
-    playbackConfig: (data.playbackConfig as { id: InstrumentId; style: 'block' | 'arpeggio' }[]) ?? undefined,
     createdAt: (data.createdAt as { toDate: () => Date })?.toDate?.() || new Date(),
     updatedAt: (data.updatedAt as { toDate: () => Date })?.toDate?.() || new Date(),
     viewCount: (data.viewCount as number) || 0,

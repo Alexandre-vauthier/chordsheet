@@ -38,29 +38,17 @@ function hasLocalInstrument(): boolean {
   return !!(v && (INSTRUMENTS as readonly string[]).includes(v));
 }
 
-const ACCOMP_LS_KEY = 'chordsheet_accompaniment';
-
 // Map instrument -> style de jeu (plaqué / arpège). Une entrée = instrument activé.
 type AccompMap = Record<string, PlayStyle>;
 
-function getSavedAccompaniment(fallback: AccompMap): AccompMap {
-  if (typeof window === 'undefined') return fallback;
-  try {
-    const raw = localStorage.getItem(ACCOMP_LS_KEY);
-    if (!raw) return fallback;
-    const parsed = JSON.parse(raw);
-    const out: AccompMap = {};
-    if (Array.isArray(parsed)) {
-      // Ancien format : liste d'instruments → tous en plaqué.
-      for (const x of parsed) if (ACCOMPANIMENT_INSTRUMENTS.includes(x)) out[x] = 'block';
-    } else if (parsed && typeof parsed === 'object') {
-      for (const [k, v] of Object.entries(parsed)) {
-        if (ACCOMPANIMENT_INSTRUMENTS.includes(k as InstrumentId)) out[k] = v === 'arpeggio' ? 'arpeggio' : 'block';
-      }
-    }
-    return out;
-  } catch { /* JSON invalide */ }
-  return fallback;
+/**
+ * Point de départ de l'accompagnement à chaque chargement de grille : l'instrument
+ * du sélecteur, en plaqué. Rien n'est relu depuis la grille (l'auteur ne fixe plus
+ * de config de lecture) ni depuis le stockage local (le choix de session n'est pas
+ * mémorisé d'une grille à l'autre).
+ */
+function initialAccompaniment(instrument: InstrumentId, chordsAudioDisabled: boolean): AccompMap {
+  return chordsAudioDisabled ? {} : { [instrument]: 'block' };
 }
 
 // Icône SVG (au lieu des glyphes Unicode ♩/♪, absents des polices de l'environnement
@@ -174,41 +162,35 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   // leurs badges de répétition).
   const [recActiveRows, setRecActiveRows] = useState<ActiveRow[]>([]);
   // Accompagnement joué (Play + suivi REC) : instrument -> style (plaqué / arpège).
-  // Par défaut : l'instrument principal en plaqué si la préférence "lire les accords" est active.
-  // La grille porte-t-elle une config de lecture posée par l'auteur ?
-  // Si oui : point de départ pour le lecteur (modifiable en session, non mémorisé
-  // globalement pour ne pas polluer sa préférence perso). Si non : comportement habituel.
-  const hasAuthorPlayback = sheet.playbackConfig !== undefined;
-  const [accompaniment, setAccompaniment] = useState<AccompMap>(() => {
-    if (sheet.playbackConfig !== undefined) {
-      const out: AccompMap = {};
-      for (const v of sheet.playbackConfig) {
-        if (ACCOMPANIMENT_INSTRUMENTS.includes(v.id)) out[v.id] = v.style;
-      }
-      return out; // peut être {} => aucun instrument (boîte à rythmes seule)
-    }
-    const fallback: AccompMap = user?.defaultChordsAudio === false
-      ? {}
-      : { [hasLocalInstrument() ? getSavedInstrument('guitar') : (sheet.instrumentId ?? 'guitar')]: 'block' };
-    return getSavedAccompaniment(fallback);
-  });
+  // Chaque chargement de grille repart de l'instrument du sélecteur, en plaqué. Les
+  // ajouts faits en session sont volontairement éphémères : ni mémorisés d'une grille
+  // à l'autre, ni imposés par l'auteur de la grille.
+  const [accompaniment, setAccompaniment] = useState<AccompMap>(
+    () => initialAccompaniment(instrumentId, user?.defaultChordsAudio === false),
+  );
+
+  // Changement de grille (navigation, et setlist en mode concert où le viewer n'est
+  // pas remonté) : on repart du sélecteur. Ajustement d'état pendant le rendu — le
+  // motif React prévu pour ça — plutôt qu'un effet, qui laisserait passer un rendu
+  // intermédiaire avec l'accompagnement de la grille précédente.
+  const [accompSheetId, setAccompSheetId] = useState(sheet.id);
+  if (accompSheetId !== sheet.id) {
+    setAccompSheetId(sheet.id);
+    setAccompaniment(initialAccompaniment(instrumentId, user?.defaultChordsAudio === false));
+  }
+
   const [accompMenuOpen, setAccompMenuOpen] = useState(false);
   const accompMenuRef = useRef<HTMLDivElement>(null);
 
-  const persistAccompaniment = (next: AccompMap) => {
-    // On ne mémorise dans la préférence globale que si la grille n'impose pas de départ.
-    if (!hasAuthorPlayback && typeof window !== 'undefined') localStorage.setItem(ACCOMP_LS_KEY, JSON.stringify(next));
-    return next;
-  };
   const toggleAccompaniment = (inst: InstrumentId) => {
     setAccompaniment((prev) => {
       const next = { ...prev };
       if (inst in next) delete next[inst]; else next[inst] = 'block';
-      return persistAccompaniment(next);
+      return next;
     });
   };
   const setAccompStyle = (inst: InstrumentId, style: PlayStyle) => {
-    setAccompaniment((prev) => persistAccompaniment({ ...prev, [inst]: style }));
+    setAccompaniment((prev) => ({ ...prev, [inst]: style }));
   };
 
   const accompVoices: PlaybackVoice[] = useMemo(
@@ -658,7 +640,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                     </p>
                     {/* Aucun : coupe tous les instruments (seule la boîte à rythmes joue) */}
                     <button
-                      onClick={() => setAccompaniment(persistAccompaniment({}))}
+                      onClick={() => setAccompaniment({})}
                       className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] transition-colors"
                     >
                       <span className={`shrink-0 flex items-center justify-center w-4 h-4 rounded-full border ${accompCount === 0 ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : 'border-[var(--line)]'}`}>
