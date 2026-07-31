@@ -195,13 +195,6 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Avatar */}
-      <div className="flex justify-center mb-8">
-        <div className="w-24 h-24 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-4xl font-bold shadow-lg">
-          {user.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
-        </div>
-      </div>
-
       {/* Formulaire */}
       <div className="space-y-6 bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-6">
         {/* Photo de profil — reprise partout où le compte apparaît (membres d'un

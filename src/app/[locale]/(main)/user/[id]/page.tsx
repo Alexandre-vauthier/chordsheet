@@ -16,6 +16,7 @@ import { Link } from '@/i18n/navigation';
 
 interface PublicUser {
   displayName: string;
+  photoURL: string | null;
   createdAt: Date | null;
 }
 
@@ -47,6 +48,7 @@ export default function UserPage({ params }: UserPageProps) {
           const data = userDoc.data();
           setPublicUser({
             displayName: (data.displayName as string) || 'Anonyme',
+            photoURL: (data.photoURL as string) || null,
             createdAt: (data.createdAt as { toDate: () => Date } | null)?.toDate() ?? null,
           });
         }
@@ -67,6 +69,7 @@ export default function UserPage({ params }: UserPageProps) {
 
         setPublicUser(prev => prev ?? (loaded.length > 0 ? {
           displayName: loaded[0].ownerName || 'Anonyme',
+          photoURL: null,
           createdAt: null,
         } : null));
 
@@ -162,8 +165,13 @@ export default function UserPage({ params }: UserPageProps) {
     <div className="max-w-[1270px] mx-auto px-4 sm:px-6 py-8">
       {/* Header auteur */}
       <div className="flex items-center gap-5 mb-8 pb-6 border-b-2 border-[var(--ink)]">
-        <div className="w-16 h-16 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-2xl font-bold shrink-0 shadow-md">
-          {initial}
+        <div className="w-16 h-16 rounded-full overflow-hidden bg-[var(--accent)] flex items-center justify-center text-white text-2xl font-bold shrink-0 shadow-md">
+          {publicUser.photoURL ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={publicUser.photoURL} alt="" className="w-full h-full object-cover" />
+          ) : (
+            initial
+          )}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
