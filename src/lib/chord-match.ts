@@ -58,3 +58,31 @@ export function chordsMatch(detected: string, cellChord: string): boolean {
   // sus → D et Dsus4 ne fusionnent plus dans le suivi.
   return a.family === b.family;
 }
+
+// ─── Lissage de la détection ──────────────────────────────────────────────────
+
+/**
+ * Accord retenu à partir des N dernières analyses du micro.
+ *
+ * Les analyses sans détection (score sous le seuil : attaque, silence entre deux
+ * grattes, note étouffée) sont **ignorées** dans le vote au lieu d'y participer.
+ * Sinon un accord correctement reconnu 2 fois sur 5 perdait face aux 3 analyses
+ * vides, et disparaissait du suivi alors qu'il était bel et bien joué.
+ *
+ * Il suffit donc que le même accord ressorte `minVotes` fois dans la fenêtre.
+ * À 10 analyses/seconde et une fenêtre de 5, cela couvre un trou d'environ 300 ms.
+ */
+export function smoothDetection(history: readonly string[], minVotes = 2): string {
+  const counts = new Map<string, number>();
+  for (const c of history) {
+    if (c) counts.set(c, (counts.get(c) || 0) + 1);
+  }
+
+  let best = '';
+  let bestN = 0;
+  counts.forEach((n, c) => {
+    if (n > bestN) { bestN = n; best = c; }
+  });
+
+  return bestN >= minVotes ? best : '';
+}

@@ -8,6 +8,8 @@
 
 import { useRef, useState, useCallback, useEffect } from 'react';
 
+import { smoothDetection } from '@/lib/chord-match';
+
 const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
 interface Template {
@@ -95,6 +97,7 @@ const F_MIN = 65;             // Hz (~C2) : on ignore le sub-grave
 const F_MAX = 2000;           // Hz : on ignore l'aigu peu informatif pour l'accord
 const SCORE_GATE = 0.72;      // score cosinus minimal pour valider un accord
 const SMOOTH_WINDOW = 5;      // vote majoritaire sur N dernières analyses
+const MIN_VOTES = 2;          // occurrences suffisantes pour retenir un accord
 
 // echoCancellation : à activer quand un son sort des enceintes pendant l'écoute
 // (ex. boîte à rythme). Le navigateur retire alors du micro ce qu'il joue lui-même,
@@ -192,15 +195,11 @@ export function useChordListener(echoCancellation = false) {
         const gate = energy > 1e-3 && best.adj > SCORE_GATE;
         const detected = gate ? best.name : '';
 
-        // Lissage : vote majoritaire sur les dernières analyses
+        // Lissage : vote majoritaire sur les dernières analyses, silences exclus.
         const hist = historyRef.current;
         hist.push(detected);
         if (hist.length > SMOOTH_WINDOW) hist.shift();
-        const counts = new Map<string, number>();
-        for (const c of hist) counts.set(c, (counts.get(c) || 0) + 1);
-        let smooth = '';
-        let smoothN = 0;
-        counts.forEach((n, c) => { if (n > smoothN) { smoothN = n; smooth = c; } });
+        const smooth = smoothDetection(hist, MIN_VOTES);
 
         setState((s) => ({
           ...s,
