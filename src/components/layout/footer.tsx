@@ -3,16 +3,96 @@
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 
+/**
+ * Pied de page : c'est le principal outil de maillage interne du site. Il est rendu
+ * partout, y compris sur la page d'accueil, qui reçoit les liens externes et doit
+ * donc redistribuer vers les pages de contenu.
+ *
+ * Les libellés sont des ancres descriptives : ce texte est ce que les moteurs
+ * retiennent de la page de destination.
+ */
 export function Footer() {
   const t = useTranslations('Footer');
+
+  const columns: { heading: string; links: { href: string; label: string }[] }[] = [
+    {
+      heading: t('colBrowse'),
+      links: [
+        { href: '/explore', label: t('linkExplore') },
+        { href: '/artists', label: t('linkArtists') },
+      ],
+    },
+    {
+      heading: t('colChords'),
+      links: [
+        { href: '/chords', label: t('linkChords') },
+        { href: '/chord-detect', label: t('linkChordDetect') },
+      ],
+    },
+    {
+      heading: t('colTools'),
+      links: [
+        { href: '/tuner', label: t('linkTuner') },
+        { href: '/sheet/new', label: t('linkNewSheet') },
+      ],
+    },
+    {
+      heading: t('colAbout'),
+      links: [
+        { href: '/about', label: t('about') },
+        { href: '/faq', label: t('faq') },
+        { href: '/pricing', label: t('linkPricing') },
+        { href: '/contact', label: t('contact') },
+        { href: '/credits', label: t('credits') },
+      ],
+    },
+    {
+      heading: t('colLegal'),
+      links: [
+        { href: '/legal/mentions-legales', label: t('legalNotice') },
+        { href: '/legal/cgu', label: t('terms') },
+        { href: '/legal/cgv', label: t('salesTerms') },
+        { href: '/legal/confidentialite', label: t('privacy') },
+      ],
+    },
+  ];
+
   return (
     <footer className="mt-auto border-t border-[var(--line)] bg-[var(--cell-bg)] print:hidden">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex flex-col items-center sm:items-start gap-1">
-            <p className="text-xs text-[var(--ink-faint)]">
-              {t('copyright', { year: new Date().getFullYear() })}
-            </p>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-8">
+          {columns.map(col => (
+            <nav key={col.heading} aria-label={col.heading}>
+              <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--ink-light)] mb-3">
+                {col.heading}
+              </h2>
+              <ul className="space-y-1.5">
+                {col.links.map(l => (
+                  <li key={l.href}>
+                    <Link href={l.href} className="text-xs text-[var(--ink-faint)] hover:text-[var(--accent)] transition-colors">
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
+        </div>
+
+        <div className="mt-8 pt-5 border-t border-[var(--line)] flex flex-col sm:flex-row items-center justify-between gap-3">
+          <p className="text-xs text-[var(--ink-faint)]">
+            {t('copyright', { year: new Date().getFullYear() })}
+          </p>
+          <div className="flex flex-wrap justify-center items-center gap-x-5 gap-y-1">
+            <a
+              href="https://discord.gg/vn3xVCCKFD"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-light)] transition-colors"
+            >
+              {t('discord')}
+            </a>
             {/* Backlink requis par GetSongBPM (source tempo & tonalité). Lien suivi
                 (pas de nofollow), présent sur tout le site via le footer. */}
             <a
@@ -24,36 +104,8 @@ export function Footer() {
               Tempo &amp; tonalité : GetSongBPM
             </a>
           </div>
-          <nav className="flex flex-wrap justify-center gap-x-5 gap-y-1">
-            <Link href="/credits" className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-light)] transition-colors">
-              {t('credits')}
-            </Link>
-            <Link href="/about" className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-light)] transition-colors">
-              {t('about')}
-            </Link>
-            <Link href="/faq" className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-light)] transition-colors">
-              {t('faq')}
-            </Link>
-            <Link href="/legal/mentions-legales" className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-light)] transition-colors">
-              {t('legalNotice')}
-            </Link>
-            <Link href="/legal/cgu" className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-light)] transition-colors">
-              {t('terms')}
-            </Link>
-            <Link href="/legal/confidentialite" className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-light)] transition-colors">
-              {t('privacy')}
-            </Link>
-            <Link href="/legal/cgv" className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-light)] transition-colors">
-              {t('salesTerms')}
-            </Link>
-            <Link href="/contact" className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-light)] transition-colors">
-              {t('contact')}
-            </Link>
-            <a href="https://discord.gg/vn3xVCCKFD" target="_blank" rel="noopener noreferrer" className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink-light)] transition-colors">
-              {t('discord')}
-            </a>
-          </nav>
         </div>
+
       </div>
     </footer>
   );

@@ -118,19 +118,18 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
     // Mobile : reste false (replié par défaut)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.showChordSummaryByDefault]);
-  const [instrumentId, setInstrumentId] = useState<InstrumentId>(() => {
-    // Priorité 1 : dernier choix explicite (localStorage)
-    if (hasLocalInstrument()) return getSavedInstrument('guitar');
-    // Priorité 2 : instrument de la grille si pas de choix utilisateur
-    if (sheet.instrumentId) return sheet.instrumentId;
-    return 'guitar';
-  });
+  // L'état initial ne dépend QUE de la grille : c'est la seule valeur que le serveur
+  // et le client calculent à l'identique. Lire localStorage ici produirait un rendu
+  // serveur différent du premier rendu client, donc une erreur d'hydratation.
+  const [instrumentId, setInstrumentId] = useState<InstrumentId>(
+    () => sheet.instrumentId ?? 'guitar',
+  );
 
-  // Priorité 2 bis : préférence profil une fois le user chargé, si pas de localStorage
+  // Après hydratation seulement : priorité 1 au dernier choix explicite (localStorage),
+  // priorité 2 à la préférence du profil une fois l'utilisateur chargé.
   useEffect(() => {
-    if (!hasLocalInstrument() && user?.preferredInstrument) {
-      setInstrumentId(user.preferredInstrument);
-    }
+    if (hasLocalInstrument()) setInstrumentId(getSavedInstrument('guitar'));
+    else if (user?.preferredInstrument) setInstrumentId(user.preferredInstrument);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.preferredInstrument]);
 

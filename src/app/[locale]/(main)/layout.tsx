@@ -12,13 +12,21 @@ import { LiveSessionBanner } from '@/components/layout/live-session-banner';
 import { EmailVerificationGate } from '@/components/layout/email-verification-gate';
 import { usePathname, useRouter } from '@/i18n/navigation';
 
-// Routes accessibles sans authentification (contenu public en lecture seule)
-const PUBLIC_EXACT = ['/explore', '/chords', '/chord-detect', '/tuner', '/pricing', '/contact'];
+// Routes accessibles sans authentification (contenu public en lecture seule).
+// /about, /faq, /credits sont liées depuis le pied de page : les garder privées
+// envoyait les visiteurs sur /login depuis nos propres liens.
+const PUBLIC_EXACT = [
+  '/explore', '/chords', '/chord-detect', '/tuner', '/pricing', '/contact',
+  '/about', '/faq', '/credits', '/artists',
+];
 const PUBLIC_PREFIXES = ['/legal'];
 // /sheet/:id (mais pas /sheet/new ni /sheet/:id/edit), /artist/:name, /user/:id,
-// /session/:code (rejoindre une session éphémère sans compte — pas /session lui-même,
-// qui reste réservé aux hôtes Pro connectés)
-const PUBLIC_PATTERNS = [/^\/sheet\/[^/]+$/, /^\/artist\/[^/]+$/, /^\/user\/[^/]+$/, /^\/session\/[^/]+$/];
+// /song/:titre/:artiste, /session/:code (rejoindre une session éphémère sans compte
+// — pas /session lui-même, qui reste réservé aux hôtes Pro connectés)
+const PUBLIC_PATTERNS = [
+  /^\/sheet\/[^/]+$/, /^\/artist\/[^/]+$/, /^\/user\/[^/]+$/,
+  /^\/song\/[^/]+\/[^/]+$/, /^\/session\/[^/]+$/,
+];
 
 function isPublicRoute(pathname: string): boolean {
   if (PUBLIC_EXACT.includes(pathname)) return true;
@@ -44,20 +52,27 @@ export default function MainLayout({
     }
   }, [user, loading, router, isPublic]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[var(--accent)] border-t-transparent" />
-      </div>
-    );
-  }
+  // Les gardes ne s'appliquent QU'AUX routes privées. Une page publique doit se
+  // rendre immédiatement, sans attendre l'état d'authentification : côté serveur
+  // `loading` vaut toujours true (onAuthStateChanged n'y existe pas), si bien que
+  // ce retour anticipé émettait un écran d'attente au lieu du contenu — et privait
+  // les moteurs de recherche de l'intégralité des pages publiques.
+  if (!isPublic) {
+    if (loading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-[var(--accent)] border-t-transparent" />
+        </div>
+      );
+    }
 
-  if (!user && !isPublic) {
-    return null;
-  }
+    if (!user) {
+      return null;
+    }
 
-  if (user && !isPublic && !isAdmin && !emailVerified) {
-    return <EmailVerificationGate />;
+    if (!isAdmin && !emailVerified) {
+      return <EmailVerificationGate />;
+    }
   }
 
   return (

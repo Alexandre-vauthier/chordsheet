@@ -39,7 +39,19 @@
     "salesTerms": "CGV",
     "contact": "Contact",
     "discord": "Discord",
-    "copyright": "© {year} ChordSheet — Alexandre Vauthier"
+    "copyright": "© {year} ChordSheet — Alexandre Vauthier",
+    "colBrowse": "Explorer",
+    "colChords": "Accords",
+    "colTools": "Outils",
+    "colAbout": "ChordSheet",
+    "colLegal": "Légal",
+    "linkExplore": "Toutes les grilles",
+    "linkArtists": "Artistes",
+    "linkChords": "Bibliothèque d'accords",
+    "linkChordDetect": "Identifier un accord",
+    "linkTuner": "Accordeur en ligne",
+    "linkNewSheet": "Créer une grille",
+    "linkPricing": "Tarifs"
   },
   "Landing": {
     "nav": {
@@ -1191,5 +1203,67 @@
     "tooLarge": "Image trop lourde (10 Mo maximum).",
     "notAnImage": "Ce fichier n'est pas une image.",
     "uploadFailed": "Envoi impossible, réessaie."
+  },
+  "Seo": {
+    "siteTitle": "ChordSheet — Grilles d'accords pour musiciens",
+    "siteDescription": "Créez, partagez et consultez vos grilles d'accords. Transposez, imprimez et jouez sur scène. Gratuit, pour guitare, piano, ukulélé et plus.",
+    "pages": {
+      "explore": {
+        "title": "Explorer les grilles d'accords",
+        "description": "Parcourez les grilles d'accords partagées par la communauté : rock, pop, chanson française, jazz. Filtrez par genre, difficulté et instrument."
+      },
+      "chords": {
+        "title": "Bibliothèque d'accords : guitare, piano, ukulélé",
+        "description": "Tous les diagrammes d'accords pour guitare, ukulélé, mandoline, banjo, basse et piano. Positions, doigtés et variantes."
+      },
+      "artists": {
+        "title": "Artistes",
+        "description": "Tous les artistes dont les grilles d'accords sont partagées sur ChordSheet, classés par ordre alphabétique."
+      },
+      "tuner": {
+        "title": "Accordeur en ligne gratuit",
+        "description": "Accordez votre guitare, basse, ukulélé, mandoline ou banjo au micro, directement dans le navigateur. Gratuit, sans installation."
+      },
+      "chordDetect": {
+        "title": "Identifier un accord au micro",
+        "description": "Jouez un accord, ChordSheet le reconnaît. Identification en temps réel dans le navigateur, sans rien installer."
+      },
+      "pricing": {
+        "title": "Tarifs",
+        "description": "ChordSheet est gratuit pour un usage personnel. L'offre Pro débloque les groupes, le partage de répertoire et l'analyse illimitée."
+      },
+      "contact": {
+        "title": "Contact",
+        "description": "Une question, une suggestion, une erreur repérée ? Écrivez-nous, nous lisons tous les messages."
+      },
+      "credits": {
+        "title": "Crédits",
+        "description": "Celles et ceux sans qui ChordSheet n'existerait pas."
+      },
+      "faq": {
+        "title": "Questions fréquentes",
+        "description": "Tout ce qu'il faut savoir pour créer, importer, partager et imprimer vos grilles d'accords."
+      },
+      "about": {
+        "title": "Qui sommes-nous ?",
+        "description": "ChordSheet est né d'un besoin simple : ne pas perdre ce qu'on a appris. L'histoire de deux frères musiciens."
+      },
+      "legalCgu": {
+        "title": "Conditions générales d'utilisation",
+        "description": "Les conditions d'utilisation du service ChordSheet."
+      },
+      "legalCgv": {
+        "title": "Conditions générales de vente",
+        "description": "Les conditions de vente de l'abonnement ChordSheet Pro."
+      },
+      "legalPrivacy": {
+        "title": "Politique de confidentialité",
+        "description": "Quelles données ChordSheet collecte, pourquoi, et comment exercer vos droits."
+      },
+      "legalNotice": {
+        "title": "Mentions légales",
+        "description": "Éditeur, hébergeur et propriété intellectuelle du site ChordSheet."
+      }
+    }
   }
 }

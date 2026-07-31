@@ -8,6 +8,7 @@ import { getDb } from '@/lib/firebase';
 import { useArtwork } from '@/lib/use-artwork';
 import { useAuth } from '@/lib/auth-context';
 import { Link } from '@/i18n/navigation';
+import { Footer } from '@/components/layout/footer';
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 
@@ -234,11 +235,13 @@ export default function Home() {
             {t('hero.eyebrow')}
           </p>
           <div className="mb-5 flex justify-center">
-            <Image src="/logo-chordsheet.svg" alt="ChordSheet" height={64} width={280} priority className="w-auto h-12 sm:h-16" />
+            {/* Le logo est décoratif : la promesse du site est portée par le h1
+                ci-dessous, seul titre de niveau 1 de la page (il n'y en avait aucun). */}
+            <Image src="/logo-chordsheet.svg" alt="" aria-hidden height={64} width={280} priority className="w-auto h-12 sm:h-16" />
           </div>
-          <p className="text-[var(--nav-text)]/70 text-xl sm:text-2xl mb-3 font-light leading-snug">
+          <h1 className="text-[var(--nav-text)]/70 text-xl sm:text-2xl mb-3 font-light leading-snug">
             {t('hero.tagline')}
-          </p>
+          </h1>
           <p className="text-[var(--nav-text)]/40 text-sm mb-10 max-w-md mx-auto">
             {t('hero.subtitle')}
           </p>
@@ -516,17 +519,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Footer ──────────────────────────────────────────────── */}
-      <footer className="text-center py-8 text-[var(--nav-text)]/25 text-xs border-t border-white/5">
-        <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 mb-2">
-          <Link href="/legal/cgu" className="hover:text-[var(--nav-text)]/50 transition-colors">{t('footer.terms')}</Link>
-          <Link href="/legal/confidentialite" className="hover:text-[var(--nav-text)]/50 transition-colors">{t('footer.privacy')}</Link>
-          <Link href="/legal/mentions-legales" className="hover:text-[var(--nav-text)]/50 transition-colors">{t('footer.legalNotice')}</Link>
-          {/* Backlink requis par GetSongBPM (source tempo & tonalité) — sur la page d'accueil aussi */}
-          <a href="https://getsongbpm.com" target="_blank" rel="noopener" className="hover:text-[var(--nav-text)]/50 transition-colors">Tempo &amp; tonalité : GetSongBPM</a>
-        </div>
-        {t('footer.copyright', { year: new Date().getFullYear() })}
-      </footer>
+      <Footer />
+
     </main>
   );
 }

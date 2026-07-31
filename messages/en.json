@@ -39,7 +39,19 @@
     "salesTerms": "Terms of sale",
     "contact": "Contact",
     "discord": "Discord",
-    "copyright": "© {year} ChordSheet — Alexandre Vauthier"
+    "copyright": "© {year} ChordSheet — Alexandre Vauthier",
+    "colBrowse": "Browse",
+    "colChords": "Chords",
+    "colTools": "Tools",
+    "colAbout": "ChordSheet",
+    "colLegal": "Legal",
+    "linkExplore": "All chord charts",
+    "linkArtists": "Artists",
+    "linkChords": "Chord library",
+    "linkChordDetect": "Identify a chord",
+    "linkTuner": "Online tuner",
+    "linkNewSheet": "Create a chart",
+    "linkPricing": "Pricing"
   },
   "Landing": {
     "nav": {
@@ -1191,5 +1203,67 @@
     "tooLarge": "Image too large (10 MB maximum).",
     "notAnImage": "This file is not an image.",
     "uploadFailed": "Upload failed, please retry."
+  },
+  "Seo": {
+    "siteTitle": "ChordSheet — Chord charts for musicians",
+    "siteDescription": "Create, share and read your chord charts. Transpose, print and play on stage. Free, for guitar, piano, ukulele and more.",
+    "pages": {
+      "explore": {
+        "title": "Browse chord charts",
+        "description": "Browse chord charts shared by the community: rock, pop, jazz, folk. Filter by genre, difficulty and instrument."
+      },
+      "chords": {
+        "title": "Chord library: guitar, piano, ukulele",
+        "description": "Every chord diagram for guitar, ukulele, mandolin, banjo, bass and piano. Positions, fingerings and variations."
+      },
+      "artists": {
+        "title": "Artists",
+        "description": "Every artist whose chord charts are shared on ChordSheet, listed alphabetically."
+      },
+      "tuner": {
+        "title": "Free online tuner",
+        "description": "Tune your guitar, bass, ukulele, mandolin or banjo with your microphone, right in the browser. Free, nothing to install."
+      },
+      "chordDetect": {
+        "title": "Identify a chord with your mic",
+        "description": "Play a chord and ChordSheet names it. Real-time recognition in the browser, nothing to install."
+      },
+      "pricing": {
+        "title": "Pricing",
+        "description": "ChordSheet is free for personal use. Pro unlocks bands, shared repertoire and unlimited analysis."
+      },
+      "contact": {
+        "title": "Contact",
+        "description": "A question, a suggestion, a mistake you spotted? Write to us, we read every message."
+      },
+      "credits": {
+        "title": "Credits",
+        "description": "The people without whom ChordSheet would not exist."
+      },
+      "faq": {
+        "title": "Frequently asked questions",
+        "description": "Everything you need to create, import, share and print your chord charts."
+      },
+      "about": {
+        "title": "About us",
+        "description": "ChordSheet was born from a simple need: not losing what you have learned. The story of two musician brothers."
+      },
+      "legalCgu": {
+        "title": "Terms of use",
+        "description": "The terms governing the use of ChordSheet."
+      },
+      "legalCgv": {
+        "title": "Terms of sale",
+        "description": "The terms of sale for the ChordSheet Pro subscription."
+      },
+      "legalPrivacy": {
+        "title": "Privacy policy",
+        "description": "What data ChordSheet collects, why, and how to exercise your rights."
+      },
+      "legalNotice": {
+        "title": "Legal notice",
+        "description": "Publisher, host and intellectual property of the ChordSheet website."
+      }
+    }
   }
 }
