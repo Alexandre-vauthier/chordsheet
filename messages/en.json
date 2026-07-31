@@ -1202,7 +1202,8 @@
     "hint": "JPEG or PNG, cropped to a square automatically.",
     "tooLarge": "Image too large (10 MB maximum).",
     "notAnImage": "This file is not an image.",
-    "uploadFailed": "Upload failed, please retry."
+    "uploadFailed": "Upload failed, please retry.",
+    "forbidden": "Upload refused by the server. Storage rules have most likely not been deployed."
   },
   "Seo": {
     "siteTitle": "ChordSheet — Chord charts for musicians",

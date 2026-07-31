@@ -20,6 +20,8 @@ const OUTPUT_QUALITY = 0.85;
 
 export class ImageTooLargeError extends Error {}
 export class NotAnImageError extends Error {}
+/** Le dépôt a été refusé par les règles Storage (règles non déployées, ou chemin interdit). */
+export class UploadForbiddenError extends Error {}
 
 /**
  * Recadre au centre en carré, rééchantillonne, et renvoie un JPEG.
@@ -71,9 +73,19 @@ export function groupPhotoPath(groupId: string, userId: string): string {
 /** Prépare puis dépose l'image, et renvoie son URL de téléchargement. */
 export async function uploadSquareImage(file: File, path: string): Promise<string> {
   const blob = await prepareSquareImage(file);
-  const snap = await uploadBytes(storageRef(getStorage(), path), blob, {
-    contentType: 'image/jpeg',
-    cacheControl: 'public, max-age=86400',
-  });
-  return getDownloadURL(snap.ref);
+  try {
+    const snap = await uploadBytes(storageRef(getStorage(), path), blob, {
+      contentType: 'image/jpeg',
+      cacheControl: 'public, max-age=86400',
+    });
+    return getDownloadURL(snap.ref);
+  } catch (e) {
+    // `storage/unauthorized` signifie que les règles refusent le chemin. La cause
+    // de loin la plus fréquente : storage.rules n'a pas été déployé, et seul
+    // analyze-uploads/ est autorisé. Le distinguer évite de chercher un bug
+    // applicatif là où il n'y en a pas.
+    const code = (e as { code?: string })?.code;
+    if (code === 'storage/unauthorized') throw new UploadForbiddenError(path);
+    throw e;
+  }
 }

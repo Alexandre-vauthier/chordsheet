@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { uploadSquareImage, ImageTooLargeError, NotAnImageError } from '@/lib/upload-image';
+import { uploadSquareImage, ImageTooLargeError, NotAnImageError, UploadForbiddenError } from '@/lib/upload-image';
 
 /**
  * Pastille photo avec dépôt de fichier : avatar d'un compte, photo d'un groupe.
@@ -45,7 +45,10 @@ export function PhotoPicker({
     } catch (e) {
       if (e instanceof ImageTooLargeError) setError(t('tooLarge'));
       else if (e instanceof NotAnImageError) setError(t('notAnImage'));
+      else if (e instanceof UploadForbiddenError) setError(t('forbidden'));
       else setError(t('uploadFailed'));
+      // Le détail technique reste en console : le message affiché doit rester lisible.
+      console.error('[PhotoPicker] dépôt impossible', e);
     } finally {
       setBusy(false);
       // Réinitialise l'input : redéposer le même fichier doit redéclencher l'événement.

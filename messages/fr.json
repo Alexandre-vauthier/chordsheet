@@ -1202,7 +1202,8 @@
     "hint": "JPEG ou PNG, recadrée en carré automatiquement.",
     "tooLarge": "Image trop lourde (10 Mo maximum).",
     "notAnImage": "Ce fichier n'est pas une image.",
-    "uploadFailed": "Envoi impossible, réessaie."
+    "uploadFailed": "Envoi impossible, réessaie.",
+    "forbidden": "Dépôt refusé par le serveur. Les règles de stockage n'ont probablement pas été déployées."
   },
   "Seo": {
     "siteTitle": "ChordSheet — Grilles d'accords pour musiciens",
