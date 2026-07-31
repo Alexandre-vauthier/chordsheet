@@ -16,11 +16,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { useChordListener } from '@/lib/use-chord-listener';
 import { chordsMatch } from '@/lib/chord-match';
+import {
+  clampMsPerBeat, updateMsPerBeat, shouldAnticipate, MAX_UNCONFIRMED,
+} from '@/lib/follow-tempo';
 
 export interface FollowSeqItem {
   pos: string;         // data-pos de la cellule
   rowId: string;       // data-row-id de la mesure (défilement)
   sound: string;       // accord réellement entendu (forme + capo effectif)
+  beats: number;       // durée de la cellule en temps (sert à l'horloge du suivi)
   repeatIndex: number; // passage courant de la mesure répétée (0-based)
   rowRepeat: number;   // nombre total de passages de la mesure
 }
@@ -35,6 +39,7 @@ export interface ActiveRow {
 // Un bloc = suite de cellules consécutives que la détection ne distingue pas.
 interface ChordGroup {
   sound: string;       // accord représentatif du bloc
+  beats: number;       // durée cumulée du bloc en temps
   positions: string[]; // data-pos de toutes les cellules du bloc
   rowId: string;       // mesure de la première cellule (pour le défilement)
   rows: ActiveRow[];   // mesures du bloc + passage de répétition (badges)
@@ -62,9 +67,10 @@ function buildGroups(seq: FollowSeqItem[]): ChordGroup[] {
     // Rejoint le bloc courant si l'accord ne s'en distingue pas (même famille+fond.).
     if (last && chordsMatch(last.sound, it.sound)) {
       last.positions.push(it.pos);
+      last.beats += it.beats;
       addRow(last, it);
     } else {
-      const g: ChordGroup = { sound: it.sound, positions: [it.pos], rowId: it.rowId, rows: [] };
+      const g: ChordGroup = { sound: it.sound, beats: it.beats, positions: [it.pos], rowId: it.rowId, rows: [] };
       addRow(g, it);
       groups.push(g);
     }
@@ -74,12 +80,15 @@ function buildGroups(seq: FollowSeqItem[]): ChordGroup[] {
 
 export function LiveChordFollow({
   sequence,
+  bpm,
   onListeningChange,
   onActiveRowsChange,
   onAdvance,
   outputActive = false,
 }: {
   sequence: FollowSeqItem[];
+  // Tempo de la grille : amorce l'horloge avant d'avoir observé le joueur.
+  bpm: number;
   onListeningChange?: (listening: boolean) => void;
   onActiveRowsChange?: (rows: ActiveRow[]) => void;
   // Appelé au passage à un nouveau bloc, avec l'accord entendu (pour jouer un
@@ -95,11 +104,21 @@ export function LiveChordFollow({
   const latestChordRef = useRef('');
   const posRef = useRef(-1); // index du bloc courant
 
+  // Horloge : tempo estimé du joueur, instant d'entrée dans le bloc courant, et
+  // nombre d'avances consécutives décidées sans confirmation du micro.
+  const msPerBeatRef = useRef(clampMsPerBeat(60000 / (bpm || 90)));
+  // Le BPM passe par une ref : éditer le champ tempo pendant l'écoute ne doit pas
+  // relancer l'effet de suivi, qui remettrait la position à zéro.
+  const bpmRef = useRef(bpm);
+  const enteredAtRef = useRef(0);
+  const unconfirmedRef = useRef(0);
+
   const [autoStopped, setAutoStopped] = useState(false);
   const prevOutputRef = useRef(outputActive);
 
   useEffect(() => { groupsRef.current = buildGroups(sequence); posRef.current = -1; }, [sequence]);
   useEffect(() => { latestChordRef.current = chord; }, [chord]);
+  useEffect(() => { bpmRef.current = bpm; }, [bpm]);
   useEffect(() => { onListeningChange?.(listening); }, [listening, onListeningChange]);
   // Plus d'écoute → plus de ligne active (arrête le clignotement des répétitions).
   useEffect(() => { if (!listening) onActiveRowsChange?.([]); }, [listening, onActiveRowsChange]);
@@ -119,10 +138,25 @@ export function LiveChordFollow({
   useEffect(() => {
     if (!listening) return;
     posRef.current = -1;
+    enteredAtRef.current = 0;
+    unconfirmedRef.current = 0;
+    msPerBeatRef.current = clampMsPerBeat(60000 / (bpmRef.current || 90));
     clearClass('chord-current');
 
-    const goToGroup = (idx: number) => {
+    const goToGroup = (idx: number, confirmed: boolean) => {
       const groups = groupsRef.current;
+      const now = Date.now();
+
+      // Le tempo ne s'apprend que sur les changements réellement entendus : une
+      // avance décidée par l'horloge ne doit pas nourrir sa propre estimation.
+      if (confirmed && posRef.current >= 0 && enteredAtRef.current > 0) {
+        msPerBeatRef.current = updateMsPerBeat(
+          msPerBeatRef.current, now - enteredAtRef.current, groups[posRef.current].beats,
+        );
+      }
+      unconfirmedRef.current = confirmed ? 0 : unconfirmedRef.current + 1;
+      enteredAtRef.current = now;
+
       posRef.current = idx;
       clearClass('chord-current');
       for (const p of groups[idx].positions) {
@@ -142,34 +176,52 @@ export function LiveChordFollow({
     };
 
     const id = setInterval(() => {
+      // `c` peut être vide (silence, attaque, note étouffée). On ne s'en sert que
+      // pour les comparaisons : l'horloge, elle, doit tourner même sans rien
+      // entendre, sinon un joueur qui s'arrête laisserait le suivi figé au lieu
+      // d'être coupé.
       const c = latestChordRef.current;
-      if (!c) return;
       const groups = groupsRef.current;
       if (!groups.length) return;
       const gpos = posRef.current;
 
-      // Pas encore calé : chercher le premier bloc correspondant au début.
+      // Pas encore calé : il faut une vraie détection pour se caler, l'horloge
+      // n'a pas de point de départ tant qu'on ne sait pas où on en est.
       if (gpos < 0) {
+        if (!c) return;
         for (let k = 0; k < START_WINDOW && k < groups.length; k++) {
-          if (chordsMatch(c, groups[k].sound)) { goToGroup(k); return; }
+          if (chordsMatch(c, groups[k].sound)) { goToGroup(k, true); return; }
         }
         return;
       }
 
-      // Toujours dans le bloc courant → rien à faire (déjà surligné en entier).
-      if (chordsMatch(c, groups[gpos].sound)) return;
-
-      // Changement d'accord : avancer au bloc suivant s'il correspond (jamais de saut).
       const next = groups[gpos + 1];
-      if (next && chordsMatch(c, next.sound)) goToGroup(gpos + 1);
-      // Sinon on attend (l'accord courant ou le suivant finira par revenir).
+
+      if (c) {
+        // Toujours dans le bloc courant → rien à faire (déjà surligné en entier).
+        if (chordsMatch(c, groups[gpos].sound)) return;
+        // Changement d'accord entendu : avancer au bloc suivant (jamais de saut).
+        if (next && chordsMatch(c, next.sound)) { goToGroup(gpos + 1, true); return; }
+      }
+
+      // Rien d'exploitable au micro. Si la durée attendue du bloc courant est
+      // écoulée (au devancement près), on bascule quand même : l'accord a été mal
+      // joué, mal détecté, ou le joueur s'est arrêté.
+      if (!next) return;
+      if (!shouldAnticipate(Date.now() - enteredAtRef.current, groups[gpos].beats, msPerBeatRef.current)) return;
+
+      goToGroup(gpos + 1, false);
+
+      // Deux blocs enchaînés sans que le micro confirme quoi que ce soit : le
+      // joueur s'est arrêté ou a décroché. On coupe plutôt que de dérouler seul.
+      if (unconfirmedRef.current >= MAX_UNCONFIRMED) stop();
     }, TICK_MS);
 
     return () => {
       clearInterval(id);
       clearClass('chord-current');
     };
-  }, [listening, onActiveRowsChange, onAdvance]);
+  }, [listening, onActiveRowsChange, onAdvance, stop]);
 
   useEffect(() => () => clearClass('chord-current'), []);
 

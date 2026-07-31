@@ -255,6 +255,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
         pos: it.pos,
         rowId: it.rowId,
         sound: effectiveCapo > 0 ? transposeChord(it.chord, effectiveCapo) : it.chord,
+        beats: it.span,
         repeatIndex: it.repeatIndex,
         rowRepeat: it.rowRepeat,
       })),
@@ -1162,6 +1163,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
       {instrumentId !== 'voice' && (
         <LiveChordFollow
           sequence={followSequence}
+          bpm={parseTempo(localTempo) || bpm || 90}
           onListeningChange={setRecListening}
           onActiveRowsChange={setRecActiveRows}
           onAdvance={playAccompanimentChord}
