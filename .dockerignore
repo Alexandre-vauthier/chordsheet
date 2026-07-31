@@ -1,0 +1,44 @@
+# Contexte de build de l'app Next uniquement : tout le reste est exclu pour ne
+# pas envoyer 3 Go au démon Docker à chaque build.
+
+# dépendances et artefacts de build (reconstruits dans l'image)
+node_modules
+.next
+out
+build
+*.tsbuildinfo
+
+# services Python (Cloud Run) : ~1 Go de .venv et de stems, et leurs propres Dockerfile
+services
+
+# git
+.git
+.gitignore
+.gitattributes
+.github
+
+# secrets : injectés via le secret de build (builder) et env_file (runtime),
+# jamais copiés dans une couche d'image
+.env
+.env*.local
+
+# outillage et fichiers locaux
+.vercel
+.claude
+.firebaserc
+firebase.json
+firestore.indexes.json
+firestore.rules
+storage.rules
+.DS_Store
+npm-debug.log*
+yarn-error.log*
+
+# docker lui-même
+Dockerfile
+compose.yaml
+.dockerignore
+
+# documentation
+docs
+*.md

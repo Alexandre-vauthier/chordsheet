@@ -1,0 +1,55 @@
+name: chordsheet
+
+services:
+  # Développement : hot reload, sources montées depuis l'hôte.
+  # Docker Desktop relaie bien les événements de fichiers à travers le bind mount
+  # (recompilation mesurée à ~1 s), aucun polling n'est nécessaire.
+  #
+  # node_modules est un volume Docker pour masquer celui de l'hôte, compilé pour
+  # macOS. .next aussi : son cache (~1,5 Go à l'usage) ne s'accumule donc plus
+  # sur le disque de la machine.
+  #
+  # Après un changement de dépendances : npm run docker:reset, puis relancer.
+  dev:
+    build:
+      context: .
+      target: dev
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - next_cache:/app/.next
+
+  # Production locale : build dans l'image, .next/cache supprimé juste après,
+  # sortie standalone. Rien n'est écrit sur le disque de l'hôte.
+  web:
+    build:
+      context: .
+      target: runner
+      secrets:
+        - env_local
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.local
+    healthcheck:
+      # Le script est cité : le `? 0 : 1` du ternaire contient un « : » que YAML
+      # interpréterait sinon comme une map.
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+secrets:
+  # Monté uniquement pendant le `next build` : les NEXT_PUBLIC_* doivent être
+  # présents à ce moment-là pour être inlinés dans le bundle client.
+  env_local:
+    file: .env.local
+
+volumes:
+  node_modules:
+  next_cache:

@@ -279,7 +279,36 @@ Voir `firestore-helpers.ts` :
 npm run dev      # Dev local (localhost:3000)
 npm run build    # Build production
 npm run lint     # ESLint
+npm run clean    # Purge .next/cache (le cache webpack monte vite à ~1,5 Go)
 ```
+
+### Docker (local)
+
+`Dockerfile` multi-stage à la racine + `compose.yaml`. Ne concerne que l'app Next :
+les services Python ont leurs propres Dockerfile pour Cloud Run et sont exclus du
+contexte de build ; en local l'app les appelle à distance via `CHORD_DETECTOR_URL`.
+
+```bash
+npm run docker:dev     # cible dev — hot reload, sources montées
+npm run docker:prod    # cible runner — build + .next/cache purgé, sortie standalone
+npm run docker:reset   # détruit les volumes (à faire après un changement de dépendances)
+```
+
+- `node_modules` et `.next` sont des volumes Docker en dev : rien de lourd ne
+  s'accumule sur le disque de l'hôte.
+- `.env.local` est monté en **secret de build** (les `NEXT_PUBLIC_*` doivent être
+  inlinés pendant `next build`) et en `env_file` au runtime. Jamais copié dans une couche.
+- `output: 'standalone'` n'est activé que si `BUILD_STANDALONE=1` (posé par le
+  Dockerfile) : le déploiement Vercel est inchangé.
+- Les deux cibles écoutent sur le port 3000 : une seule à la fois.
+
+**Piège `.env.local`** : les variables marquées *Sensitive* sur Vercel sont en
+écriture seule. `vercel env pull` les rend en `[SENSITIVE]`, y compris depuis
+`--environment=production`. Il faut donc les renseigner à la main en local
+(`FIREBASE_ADMIN_*`, `ANTHROPIC_API_KEY`, `CHORD_DETECTOR_*`, `NEXT_PUBLIC_SENTRY_DSN`,
+`GETSONGBPM_API_KEY`, `SCRAPER_API_KEY`). Sans ça l'app démarre et le front marche
+(les 6 `NEXT_PUBLIC_FIREBASE_*` sont en clair), mais tout le serveur échoue en
+silence : Firebase Admin, analyse audio, analyse de grille, Sentry.
 
 ---
 

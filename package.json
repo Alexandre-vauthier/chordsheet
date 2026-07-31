@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "docker:dev": "docker compose up dev",
+    "docker:prod": "docker compose up --build web",
+    "docker:reset": "docker compose down -v --remove-orphans",
+    "clean": "rm -rf .next/cache"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.102.0",
