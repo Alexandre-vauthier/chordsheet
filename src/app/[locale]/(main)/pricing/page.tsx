@@ -70,10 +70,18 @@ export default function PricingPage() {
         <div className="flex items-center justify-center gap-3 mt-6">
           <span className={`text-sm ${billing === 'monthly' ? 'text-[var(--ink)]' : 'text-[var(--ink-faint)]'}`}>{t('monthlyLabel')}</span>
           <button
+            type="button"
+            role="switch"
+            aria-checked={billing === 'yearly'}
+            aria-label={t('billingToggleLabel')}
             onClick={() => setBilling(b => b === 'monthly' ? 'yearly' : 'monthly')}
             className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer ${billing === 'yearly' ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'}`}
           >
-            <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${billing === 'yearly' ? 'translate-x-6' : 'translate-x-1'}`} />
+            {/* `left-1` explicite : sans lui le curseur se cale sur sa position statique,
+                que les navigateurs centrent (les <button> ont text-align: center par
+                défaut), et le translate s'ajoute par-dessus — il sortait de la piste.
+                Piste 44 - curseur 16 - 4 de marge de chaque côté = 20 de course. */}
+            <span className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${billing === 'yearly' ? 'translate-x-5' : 'translate-x-0'}`} />
           </button>
           <span className={`text-sm ${billing === 'yearly' ? 'text-[var(--ink)]' : 'text-[var(--ink-faint)]'}`}>
             {t('yearlyLabel')}

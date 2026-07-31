@@ -1039,7 +1039,8 @@
     "upgradeButton": "Passer à Pro",
     "startProButton": "Commencer avec Pro",
     "securePayment": "Paiement sécurisé par Stripe · Annulable à tout moment ·",
-    "tosLink": "CGV"
+    "tosLink": "CGV",
+    "billingToggleLabel": "Choisir la facturation mensuelle ou annuelle"
   },
   "Chords": {
     "pageTitle": "Bibliothèque d'accords",
