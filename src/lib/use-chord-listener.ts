@@ -75,6 +75,10 @@ export interface ChordCandidate {
 export interface ChordListenerState {
   listening: boolean;
   chord: string;              // accord lissé affiché ('' si rien de fiable)
+  // Y a-t-il du son ? Indépendant de la reconnaissance : un accord joué mais non
+  // identifié reste « audible ». Sans cette distinction, le suivi confond « je
+  // n'ai pas su nommer l'accord » avec « il n'y a plus personne ».
+  audible: boolean;
   confidence: number;         // score du meilleur candidat (0..1)
   chroma: number[];           // 12 bins normalisés (0..1) pour la visualisation
   candidates: ChordCandidate[]; // top 3 pour juger la précision
@@ -84,6 +88,7 @@ export interface ChordListenerState {
 const INITIAL: ChordListenerState = {
   listening: false,
   chord: '',
+  audible: false,
   confidence: 0,
   chroma: new Array(12).fill(0),
   candidates: [],
@@ -204,6 +209,7 @@ export function useChordListener(echoCancellation = false) {
         setState((s) => ({
           ...s,
           chord: smooth,
+          audible: energy > 1e-3,
           confidence: Math.max(0, Math.min(1, best.score)),
           chroma: chromaViz,
           candidates: scored.slice(0, 3),

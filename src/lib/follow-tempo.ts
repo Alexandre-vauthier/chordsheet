@@ -20,9 +20,6 @@ export const MAX_MS_PER_BEAT = 1500;
  */
 export const ANTICIPATION = 0.9;
 
-/** Nombre d'avances non confirmées consécutives au-delà duquel on coupe le suivi. */
-export const MAX_UNCONFIRMED = 2;
-
 export function clampMsPerBeat(value: number): number {
   return Math.min(MAX_MS_PER_BEAT, Math.max(MIN_MS_PER_BEAT, value));
 }
