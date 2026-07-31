@@ -29,7 +29,7 @@ interface AuthContextType {
   deleteAccount: () => Promise<void>;
   resendVerificationEmail: () => Promise<void>;
   refreshEmailVerification: () => Promise<boolean>;
-  updateUser: (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean; printMinimizeRepeatedSections?: boolean; printChordDiagrams?: boolean; showChordSummaryByDefault?: boolean; defaultMetronome?: boolean; defaultGrooveBox?: boolean; defaultChordsAudio?: boolean; defaultCountIn?: boolean; reputation?: import('@/types').CreatorReputation }) => Promise<void>;
+  updateUser: (updates: { displayName?: string; photoURL?: string | null; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean; printMinimizeRepeatedSections?: boolean; printChordDiagrams?: boolean; showChordSummaryByDefault?: boolean; defaultMetronome?: boolean; defaultGrooveBox?: boolean; defaultChordsAudio?: boolean; defaultCountIn?: boolean; reputation?: import('@/types').CreatorReputation }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -261,7 +261,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // Mettre à jour le profil utilisateur
-  const updateUser = async (updates: { displayName?: string; photoURL?: string; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean; printMinimizeRepeatedSections?: boolean; printChordDiagrams?: boolean; defaultMetronome?: boolean; defaultGrooveBox?: boolean; defaultChordsAudio?: boolean; defaultCountIn?: boolean; reputation?: import('@/types').CreatorReputation }) => {
+  const updateUser = async (updates: { displayName?: string; photoURL?: string | null; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean; printMinimizeRepeatedSections?: boolean; printChordDiagrams?: boolean; defaultMetronome?: boolean; defaultGrooveBox?: boolean; defaultChordsAudio?: boolean; defaultCountIn?: boolean; reputation?: import('@/types').CreatorReputation }) => {
     const auth = getAuth();
     const db = getDb();
     const currentUser = auth.currentUser;

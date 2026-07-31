@@ -644,7 +644,8 @@
     "ocrEarnedCredits": "including {count, plural, one {# credit earned} other {# credits earned}} from your contributions",
     "loading": "Loading…",
     "manageSubscription": "Manage subscription",
-    "upgradeToPro": "Upgrade to Pro"
+    "upgradeToPro": "Upgrade to Pro",
+    "photo": "Profile photo"
   },
   "SectionLabels": {
     "Intro": "Intro",
@@ -1181,5 +1182,14 @@
     "addSheet": "Add a sheet",
     "addSheetPlaceholder": "Search for a sheet to send…",
     "noResults": "No public sheet found."
+  },
+  "PhotoPicker": {
+    "add": "Add a photo",
+    "replace": "Replace",
+    "remove": "Remove",
+    "hint": "JPEG or PNG, cropped to a square automatically.",
+    "tooLarge": "Image too large (10 MB maximum).",
+    "notAnImage": "This file is not an image.",
+    "uploadFailed": "Upload failed, please retry."
   }
 }

@@ -644,7 +644,8 @@
     "ocrEarnedCredits": "dont {count, plural, one {# crédit gagné} other {# crédits gagnés}} par vos contributions",
     "loading": "Chargement…",
     "manageSubscription": "Gérer l'abonnement",
-    "upgradeToPro": "Passer à Pro"
+    "upgradeToPro": "Passer à Pro",
+    "photo": "Photo de profil"
   },
   "SectionLabels": {
     "Intro": "Intro",
@@ -1181,5 +1182,14 @@
     "addSheet": "Ajouter une grille",
     "addSheetPlaceholder": "Chercher une grille à envoyer…",
     "noResults": "Aucune grille publique trouvée."
+  },
+  "PhotoPicker": {
+    "add": "Ajouter une photo",
+    "replace": "Remplacer",
+    "remove": "Retirer",
+    "hint": "JPEG ou PNG, recadrée en carré automatiquement.",
+    "tooLarge": "Image trop lourde (10 Mo maximum).",
+    "notAnImage": "Ce fichier n'est pas une image.",
+    "uploadFailed": "Envoi impossible, réessaie."
   }
 }

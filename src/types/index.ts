@@ -354,6 +354,8 @@ export interface Group {
   id?: string;
   name: string;
   description?: string | null;
+  /** Photo du groupe (Storage). Absente : on retombe sur les initiales colorées. */
+  photoURL?: string | null;
   ownerId: string;
   memberIds: string[];
   roles: Record<string, GroupRole>;

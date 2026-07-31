@@ -8,5 +8,31 @@ service firebase.storage {
     match /analyze-uploads/{userId}/{fileName} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
+
+    // Une image affichable : type correct et taille bornée. Le client rééchantillonne
+    // déjà en 512 px JPEG (~50 Ko), la borne n'est qu'un garde-fou.
+    function isImage() {
+      return request.resource.contentType.matches('image/.*')
+             && request.resource.size < 2 * 1024 * 1024;
+    }
+
+    // Avatars : lecture publique (ils s'affichent dans les listes de membres et
+    // sur les profils publics), écriture réservée au propriétaire du compte.
+    match /avatars/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId && isImage();
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Photos de groupe : le uid du déposant est dans le chemin, car les règles
+    // Storage ne savent pas lire Firestore pour vérifier qui est leader. Chacun
+    // n'écrit donc que sous son propre segment, et c'est le document du groupe
+    // (protégé par les règles Firestore, modifiable par les seuls leaders) qui
+    // désigne la photo réellement affichée.
+    match /group-photos/{groupId}/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId && isImage();
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
   }
 }

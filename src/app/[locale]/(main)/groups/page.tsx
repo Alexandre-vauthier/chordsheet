@@ -39,12 +39,17 @@ function GroupCard({ group, setsCount }: { group: Group; setsCount: number }) {
       href={`/groups/${group.id}`}
       className="flex items-center gap-4 p-4 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl hover:border-[var(--accent)] hover:shadow-sm transition-all group"
     >
-      {/* Avatar initiales */}
+      {/* Photo du groupe, ou initiales colorées à défaut */}
       <div
-        className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 text-white font-semibold text-sm select-none"
-        style={{ backgroundColor: color }}
+        className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0 text-white font-semibold text-sm select-none"
+        style={{ backgroundColor: group.photoURL ? undefined : color }}
       >
-        {initials}
+        {group.photoURL ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={group.photoURL} alt="" className="w-full h-full object-cover" />
+        ) : (
+          initials
+        )}
       </div>
 
       {/* Infos */}

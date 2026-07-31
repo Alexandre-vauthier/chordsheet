@@ -28,6 +28,7 @@ function groupFromDoc(id: string, data: Record<string, unknown>): Group {
     name: (data.name as string) || '',
     description: (data.description as string) || undefined,
     ownerId: (data.ownerId as string) || '',
+    photoURL: (data.photoURL as string) ?? null,
     memberIds: (data.memberIds as string[]) || [],
     roles: (data.roles as Record<string, GroupRole>) || {},
     linkedSheetIds: (data.linkedSheetIds as string[]) || [],

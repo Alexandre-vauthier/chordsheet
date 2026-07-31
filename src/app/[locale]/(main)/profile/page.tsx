@@ -7,6 +7,8 @@ import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
+import { PhotoPicker } from '@/components/ui/photo-picker';
+import { avatarPath } from '@/lib/upload-image';
 import { isPro, getRemainingOcr, getEarnedOcrCredits } from '@/lib/plan-limits';
 import { fromFirestore } from '@/lib/firestore-helpers';
 import { LevelBadge } from '@/components/reputation/level-badge';
@@ -202,6 +204,21 @@ export default function ProfilePage() {
 
       {/* Formulaire */}
       <div className="space-y-6 bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-6">
+        {/* Photo de profil — reprise partout où le compte apparaît (membres d'un
+            groupe, listes admin, navbar). */}
+        <div>
+          <label className="block text-sm font-medium text-[var(--ink)] mb-2">
+            {t('photo')}
+          </label>
+          <PhotoPicker
+            url={user.photoURL}
+            fallback={(user.displayName || user.email || '?').charAt(0).toUpperCase()}
+            storagePath={avatarPath(user.id)}
+            size="lg"
+            onChange={(url) => updateUser({ photoURL: url })}
+          />
+        </div>
+
         {/* Nom d'affichage */}
         <div>
           <label className="block text-sm font-medium text-[var(--ink)] mb-2">

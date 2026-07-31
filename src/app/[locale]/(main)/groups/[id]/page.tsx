@@ -15,6 +15,8 @@ import { fromFirestore, toFirestore } from '@/lib/firestore-helpers';
 import { useAuth } from '@/lib/auth-context';
 import { useGroups } from '@/lib/use-groups';
 import { useArtwork } from '@/lib/use-artwork';
+import { PhotoPicker } from '@/components/ui/photo-picker';
+import { groupPhotoPath } from '@/lib/upload-image';
 import type { Group, GroupRole, Sheet, NewSheet, Set, InstrumentId } from '@/types';
 
 interface MemberInfo {
@@ -22,12 +24,14 @@ interface MemberInfo {
   displayName: string;
   email: string;
   role: GroupRole;
+  photoURL?: string | null;
   preferredInstrument?: InstrumentId;
 }
 
 function groupFromDoc(id: string, data: Record<string, unknown>): Group {
   return {
     id,
+    photoURL: (data.photoURL as string) ?? null,
     name: (data.name as string) || '',
     description: (data.description as string) || undefined,
     ownerId: (data.ownerId as string) || '',
@@ -208,6 +212,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
             displayName: (data?.displayName as string) || (data?.email as string) || uid,
             email: (data?.email as string) || '',
             role: g.roles[uid] || 'member',
+            photoURL: (data?.photoURL as string) || null,
             preferredInstrument: (data?.preferredInstrument as InstrumentId) || undefined,
           };
         })
@@ -434,6 +439,15 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
     }
   };
 
+  // Persiste la photo sur le document du groupe : c'est lui qui fait foi, les
+  // règles Firestore n'autorisant que les leaders à le modifier.
+  const handleGroupPhoto = async (url: string | null) => {
+    if (!group?.id) return;
+    const db = getDb();
+    await updateDoc(doc(db, 'groups', group.id), { photoURL: url, updatedAt: serverTimestamp() });
+    setGroup(g => (g ? { ...g, photoURL: url } : g));
+  };
+
   const handleGenerateInvite = async () => {
     if (!group) return;
     setInviteLoading(true);
@@ -507,7 +521,16 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
         <Link href="/groups" className="text-sm text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors">
           ← {t('backToGroups')}
         </Link>
-        <div className="mt-2">
+        <div className="mt-2 flex items-start gap-4">
+          {/* Photo du groupe : modifiable par les leaders, reprise dans la liste des groupes. */}
+          <PhotoPicker
+            url={group.photoURL}
+            fallback={group.name.charAt(0).toUpperCase()}
+            storagePath={groupPhotoPath(group.id!, user!.id)}
+            editable={isLeader || isOwner}
+            onChange={handleGroupPhoto}
+          />
+          <div className="flex-1 min-w-0">
           <h1 className="font-playfair text-2xl font-bold text-[var(--ink)]">{group.name}</h1>
 
           {editingDesc ? (
@@ -549,6 +572,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
               + {t('addDescription')}
             </button>
           ) : null}
+          </div>
         </div>
       </div>
 
@@ -727,8 +751,13 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
           {members.map(member => (
             <div key={member.id} className="flex items-center justify-between px-4 py-3 bg-[var(--cell-bg)] border border-[var(--line)] rounded-lg">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-sm font-bold">
-                  {member.displayName.charAt(0).toUpperCase()}
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-[var(--accent)] flex items-center justify-center text-white text-sm font-bold shrink-0">
+                  {member.photoURL ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={member.photoURL} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    member.displayName.charAt(0).toUpperCase()
+                  )}
                 </div>
                 <div>
                   <div className="text-sm font-medium text-[var(--ink)]">{member.displayName}</div>
