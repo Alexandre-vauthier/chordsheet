@@ -1,5 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { Section, Cell, InstrumentId, StringChord, PianoChord } from '@/types';
+// Réexport : PlayStyle et ACCOMPANIMENT_INSTRUMENTS vivent dans accompaniment.ts
+// (sans dépendance React), les appelants historiques les importent d'ici.
+import { ACCOMPANIMENT_INSTRUMENTS, type PlayStyle } from '@/lib/accompaniment';
+export { ACCOMPANIMENT_INSTRUMENTS, type PlayStyle };
 import { findChordVariants, enharmonicEquivalent, parseChordInput } from '@/lib/chord-data';
 import { playChord, playArpeggio, playMetronomeTick, getAudioContext } from '@/lib/chord-audio';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
@@ -104,7 +108,7 @@ const TEMPO_UNIT_FACTOR: Record<TempoUnit, number> = {
   eighth: 0.5,
 };
 
-export type PlayStyle = 'block' | 'arpeggio';
+
 export interface PlaybackVoice {
   id: InstrumentId;
   style: PlayStyle;
@@ -112,7 +116,7 @@ export interface PlaybackVoice {
 
 // Instruments d'accompagnement proposés (ceux qui ont un son jouable).
 // Partagé entre le lecteur (sheet-viewer) et l'éditeur (config de lecture par défaut).
-export const ACCOMPANIMENT_INSTRUMENTS: InstrumentId[] = ['guitar', 'bass', 'piano', 'mandolin', 'banjo', 'ukulele'];
+
 
 interface UsePlaybackOptions {
   sections: Section[];

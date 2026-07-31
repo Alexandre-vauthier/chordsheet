@@ -19,6 +19,7 @@ import { CoachMark } from './coach-mark';
 import { getChordsByInstrument, getAllExtendedChords } from '@/lib/chord-data';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
 import { useAuth } from '@/lib/auth-context';
+import { swapSelectorVoice } from '@/lib/accompaniment';
 import { usePublicArtistSuggestions } from '@/lib/use-search-suggestions';
 import { useGenreLabel } from '@/lib/use-genre-labels';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
@@ -186,6 +187,18 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
   const [pbOverride, setPbOverride] = useState<Record<string, PlayStyle> | null>(null);
   const defaultPbInst: InstrumentId = (sheet.instrumentId && ACCOMPANIMENT_INSTRUMENTS.includes(sheet.instrumentId))
     ? sheet.instrumentId : 'guitar';
+
+  // Tant que l'auteur n'a pas touché au menu (`pbOverride` null), la préécoute suit
+  // le sélecteur de fait. Une fois qu'il y a touché, on remplace explicitement la
+  // voix venue du sélecteur pour que le Play continue de suivre, sans perdre les
+  // instruments ajoutés à côté.
+  const [pbSelectorVoice, setPbSelectorVoice] = useState<InstrumentId>(defaultPbInst);
+  if (pbSelectorVoice !== defaultPbInst) {
+    const previous = pbSelectorVoice;
+    setPbSelectorVoice(defaultPbInst);
+    setPbOverride((prev) => (prev === null ? prev : swapSelectorVoice(prev, previous, defaultPbInst)));
+  }
+
   const displayPbMap: Record<string, PlayStyle> = pbOverride ?? { [defaultPbInst]: 'block' };
 
   const togglePbInstrument = (inst: InstrumentId) => {

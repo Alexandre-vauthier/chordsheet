@@ -15,6 +15,7 @@ import { useGrooveBox, PATTERN_DEFS } from '@/lib/use-groove-box';
 import type { PlayStep, PlayStyle, PlaybackVoice } from '@/lib/use-playback';
 import { useArtwork } from '@/lib/use-artwork';
 import { useAuth } from '@/lib/auth-context';
+import { swapSelectorVoice } from '@/lib/accompaniment';
 import { INSTRUMENT_CONFIG, findChordVariants, parseChordInput } from '@/lib/chord-data';
 import { useChordVariants } from '@/lib/use-chord-variants';
 import { playChord, playMetronomeTick, preloadInstrument } from '@/lib/chord-audio';
@@ -174,9 +175,19 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   // motif React prévu pour ça — plutôt qu'un effet, qui laisserait passer un rendu
   // intermédiaire avec l'accompagnement de la grille précédente.
   const [accompSheetId, setAccompSheetId] = useState(sheet.id);
+  // L'instrument que le sélecteur a posé dans l'accompagnement, pour savoir quelle
+  // entrée remplacer quand il change.
+  const [selectorVoice, setSelectorVoice] = useState<InstrumentId>(instrumentId);
+
   if (accompSheetId !== sheet.id) {
     setAccompSheetId(sheet.id);
+    setSelectorVoice(instrumentId);
     setAccompaniment(initialAccompaniment(instrumentId, user?.defaultChordsAudio === false));
+  } else if (selectorVoice !== instrumentId) {
+    // Changement d'instrument au sélecteur : le Play doit suivre (voir swapSelectorVoice).
+    const previous = selectorVoice;
+    setSelectorVoice(instrumentId);
+    setAccompaniment((prev) => swapSelectorVoice(prev, previous, instrumentId));
   }
 
   const [accompMenuOpen, setAccompMenuOpen] = useState(false);
