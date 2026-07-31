@@ -7,7 +7,9 @@ import { GridRow } from './grid-row';
 import { createEmptyRow } from '@/types';
 import { CoachMark } from './coach-mark';
 
-const EXAMPLE_CHORDS = ['Am', 'C', 'F', 'G'];
+// Accords en filigrane sur la première mesure d'une grille en cours de création :
+// ils montrent où se remplit la grille. Une section en 3/4 n'en affiche que trois.
+const EXAMPLE_CHORDS = ['Am', 'F', 'C', 'G'];
 
 // Composant de saisie de répétition avec boutons ‹/› custom
 function RepeatInput({ value, onChange, size = 'md' }: {
@@ -63,6 +65,8 @@ interface SectionBlockProps {
   onDrop: () => void;
   isDragOver: boolean;
   isFirstSection?: boolean;
+  /** Grille en cours de création : affiche les accords d'exemple sur la première mesure. */
+  showExampleChords?: boolean;
   onDismissOnboarding?: () => void;
   onFrenchDetected?: () => void;
   finderChordPool?: Record<InstrumentId, (StringChord | PianoChord)[]>;
@@ -91,6 +95,7 @@ export function SectionBlock({
   onDrop,
   isDragOver,
   isFirstSection = false,
+  showExampleChords = false,
   onDismissOnboarding,
   onFrenchDetected,
   finderChordPool,
@@ -140,8 +145,23 @@ export function SectionBlock({
     onUpdate({ rows: newRows });
   };
 
+  // La mesure suit la métrique de la section : 3 cellules en 3/4, 4 en 4/4.
+  const newRow = () => createEmptyRow(section.beatsPerMeasure || 4);
+
   const addRow = () => {
-    onUpdate({ rows: [...section.rows, createEmptyRow(4)] });
+    onUpdate({ rows: [...section.rows, newRow()] });
+  };
+
+  /**
+   * Tab sur la dernière cellule de la dernière mesure : on ajoute une mesure et on
+   * entre dans sa première cellule. La navigation cible la cellule par son
+   * `data-cell-id`, qui n'existe pas encore dans le DOM au moment de l'ajout —
+   * d'où le report au macrotask suivant, une fois le rendu de React committé.
+   */
+  const appendRowAndNavigate = () => {
+    const rows = [...section.rows, newRow()];
+    onUpdate({ rows });
+    setTimeout(() => onNavigateToCell(section.id, rows.length - 1, 0), 0);
   };
 
   const deleteRow = (rowIndex: number) => {
@@ -289,11 +309,12 @@ export function SectionBlock({
               onNavigateToCell={(nextRowIndex, cellIndex) =>
                 onNavigateToCell(section.id, nextRowIndex, cellIndex)
               }
+              onAppendRow={appendRowAndNavigate}
               totalRows={section.rows.length}
               activeCellIndex={activeRowIndex === rowIndex ? activeCellIndex : undefined}
               activeDurationMs={activeRowIndex === rowIndex ? activeDurationMs : undefined}
               isFirstRow={isFirstSection && rowIndex === 0}
-              exampleChords={isFirstSection && rowIndex === 0 ? EXAMPLE_CHORDS : undefined}
+              exampleChords={showExampleChords && rowIndex === 0 ? EXAMPLE_CHORDS : undefined}
               onDismissOnboarding={onDismissOnboarding}
               onFrenchDetected={onFrenchDetected}
               finderChordPool={finderChordPool}

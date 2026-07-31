@@ -17,6 +17,8 @@ interface GridRowProps {
   onSplit: (cellIndex: number) => void;
   onMerge: (cellIndex: number) => void;
   onNavigateToCell: (rowIndex: number, cellIndex: number) => void;
+  /** Tab depuis la dernière cellule de la dernière mesure : crée la mesure suivante et y entre. */
+  onAppendRow?: () => void;
   onFrenchDetected?: () => void;
   totalRows: number;
   activeCellIndex?: number;
@@ -40,6 +42,7 @@ export function GridRow({
   onSplit,
   onMerge,
   onNavigateToCell,
+  onAppendRow,
   onFrenchDetected,
   totalRows,
   activeCellIndex,
@@ -94,7 +97,7 @@ export function GridRow({
               onSplit={() => onSplit(cellIndex)}
               isActive={activeCellIndex === cellIndex}
               activeDurationMs={activeCellIndex === cellIndex ? activeDurationMs : undefined}
-              exampleChord={isFirstRow ? exampleChords?.[cellIndex] : undefined}
+              exampleChord={exampleChords?.[cellIndex]}
               showSplitCoach={isFirstRow && cellIndex === 0 && canSplit}
               onDismissOnboarding={onDismissOnboarding}
               finderChordPool={finderChordPool}
@@ -107,6 +110,9 @@ export function GridRow({
                 }
                 if (nextRowIndex < totalRows) {
                   onNavigateToCell(nextRowIndex, nextCellIndex);
+                } else {
+                  // Plus de mesure en dessous : on en crée une et on y entre.
+                  onAppendRow?.();
                 }
               }}
             />

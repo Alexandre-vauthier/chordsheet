@@ -146,6 +146,11 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
   const [metronomeEnabled, setMetronomeEnabled] = useState(false);
   const [grooveEnabled, setGrooveEnabled] = useState(false);
 
+  // Grille en cours de création (jamais enregistrée) : la première mesure porte des
+  // accords en filigrane pour montrer où se remplit la grille. Volontairement distinct
+  // de `isFirstSheet` ci-dessous, qui ne se déclenche qu'une fois par navigateur.
+  const isNewSheet = !('id' in initialSheet);
+
   // Onboarding première grille
   const [isFirstSheet, setIsFirstSheet] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -1037,6 +1042,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
                 onDrop={() => handleDrop(section.id)}
                 isDragOver={dragOverSectionId === section.id && dragSectionId !== section.id && !isNoOpTarget}
                 isFirstSection={isFirstSheet && sectionIndex === 0}
+                showExampleChords={isNewSheet && sectionIndex === 0}
                 onDismissOnboarding={dismissOnboarding}
                 onFrenchDetected={handleFrenchDetected}
                 finderChordPool={finderChordPool}
