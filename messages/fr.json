@@ -795,7 +795,17 @@
     "editButton": "Éditer",
     "deleteButton": "Supprimer",
     "deleteConfirm": "Supprimer cette grille ? Cette action est irréversible.",
-    "deleteError": "Erreur lors de la suppression"
+    "deleteError": "Erreur lors de la suppression",
+    "searchPlaceholder": "Rechercher un nom ou un email…",
+    "sortBy": "Trier par {column}",
+    "resultCount": "{filtered} sur {total}",
+    "noUsersMatch": "Aucun utilisateur ne correspond à ces critères",
+    "visitFilter_all": "Toutes",
+    "visitFilter_7": "7 derniers jours",
+    "visitFilter_30": "30 derniers jours",
+    "visitFilter_90": "90 derniers jours",
+    "visitFilter_inactive": "Inactifs (+ de 90 jours)",
+    "visitFilter_never": "Jamais revenus"
   },
   "LegalMentions": {
     "pageTitle": "Mentions légales",

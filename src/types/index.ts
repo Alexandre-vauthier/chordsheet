@@ -257,6 +257,22 @@ export interface CreatorReputation {
 export const ADMIN_EMAILS = ['alex.vauthier@gmail.com', 'vauthier.julien@gmail.com', 'gregoire@42stores.com'] as const;
 
 // Type utilisateur
+/**
+ * Ligne du tableau des utilisateurs de la page admin : le `User` Firestore
+ * augmenté des compteurs agrégés côté client et de la dernière visite.
+ * `lastVisitAt` vaut `null` pour un compte qui n'est jamais revenu depuis
+ * son inscription — c'est une absence de donnée, pas une date ancienne.
+ */
+export interface UserWithStats extends Omit<User, 'createdAt' | 'updatedAt'> {
+  createdAt: Date;
+  updatedAt: Date;
+  sheetsCount: number;
+  setsCount: number;
+  bookmarksCount: number;
+  groupsCount: number;
+  lastVisitAt: Date | null;
+}
+
 export interface User {
   id: string;
   displayName: string;

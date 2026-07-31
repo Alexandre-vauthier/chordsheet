@@ -7,8 +7,9 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useAuth } from '@/lib/auth-context';
 import { getDb } from '@/lib/firebase';
 import { collection, query, getDocs, orderBy, limit, doc, deleteDoc, setDoc, updateDoc, deleteField, where } from 'firebase/firestore';
-import type { User, Sheet } from '@/types';
+import type { Sheet, UserWithStats } from '@/types';
 import { Button } from '@/components/ui/button';
+import { AdminUsersTable } from '@/components/admin/users-table';
 import { Link, useRouter } from '@/i18n/navigation';
 interface Stats {
   totalUsers: number;
@@ -16,16 +17,6 @@ interface Stats {
   publicSheets: number;
   totalSets: number;
   totalBookmarks: number;
-}
-
-interface UserWithStats extends Omit<User, 'createdAt' | 'updatedAt'> {
-  createdAt: Date;
-  updatedAt: Date;
-  sheetsCount: number;
-  setsCount: number;
-  bookmarksCount: number;
-  groupsCount: number;
-  lastVisitAt: Date | null;
 }
 
 interface SheetWithOwner extends Sheet {
@@ -395,61 +386,7 @@ export default function AdminPage() {
         <h2 className="font-playfair text-xl font-bold text-[var(--ink)] mb-4">
           {t('usersSection', { count: users.length })}
         </h2>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-[var(--line)]">
-                <th className="text-left py-2 px-3 font-medium text-[var(--ink-light)]">{t('colUser')}</th>
-                <th className="text-left py-2 px-3 font-medium text-[var(--ink-light)]">{t('colEmail')}</th>
-                <th className="text-center py-2 px-3 font-medium text-[var(--ink-light)]">{t('colRole')}</th>
-                <th className="text-center py-2 px-3 font-medium text-[var(--ink-light)]">{t('colSheets')}</th>
-                <th className="text-center py-2 px-3 font-medium text-[var(--ink-light)]">{t('colSets')}</th>
-                <th className="text-center py-2 px-3 font-medium text-[var(--ink-light)]">{t('colBook')}</th>
-                <th className="text-center py-2 px-3 font-medium text-[var(--ink-light)]">{t('colGroups')}</th>
-                <th className="text-left py-2 px-3 font-medium text-[var(--ink-light)]">{t('colJoined')}</th>
-                <th className="text-left py-2 px-3 font-medium text-[var(--ink-light)]">{t('colLastVisit')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map(u => (
-                <tr key={u.id} className="border-b border-[var(--line)] last:border-0 hover:bg-[var(--cell-hover)]">
-                  <td className="py-3 px-3">
-                    <Link href={`/user/${u.id}`} className="flex items-center gap-2 group/user">
-                      {u.photoURL ? (
-                        <img src={u.photoURL} alt="" className="w-8 h-8 rounded-full object-cover" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-xs font-bold">
-                          {u.displayName?.charAt(0).toUpperCase() || u.email?.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <span className="font-medium text-[var(--ink)] group-hover/user:text-[var(--accent)] transition-colors">
-                        {u.displayName || '-'}
-                      </span>
-                    </Link>
-                  </td>
-                  <td className="py-3 px-3 text-[var(--ink-light)]">{u.email}</td>
-                  <td className="py-3 px-3 text-center">
-                    {u.role === 'admin' ? (
-                      <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs">{t('roleAdmin')}</span>
-                    ) : (
-                      <span className="px-2 py-0.5 bg-[var(--line)] text-gray-600 rounded text-xs">{t('roleUser')}</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-3 text-center font-mono">{u.sheetsCount}</td>
-                  <td className="py-3 px-3 text-center font-mono">{u.setsCount}</td>
-                  <td className="py-3 px-3 text-center font-mono">{u.bookmarksCount}</td>
-                  <td className="py-3 px-3 text-center font-mono">{u.groupsCount}</td>
-                  <td className="py-3 px-3 text-[var(--ink-light)]">
-                    {u.createdAt.toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR')}
-                  </td>
-                  <td className="py-3 px-3 text-[var(--ink-light)]">
-                    {u.lastVisitAt ? u.lastVisitAt.toLocaleDateString(locale === 'en' ? 'en-US' : 'fr-FR') : <span className="text-[var(--ink-faint)]">—</span>}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <AdminUsersTable users={users} />
       </div>
 
       {/* Grilles récentes */}

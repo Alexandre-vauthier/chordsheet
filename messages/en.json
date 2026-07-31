@@ -795,7 +795,17 @@
     "editButton": "Edit",
     "deleteButton": "Delete",
     "deleteConfirm": "Delete this sheet? This action cannot be undone.",
-    "deleteError": "Error while deleting"
+    "deleteError": "Error while deleting",
+    "searchPlaceholder": "Search by name or email…",
+    "sortBy": "Sort by {column}",
+    "resultCount": "{filtered} of {total}",
+    "noUsersMatch": "No user matches these filters",
+    "visitFilter_all": "All",
+    "visitFilter_7": "Last 7 days",
+    "visitFilter_30": "Last 30 days",
+    "visitFilter_90": "Last 90 days",
+    "visitFilter_inactive": "Inactive (90+ days)",
+    "visitFilter_never": "Never returned"
   },
   "LegalMentions": {
     "pageTitle": "Legal notice",
