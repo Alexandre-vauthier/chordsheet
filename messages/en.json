@@ -48,7 +48,9 @@
       "features": "Features",
       "how": "How it works",
       "login": "Log in",
-      "register": "Sign up"
+      "register": "Sign up",
+      "myBook": "My Book",
+      "mySheets": "My sheets"
     },
     "hero": {
       "eyebrow": "The chord sheet library",
@@ -56,7 +58,9 @@
       "subtitle": "The tool that was missing to organize your repertoire, rehearse and get on stage.",
       "cta": "Create a free account",
       "login": "Log in",
-      "sheetCount": "{count}+ sheets shared by the community"
+      "sheetCount": "{count}+ sheets shared by the community",
+      "ctaLoggedIn": "My sheets",
+      "bookLoggedIn": "My Book"
     },
     "book": {
       "eyebrow": "The heart of ChordSheet",
@@ -73,7 +77,8 @@
       "previewCount": "12 sheets",
       "tagMine": "My sheet",
       "tagCommunity": "Community",
-      "previewAdd": "Add a sheet from Explore…"
+      "previewAdd": "Add a sheet from Explore…",
+      "ctaLoggedIn": "Open my Book →"
     },
     "bands": {
       "badge": "Premium",
@@ -94,7 +99,8 @@
       "teachersItem4": "Students can transpose and play on their own",
       "pricingText": "One subscription for the whole band.",
       "pricingSubtext": "Teacher, students, musicians — one shared license, not one per head.",
-      "cta": "Create my band →"
+      "cta": "Create my band →",
+      "ctaLoggedIn": "View my bands →"
     },
     "features": {
       "title": "Everything you need to play.",
@@ -153,7 +159,8 @@
       "titleBreak": "your repertoire?",
       "subtitle": "Free, no credit card. Your repertoire online in 2 minutes.",
       "cta": "Create a free account",
-      "browse": "Browse sheets"
+      "browse": "Browse sheets",
+      "ctaLoggedIn": "Create a sheet"
     },
     "footer": {
       "terms": "Terms of use",
@@ -500,7 +507,8 @@
     "errorGenericRegister": "Error creating the account",
     "errorEmailInUse": "This email address is already in use",
     "errorWeakPassword": "The password is too weak",
-    "errorRegisterRetry": "Error creating the account. Please try again."
+    "errorRegisterRetry": "Error creating the account. Please try again.",
+    "redirecting": "Redirecting"
   },
   "Sets": {
     "errorSave": "Error saving",

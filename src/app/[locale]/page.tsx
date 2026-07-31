@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
 import { useArtwork } from '@/lib/use-artwork';
+import { useAuth } from '@/lib/auth-context';
 import { Link } from '@/i18n/navigation';
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
@@ -80,8 +81,15 @@ function ScrollColumn({ sheets, duration, offsetPx = 0 }: { sheets: MiniSheet[];
 
 /* ── Navbar ───────────────────────────────────────────────────────── */
 
+// Les CTA d'authentification sont masqués tant que l'état de connexion n'est pas
+// résolu : sans ça un utilisateur déjà connecté voit « Créer un compte » clignoter
+// avant le bon libellé. `pointer-events-none` évite un clic sur un bouton invisible.
+const ctaFade = (loading: boolean) =>
+  loading ? 'opacity-0 pointer-events-none' : 'opacity-100';
+
 function LandingNav({ scrolled }: { scrolled: boolean }) {
   const t = useTranslations('Landing.nav');
+  const { user, loading } = useAuth();
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[var(--nav-bg)]/95 backdrop-blur-sm border-b border-white/8' : 'bg-transparent'}`}>
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -97,13 +105,26 @@ function LandingNav({ scrolled }: { scrolled: boolean }) {
           <a href="#features" className="hover:text-[var(--nav-text)] transition-colors">{t('features')}</a>
           <a href="#how" className="hover:text-[var(--nav-text)] transition-colors">{t('how')}</a>
         </div>
-        <div className="flex items-center gap-3">
-          <Link href="/login" className="text-[var(--nav-text)]/65 text-sm hover:text-[var(--nav-text)] transition-colors hidden sm:block px-3 py-2">
-            {t('login')}
-          </Link>
-          <Link href="/register" className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity">
-            {t('register')}
-          </Link>
+        <div className={`flex items-center gap-3 transition-opacity ${ctaFade(loading)}`}>
+          {user ? (
+            <>
+              <Link href="/book" className="text-[var(--nav-text)]/65 text-sm hover:text-[var(--nav-text)] transition-colors hidden sm:block px-3 py-2">
+                {t('myBook')}
+              </Link>
+              <Link href="/dashboard" className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity">
+                {t('mySheets')}
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/login" className="text-[var(--nav-text)]/65 text-sm hover:text-[var(--nav-text)] transition-colors hidden sm:block px-3 py-2">
+                {t('login')}
+              </Link>
+              <Link href="/register" className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity">
+                {t('register')}
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>
@@ -152,6 +173,7 @@ const PLACEHOLDERS: MiniSheet[] = [
 
 export default function Home() {
   const t = useTranslations('Landing');
+  const { user, loading: authLoading } = useAuth();
   const [sheets, setSheets] = useState<MiniSheet[]>(PLACEHOLDERS);
   const [sheetCount, setSheetCount] = useState<number | null>(null);
   const [scrolled, setScrolled] = useState(false);
@@ -220,18 +242,18 @@ export default function Home() {
           <p className="text-[var(--nav-text)]/40 text-sm mb-10 max-w-md mx-auto">
             {t('hero.subtitle')}
           </p>
-          <div className="flex gap-3 justify-center flex-wrap pointer-events-auto">
+          <div className={`flex gap-3 justify-center flex-wrap pointer-events-auto transition-opacity ${ctaFade(authLoading)}`}>
             <Link
-              href="/register"
+              href={user ? '/dashboard' : '/register'}
               className="px-7 py-3.5 bg-[var(--accent)] text-white rounded-xl font-semibold text-base hover:opacity-90 transition-opacity shadow-lg shadow-[#c84b2f]/30"
             >
-              {t('hero.cta')}
+              {user ? t('hero.ctaLoggedIn') : t('hero.cta')}
             </Link>
             <Link
-              href="/login"
+              href={user ? '/book' : '/login'}
               className="px-7 py-3.5 bg-white/8 text-[var(--nav-text)] rounded-xl font-semibold text-base hover:bg-white/12 transition-colors border border-white/10"
             >
-              {t('hero.login')}
+              {user ? t('hero.bookLoggedIn') : t('hero.login')}
             </Link>
           </div>
           {sheetCount !== null && sheetCount > 0 && (
@@ -284,10 +306,10 @@ export default function Home() {
                 ))}
               </ul>
               <Link
-                href="/register"
-                className="inline-block px-6 py-3 bg-[var(--accent)] text-white rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity"
+                href={user ? '/book' : '/register'}
+                className={`inline-block px-6 py-3 bg-[var(--accent)] text-white rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity ${ctaFade(authLoading)}`}
               >
-                {t('book.cta')}
+                {user ? t('book.ctaLoggedIn') : t('book.cta')}
               </Link>
             </div>
 
@@ -412,10 +434,10 @@ export default function Home() {
               <p className="text-[var(--nav-text)]/40 text-xs mt-0.5">{t('bands.pricingSubtext')}</p>
             </div>
             <Link
-              href="/register"
-              className="shrink-0 px-6 py-2.5 bg-amber-500 text-white rounded-xl font-semibold text-sm hover:bg-amber-400 transition-colors whitespace-nowrap"
+              href={user ? '/groups' : '/register'}
+              className={`shrink-0 px-6 py-2.5 bg-amber-500 text-white rounded-xl font-semibold text-sm hover:bg-amber-400 transition-colors whitespace-nowrap ${ctaFade(authLoading)}`}
             >
-              {t('bands.cta')}
+              {user ? t('bands.ctaLoggedIn') : t('bands.cta')}
             </Link>
           </div>
 
@@ -477,12 +499,12 @@ export default function Home() {
           <p className="text-[var(--nav-text)]/45 text-base mb-8">
             {t('finalCta.subtitle')}
           </p>
-          <div className="flex gap-3 justify-center flex-wrap">
+          <div className={`flex gap-3 justify-center flex-wrap transition-opacity ${ctaFade(authLoading)}`}>
             <Link
-              href="/register"
+              href={user ? '/sheet/new' : '/register'}
               className="px-7 py-3.5 bg-[var(--accent)] text-white rounded-xl font-semibold text-base hover:opacity-90 transition-opacity shadow-lg shadow-[#c84b2f]/25"
             >
-              {t('finalCta.cta')}
+              {user ? t('finalCta.ctaLoggedIn') : t('finalCta.cta')}
             </Link>
             <Link
               href="/explore"

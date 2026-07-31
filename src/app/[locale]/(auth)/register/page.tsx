@@ -6,9 +6,18 @@ import { useTranslations } from 'next-intl';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { RedirectIfAuthenticated } from '@/components/auth/redirect-if-authenticated';
 import { Link, useRouter } from '@/i18n/navigation';
 
 export default function RegisterPage() {
+  return (
+    <RedirectIfAuthenticated>
+      <RegisterForm />
+    </RedirectIfAuthenticated>
+  );
+}
+
+function RegisterForm() {
   const t = useTranslations('Auth');
   const router = useRouter();
   const { signUp } = useAuth();

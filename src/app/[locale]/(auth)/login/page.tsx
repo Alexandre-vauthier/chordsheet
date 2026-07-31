@@ -8,9 +8,18 @@ import { useAuth } from '@/lib/auth-context';
 import { getAuth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { RedirectIfAuthenticated } from '@/components/auth/redirect-if-authenticated';
 import { Link, useRouter } from '@/i18n/navigation';
 
 export default function LoginPage() {
+  return (
+    <RedirectIfAuthenticated>
+      <LoginForm />
+    </RedirectIfAuthenticated>
+  );
+}
+
+function LoginForm() {
   const t = useTranslations('Auth');
   const router = useRouter();
   const { signIn } = useAuth();
