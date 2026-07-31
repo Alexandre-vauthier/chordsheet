@@ -107,7 +107,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             subscription,
             reputation,
             notationPreference: userData.notationPreference || 'american',
-            chordColorCoding: userData.chordColorCoding ?? false,
+            // Activée par défaut. Le champ n'est absent que pour les comptes créés
+            // avant que ce défaut existe : un refus explicite est stocké en `false`
+            // par updateUser (setDoc merge), il n'est donc jamais écrasé ici.
+            chordColorCoding: userData.chordColorCoding ?? true,
             showInlineDiagram: userData.showInlineDiagram ?? false,
             darkMode: userData.darkMode ?? true,
             preferredInstrument: userData.preferredInstrument,
