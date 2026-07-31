@@ -8,10 +8,10 @@ import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
 import { useBookmarks } from '@/lib/use-bookmarks';
 import { useRatings } from '@/lib/use-ratings';
-import { useSets } from '@/lib/use-sets';
 import { useLiveSession } from '@/lib/live-session-context';
 import { SheetViewer } from '@/components/sheet/sheet-viewer';
 import { SheetComments } from '@/components/sheet/sheet-comments';
+import { useAddToCollection } from '@/lib/add-to-collection-context';
 import { useSheetComments } from '@/lib/use-sheet-comments';
 import { RatingStars } from '@/components/sheet/rating-stars';
 
@@ -35,10 +35,8 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
   const [commentInvite, setCommentInvite] = useState(false);
   const [pendingRating, setPendingRating] = useState<1 | 2 | 3 | 4 | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [setPickerOpen, setSetPickerOpen] = useState(false);
-  const [addedToSetIds, setAddedToSetIds] = useState<string[]>([]);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { sets, addSheetToSet } = useSets(user?.id);
+  const { openAddTo } = useAddToCollection();
   const comments = useSheetComments(sheet?.id, sheet?.ownerId, sheet?.title);
 
   useEffect(() => {
@@ -182,14 +180,6 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
 
   const sheetIsBookmarked = sheet?.id ? isBookmarked(sheet.id) : false;
 
-  useEffect(() => { if (!menuOpen) setSetPickerOpen(false); }, [menuOpen]);
-
-  const handleAddToSet = async (setId: string) => {
-    if (!sheet?.id) return;
-    await addSheetToSet(setId, sheet.id);
-    setAddedToSetIds(prev => [...prev, setId]);
-  };
-
   // Fermer le menu "..." au clic extérieur
   useEffect(() => {
     if (!menuOpen) return;
@@ -274,69 +264,75 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
 
             {menuOpen && (
               <div className="absolute right-0 top-full mt-1 z-50 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl shadow-lg py-1 min-w-[180px]">
+                {/* Pictos : SVG inline uniformes (w-4 h-4, stroke currentColor), comme
+                    partout ailleurs — les emojis rendaient des tailles et des styles
+                    différents d'une ligne à l'autre selon la police système. */}
                 <button
                   onClick={() => { handlePrint(); setMenuOpen(false); }}
-                  className="w-full text-left px-4 py-2.5 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors"
+                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors"
                 >
-                  🖨 Imprimer / PDF
+                  <svg className="w-4 h-4 shrink-0 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                  Imprimer / PDF
                 </button>
                 {user && (
                   <button
                     onClick={() => { handleToggleBookmark(); setMenuOpen(false); }}
                     disabled={isTogglingBookmark}
-                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors ${sheetIsBookmarked ? 'text-amber-500' : 'text-[var(--ink)]'}`}
+                    className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-sm hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors ${sheetIsBookmarked ? 'text-amber-500' : 'text-[var(--ink)]'}`}
                   >
-                    {sheetIsBookmarked ? '★ Dans mon book' : '☆ Ajouter au book'}
+                    <svg className="w-4 h-4 shrink-0" fill={sheetIsBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                    {sheetIsBookmarked ? 'Dans mes favoris' : 'Ajouter aux favoris'}
                   </button>
                 )}
-                {user && sets.length > 0 && (
+                {user && sheet && (
                   <>
+                    {/* Même modale que les cartes d'Explore et la page groupe :
+                        elle gère la création de set à la volée et le rattachement. */}
                     <button
-                      onClick={() => setSetPickerOpen(v => !v)}
-                      className="w-full text-left px-4 py-2.5 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors flex items-center justify-between"
+                      onClick={() => { setMenuOpen(false); openAddTo(sheet, 'set'); }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors"
                     >
-                      <span>📋 Ajouter à un set</span>
-                      <span className="text-[var(--ink-faint)] text-xs">{setPickerOpen ? '▲' : '▶'}</span>
+                      <svg className="w-4 h-4 shrink-0 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h10M4 18h10M18 14v6m3-3h-6" />
+                      </svg>
+                      Ajouter à un set
                     </button>
-                    {setPickerOpen && (
-                      <div className="border-t border-b border-[var(--line)] max-h-44 overflow-y-auto">
-                        {sets.map(s => {
-                          const alreadyIn = s.sheetIds.includes(sheet?.id ?? '') || addedToSetIds.includes(s.id ?? '');
-                          return (
-                            <button
-                              key={s.id}
-                              onClick={() => { if (!alreadyIn && s.id) handleAddToSet(s.id); }}
-                              disabled={alreadyIn}
-                              className={`w-full text-left px-5 py-2 text-sm flex items-center justify-between gap-2 transition-colors
-                                ${alreadyIn
-                                  ? 'text-[var(--ink-faint)] cursor-default'
-                                  : 'text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] cursor-pointer'
-                                }`}
-                            >
-                              <span className="truncate">{s.name}</span>
-                              <span className="flex-shrink-0 text-xs font-medium">{alreadyIn ? '✓' : '+'}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
+                    <button
+                      onClick={() => { setMenuOpen(false); openAddTo(sheet, 'group'); }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors"
+                    >
+                      <svg className="w-4 h-4 shrink-0 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-1a4 4 0 00-3-3.87M9 20H4v-1a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-4a3 3 0 11-3-3M7 11a3 3 0 11-3-3" />
+                      </svg>
+                      Ajouter à un groupe
+                    </button>
                   </>
                 )}
                 {user && !isActualOwner && (
                   <button
                     onClick={() => { handleFork(); setMenuOpen(false); }}
-                    className="w-full text-left px-4 py-2.5 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors"
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors"
                   >
-                    ⎘ Dupliquer
+                    <svg className="w-4 h-4 shrink-0 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Dupliquer
                   </button>
                 )}
                 {isOwner && (
                   <Link
                     href={`/sheet/${id}/edit`}
                     onClick={() => setMenuOpen(false)}
-                    className="block px-4 py-2.5 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors"
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors"
                   >
-                    ✏ Modifier
+                    <svg className="w-4 h-4 shrink-0 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Modifier
                   </Link>
                 )}
                 {isAdmin && (
@@ -344,9 +340,12 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
                     <div className="my-1 border-t border-[var(--line)]" />
                     <button
                       onClick={() => { handleAdminDelete(); setMenuOpen(false); }}
-                      className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
                     >
-                      🗑 Supprimer
+                      <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Supprimer
                     </button>
                   </>
                 )}
