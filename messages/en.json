@@ -340,7 +340,10 @@
     "playSection": "Play this section",
     "sameAs": "Same as",
     "lyrics": "Lyrics",
-    "clickToListen": "Click to listen"
+    "clickToListen": "Click to listen",
+    "metronomeMenu": "Metronome and count-in",
+    "metronomeClick": "Metronome click",
+    "countIn": "Count-in before playing"
   },
   "Groups": {
     "title": "My bands",

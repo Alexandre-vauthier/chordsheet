@@ -153,6 +153,10 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   const [livePattern, setLivePattern] = useState<string | undefined>(sheet.groovePattern);
   const [grooveMenuOpen, setGrooveMenuOpen] = useState(false);
   const grooveMenuRef = useRef<HTMLDivElement>(null);
+  // Métronome et décompte de départ sont regroupés sous un seul bouton-menu :
+  // deux réglages liés, qui n'agissent qu'au démarrage de la lecture.
+  const [metroMenuOpen, setMetroMenuOpen] = useState(false);
+  const metroMenuRef = useRef<HTMLDivElement>(null);
   // Prévisualisation d'un pattern : réutilise le même useGrooveBox (2 mesures puis stop).
   const [previewPattern, setPreviewPattern] = useState<string | null>(null);
   const previewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -385,6 +389,15 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
     return () => document.removeEventListener('mousedown', handler);
   }, [grooveMenuOpen]);
 
+  useEffect(() => {
+    if (!metroMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (metroMenuRef.current && !metroMenuRef.current.contains(e.target as Node)) setMetroMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [metroMenuOpen]);
+
   useGrooveBox({
     // Tourne pendant la lecture, pendant le suivi micro si la boîte à rythme est
     // activée, ou pendant un aperçu de pattern.
@@ -517,26 +530,92 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
           <div className="print:hidden flex flex-col gap-2 sm:flex-shrink-0 sm:items-end w-full sm:w-auto">
             {!concertMode && (
             <div className="flex items-center gap-2 flex-wrap">
-              {/* Toggle métronome */}
-              <button
-                onClick={() => setMetronomeEnabled(v => !v)}
-                title={metronomeEnabled ? t('disableMetronome') : t('enableMetronome')}
-                className={`
-                  flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
-                  ${metronomeEnabled
-                    ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
-                    : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
-                  }
-                `}
-              >
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
-                  <path d="M12 3 8 21" strokeLinecap="round"/>
-                  <path d="M12 3l4 18" strokeLinecap="round"/>
-                  <path d="M8.5 14.5l7-4" strokeLinecap="round"/>
-                  <ellipse cx="12" cy="21" rx="3" ry="1.5"/>
-                  <line x1="9.5" y1="3" x2="14.5" y2="3" strokeLinecap="round"/>
-                </svg>
-              </button>
+              {/* Tempo éditable */}
+              <div className="flex items-center gap-1 px-3 py-2 bg-[var(--cell-bg)] text-[var(--ink)] rounded-lg border-[1.5px] border-[var(--line)] hover:border-[var(--ink-faint)] transition-colors">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const units = ['quarter', 'eighth'] as const;
+                    setLocalTempoUnit(u => units[(units.indexOf(u) + 1) % units.length]);
+                  }}
+                  title={t('changeTempoUnit')}
+                  className="hover:text-[var(--accent)] transition-colors cursor-pointer"
+                >
+                  <NoteIcon unit={localTempoUnit} className="w-3.5 h-3.5" />
+                </button>
+                <input
+                  type="number"
+                  min={40}
+                  max={300}
+                  value={localTempo}
+                  onChange={(e) => setLocalTempo(e.target.value)}
+                  onBlur={(e) => {
+                    const v = parseInt(e.target.value);
+                    setLocalTempo(String(v >= 40 && v <= 300 ? v : parseTempo(sheet.tempo)));
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                  }}
+                  className="w-10 bg-transparent border-none outline-none text-sm font-medium text-center
+                    [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  title={t('editTempo')}
+                />
+                <span className="text-xs text-[var(--ink-light)]">BPM</span>
+              </div>
+
+              {/* Métronome : bouton-menu réunissant le clic et le décompte de départ.
+                  Deux réglages liés (ils n'agissent qu'au démarrage de la lecture),
+                  regroupés pour alléger la barre. */}
+              <div className="relative" ref={metroMenuRef}>
+                <button
+                  onClick={() => setMetroMenuOpen(v => !v)}
+                  title={t('metronomeMenu')}
+                  className={`
+                    relative flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
+                    ${metronomeEnabled
+                      ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                      : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                    }
+                  `}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+                    <path d="M12 3 8 21" strokeLinecap="round"/>
+                    <path d="M12 3l4 18" strokeLinecap="round"/>
+                    <path d="M8.5 14.5l7-4" strokeLinecap="round"/>
+                    <ellipse cx="12" cy="21" rx="3" ry="1.5"/>
+                    <line x1="9.5" y1="3" x2="14.5" y2="3" strokeLinecap="round"/>
+                  </svg>
+                  {/* Pastille : le décompte est armé — visible même quand le clic est coupé,
+                      sinon le réglage serait invisible une fois le menu refermé. */}
+                  {countInEnabled && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[var(--accent)] border-2 border-[var(--paper)]" />
+                  )}
+                </button>
+
+                {metroMenuOpen && (
+                  <div className="absolute right-0 top-full mt-1 z-50 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl shadow-lg py-1 min-w-max whitespace-nowrap">
+                    {[
+                      { on: metronomeEnabled, toggle: () => setMetronomeEnabled(v => !v), label: t('metronomeClick') },
+                      { on: countInEnabled, toggle: () => setCountInEnabled(v => !v), label: t('countIn') },
+                    ].map(({ on, toggle, label }) => (
+                      <button
+                        key={label}
+                        onClick={toggle}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-left text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors"
+                      >
+                        <span className={`shrink-0 flex items-center justify-center w-4 h-4 rounded-full border ${on ? 'bg-[var(--accent)] border-[var(--accent)] text-white' : 'border-[var(--line)]'}`}>
+                          {on && (
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
+                            </svg>
+                          )}
+                        </span>
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Boîte à rythme : bouton unique (activer + choisir le pattern), "Aucun" en tête */}
               <div className="relative" ref={grooveMenuRef}>
@@ -619,6 +698,13 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   </div>
                 )}
               </div>
+
+              {/* Sélecteur d'instrument : remonté ici, il pilote aussi la voix jouée. */}
+              <InstrumentSelector
+                value={instrumentId}
+                onChange={handleInstrumentChange}
+                exclude={sheet.lyrics ? [] : ['voice']}
+              />
 
               {/* Lecture des accords — menu des instruments d'accompagnement */}
               <div className="relative" ref={accompMenuRef}>
@@ -703,58 +789,6 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 )}
               </div>
 
-              {/* Tempo éditable */}
-              <div className="flex items-center gap-1 px-3 py-2 bg-[var(--cell-bg)] text-[var(--ink)] rounded-lg border-[1.5px] border-[var(--line)] hover:border-[var(--ink-faint)] transition-colors">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const units = ['quarter', 'eighth'] as const;
-                    setLocalTempoUnit(u => units[(units.indexOf(u) + 1) % units.length]);
-                  }}
-                  title={t('changeTempoUnit')}
-                  className="hover:text-[var(--accent)] transition-colors cursor-pointer"
-                >
-                  <NoteIcon unit={localTempoUnit} className="w-3.5 h-3.5" />
-                </button>
-                <input
-                  type="number"
-                  min={40}
-                  max={300}
-                  value={localTempo}
-                  onChange={(e) => setLocalTempo(e.target.value)}
-                  onBlur={(e) => {
-                    const v = parseInt(e.target.value);
-                    setLocalTempo(String(v >= 40 && v <= 300 ? v : parseTempo(sheet.tempo)));
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
-                  }}
-                  className="w-10 bg-transparent border-none outline-none text-sm font-medium text-center
-                    [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                  title={t('editTempo')}
-                />
-                <span className="text-xs text-[var(--ink-light)]">BPM</span>
-              </div>
-
-              {/* Toggle count-in */}
-              <button
-                onClick={() => setCountInEnabled(v => !v)}
-                title={countInEnabled ? t('disableCountIn') : t('enableCountIn')}
-                className={`
-                  flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
-                  ${countInEnabled
-                    ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
-                    : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
-                  }
-                `}
-              >
-                <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                  <rect x="2"  y="16" width="4" height="6" rx="1"/>
-                  <rect x="7"  y="11" width="4" height="11" rx="1"/>
-                  <rect x="12" y="6"  width="4" height="16" rx="1"/>
-                  <rect x="17" y="1"  width="4" height="21" rx="1"/>
-                </svg>
-              </button>
 
               {/* Play / Stop */}
               <button
@@ -943,11 +977,6 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 {t('diagrams')}
               </button>
             )}
-            <InstrumentSelector
-              value={instrumentId}
-              onChange={handleInstrumentChange}
-              exclude={sheet.lyrics ? [] : ['voice']}
-            />
           </div>
         </div>
         {showChordSummary && instrumentId !== 'voice' && (

@@ -340,7 +340,10 @@
     "playSection": "Jouer cette section",
     "sameAs": "Identique à",
     "lyrics": "Paroles",
-    "clickToListen": "Cliquer pour écouter"
+    "clickToListen": "Cliquer pour écouter",
+    "metronomeMenu": "Métronome et décompte",
+    "metronomeClick": "Clic du métronome",
+    "countIn": "Décompte au démarrage"
   },
   "Groups": {
     "title": "Mes groupes",
