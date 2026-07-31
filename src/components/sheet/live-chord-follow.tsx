@@ -112,6 +112,10 @@ export function LiveChordFollow({
   const bpmRef = useRef(bpm);
   const enteredAtRef = useRef(0);
   const unconfirmedRef = useRef(0);
+  // Le micro a-t-il entendu QUELQUE CHOSE depuis l'entrée dans le bloc courant ?
+  // Sert à distinguer « le joueur s'est arrêté » de « on l'entend mais on n'a pas
+  // su reconnaître l'accord » : seul le premier cas doit couper le suivi.
+  const heardRef = useRef(false);
 
   const [autoStopped, setAutoStopped] = useState(false);
   const prevOutputRef = useRef(outputActive);
@@ -140,22 +144,34 @@ export function LiveChordFollow({
     posRef.current = -1;
     enteredAtRef.current = 0;
     unconfirmedRef.current = 0;
+    heardRef.current = false;
     msPerBeatRef.current = clampMsPerBeat(60000 / (bpmRef.current || 90));
     clearClass('chord-current');
 
-    const goToGroup = (idx: number, confirmed: boolean) => {
+    // 'heard'     : changement d'accord reconnu au micro → le suivi est calé.
+    // 'unmatched' : on entend le joueur, mais rien ne correspond (accord mal joué,
+    //               ou confusion classique du détecteur, par exemple une mineure
+    //               prise pour sa relative majeure). On avance sans pénaliser.
+    // 'silent'    : rien entendu du tout pendant tout le bloc → le joueur a décroché.
+    type Outcome = 'heard' | 'unmatched' | 'silent';
+
+    const goToGroup = (idx: number, outcome: Outcome) => {
       const groups = groupsRef.current;
       const now = Date.now();
 
       // Le tempo ne s'apprend que sur les changements réellement entendus : une
       // avance décidée par l'horloge ne doit pas nourrir sa propre estimation.
-      if (confirmed && posRef.current >= 0 && enteredAtRef.current > 0) {
+      if (outcome === 'heard' && posRef.current >= 0 && enteredAtRef.current > 0) {
         msPerBeatRef.current = updateMsPerBeat(
           msPerBeatRef.current, now - enteredAtRef.current, groups[posRef.current].beats,
         );
       }
-      unconfirmedRef.current = confirmed ? 0 : unconfirmedRef.current + 1;
+      if (outcome === 'heard') unconfirmedRef.current = 0;
+      else if (outcome === 'silent') unconfirmedRef.current += 1;
+      // 'unmatched' : compteur inchangé, on ne coupe pas un joueur qui joue.
+
       enteredAtRef.current = now;
+      heardRef.current = false;
 
       posRef.current = idx;
       clearClass('chord-current');
@@ -190,7 +206,7 @@ export function LiveChordFollow({
       if (gpos < 0) {
         if (!c) return;
         for (let k = 0; k < START_WINDOW && k < groups.length; k++) {
-          if (chordsMatch(c, groups[k].sound)) { goToGroup(k, true); return; }
+          if (chordsMatch(c, groups[k].sound)) { goToGroup(k, 'heard'); return; }
         }
         return;
       }
@@ -198,10 +214,11 @@ export function LiveChordFollow({
       const next = groups[gpos + 1];
 
       if (c) {
+        heardRef.current = true;
         // Toujours dans le bloc courant → rien à faire (déjà surligné en entier).
         if (chordsMatch(c, groups[gpos].sound)) return;
         // Changement d'accord entendu : avancer au bloc suivant (jamais de saut).
-        if (next && chordsMatch(c, next.sound)) { goToGroup(gpos + 1, true); return; }
+        if (next && chordsMatch(c, next.sound)) { goToGroup(gpos + 1, 'heard'); return; }
       }
 
       // Rien d'exploitable au micro. Si la durée attendue du bloc courant est
@@ -210,10 +227,12 @@ export function LiveChordFollow({
       if (!next) return;
       if (!shouldAnticipate(Date.now() - enteredAtRef.current, groups[gpos].beats, msPerBeatRef.current)) return;
 
-      goToGroup(gpos + 1, false);
+      const silencieux = !heardRef.current;
+      goToGroup(gpos + 1, silencieux ? 'silent' : 'unmatched');
 
-      // Deux blocs enchaînés sans que le micro confirme quoi que ce soit : le
-      // joueur s'est arrêté ou a décroché. On coupe plutôt que de dérouler seul.
+      // On ne coupe que sur du vrai silence enchaîné : deux blocs sans que le micro
+      // ait capté quoi que ce soit. Une suite d'accords entendus mais non reconnus
+      // fait avancer le suivi sans jamais l'interrompre.
       if (unconfirmedRef.current >= MAX_UNCONFIRMED) stop();
     }, TICK_MS);
 
