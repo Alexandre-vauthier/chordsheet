@@ -37,11 +37,12 @@ function GroupCard({ group, setsCount }: { group: Group; setsCount: number }) {
   return (
     <Link
       href={`/groups/${group.id}`}
-      className="flex items-center gap-4 p-4 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl hover:border-[var(--accent)] hover:shadow-sm transition-all group"
+      className="flex items-stretch gap-5 p-4 sm:p-5 bg-[var(--cell-bg)] border border-[var(--line)] rounded-2xl hover:border-[var(--accent)] hover:shadow-md transition-all group"
     >
-      {/* Photo du groupe, ou initiales colorées à défaut */}
+      {/* Photo du groupe, ou initiales colorées à défaut. Carrée et large : la
+          plupart des musiciens n'ont qu'un ou deux groupes, autant les montrer. */}
       <div
-        className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center shrink-0 text-white font-semibold text-sm select-none"
+        className="w-20 h-20 sm:w-28 sm:h-28 rounded-xl overflow-hidden flex items-center justify-center shrink-0 text-white font-semibold text-2xl sm:text-3xl select-none"
         style={{ backgroundColor: group.photoURL ? undefined : color }}
       >
         {group.photoURL ? (
@@ -53,24 +54,24 @@ function GroupCard({ group, setsCount }: { group: Group; setsCount: number }) {
       </div>
 
       {/* Infos */}
-      <div className="flex-1 min-w-0">
-        <h2 className="font-semibold text-[var(--ink)] truncate group-hover:text-[var(--accent)] transition-colors">
+      <div className="flex-1 min-w-0 flex flex-col justify-center gap-1.5">
+        <h2 className="font-playfair text-lg sm:text-xl font-bold text-[var(--ink)] truncate group-hover:text-[var(--accent)] transition-colors">
           {group.name}
         </h2>
         {group.description && (
-          <p className="text-sm text-[var(--ink-light)] mt-0.5 truncate">{group.description}</p>
+          <p className="text-sm text-[var(--ink-light)] line-clamp-2">{group.description}</p>
         )}
-        <div className="flex items-center gap-2 mt-1 text-xs text-[var(--ink-faint)]">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--ink-faint)] mt-0.5">
           <span>{t('membersCount', { count: group.memberIds.length })}</span>
-          <span>·</span>
+          <span aria-hidden>·</span>
           <span>{t('sheetsCount', { count: sheetCount })}</span>
-          <span>·</span>
+          <span aria-hidden>·</span>
           <span>{t('setsCountShort', { count: setsCount })}</span>
         </div>
       </div>
 
       {/* Chevron */}
-      <svg className="w-4 h-4 text-[var(--ink-faint)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5 text-[var(--ink-faint)] shrink-0 self-center group-hover:text-[var(--accent)] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/>
       </svg>
     </Link>
