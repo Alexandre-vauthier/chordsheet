@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useFormatter } from 'next-intl';
 
 interface RatingStarsProps {
   value: number | null;
@@ -8,6 +9,13 @@ interface RatingStarsProps {
   readonly?: boolean;
   size?: 'sm' | 'md' | 'lg';
   showCount?: number;
+  /**
+   * `stars` : les 5 étoiles, pour *donner* une note.
+   * `summary` : la note chiffrée suivie d'une seule étoile, pour *afficher* une
+   * moyenne. Cinq étoiles à côté du contrôle de notation prêtaient à confusion,
+   * et une moyenne de 4,8 se lit mal sur une échelle discrète.
+   */
+  variant?: 'stars' | 'summary';
 }
 
 export function RatingStars({
@@ -16,8 +24,10 @@ export function RatingStars({
   readonly = false,
   size = 'md',
   showCount,
+  variant = 'stars',
 }: RatingStarsProps) {
   const [hoverValue, setHoverValue] = useState<number | null>(null);
+  const format = useFormatter();
 
   const sizeClasses = {
     sm: 'text-sm',
@@ -26,6 +36,24 @@ export function RatingStars({
   };
 
   const displayValue = hoverValue ?? value ?? 0;
+
+  if (variant === 'summary') {
+    // Rien à afficher tant que personne n'a noté : cinq étoiles grises laissaient
+    // croire à une note de zéro.
+    if (value === null) return null;
+
+    return (
+      <span className="inline-flex items-baseline gap-1">
+        <span className={`font-medium text-[var(--ink)] ${sizeClasses[size]}`}>
+          {format.number(value, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+        </span>
+        <span className={`text-amber-400 ${sizeClasses[size]}`} aria-hidden>★</span>
+        {showCount !== undefined && showCount > 0 && (
+          <span className="text-xs text-[var(--ink-faint)]">({showCount})</span>
+        )}
+      </span>
+    );
+  }
 
   return (
     <div className="flex items-center gap-1">

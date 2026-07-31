@@ -231,7 +231,7 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
             {sheet.isPublic && (
               <>
                 <div className="flex items-center gap-1.5">
-                  <RatingStars value={sheet.averageRating} readonly size="sm" showCount={sheet.ratingCount} />
+                  <RatingStars value={sheet.averageRating} readonly variant="summary" size="sm" showCount={sheet.ratingCount} />
                 </div>
                 {sheet.viewCount > 0 && (
                   <span className="text-xs text-[var(--ink-faint)] whitespace-nowrap">
