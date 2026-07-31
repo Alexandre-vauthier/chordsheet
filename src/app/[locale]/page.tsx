@@ -111,8 +111,8 @@ function LandingNav({ scrolled }: { scrolled: boolean }) {
               <Link href="/book" className="text-[var(--nav-text)]/65 text-sm hover:text-[var(--nav-text)] transition-colors hidden sm:block px-3 py-2">
                 {t('myBook')}
               </Link>
-              <Link href="/dashboard" className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity">
-                {t('mySheets')}
+              <Link href="/explore" className="px-4 py-2 bg-[var(--accent)] text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity">
+                {t('explore')}
               </Link>
             </>
           ) : (
@@ -244,16 +244,16 @@ export default function Home() {
           </p>
           <div className={`flex gap-3 justify-center flex-wrap pointer-events-auto transition-opacity ${ctaFade(authLoading)}`}>
             <Link
-              href={user ? '/dashboard' : '/register'}
+              href={user ? '/book' : '/register'}
               className="px-7 py-3.5 bg-[var(--accent)] text-white rounded-xl font-semibold text-base hover:opacity-90 transition-opacity shadow-lg shadow-[#c84b2f]/30"
             >
-              {user ? t('hero.ctaLoggedIn') : t('hero.cta')}
+              {user ? t('hero.bookLoggedIn') : t('hero.cta')}
             </Link>
             <Link
-              href={user ? '/book' : '/login'}
+              href={user ? '/explore' : '/login'}
               className="px-7 py-3.5 bg-white/8 text-[var(--nav-text)] rounded-xl font-semibold text-base hover:bg-white/12 transition-colors border border-white/10"
             >
-              {user ? t('hero.bookLoggedIn') : t('hero.login')}
+              {user ? t('hero.exploreLoggedIn') : t('hero.login')}
             </Link>
           </div>
           {sheetCount !== null && sheetCount > 0 && (

@@ -50,7 +50,7 @@
       "login": "Log in",
       "register": "Sign up",
       "myBook": "My Book",
-      "mySheets": "My sheets"
+      "explore": "Explore"
     },
     "hero": {
       "eyebrow": "The chord sheet library",
@@ -59,8 +59,8 @@
       "cta": "Create a free account",
       "login": "Log in",
       "sheetCount": "{count}+ sheets shared by the community",
-      "ctaLoggedIn": "My sheets",
-      "bookLoggedIn": "My Book"
+      "bookLoggedIn": "My Book",
+      "exploreLoggedIn": "Explore"
     },
     "book": {
       "eyebrow": "The heart of ChordSheet",

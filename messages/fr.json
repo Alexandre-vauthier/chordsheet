@@ -50,7 +50,7 @@
       "login": "Se connecter",
       "register": "Créer un compte",
       "myBook": "Mon Book",
-      "mySheets": "Mes grilles"
+      "explore": "Explorer"
     },
     "hero": {
       "eyebrow": "La librairie de grilles d'accords",
@@ -59,8 +59,8 @@
       "cta": "Créer un compte gratuit",
       "login": "Se connecter",
       "sheetCount": "{count}+ grilles partagées par la communauté",
-      "ctaLoggedIn": "Mes grilles",
-      "bookLoggedIn": "Mon Book"
+      "bookLoggedIn": "Mon Book",
+      "exploreLoggedIn": "Explorer"
     },
     "book": {
       "eyebrow": "Le cœur de ChordSheet",
