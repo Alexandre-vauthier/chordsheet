@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { routing } from '@/i18n/routing';
 import { localeUrl } from '@/lib/seo';
+import { getPublicSheetIndex, songKey } from '@/lib/public-sheet-index';
 
 export const revalidate = 86400;
 
@@ -38,20 +39,81 @@ const PUBLIC_PATHS: { path: string; priority: number; changeFrequency: MetadataR
   { path: '/legal/mentions-legales',   priority: 0.2, changeFrequency: 'yearly' },
 ];
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const lastModified = new Date();
+/** Une entrée par langue, avec les alternates réciproques qu'attend Google. */
+function entriesFor(
+  path: string,
+  lastModified: Date,
+  changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'],
+  priority: number,
+): MetadataRoute.Sitemap {
+  const languages = Object.fromEntries(routing.locales.map(l => [l, localeUrl(l, path)]));
 
-  return PUBLIC_PATHS.flatMap(({ path, priority, changeFrequency }) => {
-    // Les alternates sont identiques pour toutes les langues d'un même chemin :
-    // c'est la réciprocité qu'attend Google.
-    const languages = Object.fromEntries(routing.locales.map(l => [l, localeUrl(l, path)]));
+  return routing.locales.map(locale => ({
+    url: localeUrl(locale, path),
+    lastModified,
+    changeFrequency,
+    priority,
+    alternates: { languages },
+  }));
+}
 
-    return routing.locales.map(locale => ({
-      url: localeUrl(locale, path),
-      lastModified,
-      changeFrequency,
-      priority,
-      alternates: { languages },
-    }));
-  });
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const now = new Date();
+
+  const fixed = PUBLIC_PATHS.flatMap(({ path, priority, changeFrequency }) =>
+    entriesFor(path, now, changeFrequency, priority),
+  );
+
+  // Les grilles publiques : le vrai catalogue du site, et de loin le plus gros
+  // volume. Sans elles, un moteur ne découvre une grille que s'il suit un lien
+  // depuis /explore, dont la pagination est côté client.
+  const sheets = await getPublicSheetIndex();
+
+  const sheetEntries = sheets.flatMap(s =>
+    entriesFor(`/sheet/${s.id}`, s.updatedAt ?? now, 'weekly', 0.6),
+  );
+
+  // Les pages d'artiste et de morceau ne sont pas stockées : elles se déduisent du
+  // catalogue. On ne déclare que celles qui ont réellement quelque chose à montrer.
+  const artistDates = new Map<string, Date>();
+  const songVersions = new Map<string, { title: string; artist: string; count: number; lastModified: Date }>();
+
+  for (const s of sheets) {
+    const date = s.updatedAt ?? now;
+
+    if (s.artist) {
+      const known = artistDates.get(s.artist);
+      if (!known || date > known) artistDates.set(s.artist, date);
+    }
+
+    if (s.title && s.artist) {
+      const key = songKey(s.title, s.artist);
+      const known = songVersions.get(key);
+      if (known) {
+        known.count += 1;
+        if (date > known.lastModified) known.lastModified = date;
+      } else {
+        songVersions.set(key, { title: s.title, artist: s.artist, count: 1, lastModified: date });
+      }
+    }
+  }
+
+  const artistEntries = [...artistDates].flatMap(([artist, date]) =>
+    entriesFor(`/artist/${encodeURIComponent(artist)}`, date, 'weekly', 0.5),
+  );
+
+  // Une seule version d'un morceau : la page /song ne ferait que rediriger le
+  // lecteur vers l'unique grille. La déclarer créerait un quasi-doublon.
+  const songEntries = [...songVersions.values()]
+    .filter(v => v.count > 1)
+    .flatMap(v =>
+      entriesFor(
+        `/song/${encodeURIComponent(v.title)}/${encodeURIComponent(v.artist)}`,
+        v.lastModified,
+        'weekly',
+        0.5,
+      ),
+    );
+
+  return [...fixed, ...sheetEntries, ...artistEntries, ...songEntries];
 }

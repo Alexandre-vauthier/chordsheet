@@ -9,6 +9,7 @@ import { useArtwork } from '@/lib/use-artwork';
 import { useAuth } from '@/lib/auth-context';
 import { Link } from '@/i18n/navigation';
 import { Footer } from '@/components/layout/footer';
+import { HomeJsonLd } from './home-json-ld';
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 
@@ -520,6 +521,7 @@ export default function Home() {
       </section>
 
       <Footer />
+      <HomeJsonLd />
 
     </main>
   );

@@ -20,16 +20,27 @@ import { Link, useRouter } from '@/i18n/navigation';
 
 interface SheetViewClientProps {
   id: string;
+  /**
+   * Grille déjà lue côté serveur, quand elle est publique ou non répertoriée, et
+   * **privée de ses paroles**. Fournie, la page est complète dès le premier rendu,
+   * donc présente dans le HTML servi, donc lisible par un moteur — au lieu
+   * d'attendre l'hydratation.
+   *
+   * La lecture client continue malgré tout : c'est elle qui incrémente le compteur
+   * de vues et qui ramène les paroles. Absente (grille privée, ou lecture serveur
+   * indisponible), elle reste seule aux commandes, comme avant.
+   */
+  initialSheet?: Sheet | null;
 }
 
-export function SheetViewClient({ id }: SheetViewClientProps) {
+export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
   const router = useRouter();
   const { user, isAdmin } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
   const { userRating, rateSheet, isLoading: ratingLoading } = useRatings(id, user?.id);
   const { setViewedSheet } = useLiveSession();
-  const [sheet, setSheet] = useState<Sheet | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [sheet, setSheet] = useState<Sheet | null>(initialSheet ?? null);
+  const [loading, setLoading] = useState(!initialSheet);
   const [error, setError] = useState<string | null>(null);
   const [isTogglingBookmark, setIsTogglingBookmark] = useState(false);
   const [commentInvite, setCommentInvite] = useState(false);
@@ -55,6 +66,7 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
           return;
         }
 
+
         const data = docSnap.data();
 
         // Vérifier les droits d'accès
@@ -73,14 +85,17 @@ export function SheetViewClient({ id }: SheetViewClientProps) {
         }
       } catch (err) {
         console.error('Error loading sheet:', err);
-        setError('Erreur lors du chargement');
+        // Le serveur a déjà fourni la grille : un échec de relecture ne doit pas
+        // effacer une page qui s'affiche correctement, il ne coûte que les paroles
+        // et l'incrément de vue.
+        if (!initialSheet) setError('Erreur lors du chargement');
       } finally {
         setLoading(false);
       }
     }
 
     loadSheet();
-  }, [id, user, isAdmin]);
+  }, [id, user, isAdmin, initialSheet]);
 
   // Signale au contexte de session live quelle grille est consultée, pour que la
   // bannière puisse proposer un envoi direct en un clic (seules les grilles

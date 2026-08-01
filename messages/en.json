@@ -1345,5 +1345,13 @@
     "closing": "It is a tool made by musicians, for musicians. No more, no less.",
     "roleAlexandre": "Development & design",
     "roleJulien": "Musical vision & theory"
+  },
+  "Related": {
+    "aria": "Related chord charts",
+    "versionsHeading": "Other versions of “{title}”",
+    "versionLabel": "Another version",
+    "compareVersions": "Compare every version of “{title}”",
+    "artistHeading": "More {artist} chord charts",
+    "allByArtist": "See all {artist} chord charts"
   }
 }

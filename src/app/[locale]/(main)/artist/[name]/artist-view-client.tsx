@@ -16,17 +16,24 @@ import { Link } from '@/i18n/navigation';
 
 interface ArtistViewClientProps {
   name: string;
+  /**
+   * Grilles publiques déjà lues côté serveur. Quand elles sont fournies, la page
+   * s'affiche complète dès le premier rendu — donc dans le HTML servi, donc
+   * lisible par un moteur de recherche — au lieu d'attendre l'hydratation.
+   * Absentes (lecture serveur indisponible), le chargement client prend le relais.
+   */
+  initialSheets?: Sheet[];
 }
 
-export function ArtistViewClient({ name }: ArtistViewClientProps) {
+export function ArtistViewClient({ name, initialSheets }: ArtistViewClientProps) {
   const t = useTranslations('ArtistView');
   // Param URL-encodé (ex. « Save%20Tonight ») : décodage sûr (pas de plantage sur '%').
   const artistName = decodeParam(name);
   const { user, isAdmin, loading: authLoading } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
   const { artworkUrl } = useArtwork(artistName, undefined);
-  const [sheets, setSheets] = useState<Sheet[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [sheets, setSheets] = useState<Sheet[]>(initialSheets ?? []);
+  const [loading, setLoading] = useState(!initialSheets);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -34,6 +41,9 @@ export function ArtistViewClient({ name }: ArtistViewClientProps) {
 
   useEffect(() => {
     if (authLoading) return;
+    // Un admin voit aussi les grilles non publiques : dans ce cas seulement, on
+    // relit côté client. Pour tout le monde d'autre, la donnée serveur suffit.
+    if (initialSheets && !isAdmin) return;
 
     async function loadSheets() {
       try {
@@ -53,6 +63,7 @@ export function ArtistViewClient({ name }: ArtistViewClientProps) {
     }
 
     loadSheets();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artistName, isAdmin, authLoading]);
 
   // Grouper par titre → une seule entrée par musique

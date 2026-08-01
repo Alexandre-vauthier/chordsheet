@@ -1345,5 +1345,13 @@
     "closing": "C'est un outil fait par des musiciens, pour des musiciens. Pas plus, pas moins.",
     "roleAlexandre": "Développement & design",
     "roleJulien": "Vision musicale & solfège"
+  },
+  "Related": {
+    "aria": "Grilles liées",
+    "versionsHeading": "Autres versions de « {title} »",
+    "versionLabel": "Autre version",
+    "compareVersions": "Comparer toutes les versions de « {title} »",
+    "artistHeading": "Autres grilles d'accords de {artist}",
+    "allByArtist": "Voir toutes les grilles de {artist}"
   }
 }
