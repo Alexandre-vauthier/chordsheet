@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { SITE_NAME } from '@/lib/seo';
 import { useTranslations } from 'next-intl';
 
 import { useAuth } from '@/lib/auth-context';
@@ -76,9 +77,7 @@ function RegisterForm() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <h1 className="font-playfair text-3xl font-bold">
-              Chord<span className="text-[var(--accent)]">Sheet</span>
-            </h1>
+            <h1 className="font-playfair text-3xl font-bold">{SITE_NAME}</h1>
           </Link>
           <p className="text-[var(--ink-light)] mt-2">{t('registerTitle')}</p>
         </div>

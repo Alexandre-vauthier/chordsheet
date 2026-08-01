@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { SITE_URL } from '@/lib/seo';
 import { getAdminDb, getAdminAuth } from '@/lib/firebase-admin';
 import { createExportToken } from '@/lib/pdf-export-token';
 
@@ -84,7 +85,7 @@ export async function POST(req: NextRequest) {
   }
 
   const token = await createExportToken(setId, userId);
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://chordsheet.app';
+  const baseUrl = SITE_URL;
   const exportUrl = `${baseUrl}/export/set/${setId}?token=${token}`;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

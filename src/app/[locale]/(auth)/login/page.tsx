@@ -1,11 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { SITE_NAME } from '@/lib/seo';
+import { useLocale, useTranslations } from 'next-intl';
 
-import { sendPasswordResetEmail } from 'firebase/auth';
 import { useAuth } from '@/lib/auth-context';
-import { getAuth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RedirectIfAuthenticated } from '@/components/auth/redirect-if-authenticated';
@@ -21,6 +20,7 @@ export default function LoginPage() {
 
 function LoginForm() {
   const t = useTranslations('Auth');
+  const locale = useLocale();
   const router = useRouter();
   const { signIn } = useAuth();
 
@@ -62,7 +62,14 @@ function LoginForm() {
     setResetLoading(true);
     setError('');
     try {
-      await sendPasswordResetEmail(getAuth(), email.trim());
+      // Route serveur plutôt que le SDK : le mail part de notre domaine, avec notre
+      // gabarit. Elle répond toujours 200, y compris pour une adresse inconnue —
+      // c'est voulu, une réponse différenciée dirait qui a un compte ici.
+      await fetch('/api/auth/send-password-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), locale }),
+      });
       setResetSent(true);
     } catch {
       setError(t('errorResetFailed'));
@@ -76,9 +83,7 @@ function LoginForm() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <h1 className="font-playfair text-3xl font-bold">
-              Chord<span className="text-[var(--accent)]">Sheet</span>
-            </h1>
+            <h1 className="font-playfair text-3xl font-bold">{SITE_NAME}</h1>
           </Link>
           <p className="text-[var(--ink-light)] mt-2">{t('loginTitle')}</p>
         </div>

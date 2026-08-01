@@ -9,7 +9,6 @@ import {
   signOut as firebaseSignOut,
   deleteUser as firebaseDeleteUser,
   updateProfile,
-  sendEmailVerification,
   reload,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, getDocs, deleteDoc, collection, query, where, writeBatch, serverTimestamp } from 'firebase/firestore';
@@ -33,6 +32,25 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+/**
+ * Demande l'envoi du mail de confirmation à notre route serveur.
+ *
+ * On ne passe plus par `sendEmailVerification` du SDK : Firebase expédiait depuis
+ * `firebaseapp.com`, un domaine étranger à la marque, ce que les filtres sanctionnent.
+ * La route serveur produit le même lien via l'Admin SDK et l'envoie depuis notre
+ * domaine, avec notre gabarit.
+ */
+async function requestVerificationEmail(user: FirebaseUser): Promise<void> {
+  const token = await user.getIdToken();
+  const locale = typeof document !== 'undefined' && document.documentElement.lang === 'en' ? 'en' : 'fr';
+
+  const res = await fetch(`/api/auth/send-verification?locale=${locale}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error('verification-email-failed');
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
@@ -187,14 +205,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       updatedAt: serverTimestamp(),
     });
 
-    await sendEmailVerification(credential.user).catch(() => {});
+    // Envoi par notre propre route, depuis notre domaine : le mail de Firebase
+    // partait de firebaseapp.com et finissait en indésirable. Un échec ne doit pas
+    // faire capoter l'inscription, le compte existe déjà à ce stade.
+    await requestVerificationEmail(credential.user).catch(() => {});
   };
 
   // Renvoyer l'email de vérification
   const resendVerificationEmail = async () => {
     const auth = getAuth();
     if (auth.currentUser) {
-      await sendEmailVerification(auth.currentUser);
+      await requestVerificationEmail(auth.currentUser);
     }
   };
 
