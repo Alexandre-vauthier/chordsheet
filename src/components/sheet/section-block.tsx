@@ -57,6 +57,9 @@ interface SectionBlockProps {
   onPlayRow?: (rowIndex: number) => void;
   activeRowIndex?: number;
   activeCellIndex?: number;
+  /** Cellule visée par la dictée au micro, quand elle est dans cette section. */
+  dictationRowIndex?: number;
+  dictationCellIndex?: number;
   activeDurationMs?: number;
   onNavigateToCell: (sectionId: string, rowIndex: number, cellIndex: number) => void;
   onDragStart: () => void;
@@ -87,6 +90,8 @@ export function SectionBlock({
   onPlayRow,
   activeRowIndex,
   activeCellIndex,
+  dictationRowIndex,
+  dictationCellIndex,
   activeDurationMs,
   onNavigateToCell,
   onDragStart,
@@ -312,6 +317,7 @@ export function SectionBlock({
               onAppendRow={appendRowAndNavigate}
               totalRows={section.rows.length}
               activeCellIndex={activeRowIndex === rowIndex ? activeCellIndex : undefined}
+              dictationCellIndex={dictationRowIndex === rowIndex ? dictationCellIndex : undefined}
               activeDurationMs={activeRowIndex === rowIndex ? activeDurationMs : undefined}
               isFirstRow={isFirstSection && rowIndex === 0}
               exampleChords={showExampleChords && rowIndex === 0 ? EXAMPLE_CHORDS : undefined}

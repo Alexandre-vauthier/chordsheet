@@ -23,6 +23,8 @@ interface GridRowProps {
   totalRows: number;
   activeCellIndex?: number;
   activeDurationMs?: number;
+  /** Cellule visée par la dictée au micro, quand elle est dans cette mesure. */
+  dictationCellIndex?: number;
   isFirstRow?: boolean;
   exampleChords?: string[];
   onDismissOnboarding?: () => void;
@@ -47,6 +49,7 @@ export function GridRow({
   totalRows,
   activeCellIndex,
   activeDurationMs,
+  dictationCellIndex,
   isFirstRow = false,
   exampleChords,
   onDismissOnboarding,
@@ -96,6 +99,7 @@ export function GridRow({
               canSplit={canSplit}
               onSplit={() => onSplit(cellIndex)}
               isActive={activeCellIndex === cellIndex}
+              isDictationTarget={dictationCellIndex === cellIndex}
               activeDurationMs={activeCellIndex === cellIndex ? activeDurationMs : undefined}
               exampleChord={exampleChords?.[cellIndex]}
               showSplitCoach={isFirstRow && cellIndex === 0 && canSplit}

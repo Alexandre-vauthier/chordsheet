@@ -21,6 +21,12 @@ interface BeatCellProps {
   onNavigateNext: () => void;
   isActive?: boolean;
   activeDurationMs?: number;
+  /**
+   * Cellule que la dictée au micro va remplir. Distincte de `isActive`, qui suit la
+   * lecture audio : les deux peuvent être en cours en même temps et ne désignent pas
+   * la même chose.
+   */
+  isDictationTarget?: boolean;
   exampleChord?: string;
   showSplitCoach?: boolean;
   onDismissOnboarding?: () => void;
@@ -38,6 +44,7 @@ export function BeatCell({
   onNavigateNext,
   isActive = false,
   activeDurationMs = 0,
+  isDictationTarget = false,
   exampleChord,
   showSplitCoach = false,
   onDismissOnboarding,
@@ -185,6 +192,7 @@ export function BeatCell({
           }
           ${isSmall ? 'opacity-70' : ''}
           ${isActive && !color ? 'border-[var(--accent)]' : ''}
+          ${isDictationTarget ? 'ring-4 ring-[var(--accent)]/25 border-[var(--accent)]' : ''}
         `}
       >
         {/* Sweep animation pendant la lecture */}

@@ -772,7 +772,18 @@
     "chordNotationHint": "Utilise la notation Am, G7, Cmaj7…",
     "viewDiagram": "Voir le diagramme",
     "splitInTwo": "Diviser en deux",
-    "divideInTwoBeats": "Divise en deux temps"
+    "divideInTwoBeats": "Divise en deux temps",
+    "dictation": {
+      "start": "Dicter les accords au micro",
+      "stop": "Arrêter la dictée",
+      "statusWaiting": "En attente d'un accord…",
+      "statusHearing": "J'entends quelque chose, sans le reconnaître encore…",
+      "statusReady": "{chord} reconnu",
+      "releaseToWrite": "étouffe les cordes pour l'écrire",
+      "hint": "Joue l'accord, puis étouffe les cordes : il s'écrit et la case suivante s'active.",
+      "undo": "Corriger",
+      "stopButton": "Arrêter"
+    }
   },
   "Admin": {
     "title": "Administration",

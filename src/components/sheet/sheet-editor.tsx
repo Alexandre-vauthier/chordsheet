@@ -6,7 +6,7 @@ import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
 import { computeDifficulty } from '@/lib/compute-difficulty';
 import type { Sheet, Section, NewSheet, StringChord, PianoChord, CustomChord, InstrumentId } from '@/types';
-import { createEmptySection, GENRES } from '@/types';
+import { createEmptySection, createEmptyRow, GENRES } from '@/types';
 import { SectionBlock } from './section-block';
 import { Button } from '@/components/ui/button';
 import { InstrumentSelector, ChordSummary, ChordEditorModal } from '@/components/chord';
@@ -27,6 +27,9 @@ import { useArtwork } from '@/lib/use-artwork';
 import { useSongBpm } from '@/lib/use-song-bpm';
 import { SuggestionsDropdown } from '@/components/ui/suggestions-dropdown';
 import { Link } from '@/i18n/navigation';
+import { useChordDictation } from '@/lib/use-chord-dictation';
+import { applyDictatedChord, undoDictatedChord } from '@/lib/chord-dictation';
+import { DictationBar } from './dictation-bar';
 
 // Filtre local pour les grilles privées de l'utilisateur (petit lot déjà chargé,
 // pas besoin d'une requête Firestore dédiée par frappe).
@@ -553,6 +556,115 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
     []
   );
 
+  /* ── Dictée au micro ──────────────────────────────────────────────────────
+   *
+   * Le micro écrit les accords dans la grille, une cellule à la fois. La cellule
+   * visée est celle qui est mise en évidence ; elle avance après chaque accord
+   * validé, exactement comme le ferait Tab — y compris en créant une mesure quand
+   * on arrive au bout de la section.
+   */
+  const [dictationTarget, setDictationTarget] = useState<
+    { sectionId: string; rowIndex: number; cellIndex: number } | null
+  >(null);
+
+  // La validation lit la grille au moment où elle survient, pas au moment où le
+  // micro a démarré : une ref évite de recréer l'écoute à chaque frappe.
+  const sectionsRef = useRef(sheet.sections);
+  useEffect(() => { sectionsRef.current = sheet.sections; }, [sheet.sections]);
+  const targetRef = useRef(dictationTarget);
+  useEffect(() => { targetRef.current = dictationTarget; }, [dictationTarget]);
+
+  /** Première cellule vide de la grille : là où la dictée a le plus de sens. */
+  const firstEmptyCell = useCallback(() => {
+    for (const section of sheet.sections) {
+      for (let r = 0; r < section.rows.length; r++) {
+        for (let c = 0; c < section.rows[r].length; c++) {
+          if (!section.rows[r][c].chord) return { sectionId: section.id, rowIndex: r, cellIndex: c };
+        }
+      }
+    }
+    const first = sheet.sections[0];
+    return first ? { sectionId: first.id, rowIndex: 0, cellIndex: 0 } : null;
+  }, [sheet.sections]);
+
+  const writeChordAt = useCallback(
+    (at: { sectionId: string; rowIndex: number; cellIndex: number }, chord: string) => {
+      const section = sectionsRef.current.find((s) => s.id === at.sectionId);
+      if (!section) return null;
+
+      const result = applyDictatedChord(
+        section.rows,
+        { rowIndex: at.rowIndex, cellIndex: at.cellIndex },
+        chord,
+        section.beatsPerMeasure || 4,
+        createEmptyRow,
+      );
+      if (!result) return null;
+
+      updateSection(section.id, { rows: result.rows });
+      return { sectionId: section.id, ...result.next };
+    },
+    [updateSection],
+  );
+
+  const handleDictatedChord = useCallback(
+    (chord: string) => {
+      const at = targetRef.current;
+      if (!at) return;
+      const next = writeChordAt(at, chord);
+      if (next) setDictationTarget(next);
+    },
+    [writeChordAt],
+  );
+
+  const dictation = useChordDictation(handleDictatedChord);
+
+  /** Revenir d'une cellule et l'effacer : le rattrapage d'une détection fausse. */
+  const undoDictation = useCallback(() => {
+    const at = targetRef.current;
+    if (!at) return;
+
+    const section = sectionsRef.current.find((s) => s.id === at.sectionId);
+    if (!section) return;
+
+    const result = undoDictatedChord(section.rows, { rowIndex: at.rowIndex, cellIndex: at.cellIndex });
+    if (!result) return;
+
+    updateSection(section.id, { rows: result.rows });
+    setDictationTarget({ sectionId: section.id, ...result.next });
+  }, [updateSection]);
+
+  const toggleDictation = useCallback(() => {
+    if (dictation.listening) {
+      dictation.stop();
+      setDictationTarget(null);
+      return;
+    }
+    const start = firstEmptyCell();
+    if (!start) return;
+    setDictationTarget(start);
+    targetRef.current = start;
+    dictation.start();
+  }, [dictation, firstEmptyCell]);
+
+  // Échap coupe l'écoute : un micro ouvert doit toujours pouvoir se fermer vite.
+  // L'abonnement ne dépend que de l'état d'écoute — `dictation` est un objet neuf à
+  // chaque rendu, s'y fier ferait poser et retirer l'écouteur à chaque frappe.
+  const stopDictationRef = useRef(dictation.stop);
+  useEffect(() => { stopDictationRef.current = dictation.stop; }, [dictation.stop]);
+
+  useEffect(() => {
+    if (!dictation.listening) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        stopDictationRef.current();
+        setDictationTarget(null);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [dictation.listening]);
+
   // Ouvrir la modal pour éditer un accord
   const handleEditChord = useCallback((chordName: string, currentChord: StringChord | PianoChord | null) => {
     setEditingChordName(chordName);
@@ -674,6 +786,25 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
                 <path d="M8.5 14.5l7-4" strokeLinecap="round"/>
                 <ellipse cx="12" cy="21" rx="3" ry="1.5"/>
                 <line x1="9.5" y1="3" x2="14.5" y2="3" strokeLinecap="round"/>
+              </svg>
+            </button>
+
+            {/* Dictée au micro : écrit les accords joués dans la grille */}
+            <button
+              onClick={toggleDictation}
+              title={dictation.listening ? t('dictation.stop') : t('dictation.start')}
+              className={`
+                cursor-pointer flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
+                ${dictation.listening
+                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                  : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                }
+              `}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+                <rect x="9" y="3" width="6" height="11" rx="3" />
+                <path d="M5 11a7 7 0 0 0 14 0" strokeLinecap="round" />
+                <line x1="12" y1="18" x2="12" y2="21" strokeLinecap="round" />
               </svg>
             </button>
 
@@ -1048,6 +1179,8 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
                 activeRowIndex={isPlaying && activeStep?.sectionId === section.id ? activeStep.rowIndex : undefined}
                 activeCellIndex={isPlaying && activeStep?.sectionId === section.id ? activeStep.cellIndex : undefined}
                 activeDurationMs={isPlaying && activeStep?.sectionId === section.id ? activeStep.durationMs : undefined}
+                dictationRowIndex={dictationTarget?.sectionId === section.id ? dictationTarget.rowIndex : undefined}
+                dictationCellIndex={dictationTarget?.sectionId === section.id ? dictationTarget.cellIndex : undefined}
                 onNavigateToCell={navigateToCell}
                 onDragStart={() => handleDragStart(section.id)}
                 onDragEnd={handleDragEnd}
@@ -1161,6 +1294,17 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
           </div>
         </div>
       </div>
+
+      {dictation.listening && (
+        <DictationBar
+          pending={dictation.pending}
+          audible={dictation.audible}
+          error={dictation.error}
+          canUndo={!!dictationTarget && (dictationTarget.rowIndex > 0 || dictationTarget.cellIndex > 0)}
+          onUndo={undoDictation}
+          onStop={toggleDictation}
+        />
+      )}
     </div>
   );
 }

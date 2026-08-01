@@ -772,7 +772,18 @@
     "chordNotationHint": "Use notation like Am, G7, Cmaj7…",
     "viewDiagram": "View diagram",
     "splitInTwo": "Split in two",
-    "divideInTwoBeats": "Split into two beats"
+    "divideInTwoBeats": "Split into two beats",
+    "dictation": {
+      "start": "Dictate chords with the mic",
+      "stop": "Stop dictation",
+      "statusWaiting": "Waiting for a chord…",
+      "statusHearing": "I hear something, but can't name it yet…",
+      "statusReady": "{chord} recognised",
+      "releaseToWrite": "mute the strings to write it",
+      "hint": "Play the chord, then mute the strings: it gets written and the next cell takes over.",
+      "undo": "Fix",
+      "stopButton": "Stop"
+    }
   },
   "Admin": {
     "title": "Administration",
