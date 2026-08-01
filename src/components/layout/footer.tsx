@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
+import { CHORD_PAGE_INSTRUMENTS } from '@/lib/chord-page';
 
 /**
  * Pied de page : c'est le principal outil de maillage interne du site. Il est rendu
@@ -13,6 +14,8 @@ import { Link } from '@/i18n/navigation';
  */
 export function Footer() {
   const t = useTranslations('Footer');
+  const tInstrument = useTranslations('Instruments');
+  const tInstrumentOf = useTranslations('InstrumentsOf');
 
   const columns: { heading: string; links: { href: string; label: string }[] }[] = [
     {
@@ -26,13 +29,21 @@ export function Footer() {
       heading: t('colChords'),
       links: [
         { href: '/chords', label: t('linkChords') },
-        { href: '/chord-detect', label: t('linkChordDetect') },
+        // Les pages par instrument : c'est par elles que les 443 pages d'accord
+        // deviennent atteignables depuis n'importe quelle page du site.
+        ...CHORD_PAGE_INSTRUMENTS.map(id => ({
+          href: `/chords/${id}`,
+          label: t('linkInstrumentChords', { instrument: tInstrument(id), instrumentOf: tInstrumentOf(id) }),
+        })),
       ],
     },
     {
       heading: t('colTools'),
       links: [
         { href: '/tuner', label: t('linkTuner') },
+        // Le chercheur par notes vit dans une fenêtre de /chords, d'où le paramètre.
+        { href: '/chords?finder=1', label: t('linkChordByNotes') },
+        { href: '/chord-detect', label: t('linkChordDetect') },
         { href: '/sheet/new', label: t('linkNewSheet') },
       ],
     },

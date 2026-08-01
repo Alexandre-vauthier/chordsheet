@@ -53,6 +53,9 @@ function ChordsPageContent() {
 
   const instrumentParam = (searchParams.get('instrument') || 'guitar') as InstrumentId;
   const categoryParam = (searchParams.get('category') || 'major') as CategoryGroup;
+  // Le chercheur par notes est une fenêtre, pas une page : sans ce paramètre, aucun
+  // lien ne peut y mener — ni le pied de page, ni un lien partagé.
+  const finderParam = searchParams.get('finder') === '1';
 
   const [instrumentId, setInstrumentId] = useState<InstrumentId>(instrumentParam);
   const [categoryGroup, setCategoryGroup] = useState<CategoryGroup>(categoryParam);
@@ -60,7 +63,7 @@ function ChordsPageContent() {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modal finder
-  const [finderOpen, setFinderOpen] = useState(false);
+  const [finderOpen, setFinderOpen] = useState(finderParam);
 
   // Modal d'édition admin
   const [modalOpen, setModalOpen] = useState(false);
@@ -76,6 +79,10 @@ function ChordsPageContent() {
     setInstrumentId(instrumentParam);
     setCategoryGroup(categoryParam);
   }, [instrumentParam, categoryParam]);
+
+  useEffect(() => {
+    if (finderParam) setFinderOpen(true);
+  }, [finderParam]);
 
   const updateUrl = (instrument: InstrumentId, category: CategoryGroup) => {
     router.push(`/chords?instrument=${instrument}&category=${category}`, { scroll: false });

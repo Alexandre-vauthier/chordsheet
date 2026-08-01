@@ -48,7 +48,7 @@
     "linkExplore": "Toutes les grilles",
     "linkArtists": "Artistes",
     "linkChords": "Bibliothèque d'accords",
-    "linkChordDetect": "Identifier un accord",
+    "linkChordDetect": "Identifier un accord au micro",
     "linkTuner": "Accordeur en ligne",
     "linkNewSheet": "Créer une grille",
     "linkPricing": "Tarifs",
@@ -58,7 +58,9 @@
     "linkSheetPhoto": "Photo de partition en grille",
     "linkAudio": "Accords depuis un audio",
     "linkBands": "Jouer en groupe",
-    "linkStage": "Mode concert"
+    "linkStage": "Mode concert",
+    "linkChordByNotes": "Trouver un accord par ses notes",
+    "linkInstrumentChords": "Accords {instrumentOf}"
   },
   "Landing": {
     "nav": {
@@ -1299,12 +1301,12 @@
         "description": "Analyser un enregistrement pour en tirer une première grille. Ce que l'analyse restitue vraiment, et ses limites."
       },
       "chordInstrument": {
-        "title": "Accords {instrument} : diagrammes, notes et positions",
-        "description": "Les {count} accords de {instrument} de ChordSheet. Pour chacun : le diagramme, les notes, le détail de la position et les grilles qui l'utilisent."
+        "title": "Accords {instrumentLower} : diagrammes, notes et positions",
+        "description": "Les {count} accords {instrumentOf} de ChordSheet. Pour chacun : le diagramme, les notes, le détail de la position et les grilles qui l'utilisent."
       },
       "chord": {
-        "title": "Accord {chord} {instrument} : diagramme, notes et position",
-        "description": "Comment jouer l'accord {chord} pour {instrument} : diagramme, notes ({notes}) et détail de la position. Et les grilles d'accords du site qui l'utilisent."
+        "title": "Accord {chord} {instrumentLower} : diagramme, notes et position",
+        "description": "Comment jouer l'accord {chord} {instrumentAt} : diagramme, notes ({notes}) et détail de la position. Et les grilles d'accords du site qui l'utilisent."
       }
     },
     "artist": {
@@ -1363,5 +1365,32 @@
     "compareVersions": "Comparer toutes les versions de « {title} »",
     "artistHeading": "Autres grilles d'accords de {artist}",
     "allByArtist": "Voir toutes les grilles de {artist}"
+  },
+  "InstrumentsLower": {
+    "guitar": "guitare",
+    "ukulele": "ukulélé",
+    "piano": "piano",
+    "mandolin": "mandoline",
+    "banjo": "banjo",
+    "bass": "basse",
+    "voice": "voix"
+  },
+  "InstrumentsOf": {
+    "guitar": "de guitare",
+    "ukulele": "d'ukulélé",
+    "mandolin": "de mandoline",
+    "piano": "de piano",
+    "banjo": "de banjo",
+    "bass": "de basse",
+    "voice": "de voix"
+  },
+  "InstrumentsAt": {
+    "guitar": "à la guitare",
+    "ukulele": "à l'ukulélé",
+    "mandolin": "à la mandoline",
+    "piano": "au piano",
+    "banjo": "au banjo",
+    "bass": "à la basse",
+    "voice": "à la voix"
   }
 }

@@ -425,10 +425,10 @@
     "instrumentPage": {
       "breadcrumb": "Fil d'Ariane",
       "libraryLink": "Bibliothèque d'accords",
-      "h1": "Accords de {instrument}",
-      "lead": "Les {count} accords de {instrument} de ChordSheet, rangés par famille. Chaque accord a sa page : le diagramme, les notes qui le composent, le détail de la position et les grilles du site qui l'utilisent.",
+      "h1": "Accords {instrumentOf}",
+      "lead": "Les {count} accords {instrumentOf} de ChordSheet, rangés par famille. Chaque accord a sa page : le diagramme, les notes qui le composent, le détail de la position et les grilles du site qui l'utilisent.",
       "otherInstruments": "Les mêmes accords sur un autre instrument",
-      "otherInstrumentLink": "Accords de {instrument}",
+      "otherInstrumentLink": "Accords {instrumentOf}",
       "families": {
         "major": "Majeurs",
         "minor": "Mineurs",
@@ -447,9 +447,9 @@
     "chordPage": {
       "breadcrumb": "Fil d'Ariane",
       "libraryLink": "Bibliothèque d'accords",
-      "h1": "Accord {chord} pour {instrument}",
-      "lead": "Le diagramme de l'accord {chord} pour {instrument}, les notes qui le composent, et les grilles de ChordSheet qui l'utilisent.",
-      "leadFrench": "Le diagramme de l'accord {chord} pour {instrument}, noté {frenchChord} en notation française. Les notes qui le composent, le détail de la position, et les grilles de ChordSheet qui l'utilisent.",
+      "h1": "Accord {chord} {instrumentAt}",
+      "lead": "Le diagramme de l'accord {chord} {instrumentAt}, les notes qui le composent, et les grilles de ChordSheet qui l'utilisent.",
+      "leadFrench": "Le diagramme de l'accord {chord} {instrumentAt}, noté {frenchChord} en notation française. Les notes qui le composent, le détail de la position, et les grilles de ChordSheet qui l'utilisent.",
       "diagramHeading": "Le diagramme",
       "diagramsHeading": "{count} positions",
       "notesHeading": "Les notes de {chord}",
@@ -468,7 +468,7 @@
       "sameRootHeading": "Les autres accords de {root}",
       "sameFamilyHeading": "La même couleur, sur une autre fondamentale",
       "elsewhereHeading": "{chord} sur les autres instruments",
-      "elsewhereLink": "{chord} pour {instrument}"
+      "elsewhereLink": "{chord} {instrumentAt}"
     }
   }
 }

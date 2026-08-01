@@ -48,7 +48,7 @@
     "linkExplore": "All chord charts",
     "linkArtists": "Artists",
     "linkChords": "Chord library",
-    "linkChordDetect": "Identify a chord",
+    "linkChordDetect": "Identify a chord with your mic",
     "linkTuner": "Online tuner",
     "linkNewSheet": "Create a chart",
     "linkPricing": "Pricing",
@@ -58,7 +58,9 @@
     "linkSheetPhoto": "Score photo to chart",
     "linkAudio": "Chords from audio",
     "linkBands": "Playing in a band",
-    "linkStage": "Stage mode"
+    "linkStage": "Stage mode",
+    "linkChordByNotes": "Find a chord by its notes",
+    "linkInstrumentChords": "{instrument} chords"
   },
   "Landing": {
     "nav": {
@@ -1300,11 +1302,11 @@
       },
       "chordInstrument": {
         "title": "{instrument} chords: diagrams, notes and shapes",
-        "description": "All {count} {instrument} chords on ChordSheet. For each one: the diagram, the notes, the shape in detail, and the charts that use it."
+        "description": "All {count} {instrumentLower} chords on ChordSheet. For each one: the diagram, the notes, the shape in detail, and the charts that use it."
       },
       "chord": {
-        "title": "{chord} chord on {instrument}: diagram, notes and shape",
-        "description": "How to play the {chord} chord on {instrument}: diagram, notes ({notes}) and the shape in detail. Plus the chord charts on the site that use it."
+        "title": "{chord} chord {instrumentAt}: diagram, notes and shape",
+        "description": "How to play the {chord} chord {instrumentAt}: diagram, notes ({notes}) and the shape in detail. Plus the chord charts on the site that use it."
       }
     },
     "artist": {
@@ -1363,5 +1365,32 @@
     "compareVersions": "Compare every version of “{title}”",
     "artistHeading": "More {artist} chord charts",
     "allByArtist": "See all {artist} chord charts"
+  },
+  "InstrumentsLower": {
+    "guitar": "guitar",
+    "ukulele": "ukulele",
+    "piano": "piano",
+    "mandolin": "mandolin",
+    "banjo": "banjo",
+    "bass": "bass",
+    "voice": "voice"
+  },
+  "InstrumentsOf": {
+    "guitar": "guitar",
+    "ukulele": "ukulele",
+    "mandolin": "mandolin",
+    "piano": "piano",
+    "banjo": "banjo",
+    "bass": "bass",
+    "voice": "voice"
+  },
+  "InstrumentsAt": {
+    "guitar": "on guitar",
+    "ukulele": "on ukulele",
+    "mandolin": "on mandolin",
+    "piano": "on piano",
+    "banjo": "on banjo",
+    "bass": "on bass",
+    "voice": "on voice"
   }
 }

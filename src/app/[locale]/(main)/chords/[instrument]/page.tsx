@@ -14,6 +14,7 @@ import {
 } from '@/lib/chord-page';
 import { CHORD_CATEGORIES, getChordsByInstrument } from '@/lib/chord-data';
 import type { InstrumentId } from '@/types';
+import { getInstrumentNames } from '@/lib/instrument-names';
 
 interface PageProps {
   params: Promise<{ locale: string; instrument: string }>;
@@ -38,13 +39,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!isChordPageInstrument(instrument)) return {};
 
   const t = await getTranslations({ locale, namespace: 'Seo.pages.chordInstrument' });
-  const tInstrument = await getTranslations({ locale, namespace: 'Instruments' });
-  const label = tInstrument(instrument);
+  const names = await getInstrumentNames(locale, instrument);
   const count = chordNamesFor(instrument).length;
   const path = `/chords/${instrument}`;
 
-  const title = t('title', { instrument: label });
-  const description = t('description', { instrument: label, count });
+  const title = t('title', names);
+  const description = t('description', { ...names, count });
 
   return {
     title,
@@ -60,8 +60,13 @@ export default async function ChordInstrumentPage({ params }: PageProps) {
   setRequestLocale(locale);
 
   const t = await getTranslations({ locale, namespace: 'Editorial.instrumentPage' });
-  const tInstrument = await getTranslations({ locale, namespace: 'Instruments' });
-  const label = tInstrument(instrument);
+  const forms = await getInstrumentNames(locale, instrument);
+  const otherForms = await Promise.all(
+    CHORD_PAGE_INSTRUMENTS.filter((id) => id !== instrument).map(async (id) => ({
+      id,
+      forms: await getInstrumentNames(locale, id),
+    })),
+  );
   const names = chordNamesFor(instrument);
 
   // Regroupement par famille, dans l'ordre des catégories de l'application : c'est
@@ -74,14 +79,14 @@ export default async function ChordInstrumentPage({ params }: PageProps) {
       <nav aria-label={t('breadcrumb')} className="text-xs text-[var(--ink-faint)] mb-4">
         <Link href="/chords" className="hover:text-[var(--accent)]">{t('libraryLink')}</Link>
         <span className="mx-2">/</span>
-        <span>{label}</span>
+        <span>{forms.instrument}</span>
       </nav>
 
       <h1 className="font-playfair text-3xl sm:text-4xl font-bold text-[var(--ink)] mb-3">
-        {t('h1', { instrument: label })}
+        {t('h1', forms)}
       </h1>
       <p className="text-[var(--ink-light)] leading-relaxed mb-10 max-w-2xl">
-        {t('lead', { instrument: label, count: names.length })}
+        {t('lead', { ...forms, count: names.length })}
       </p>
 
       {groups.map((group) => (
@@ -108,13 +113,13 @@ export default async function ChordInstrumentPage({ params }: PageProps) {
       <section className="mt-12 pt-8 border-t border-[var(--line)]">
         <h2 className="text-sm font-semibold text-[var(--ink)] mb-3">{t('otherInstruments')}</h2>
         <ul className="flex flex-wrap gap-2">
-          {CHORD_PAGE_INSTRUMENTS.filter((id) => id !== instrument).map((id) => (
+          {otherForms.map(({ id, forms: other }) => (
             <li key={id}>
               <Link
                 href={`/chords/${id}`}
                 className="text-sm text-[var(--accent)] hover:underline"
               >
-                {t('otherInstrumentLink', { instrument: tInstrument(id) })}
+                {t('otherInstrumentLink', other)}
               </Link>
             </li>
           ))}
@@ -126,7 +131,7 @@ export default async function ChordInstrumentPage({ params }: PageProps) {
           [
             { name: 'ChordSheet', path: '' },
             { name: t('libraryLink'), path: '/chords' },
-            { name: label, path: `/chords/${instrument}` },
+            { name: forms.instrument, path: `/chords/${instrument}` },
           ],
           locale,
         )}

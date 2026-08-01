@@ -26,6 +26,7 @@ import { normalizeChord } from '@/lib/sheet-chords';
 import { getSheetsWithChord } from '@/lib/public-sheet-index';
 import { isPianoChord } from '@/types';
 import type { InstrumentId, StringChord } from '@/types';
+import { getInstrumentNames } from '@/lib/instrument-names';
 
 interface PageProps {
   params: Promise<{ locale: string; instrument: string; chord: string }>;
@@ -54,13 +55,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!name) return {};
 
   const t = await getTranslations({ locale, namespace: 'Seo.pages.chord' });
-  const tInstrument = await getTranslations({ locale, namespace: 'Instruments' });
-  const label = tInstrument(instrument);
+  const forms = await getInstrumentNames(locale, instrument);
   const path = `/chords/${instrument}/${slug}`;
   const notes = notesOf(name, instrument);
 
-  const title = t('title', { chord: name, instrument: label });
-  const description = t('description', { chord: name, instrument: label, notes: notes.join(', ') });
+  const title = t('title', { ...forms, chord: name });
+  const description = t('description', { ...forms, chord: name, notes: notes.join(', ') });
 
   return {
     title,
@@ -79,12 +79,16 @@ export default async function ChordPage({ params }: PageProps) {
   if (!name) notFound();
 
   const t = await getTranslations({ locale, namespace: 'Editorial.chordPage' });
-  const tInstrument = await getTranslations({ locale, namespace: 'Instruments' });
-  const label = tInstrument(instrument);
+  const forms = await getInstrumentNames(locale, instrument);
   const entries = chordEntries(name, instrument);
   const notes = notesOf(name, instrument);
   const neighbours = neighbourChords(name, instrument);
-  const elsewhere = sameChordElsewhere(name, instrument);
+  const elsewhere = await Promise.all(
+    sameChordElsewhere(name, instrument).map(async (other) => ({
+      ...other,
+      forms: await getInstrumentNames(locale, other.instrumentId),
+    })),
+  );
   const sheets = await getSheetsWithChord(normalizeChord(name));
 
   // Nom français : « Am » se dit « Lam », et ses notes « La, Do, Mi ». C'est du
@@ -100,18 +104,18 @@ export default async function ChordPage({ params }: PageProps) {
       <nav aria-label={t('breadcrumb')} className="text-xs text-[var(--ink-faint)] mb-4">
         <Link href="/chords" className="hover:text-[var(--accent)]">{t('libraryLink')}</Link>
         <span className="mx-2">/</span>
-        <Link href={`/chords/${instrument}`} className="hover:text-[var(--accent)]">{label}</Link>
+        <Link href={`/chords/${instrument}`} className="hover:text-[var(--accent)]">{forms.instrument}</Link>
         <span className="mx-2">/</span>
         <span>{name}</span>
       </nav>
 
       <h1 className="font-playfair text-3xl sm:text-4xl font-bold text-[var(--ink)] mb-3">
-        {t('h1', { chord: name, instrument: label })}
+        {t('h1', { ...forms, chord: name })}
       </h1>
       <p className="text-[var(--ink-light)] leading-relaxed mb-10">
         {frenchName
-          ? t('leadFrench', { chord: name, frenchChord: frenchName, instrument: label })
-          : t('lead', { chord: name, instrument: label })}
+          ? t('leadFrench', { ...forms, chord: name, frenchChord: frenchName })
+          : t('lead', { ...forms, chord: name })}
       </p>
 
       {/* Diagrammes */}
@@ -209,7 +213,7 @@ export default async function ChordPage({ params }: PageProps) {
                     className="inline-block px-3 py-1.5 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)]
                       text-sm text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
                   >
-                    {t('elsewhereLink', { chord: other.name, instrument: tInstrument(other.instrumentId) })}
+                    {t('elsewhereLink', { ...other.forms, chord: other.name })}
                   </Link>
                 </li>
               ))}
@@ -223,7 +227,7 @@ export default async function ChordPage({ params }: PageProps) {
           [
             { name: 'ChordSheet', path: '' },
             { name: t('libraryLink'), path: '/chords' },
-            { name: label, path: `/chords/${instrument}` },
+            { name: forms.instrument, path: `/chords/${instrument}` },
             { name: name, path: `/chords/${instrument}/${slug}` },
           ],
           locale,

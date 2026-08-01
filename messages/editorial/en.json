@@ -426,7 +426,7 @@
       "breadcrumb": "Breadcrumb",
       "libraryLink": "Chord library",
       "h1": "{instrument} chords",
-      "lead": "All {count} {instrument} chords on ChordSheet, grouped by family. Every chord has its own page: the diagram, the notes it is built from, the shape in detail, and the charts on the site that use it.",
+      "lead": "All {count} {instrumentLower} chords on ChordSheet, grouped by family. Every chord has its own page: the diagram, the notes it is built from, the shape in detail, and the charts on the site that use it.",
       "otherInstruments": "The same chords on another instrument",
       "otherInstrumentLink": "{instrument} chords",
       "families": {
@@ -447,9 +447,9 @@
     "chordPage": {
       "breadcrumb": "Breadcrumb",
       "libraryLink": "Chord library",
-      "h1": "{chord} chord on {instrument}",
-      "lead": "The {chord} chord diagram for {instrument}, the notes it is built from, and the ChordSheet charts that use it.",
-      "leadFrench": "The {chord} chord diagram for {instrument} ({frenchChord}), the notes it is built from, the shape in detail, and the ChordSheet charts that use it.",
+      "h1": "{chord} chord {instrumentAt}",
+      "lead": "The {chord} chord diagram {instrumentAt}, the notes it is built from, and the ChordSheet charts that use it.",
+      "leadFrench": "The {chord} chord diagram {instrumentAt} ({frenchChord}), the notes it is built from, the shape in detail, and the ChordSheet charts that use it.",
       "diagramHeading": "The diagram",
       "diagramsHeading": "{count} shapes",
       "notesHeading": "The notes in {chord}",
@@ -468,7 +468,7 @@
       "sameRootHeading": "Other {root} chords",
       "sameFamilyHeading": "The same colour, on another root",
       "elsewhereHeading": "{chord} on other instruments",
-      "elsewhereLink": "{chord} for {instrument}"
+      "elsewhereLink": "{chord} {instrumentAt}"
     }
   }
 }
