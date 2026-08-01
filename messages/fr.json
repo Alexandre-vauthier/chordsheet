@@ -39,11 +39,11 @@
     "salesTerms": "CGV",
     "contact": "Contact",
     "discord": "Discord",
-    "copyright": "© {year} ChordSheet — Alexandre Vauthier",
+    "copyright": "© {year} Alviena — Alexandre Vauthier",
     "colBrowse": "Explorer",
     "colChords": "Accords",
     "colTools": "Outils",
-    "colAbout": "ChordSheet",
+    "colAbout": "Alviena",
     "colLegal": "Légal",
     "linkExplore": "Toutes les grilles",
     "linkArtists": "Artistes",
@@ -84,7 +84,7 @@
       "exploreLoggedIn": "Explorer"
     },
     "book": {
-      "eyebrow": "Le cœur de ChordSheet",
+      "eyebrow": "Le cœur de Alviena",
       "title": "Mon book de grilles d'accords.",
       "quote": "On sait. On a appris des dizaines de morceaux. Mais au moment de jouer — les accords exacts, la tonalité, l'enchaînement — plus vraiment sous la main.",
       "quoteFooter": "C'est exactement pour ça que le book existe.",
@@ -187,7 +187,7 @@
       "terms": "CGU",
       "privacy": "Confidentialité",
       "legalNotice": "Mentions légales",
-      "copyright": "© {year} ChordSheet"
+      "copyright": "© {year} Alviena"
     }
   },
   "Genres": {
@@ -272,7 +272,7 @@
   "WelcomeBanner": {
     "close": "Fermer",
     "welcomeBadge": "Bienvenue !",
-    "brand": "ChordSheet",
+    "brand": "Alviena",
     "title": "C'est quoi exactement ?",
     "body1": "Pas un cours de musique — plutôt un <strong>carnet de bord pour musiciens</strong>. On y note les accords et la structure d'un morceau (Intro, Couplet, Refrain…) pour avoir une vue simplifiée et jouer sans chercher.",
     "body2": "Constitue ton book personnel, retrouve tes morceaux d'un coup d'œil, et partage-les avec d'autres musiciens. <strong>La grille ne remplace pas la partition</strong> — elle te rappelle l'essentiel.",
@@ -378,8 +378,8 @@
     "backToGroups": "Mes groupes",
     "newGroupTitle": "Nouveau groupe",
     "proOnlyTitle": "Les groupes sont une fonctionnalité Pro",
-    "proOnlyDesc": "Passe à ChordSheet Pro pour créer des groupes, inviter tes musiciens et lancer des concerts synchronisés.",
-    "discoverPro": "Découvrir ChordSheet Pro",
+    "proOnlyDesc": "Passe à Alviena Pro pour créer des groupes, inviter tes musiciens et lancer des concerts synchronisés.",
+    "discoverPro": "Découvrir Alviena Pro",
     "proPricing": "À partir de 4,90 €/mois · Annulable à tout moment",
     "proUpsellTitle": "Passe à Pro pour jouer en groupe",
     "proUpsellSubtitle": "Répétitions, concerts, cours : les groupes réunissent tes musiciens autour des mêmes grilles.",
@@ -850,7 +850,7 @@
   "LegalMentions": {
     "pageTitle": "Mentions légales",
     "editorTitle": "Éditeur du site",
-    "editorIntro": "ChordSheet est édité par :",
+    "editorIntro": "Alviena est édité par :",
     "editorRole": "Auto-entrepreneur",
     "emailLabel": "Email :",
     "directorTitle": "Directeur de la publication",
@@ -869,13 +869,13 @@
     "pageTitle": "Conditions Générales d'Utilisation",
     "effectiveDate": "En vigueur au 14 juillet 2026",
     "s1Title": "1. Objet",
-    "s1Body": "Les présentes Conditions Générales d'Utilisation (CGU) régissent l'accès et l'utilisation de la plateforme ChordSheet, accessible à l'adresse chordsheet.app, éditée par Alexandre Vauthier (auto-entrepreneur, 195 rue Beauvoisine, 76000 Rouen). En créant un compte, l'utilisateur accepte sans réserve les présentes CGU.",
+    "s1Body": "Les présentes Conditions Générales d'Utilisation (CGU) régissent l'accès et l'utilisation de la plateforme Alviena, accessible à l'adresse chordsheet.app, éditée par Alexandre Vauthier (auto-entrepreneur, 195 rue Beauvoisine, 76000 Rouen). En créant un compte, l'utilisateur accepte sans réserve les présentes CGU.",
     "s2Title": "2. Accès au service",
-    "s2Body": "ChordSheet est accessible à toute personne physique créant un compte via email et mot de passe. L'inscription est gratuite. Une offre premium payante pourra être proposée ultérieurement ; ses conditions seront précisées dans les Conditions Générales de Vente applicables.",
+    "s2Body": "Alviena est accessible à toute personne physique créant un compte via email et mot de passe. L'inscription est gratuite. Une offre premium payante pourra être proposée ultérieurement ; ses conditions seront précisées dans les Conditions Générales de Vente applicables.",
     "s3Title": "3. Compte utilisateur",
     "s3Body": "L'utilisateur est responsable de la confidentialité de son compte et de toute activité réalisée depuis celui-ci. Il s'engage à ne pas créer de compte avec de fausses informations et à notifier immédiatement l'éditeur de tout accès non autorisé à son compte.",
     "s4Title": "4. Contenu utilisateur et cession de droits",
-    "s4Body1": "L'utilisateur reste propriétaire des grilles d'accords qu'il crée. En publiant une grille en mode <strong>public</strong>, l'utilisateur concède à Alexandre Vauthier une licence mondiale, non exclusive, gratuite, sous-licenciable et transférable pour utiliser, reproduire, diffuser, afficher et adapter ce contenu dans le cadre du fonctionnement et de la promotion de ChordSheet.",
+    "s4Body1": "L'utilisateur reste propriétaire des grilles d'accords qu'il crée. En publiant une grille en mode <strong>public</strong>, l'utilisateur concède à Alexandre Vauthier une licence mondiale, non exclusive, gratuite, sous-licenciable et transférable pour utiliser, reproduire, diffuser, afficher et adapter ce contenu dans le cadre du fonctionnement et de la promotion de Alviena.",
     "s4Body2": "Cette licence prend fin lorsque l'utilisateur supprime le contenu ou repasse la grille en mode privé, sous réserve des délais techniques de traitement. Les grilles privées ne sont accessibles qu'à leur auteur.",
     "s5Title": "5. Comportements interdits",
     "s5Intro": "Il est notamment interdit de :",
@@ -884,13 +884,13 @@
     "s5Item3": "tenter de contourner les mesures de sécurité du service ;",
     "s5Item4": "utiliser le service à des fins commerciales non autorisées.",
     "s6Title": "6. Propriété intellectuelle",
-    "s6Body": "ChordSheet, son interface, son code et ses contenus propres sont protégés par le droit de la propriété intellectuelle. Toute reproduction sans autorisation écrite est interdite.",
+    "s6Body": "Alviena, son interface, son code et ses contenus propres sont protégés par le droit de la propriété intellectuelle. Toute reproduction sans autorisation écrite est interdite.",
     "s7Title": "7. Responsabilité",
     "s7Body": "L'éditeur ne peut être tenu responsable des contenus publiés par les utilisateurs ni des dommages indirects résultant de l'utilisation du service. Le service est fourni « en l'état » et peut être interrompu à tout moment pour maintenance ou raisons techniques.",
     "s8Title": "8. Modification et résiliation",
     "s8Body": "L'éditeur se réserve le droit de modifier les présentes CGU à tout moment. L'utilisateur en sera informé par email ou notification sur le service. La poursuite de l'utilisation du service après modification vaut acceptation des nouvelles CGU. L'éditeur peut suspendre ou supprimer un compte en cas de non-respect des présentes conditions.",
     "s9Title": "9. Signalement de contenu (notice and takedown)",
-    "s9Intro": "Les grilles d'accords (accords et rythmique) publiées sur ChordSheet ne sont, par elles-mêmes, pas constitutives de contrefaçon. Toutefois, si un contenu publié par un utilisateur (paroles reproduites intégralement, titre, illustration ou tout autre élément) porte atteinte à un droit d'auteur, un droit voisin ou tout autre droit de propriété intellectuelle, l'ayant droit peut le signaler à <email>alex.vauthier@gmail.com</email> en précisant :",
+    "s9Intro": "Les grilles d'accords (accords et rythmique) publiées sur Alviena ne sont, par elles-mêmes, pas constitutives de contrefaçon. Toutefois, si un contenu publié par un utilisateur (paroles reproduites intégralement, titre, illustration ou tout autre élément) porte atteinte à un droit d'auteur, un droit voisin ou tout autre droit de propriété intellectuelle, l'ayant droit peut le signaler à <email>alex.vauthier@gmail.com</email> en précisant :",
     "s9Item1": "l'identification du contenu concerné (lien de la grille) ;",
     "s9Item2": "le droit invoqué et la qualité du demandeur (auteur, éditeur, ayant droit…) ;",
     "s9Item3": "ses coordonnées de contact.",
@@ -903,12 +903,12 @@
     "pageTitle": "Conditions Générales de Vente",
     "lastUpdate": "Dernière mise à jour : juin 2026",
     "s1Title": "1. Vendeur",
-    "s1Body": "ChordSheet est édité par Alexandre Vauthier, auto-entrepreneur, domicilié au 195 rue Beauvoisine, 76000 Rouen, France.",
+    "s1Body": "Alviena est édité par Alexandre Vauthier, auto-entrepreneur, domicilié au 195 rue Beauvoisine, 76000 Rouen, France.",
     "contactLabel": "Contact :",
     "s2Title": "2. Objet",
-    "s2Body": "Les présentes Conditions Générales de Vente (CGV) régissent l'achat de l'abonnement <strong>ChordSheet Pro</strong>, qui donne accès à des fonctionnalités avancées de l'application web ChordSheet (chordsheet.app).",
+    "s2Body": "Les présentes Conditions Générales de Vente (CGV) régissent l'achat de l'abonnement <strong>Alviena Pro</strong>, qui donne accès à des fonctionnalités avancées de l'application web Alviena (chordsheet.app).",
     "s3Title": "3. Offre et tarifs",
-    "s3Intro": "L'abonnement ChordSheet Pro est proposé aux tarifs suivants :",
+    "s3Intro": "L'abonnement Alviena Pro est proposé aux tarifs suivants :",
     "s3Item1": "<strong>Mensuel</strong> : 4,90 € TTC / mois",
     "s3Item2": "<strong>Annuel</strong> : 39,00 € TTC / an (soit 3,25 € / mois)",
     "s3Body1": "Les prix sont exprimés en euros toutes taxes comprises. Alexandre Vauthier est auto-entrepreneur non assujetti à la TVA (article 293 B du CGI) — les prix affichés sont donc les prix finaux.",
@@ -922,7 +922,7 @@
     "s4Item5": "Badge Pro sur le profil public",
     "s4Body": "Les fonctionnalités du plan gratuit (grilles illimitées, export PDF, accords personnalisés, 2 analyses OCR/mois) restent accessibles sans abonnement.",
     "s5Title": "5. Commande et paiement",
-    "s5Body1": "L'abonnement est souscrit en ligne via la page de tarifs de ChordSheet. Le paiement est traité par <strong>Stripe</strong> (Stripe Payments Europe, Ltd), prestataire de paiement sécurisé. Les coordonnées bancaires ne sont pas conservées par ChordSheet.",
+    "s5Body1": "L'abonnement est souscrit en ligne via la page de tarifs de Alviena. Le paiement est traité par <strong>Stripe</strong> (Stripe Payments Europe, Ltd), prestataire de paiement sécurisé. Les coordonnées bancaires ne sont pas conservées par Alviena.",
     "s5Body2": "L'abonnement est renouvelé automatiquement à chaque échéance (mensuelle ou annuelle) jusqu'à résiliation. Un reçu est émis par Stripe à chaque renouvellement.",
     "s6Title": "6. Droit de rétractation",
     "s6Body1": "Conformément à l'article L.221-28 du Code de la consommation, le droit de rétractation de 14 jours ne s'applique pas aux contenus numériques dont l'exécution a commencé avec votre accord exprès avant l'expiration du délai de rétractation.",
@@ -930,7 +930,7 @@
     "s7Title": "7. Résiliation",
     "s7Body": "Vous pouvez résilier votre abonnement à tout moment depuis votre profil (section « Mon abonnement »). La résiliation prend effet à la fin de la période en cours — aucun remboursement prorata temporis n'est effectué. Vos données et grilles restent accessibles après résiliation.",
     "s8Title": "8. Disponibilité du service",
-    "s8Body": "ChordSheet est fourni « en l'état ». Bien que nous fassions de notre mieux pour assurer la continuité du service, nous ne garantissons pas une disponibilité ininterrompue. En cas d'interruption prolongée imputable à ChordSheet, un remboursement prorata peut être accordé sur demande.",
+    "s8Body": "Alviena est fourni « en l'état ». Bien que nous fassions de notre mieux pour assurer la continuité du service, nous ne garantissons pas une disponibilité ininterrompue. En cas d'interruption prolongée imputable à Alviena, un remboursement prorata peut être accordé sur demande.",
     "s9Title": "9. Litiges",
     "s9Body1": "Les présentes CGV sont soumises au droit français. En cas de litige, une solution amiable sera recherchée en priorité. À défaut, les tribunaux compétents de Rouen seront saisis.",
     "s9Body2": "Conformément à l'article L.616-1 du Code de la consommation, vous pouvez recourir gratuitement au service de médiation de la consommation. Le médiateur compétent est la plateforme européenne de règlement en ligne des litiges :"
@@ -943,7 +943,7 @@
     "s1Role": "Auto-entrepreneur",
     "emailLabel": "Email :",
     "s2Title": "2. Données collectées",
-    "s2Intro": "Lors de l'utilisation de ChordSheet, les données suivantes sont collectées :",
+    "s2Intro": "Lors de l'utilisation de Alviena, les données suivantes sont collectées :",
     "colData": "Donnée",
     "colPurpose": "Finalité",
     "colLegalBasis": "Base légale",
@@ -966,7 +966,7 @@
     "s4Title": "4. Durée de conservation",
     "s4Body": "Les données sont conservées pendant toute la durée d'activité du compte, puis supprimées dans un délai de 30 jours suivant la demande de clôture. Les grilles publiées en mode public pourront être conservées sous forme anonymisée à des fins statistiques.",
     "s5Title": "5. Cookies",
-    "s5Body": "ChordSheet utilise des cookies techniques strictement nécessaires au fonctionnement de l'authentification (Firebase Authentication). Aucun cookie publicitaire ou de tracking tiers n'est déposé.",
+    "s5Body": "Alviena utilise des cookies techniques strictement nécessaires au fonctionnement de l'authentification (Firebase Authentication). Aucun cookie publicitaire ou de tracking tiers n'est déposé.",
     "s6Title": "6. Vos droits",
     "s6Intro": "Conformément au RGPD, vous disposez des droits suivants sur vos données personnelles :",
     "s6Item1": "<strong>Accès</strong> : obtenir une copie de vos données ;",
@@ -985,13 +985,13 @@
     "familyTitle": "La famille",
     "familyBody": "Tout commence là. <strong>Julien</strong> — mon frère, Piza — dont la vision musicale et le solfège sont dans chaque mesure de cet outil. <strong>Mon père</strong>, qui a posé des guitares dans nos mains avant qu'on sache s'en servir. <strong>Ma mère</strong>, qui depuis s'est mise à la guitare et à la basse — parce que la musique, une fois qu'elle entre dans une maison, elle ne repart plus.",
     "bandTitle": "Le groupe",
-    "bandBody": "Ceux avec qui tout a vraiment commencé — les premières répétitions dans des garages et à la MJC, les premiers concerts, les premiers riffs appris ensemble. C'est un peu pour eux, et à cause d'eux, que ChordSheet existe.",
+    "bandBody": "Ceux avec qui tout a vraiment commencé — les premières répétitions dans des garages et à la MJC, les premiers concerts, les premiers riffs appris ensemble. C'est un peu pour eux, et à cause d'eux, que Alviena existe.",
     "friendsTitle": "Les complices",
     "gregAlias": "alias Keiturna",
     "gregBody": "Grand guitariste et homme de vision. Greg a été l'un des premiers à comprendre ce que cet outil pouvait devenir, à en dessiner les contours avec moi, et à poser les bonnes questions au bon moment. Ce genre de regard extérieur qui change tout.",
     "bastienAlias": "alias Bataba",
     "bastienBody": "Guitariste et développeur — la combinaison rêvée pour ce projet. Bastien comprend les deux côtés de la chose : ce qu'un musicien attend d'un outil, et comment le construire proprement. Son aide compte beaucoup.",
-    "closing": "Et à tous ceux qui utilisent ChordSheet, partagent leurs grilles, font remonter leurs retours — merci. Vous êtes la meilleure raison de continuer."
+    "closing": "Et à tous ceux qui utilisent Alviena, partagent leurs grilles, font remonter leurs retours — merci. Vous êtes la meilleure raison de continuer."
   },
   "Contact": {
     "pageTitle": "Contact",
@@ -1004,15 +1004,15 @@
   },
   "Faq": {
     "pageTitle": "Questions fréquentes",
-    "pageSubtitle": "Tout ce qu'il faut savoir pour bien démarrer sur ChordSheet.",
+    "pageSubtitle": "Tout ce qu'il faut savoir pour bien démarrer sur Alviena.",
     "s1Title": "Démarrer",
-    "s1q1": "C'est quoi ChordSheet ?",
-    "s1a1": "ChordSheet est une application web pour créer, organiser et partager des grilles d'accords. Tu peux saisir tes grilles à la main, les importer depuis un texte d'accords, ou les extraire automatiquement depuis une photo de partition. Les grilles sont accessibles depuis n'importe quel appareil, et tu peux les imprimer ou les consulter en concert sans rien installer.",
+    "s1q1": "C'est quoi Alviena ?",
+    "s1a1": "Alviena est une application web pour créer, organiser et partager des grilles d'accords. Tu peux saisir tes grilles à la main, les importer depuis un texte d'accords, ou les extraire automatiquement depuis une photo de partition. Les grilles sont accessibles depuis n'importe quel appareil, et tu peux les imprimer ou les consulter en concert sans rien installer.",
     "s1q2": "Comment créer une grille ?",
     "s1a2": "Depuis le dashboard ou le bouton \"+ Grille\" en haut à droite, tu as trois options : partir d'une grille vierge et saisir les accords à la main, coller un texte au format accord+paroles, ou déposer une photo de partition pour une transcription automatique par IA.",
     "s2Title": "Importer & analyser",
     "s2q1": "Comment importer une grille depuis un texte ?",
-    "s2a1": "Copie le texte d'une grille au format accord+paroles (accords écrits au-dessus des paroles, sections nommées comme [Verse] ou [Chorus]), puis dans ChordSheet clique sur \"+ Grille\" → \"Importer du texte\" et colle-le. L'application détecte automatiquement le titre, l'artiste, la tonalité, le tempo et la structure en sections.",
+    "s2a1": "Copie le texte d'une grille au format accord+paroles (accords écrits au-dessus des paroles, sections nommées comme [Verse] ou [Chorus]), puis dans Alviena clique sur \"+ Grille\" → \"Importer du texte\" et colle-le. L'application détecte automatiquement le titre, l'artiste, la tonalité, le tempo et la structure en sections.",
     "s2q2": "Comment fonctionne l'analyse de partition ?",
     "s2a2": "Tu déposes une ou plusieurs photos de ta partition (JPG, PNG, WebP). Un modèle d'IA analyse les images, identifie les accords mesure par mesure, la structure du morceau (intro, couplet, refrain…), les répétitions et la signature rythmique, puis génère automatiquement une grille. Tu peux ensuite la corriger dans l'éditeur.",
     "s2q3": "Les accords détectés sont faux, que faire ?",
@@ -1021,7 +1021,7 @@
     "s3q1": "Puis-je créer des accords personnalisés ?",
     "s3a1": "Oui. Dans l'éditeur, tu peux définir tes propres doigtés pour des accords non présents dans la bibliothèque, ou modifier un doigté existant. Ces accords personnalisés sont enregistrés avec la grille et visibles dans les diagrammes.",
     "s3q2": "Quels instruments sont supportés ?",
-    "s3a2": "ChordSheet gère sept instruments : Guitare, Ukulélé, Mandoline, Banjo, Basse, Piano et Voix. Chaque instrument dispose de sa propre bibliothèque d'accords et de ses diagrammes (manche ou clavier selon l'instrument).",
+    "s3a2": "Alviena gère sept instruments : Guitare, Ukulélé, Mandoline, Banjo, Basse, Piano et Voix. Chaque instrument dispose de sa propre bibliothèque d'accords et de ses diagrammes (manche ou clavier selon l'instrument).",
     "s3q3": "La notation française (Do Ré Mi) est-elle supportée ?",
     "s3a3": "Oui. Dans ton profil, tu peux choisir entre la notation américaine (C D E F G A B) et la notation française (Do Ré Mi Fa Sol La Si). L'affichage bascule sur toute l'application, les accords restant stockés en notation américaine.",
     "s4Title": "Partage & collaboration",
@@ -1043,7 +1043,7 @@
   },
   "Pricing": {
     "title": "Tarifs",
-    "subtitle": "ChordSheet reste gratuit pour un usage personnel. Le Pro débloque la collaboration et l'OCR illimité.",
+    "subtitle": "Alviena reste gratuit pour un usage personnel. Le Pro débloque la collaboration et l'OCR illimité.",
     "monthlyLabel": "Mensuel",
     "yearlyLabel": "Annuel",
     "discountBadge": "−33 %",
@@ -1147,7 +1147,7 @@
     "analyzing": "Analyse de la partition…",
     "analyzingWithPages": "Analyse de la partition ({count} pages)…",
     "monthlyLimitReached": "Limite mensuelle atteinte",
-    "limitBody": "Le plan gratuit inclut 2 analyses par mois. Passe à ChordSheet Pro pour des analyses illimitées.",
+    "limitBody": "Le plan gratuit inclut 2 analyses par mois. Passe à Alviena Pro pour des analyses illimitées.",
     "upgradeCta": "Passer à Pro — 4,90 €/mois",
     "titleLabel": "Titre",
     "artistLabel": "Artiste",
@@ -1187,7 +1187,7 @@
     "freeSessionUsedError": "Tu as déjà utilisé ta session offerte. Passe à Pro pour continuer.",
     "proOnlyTitle": "Fonctionnalité Pro",
     "proOnlyDesc": "Les sessions live sont réservées aux comptes Pro. Passe à Pro pour démarrer une session illimitée avec tes invités.",
-    "discoverPro": "Découvrir ChordSheet Pro",
+    "discoverPro": "Découvrir Alviena Pro",
     "proPricing": "À partir de 4,90 €/mois · Annulable à tout moment",
     "proUpsellTitle": "Passe à Pro pour tes sessions live",
     "proUpsellSubtitle": "Une vraie session feu de camp : tout le monde sur la même grille, en même temps.",
@@ -1228,7 +1228,7 @@
     "forbidden": "Dépôt refusé par le serveur. Les règles de stockage n'ont probablement pas été déployées."
   },
   "Seo": {
-    "siteTitle": "ChordSheet — Grilles d'accords pour musiciens",
+    "siteTitle": "Alviena — Grilles d'accords pour musiciens",
     "siteDescription": "Créez, partagez et consultez vos grilles d'accords. Transposez, imprimez et jouez sur scène. Gratuit, pour guitare, piano, ukulélé et plus.",
     "pages": {
       "explore": {
@@ -1241,7 +1241,7 @@
       },
       "artists": {
         "title": "Artistes",
-        "description": "Tous les artistes dont les grilles d'accords sont partagées sur ChordSheet, classés par ordre alphabétique."
+        "description": "Tous les artistes dont les grilles d'accords sont partagées sur Alviena, classés par ordre alphabétique."
       },
       "tuner": {
         "title": "Accordeur en ligne gratuit",
@@ -1249,11 +1249,11 @@
       },
       "chordDetect": {
         "title": "Identifier un accord au micro",
-        "description": "Jouez un accord, ChordSheet le reconnaît. Identification en temps réel dans le navigateur, sans rien installer."
+        "description": "Jouez un accord, Alviena le reconnaît. Identification en temps réel dans le navigateur, sans rien installer."
       },
       "pricing": {
         "title": "Tarifs",
-        "description": "ChordSheet est gratuit pour un usage personnel. L'offre Pro débloque les groupes, le partage de répertoire et l'analyse illimitée."
+        "description": "Alviena est gratuit pour un usage personnel. L'offre Pro débloque les groupes, le partage de répertoire et l'analyse illimitée."
       },
       "contact": {
         "title": "Contact",
@@ -1261,7 +1261,7 @@
       },
       "credits": {
         "title": "Crédits",
-        "description": "Celles et ceux sans qui ChordSheet n'existerait pas."
+        "description": "Celles et ceux sans qui Alviena n'existerait pas."
       },
       "faq": {
         "title": "Questions fréquentes",
@@ -1269,23 +1269,23 @@
       },
       "about": {
         "title": "Qui sommes-nous ?",
-        "description": "ChordSheet est né d'un besoin simple : ne pas perdre ce qu'on a appris. L'histoire de deux frères musiciens."
+        "description": "Alviena est né d'un besoin simple : ne pas perdre ce qu'on a appris. L'histoire de deux frères musiciens."
       },
       "legalCgu": {
         "title": "Conditions générales d'utilisation",
-        "description": "Les conditions d'utilisation du service ChordSheet."
+        "description": "Les conditions d'utilisation du service Alviena."
       },
       "legalCgv": {
         "title": "Conditions générales de vente",
-        "description": "Les conditions de vente de l'abonnement ChordSheet Pro."
+        "description": "Les conditions de vente de l'abonnement Alviena Pro."
       },
       "legalPrivacy": {
         "title": "Politique de confidentialité",
-        "description": "Quelles données ChordSheet collecte, pourquoi, et comment exercer vos droits."
+        "description": "Quelles données Alviena collecte, pourquoi, et comment exercer vos droits."
       },
       "legalNotice": {
         "title": "Mentions légales",
-        "description": "Éditeur, hébergeur et propriété intellectuelle du site ChordSheet."
+        "description": "Éditeur, hébergeur et propriété intellectuelle du site Alviena."
       },
       "importChords": {
         "title": "Importer une grille depuis un texte d'accords",
@@ -1301,7 +1301,7 @@
       },
       "bands": {
         "title": "Partager son répertoire avec un groupe ou une classe",
-        "description": "Groupes sur ChordSheet : rôles, invitations par lien, répertoire partagé. Une seule licence Pro suffit pour tout le groupe."
+        "description": "Groupes sur Alviena : rôles, invitations par lien, répertoire partagé. Une seule licence Pro suffit pour tout le groupe."
       },
       "stageMode": {
         "title": "Mode concert : setlist plein écran et synchronisation",
@@ -1313,7 +1313,7 @@
       },
       "chordInstrument": {
         "title": "Accords {instrumentLower} : diagrammes, notes et positions",
-        "description": "Les {count} accords {instrumentOf} de ChordSheet. Pour chacun : le diagramme, les notes, le détail de la position et les grilles qui l'utilisent."
+        "description": "Les {count} accords {instrumentOf} de Alviena. Pour chacun : le diagramme, les notes, le détail de la position et les grilles qui l'utilisent."
       },
       "chord": {
         "title": "Accord {chord} {instrumentLower} : diagramme, notes et position",
@@ -1322,7 +1322,7 @@
     },
     "artist": {
       "title": "Grilles d'accords de {artist}",
-      "description": "Toutes les grilles d'accords de {artist} partagées sur ChordSheet : consultez, transposez et jouez les morceaux de cet artiste."
+      "description": "Toutes les grilles d'accords de {artist} partagées sur Alviena : consultez, transposez et jouez les morceaux de cet artiste."
     }
   },
   "Tuner": {
@@ -1361,10 +1361,10 @@
     "p1": "Notre père est guitariste. On a grandi avec des guitares qui traînaient dans les coins, des accords qui s'échappaient d'une pièce, une maison où la musique était une langue à part entière. Pour <b>Alexandre</b>, c'est à 13 ans que ça a vraiment mordu — cette sensation de poser les doigts sur un manche et de sentir que quelque chose se met en place. Son frère cadet <b>Julien</b>, lui, a choisi la batterie. Deux ans et demi d'écart, deux approches différentes, un seul terrain de jeu commun.",
     "p2": "À 15 ou 16 ans, on monte notre premier groupe. On ne sait pas grand-chose mais on joue des concerts, on se plante, on recommence. On passe des heures sur les forums, sur Guitar Pro, à déchiffrer des tablatures, à s'échanger des trucs trouvés la nuit. La musique devient notre façon de nous retrouver — les anniversaires, Noël, les week-ends : autant d'occasions de demander un nouvel instrument. Une basse. Un ukulélé. Un piano. Un banjo, une mandoline, une flûte de pan, un mélodica, des castagnettes. On essaie tout, du métal au classique, sans hiérarchie, sans frontière.",
     "p3": "Vingt ans ont passé. On a 35 ans aujourd'hui, et on joue toujours ensemble — avec plus de maturité, plus d'oreille, plus d'expérience. Mais le combat reste étrangement le même : <i>c'est quoi les accords déjà ? C'est quelle structure ? On joue dans quel ordre ?</i> Et avec ça, une frustration tranquille : toutes ces chansons apprises il y a vingt ans, ces riffs, ces progressions, ces arrangements — évaporés. Perdus quelque part entre deux déménagements et une mise à jour de disque dur.",
-    "p4": "ChordSheet est né de là. D'un besoin simple et un peu douloureux : <b>ne pas perdre ce qu'on a appris</b>. Se souvenir. Avoir un endroit où poser une grille proprement, retrouver un accord à 2h du matin avant une répèt, partager la structure d'un morceau sans envoyer une photo floue d'un carnet à spirales.",
+    "p4": "Alviena est né de là. D'un besoin simple et un peu douloureux : <b>ne pas perdre ce qu'on a appris</b>. Se souvenir. Avoir un endroit où poser une grille proprement, retrouver un accord à 2h du matin avant une répèt, partager la structure d'un morceau sans envoyer une photo floue d'un carnet à spirales.",
     "p5": "On l'a construit à deux. Alexandre sur la technique, Julien — alias <b>Piza</b> — sur la vision musicale, le solfège, la rigueur de quelqu'un qui lit vraiment une partition. Ce que l'un ne sait pas faire, l'autre le porte. C'est un peu notre fonctionnement depuis le début.",
     "p6": "En construisant l'outil, on a réalisé qu'il ne s'adressait pas qu'à nous. Un groupe qui répète a besoin d'une lecture commune — pas cinq versions différentes du même morceau notées sur cinq téléphones. Un prof de guitare a besoin de partager ses grilles à ses élèves sans que ça ressemble à un puzzle. Un musicien seul a besoin de son book, de son répertoire, quelque chose de personnel et de durable.",
-    "p7": "ChordSheet est multi-instruments parce qu'on l'est. Il est conçu pour jouer ensemble parce que c'est la seule raison pour laquelle on a commencé. Et il regarde vers l'avenir — l'IA pour retranscrire une partition, l'organisation d'un concert, le partage au sein d'un groupe — parce qu'on a les moyens techniques aujourd'hui de régler des problèmes qu'on traînait depuis l'adolescence.",
+    "p7": "Alviena est multi-instruments parce qu'on l'est. Il est conçu pour jouer ensemble parce que c'est la seule raison pour laquelle on a commencé. Et il regarde vers l'avenir — l'IA pour retranscrire une partition, l'organisation d'un concert, le partage au sein d'un groupe — parce qu'on a les moyens techniques aujourd'hui de régler des problèmes qu'on traînait depuis l'adolescence.",
     "closing": "C'est un outil fait par des musiciens, pour des musiciens. Pas plus, pas moins.",
     "roleAlexandre": "Développement & design",
     "roleJulien": "Vision musicale & solfège"

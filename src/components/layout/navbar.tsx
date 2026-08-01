@@ -11,6 +11,7 @@ import { SuggestionsDropdown } from '@/components/ui/suggestions-dropdown';
 import { useSearchSuggestions } from '@/lib/use-search-suggestions';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import type { Sheet } from '@/types';
+import { BrandLogo } from './brand-logo';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { LanguageSwitcher } from './language-switcher';
 import { NotificationBell } from './notification-bell';
@@ -127,7 +128,7 @@ export function Navbar() {
           {/* GAUCHE : Logo + liens de navigation */}
           <div className="flex items-center gap-6">
             <Link href={user ? '/explore' : '/'} className="flex items-center shrink-0" onClick={closeMobileMenu}>
-              <Image src="/logo-chordsheet.svg" alt="ChordSheet" height={32} width={140} priority />
+              <BrandLogo />
             </Link>
             {!loading && user && (
               <div className="hidden sm:flex items-center gap-4">

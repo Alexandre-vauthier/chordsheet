@@ -73,13 +73,13 @@
         "caption": "Correspondence between the two notations",
         "colUs": "American notation",
         "colFr": "French notation",
-        "body2": "ChordSheet accepts both when you type: enter “Lam” or “Am” and you get the same chord. Display follows the preference set in your profile and switches everywhere at once. Charts, however, are always stored in American notation — which is what lets you change the display without ever losing anything.",
+        "body2": "Alviena accepts both when you type: enter “Lam” or “Am” and you get the same chord. Display follows the preference set in your profile and switches everywhere at once. Charts, however, are always stored in American notation — which is what lets you change the display without ever losing anything.",
         "minor": "For minor chords, French adds “m” just as American does: A minor is written “Lam” or “Am”."
       },
       "enharmony": {
         "h2": "Sharps, flats and equivalences",
         "body": "C sharp and D flat name the same pitch and use the same fingering. This is called enharmonic equivalence. The choice between the two spellings still matters: it depends on the key of the piece, and a well-written score stays consistent.",
-        "body2": "When you transpose a chart, ChordSheet applies a simple rule: the keys of F, B flat, E flat, A flat, D flat and G flat are written with flats; the others with sharps. A chord originally written with a flat keeps that spelling. This is what stops you reading “A sharp” where every musician expects “B flat”."
+        "body2": "When you transpose a chart, Alviena applies a simple rule: the keys of F, B flat, E flat, A flat, D flat and G flat are written with flats; the others with sharps. A chord originally written with a flat keeps that spelling. This is what stops you reading “A sharp” where every musician expects “B flat”."
       },
       "slash": {
         "h2": "Slash chords",
@@ -323,7 +323,7 @@
     },
     "bands": {
       "h1": "Share your repertoire with a band or a class",
-      "lead": "How a band works on ChordSheet: who sees what, how you invite people, and why one licence is enough.",
+      "lead": "How a band works on Alviena: who sees what, how you invite people, and why one licence is enough.",
       "create": {
         "h2": "Creating a band and inviting people",
         "body": "You create a band by giving it a name. You then generate an invitation link, valid for seven days, and pass it on however you like: message, email, on paper. Whoever opens it joins the band, with no separate sign-up for the band itself."
@@ -426,7 +426,7 @@
       "breadcrumb": "Breadcrumb",
       "libraryLink": "Chord library",
       "h1": "{instrument} chords",
-      "lead": "All {count} {instrumentLower} chords on ChordSheet, grouped by family. Every chord has its own page: the diagram, the notes it is built from, the shape in detail, and the charts on the site that use it.",
+      "lead": "All {count} {instrumentLower} chords on Alviena, grouped by family. Every chord has its own page: the diagram, the notes it is built from, the shape in detail, and the charts on the site that use it.",
       "otherInstruments": "The same chords on another instrument",
       "otherInstrumentLink": "{instrument} chords",
       "families": {
@@ -448,8 +448,8 @@
       "breadcrumb": "Breadcrumb",
       "libraryLink": "Chord library",
       "h1": "{chord} chord {instrumentAt}",
-      "lead": "The {chord} chord diagram {instrumentAt}, the notes it is built from, and the ChordSheet charts that use it.",
-      "leadFrench": "The {chord} chord diagram {instrumentAt} ({frenchChord}), the notes it is built from, the shape in detail, and the ChordSheet charts that use it.",
+      "lead": "The {chord} chord diagram {instrumentAt}, the notes it is built from, and the Alviena charts that use it.",
+      "leadFrench": "The {chord} chord diagram {instrumentAt} ({frenchChord}), the notes it is built from, the shape in detail, and the Alviena charts that use it.",
       "diagramHeading": "The diagram",
       "diagramsHeading": "{count} shapes",
       "notesHeading": "The notes in {chord}",

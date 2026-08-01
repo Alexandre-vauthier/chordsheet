@@ -7,9 +7,9 @@ import { routing } from '@/i18n/routing';
  * Elle était auparavant redéclarée dans layout.tsx, sitemap.ts et robots.ts, avec
  * le même repli codé en dur — trois endroits à corriger le jour où le domaine change.
  */
-export const SITE_URL = (process.env.NEXT_PUBLIC_BASE_URL || 'https://chordsheet.app').replace(/\/$/, '');
+export const SITE_URL = (process.env.NEXT_PUBLIC_BASE_URL || 'https://alviena.com').replace(/\/$/, '');
 
-export const SITE_NAME = 'ChordSheet';
+export const SITE_NAME = 'Alviena';
 
 /** Codes Open Graph par locale (og:locale attend fr_FR, pas fr). */
 export const OG_LOCALE: Record<string, string> = { fr: 'fr_FR', en: 'en_US' };
@@ -50,6 +50,14 @@ export function buildOpenGraph(locale: string, path = ''): Metadata['openGraph']
     locale: OG_LOCALE[locale] ?? OG_LOCALE[routing.defaultLocale],
     alternateLocale: routing.locales.filter(l => l !== locale).map(l => OG_LOCALE[l]),
     type: 'website',
+    // Visuel de partage commun à tout le site. Il **porte le nom de la marque** : le
+    // jour où SITE_NAME change, il faut le régénérer, sans quoi les aperçus de liens
+    // continueront d'annoncer l'ancien nom.
+    //
+    // Une image générée par `opengraph-image.tsx` a été essayée : Next ne la propage
+    // pas aux pages qui déclarent elles-mêmes leur bloc `openGraph`, c'est-à-dire
+    // presque toutes ici — /tuner et les pages d'accord se retrouvaient sans aucune
+    // image. Un fichier statique couvre tout le site sans exception.
     images: [{ url: '/og-image.png', width: 1200, height: 630 }],
   };
 }

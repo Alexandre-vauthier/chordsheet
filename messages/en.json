@@ -39,11 +39,11 @@
     "salesTerms": "Terms of sale",
     "contact": "Contact",
     "discord": "Discord",
-    "copyright": "© {year} ChordSheet — Alexandre Vauthier",
+    "copyright": "© {year} Alviena — Alexandre Vauthier",
     "colBrowse": "Browse",
     "colChords": "Chords",
     "colTools": "Tools",
-    "colAbout": "ChordSheet",
+    "colAbout": "Alviena",
     "colLegal": "Legal",
     "linkExplore": "All chord charts",
     "linkArtists": "Artists",
@@ -84,7 +84,7 @@
       "exploreLoggedIn": "Explore"
     },
     "book": {
-      "eyebrow": "The heart of ChordSheet",
+      "eyebrow": "The heart of Alviena",
       "title": "My book of chord sheets.",
       "quote": "We know. You've learned dozens of songs. But when it's time to play — the exact chords, the key, the sequence — it's not quite at hand anymore.",
       "quoteFooter": "That's exactly why the book exists.",
@@ -187,7 +187,7 @@
       "terms": "Terms of use",
       "privacy": "Privacy",
       "legalNotice": "Legal notice",
-      "copyright": "© {year} ChordSheet"
+      "copyright": "© {year} Alviena"
     }
   },
   "Genres": {
@@ -272,7 +272,7 @@
   "WelcomeBanner": {
     "close": "Close",
     "welcomeBadge": "Welcome!",
-    "brand": "ChordSheet",
+    "brand": "Alviena",
     "title": "What exactly is this?",
     "body1": "Not a music course — more like a <strong>logbook for musicians</strong>. Jot down the chords and structure of a song (Intro, Verse, Chorus…) for a simplified view and play without searching.",
     "body2": "Build your personal book, find your songs at a glance, and share them with other musicians. <strong>A chord sheet doesn't replace the score</strong> — it reminds you of the essentials.",
@@ -378,8 +378,8 @@
     "backToGroups": "My bands",
     "newGroupTitle": "New band",
     "proOnlyTitle": "Bands are a Pro feature",
-    "proOnlyDesc": "Upgrade to ChordSheet Pro to create bands, invite your musicians and run synced gigs.",
-    "discoverPro": "Discover ChordSheet Pro",
+    "proOnlyDesc": "Upgrade to Alviena Pro to create bands, invite your musicians and run synced gigs.",
+    "discoverPro": "Discover Alviena Pro",
     "proPricing": "From €4.90/month · Cancel anytime",
     "proUpsellTitle": "Go Pro to play together",
     "proUpsellSubtitle": "Rehearsals, gigs, lessons: groups bring your musicians around the same charts.",
@@ -850,7 +850,7 @@
   "LegalMentions": {
     "pageTitle": "Legal notice",
     "editorTitle": "Site publisher",
-    "editorIntro": "ChordSheet is published by:",
+    "editorIntro": "Alviena is published by:",
     "editorRole": "Sole proprietor (auto-entrepreneur, France)",
     "emailLabel": "Email:",
     "directorTitle": "Publication director",
@@ -869,13 +869,13 @@
     "pageTitle": "Terms of Use",
     "effectiveDate": "Effective as of July 14, 2026",
     "s1Title": "1. Purpose",
-    "s1Body": "These Terms of Use (\"ToU\") govern access to and use of the ChordSheet platform, available at chordsheet.app, published by Alexandre Vauthier (sole proprietor, 195 rue Beauvoisine, 76000 Rouen, France). By creating an account, the user accepts these Terms of Use without reservation.",
+    "s1Body": "These Terms of Use (\"ToU\") govern access to and use of the Alviena platform, available at chordsheet.app, published by Alexandre Vauthier (sole proprietor, 195 rue Beauvoisine, 76000 Rouen, France). By creating an account, the user accepts these Terms of Use without reservation.",
     "s2Title": "2. Access to the service",
-    "s2Body": "ChordSheet is accessible to any individual who creates an account via email and password. Registration is free. A paid premium offer may be introduced later; its terms will be specified in the applicable Terms of Sale.",
+    "s2Body": "Alviena is accessible to any individual who creates an account via email and password. Registration is free. A paid premium offer may be introduced later; its terms will be specified in the applicable Terms of Sale.",
     "s3Title": "3. User account",
     "s3Body": "The user is responsible for the confidentiality of their account and for any activity carried out from it. They agree not to create an account with false information and to immediately notify the publisher of any unauthorized access to their account.",
     "s4Title": "4. User content and assignment of rights",
-    "s4Body1": "The user retains ownership of the chord sheets they create. By publishing a sheet in <strong>public</strong> mode, the user grants Alexandre Vauthier a worldwide, non-exclusive, royalty-free, sublicensable, and transferable license to use, reproduce, distribute, display, and adapt this content for the purpose of operating and promoting ChordSheet.",
+    "s4Body1": "The user retains ownership of the chord sheets they create. By publishing a sheet in <strong>public</strong> mode, the user grants Alexandre Vauthier a worldwide, non-exclusive, royalty-free, sublicensable, and transferable license to use, reproduce, distribute, display, and adapt this content for the purpose of operating and promoting Alviena.",
     "s4Body2": "This license ends when the user deletes the content or switches the sheet back to private mode, subject to technical processing delays. Private sheets are only accessible to their author.",
     "s5Title": "5. Prohibited conduct",
     "s5Intro": "It is in particular prohibited to:",
@@ -884,13 +884,13 @@
     "s5Item3": "attempt to bypass the service's security measures;",
     "s5Item4": "use the service for unauthorized commercial purposes.",
     "s6Title": "6. Intellectual property",
-    "s6Body": "ChordSheet, its interface, code, and proprietary content are protected by intellectual property law. Any reproduction without written authorization is prohibited.",
+    "s6Body": "Alviena, its interface, code, and proprietary content are protected by intellectual property law. Any reproduction without written authorization is prohibited.",
     "s7Title": "7. Liability",
     "s7Body": "The publisher cannot be held liable for content published by users or for indirect damages resulting from use of the service. The service is provided \"as is\" and may be interrupted at any time for maintenance or technical reasons.",
     "s8Title": "8. Changes and termination",
     "s8Body": "The publisher reserves the right to modify these Terms of Use at any time. The user will be informed by email or notification on the service. Continued use of the service after a change constitutes acceptance of the new Terms of Use. The publisher may suspend or delete an account in the event of non-compliance with these terms.",
     "s9Title": "9. Content reporting (notice and takedown)",
-    "s9Intro": "Chord sheets (chords and rhythm) published on ChordSheet are not, in themselves, considered infringing. However, if content published by a user (fully reproduced lyrics, title, artwork, or any other element) infringes a copyright, related right, or any other intellectual property right, the rights holder may report it to <email>alex.vauthier@gmail.com</email>, specifying:",
+    "s9Intro": "Chord sheets (chords and rhythm) published on Alviena are not, in themselves, considered infringing. However, if content published by a user (fully reproduced lyrics, title, artwork, or any other element) infringes a copyright, related right, or any other intellectual property right, the rights holder may report it to <email>alex.vauthier@gmail.com</email>, specifying:",
     "s9Item1": "identification of the content concerned (link to the sheet);",
     "s9Item2": "the right invoked and the capacity of the requester (author, publisher, rights holder…);",
     "s9Item3": "their contact details.",
@@ -903,12 +903,12 @@
     "pageTitle": "Terms of Sale",
     "lastUpdate": "Last updated: June 2026",
     "s1Title": "1. Seller",
-    "s1Body": "ChordSheet is published by Alexandre Vauthier, sole proprietor, residing at 195 rue Beauvoisine, 76000 Rouen, France.",
+    "s1Body": "Alviena is published by Alexandre Vauthier, sole proprietor, residing at 195 rue Beauvoisine, 76000 Rouen, France.",
     "contactLabel": "Contact:",
     "s2Title": "2. Purpose",
-    "s2Body": "These Terms of Sale (\"ToS\") govern the purchase of the <strong>ChordSheet Pro</strong> subscription, which grants access to advanced features of the ChordSheet web app (chordsheet.app).",
+    "s2Body": "These Terms of Sale (\"ToS\") govern the purchase of the <strong>Alviena Pro</strong> subscription, which grants access to advanced features of the Alviena web app (chordsheet.app).",
     "s3Title": "3. Offer and pricing",
-    "s3Intro": "The ChordSheet Pro subscription is offered at the following rates:",
+    "s3Intro": "The Alviena Pro subscription is offered at the following rates:",
     "s3Item1": "<strong>Monthly</strong>: €4.90 incl. tax / month",
     "s3Item2": "<strong>Yearly</strong>: €39.00 incl. tax / year (i.e. €3.25 / month)",
     "s3Body1": "Prices are shown in euros, all taxes included. Alexandre Vauthier is a sole proprietor not subject to VAT (article 293 B of the French Tax Code) — the prices shown are therefore final prices.",
@@ -922,7 +922,7 @@
     "s4Item5": "Pro badge on public profile",
     "s4Body": "The free plan's features (unlimited sheets, PDF export, custom chords, 2 OCR analyses/month) remain accessible without a subscription.",
     "s5Title": "5. Order and payment",
-    "s5Body1": "The subscription is purchased online via the ChordSheet pricing page. Payment is processed by <strong>Stripe</strong> (Stripe Payments Europe, Ltd), a secure payment provider. Bank details are not stored by ChordSheet.",
+    "s5Body1": "The subscription is purchased online via the Alviena pricing page. Payment is processed by <strong>Stripe</strong> (Stripe Payments Europe, Ltd), a secure payment provider. Bank details are not stored by Alviena.",
     "s5Body2": "The subscription renews automatically at each billing cycle (monthly or yearly) until cancelled. A receipt is issued by Stripe at each renewal.",
     "s6Title": "6. Right of withdrawal",
     "s6Body1": "In accordance with article L.221-28 of the French Consumer Code, the 14-day right of withdrawal does not apply to digital content whose performance began with your express consent before the withdrawal period expired.",
@@ -930,7 +930,7 @@
     "s7Title": "7. Cancellation",
     "s7Body": "You can cancel your subscription at any time from your profile (\"My subscription\" section). Cancellation takes effect at the end of the current billing period — no prorated refund is issued. Your data and sheets remain accessible after cancellation.",
     "s8Title": "8. Service availability",
-    "s8Body": "ChordSheet is provided \"as is\". While we do our best to ensure continuity of service, we do not guarantee uninterrupted availability. In the event of a prolonged interruption attributable to ChordSheet, a prorated refund may be granted upon request.",
+    "s8Body": "Alviena is provided \"as is\". While we do our best to ensure continuity of service, we do not guarantee uninterrupted availability. In the event of a prolonged interruption attributable to Alviena, a prorated refund may be granted upon request.",
     "s9Title": "9. Disputes",
     "s9Body1": "These Terms of Sale are governed by French law. In the event of a dispute, an amicable solution will be sought first. Failing that, the competent courts of Rouen, France will have jurisdiction.",
     "s9Body2": "In accordance with article L.616-1 of the French Consumer Code, you may use the free consumer mediation service. The competent mediator is the European online dispute resolution platform:"
@@ -943,7 +943,7 @@
     "s1Role": "Sole proprietor (auto-entrepreneur, France)",
     "emailLabel": "Email:",
     "s2Title": "2. Data collected",
-    "s2Intro": "When using ChordSheet, the following data is collected:",
+    "s2Intro": "When using Alviena, the following data is collected:",
     "colData": "Data",
     "colPurpose": "Purpose",
     "colLegalBasis": "Legal basis",
@@ -966,7 +966,7 @@
     "s4Title": "4. Retention period",
     "s4Body": "Data is retained for as long as the account is active, then deleted within 30 days of the account closure request. Sheets published in public mode may be retained in anonymized form for statistical purposes.",
     "s5Title": "5. Cookies",
-    "s5Body": "ChordSheet uses technical cookies strictly necessary for authentication to function (Firebase Authentication). No advertising or third-party tracking cookies are set.",
+    "s5Body": "Alviena uses technical cookies strictly necessary for authentication to function (Firebase Authentication). No advertising or third-party tracking cookies are set.",
     "s6Title": "6. Your rights",
     "s6Intro": "In accordance with the GDPR, you have the following rights over your personal data:",
     "s6Item1": "<strong>Access</strong>: obtain a copy of your data;",
@@ -985,13 +985,13 @@
     "familyTitle": "Family",
     "familyBody": "It all starts there. <strong>Julien</strong> — my brother, Piza — whose musical ear and sense of theory are in every measure of this tool. <strong>My father</strong>, who put guitars in our hands before we knew what to do with them. <strong>My mother</strong>, who has since picked up guitar and bass herself — because once music gets into a house, it never really leaves.",
     "bandTitle": "The band",
-    "bandBody": "The people it all really started with — the first rehearsals in garages and at the youth club, the first gigs, the first riffs learned together. ChordSheet exists a little bit for them, and because of them.",
+    "bandBody": "The people it all really started with — the first rehearsals in garages and at the youth club, the first gigs, the first riffs learned together. Alviena exists a little bit for them, and because of them.",
     "friendsTitle": "The accomplices",
     "gregAlias": "aka Keiturna",
     "gregBody": "A brilliant guitarist and a man of vision. Greg was one of the first to understand what this tool could become, to help shape it with me, and to ask the right questions at the right time. The kind of outside perspective that changes everything.",
     "bastienAlias": "aka Bataba",
     "bastienBody": "A guitarist and a developer — the dream combination for this project. Bastien understands both sides of it: what a musician expects from a tool, and how to build it properly. His help means a lot.",
-    "closing": "And to everyone who uses ChordSheet, shares their chord sheets, and sends feedback — thank you. You're the best reason to keep going."
+    "closing": "And to everyone who uses Alviena, shares their chord sheets, and sends feedback — thank you. You're the best reason to keep going."
   },
   "Contact": {
     "pageTitle": "Contact",
@@ -1004,15 +1004,15 @@
   },
   "Faq": {
     "pageTitle": "Frequently asked questions",
-    "pageSubtitle": "Everything you need to get started with ChordSheet.",
+    "pageSubtitle": "Everything you need to get started with Alviena.",
     "s1Title": "Getting started",
-    "s1q1": "What is ChordSheet?",
-    "s1a1": "ChordSheet is a web app for creating, organizing, and sharing chord sheets. You can enter your sheets by hand, import them from chord text, or extract them automatically from a photo of sheet music. Sheets are accessible from any device, and you can print them or use them live on stage without installing anything.",
+    "s1q1": "What is Alviena?",
+    "s1a1": "Alviena is a web app for creating, organizing, and sharing chord sheets. You can enter your sheets by hand, import them from chord text, or extract them automatically from a photo of sheet music. Sheets are accessible from any device, and you can print them or use them live on stage without installing anything.",
     "s1q2": "How do I create a sheet?",
     "s1a2": "From the dashboard or the \"+ Sheet\" button at the top right, you have three options: start from a blank sheet and enter chords by hand, paste text in chord+lyrics format, or drop in a photo of sheet music for automatic AI transcription.",
     "s2Title": "Import & analyze",
     "s2q1": "How do I import a sheet from text?",
-    "s2a1": "Copy the text of a sheet in chord+lyrics format (chords written above the lyrics, sections named like [Verse] or [Chorus]), then in ChordSheet click \"+ Sheet\" → \"Import text\" and paste it in. The app automatically detects the title, artist, key, tempo, and section structure.",
+    "s2a1": "Copy the text of a sheet in chord+lyrics format (chords written above the lyrics, sections named like [Verse] or [Chorus]), then in Alviena click \"+ Sheet\" → \"Import text\" and paste it in. The app automatically detects the title, artist, key, tempo, and section structure.",
     "s2q2": "How does sheet music analysis work?",
     "s2a2": "You upload one or more photos of your sheet music (JPG, PNG, WebP). An AI model analyzes the images, identifies chords measure by measure, the song structure (intro, verse, chorus…), repeats, and the time signature, then automatically generates a sheet. You can then correct it in the editor.",
     "s2q3": "The detected chords are wrong, what should I do?",
@@ -1021,7 +1021,7 @@
     "s3q1": "Can I create custom chords?",
     "s3a1": "Yes. In the editor, you can define your own fingerings for chords that aren't in the library, or modify an existing fingering. These custom chords are saved with the sheet and shown in the diagrams.",
     "s3q2": "Which instruments are supported?",
-    "s3a2": "ChordSheet supports seven instruments: Guitar, Ukulele, Mandolin, Banjo, Bass, Piano, and Voice. Each instrument has its own chord library and diagrams (fretboard or keyboard depending on the instrument).",
+    "s3a2": "Alviena supports seven instruments: Guitar, Ukulele, Mandolin, Banjo, Bass, Piano, and Voice. Each instrument has its own chord library and diagrams (fretboard or keyboard depending on the instrument).",
     "s3q3": "Is French notation (Do Ré Mi) supported?",
     "s3a3": "Yes. In your profile, you can choose between American notation (C D E F G A B) and French notation (Do Ré Mi Fa Sol La Si). The display switches across the whole app, while chords remain stored in American notation.",
     "s4Title": "Sharing & collaboration",
@@ -1043,7 +1043,7 @@
   },
   "Pricing": {
     "title": "Pricing",
-    "subtitle": "ChordSheet stays free for personal use. Pro unlocks collaboration and unlimited OCR.",
+    "subtitle": "Alviena stays free for personal use. Pro unlocks collaboration and unlimited OCR.",
     "monthlyLabel": "Monthly",
     "yearlyLabel": "Yearly",
     "discountBadge": "−33%",
@@ -1147,7 +1147,7 @@
     "analyzing": "Analyzing sheet music…",
     "analyzingWithPages": "Analyzing sheet music ({count} pages)…",
     "monthlyLimitReached": "Monthly limit reached",
-    "limitBody": "The free plan includes 2 analyses per month. Upgrade to ChordSheet Pro for unlimited analyses.",
+    "limitBody": "The free plan includes 2 analyses per month. Upgrade to Alviena Pro for unlimited analyses.",
     "upgradeCta": "Upgrade to Pro — €4.90/month",
     "titleLabel": "Title",
     "artistLabel": "Artist",
@@ -1187,7 +1187,7 @@
     "freeSessionUsedError": "You've already used your free session. Go Pro to keep going.",
     "proOnlyTitle": "Pro feature",
     "proOnlyDesc": "Live sessions are reserved for Pro accounts. Upgrade to Pro to start unlimited sessions with your guests.",
-    "discoverPro": "Discover ChordSheet Pro",
+    "discoverPro": "Discover Alviena Pro",
     "proPricing": "From €4.90/month · Cancel anytime",
     "proUpsellTitle": "Go Pro for your live sessions",
     "proUpsellSubtitle": "A real campfire session: everyone on the same chart, at the same time.",
@@ -1228,7 +1228,7 @@
     "forbidden": "Upload refused by the server. Storage rules have most likely not been deployed."
   },
   "Seo": {
-    "siteTitle": "ChordSheet — Chord charts for musicians",
+    "siteTitle": "Alviena — Chord charts for musicians",
     "siteDescription": "Create, share and read your chord charts. Transpose, print and play on stage. Free, for guitar, piano, ukulele and more.",
     "pages": {
       "explore": {
@@ -1241,7 +1241,7 @@
       },
       "artists": {
         "title": "Artists",
-        "description": "Every artist whose chord charts are shared on ChordSheet, listed alphabetically."
+        "description": "Every artist whose chord charts are shared on Alviena, listed alphabetically."
       },
       "tuner": {
         "title": "Free online tuner",
@@ -1249,11 +1249,11 @@
       },
       "chordDetect": {
         "title": "Identify a chord with your mic",
-        "description": "Play a chord and ChordSheet names it. Real-time recognition in the browser, nothing to install."
+        "description": "Play a chord and Alviena names it. Real-time recognition in the browser, nothing to install."
       },
       "pricing": {
         "title": "Pricing",
-        "description": "ChordSheet is free for personal use. Pro unlocks bands, shared repertoire and unlimited analysis."
+        "description": "Alviena is free for personal use. Pro unlocks bands, shared repertoire and unlimited analysis."
       },
       "contact": {
         "title": "Contact",
@@ -1261,7 +1261,7 @@
       },
       "credits": {
         "title": "Credits",
-        "description": "The people without whom ChordSheet would not exist."
+        "description": "The people without whom Alviena would not exist."
       },
       "faq": {
         "title": "Frequently asked questions",
@@ -1269,23 +1269,23 @@
       },
       "about": {
         "title": "About us",
-        "description": "ChordSheet was born from a simple need: not losing what you have learned. The story of two musician brothers."
+        "description": "Alviena was born from a simple need: not losing what you have learned. The story of two musician brothers."
       },
       "legalCgu": {
         "title": "Terms of use",
-        "description": "The terms governing the use of ChordSheet."
+        "description": "The terms governing the use of Alviena."
       },
       "legalCgv": {
         "title": "Terms of sale",
-        "description": "The terms of sale for the ChordSheet Pro subscription."
+        "description": "The terms of sale for the Alviena Pro subscription."
       },
       "legalPrivacy": {
         "title": "Privacy policy",
-        "description": "What data ChordSheet collects, why, and how to exercise your rights."
+        "description": "What data Alviena collects, why, and how to exercise your rights."
       },
       "legalNotice": {
         "title": "Legal notice",
-        "description": "Publisher, host and intellectual property of the ChordSheet website."
+        "description": "Publisher, host and intellectual property of the Alviena website."
       },
       "importChords": {
         "title": "Import a chord chart from plain text",
@@ -1301,7 +1301,7 @@
       },
       "bands": {
         "title": "Share your repertoire with a band or a class",
-        "description": "Bands on ChordSheet: roles, link invitations, shared repertoire. One Pro licence covers the whole band."
+        "description": "Bands on Alviena: roles, link invitations, shared repertoire. One Pro licence covers the whole band."
       },
       "stageMode": {
         "title": "Stage mode: full-screen setlist and synchronisation",
@@ -1313,7 +1313,7 @@
       },
       "chordInstrument": {
         "title": "{instrument} chords: diagrams, notes and shapes",
-        "description": "All {count} {instrumentLower} chords on ChordSheet. For each one: the diagram, the notes, the shape in detail, and the charts that use it."
+        "description": "All {count} {instrumentLower} chords on Alviena. For each one: the diagram, the notes, the shape in detail, and the charts that use it."
       },
       "chord": {
         "title": "{chord} chord {instrumentAt}: diagram, notes and shape",
@@ -1322,7 +1322,7 @@
     },
     "artist": {
       "title": "Chord charts by {artist}",
-      "description": "Every chord chart by {artist} shared on ChordSheet: read, transpose and play this artist's songs."
+      "description": "Every chord chart by {artist} shared on Alviena: read, transpose and play this artist's songs."
     }
   },
   "Tuner": {
@@ -1361,10 +1361,10 @@
     "p1": "Our father is a guitarist. We grew up with guitars lying around in corners, chords drifting out of a room, a house where music was a language of its own. For <b>Alexandre</b>, it really took hold at thirteen — that feeling of putting your fingers on a neck and sensing something fall into place. His younger brother <b>Julien</b> went for the drums. Two and a half years apart, two different approaches, one shared playground.",
     "p2": "At fifteen or sixteen we started our first band. We knew very little but we played gigs, fell flat, started again. We spent hours on forums, on Guitar Pro, working out tablature, swapping things found late at night. Music became our way of getting together — birthdays, Christmas, weekends: so many chances to ask for another instrument. A bass. A ukulele. A piano. A banjo, a mandolin, a pan flute, a melodica, castanets. We tried everything, from metal to classical, with no hierarchy and no borders.",
     "p3": "Twenty years have gone by. We are thirty-five now, and we still play together — with more maturity, a better ear, more experience. Yet the struggle is strangely unchanged: <i>what were the chords again? What is the structure? What order do we play it in?</i> And with it a quiet frustration: all those songs learnt twenty years ago, those riffs, those progressions, those arrangements — gone. Lost somewhere between two house moves and a hard drive upgrade.",
-    "p4": "ChordSheet came out of that. Out of a simple, slightly painful need: <b>not to lose what we had learnt</b>. To remember. To have somewhere to write a chart down properly, to find a chord at two in the morning before a rehearsal, to share the structure of a song without sending a blurry photo of a spiral notebook.",
+    "p4": "Alviena came out of that. Out of a simple, slightly painful need: <b>not to lose what we had learnt</b>. To remember. To have somewhere to write a chart down properly, to find a chord at two in the morning before a rehearsal, to share the structure of a song without sending a blurry photo of a spiral notebook.",
     "p5": "We built it together. Alexandre on the technical side, Julien — known as <b>Piza</b> — on the musical vision, the theory, the rigour of someone who genuinely reads a score. What one of us cannot do, the other carries. That has been how we work from the start.",
     "p6": "Building the tool, we realised it was not only for us. A band in rehearsal needs one shared reading — not five different versions of the same song on five phones. A guitar teacher needs to hand charts to a class without it turning into a puzzle. A musician on their own needs a book, a repertoire, something personal that lasts.",
-    "p7": "ChordSheet handles many instruments because we do. It is built for playing together because that is the only reason we started. And it looks ahead — AI to transcribe a score, organising a gig, sharing within a band — because we now have the technical means to solve problems we have been carrying since our teens.",
+    "p7": "Alviena handles many instruments because we do. It is built for playing together because that is the only reason we started. And it looks ahead — AI to transcribe a score, organising a gig, sharing within a band — because we now have the technical means to solve problems we have been carrying since our teens.",
     "closing": "It is a tool made by musicians, for musicians. No more, no less.",
     "roleAlexandre": "Development & design",
     "roleJulien": "Musical vision & theory"

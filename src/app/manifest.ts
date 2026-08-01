@@ -2,8 +2,8 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'ChordSheet',
-    short_name: 'ChordSheet',
+    name: 'Alviena',
+    short_name: 'Alviena',
     description: "Créez, partagez et consultez vos grilles d'accords. L'outil collaboratif pour musiciens.",
     start_url: '/',
     id: '/',

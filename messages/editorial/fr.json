@@ -73,13 +73,13 @@
         "caption": "Correspondance entre les deux notations",
         "colUs": "Notation américaine",
         "colFr": "Notation française",
-        "body2": "ChordSheet accepte les deux à la saisie : tapez « Lam » ou « Am », vous obtiendrez le même accord. L'affichage suit la préférence choisie dans votre profil et bascule partout à la fois. En revanche, les grilles sont toujours stockées en notation américaine — c'est ce qui permet de changer d'affichage sans jamais rien perdre.",
+        "body2": "Alviena accepte les deux à la saisie : tapez « Lam » ou « Am », vous obtiendrez le même accord. L'affichage suit la préférence choisie dans votre profil et bascule partout à la fois. En revanche, les grilles sont toujours stockées en notation américaine — c'est ce qui permet de changer d'affichage sans jamais rien perdre.",
         "minor": "Pour le mode mineur, le français ajoute « m » comme l’américain : La mineur s’écrit « Lam » ou « Am »."
       },
       "enharmony": {
         "h2": "Dièses, bémols et équivalences",
         "body": "Do dièse et ré bémol désignent la même hauteur, et se jouent avec le même doigté. On parle d'équivalence enharmonique. Le choix entre les deux écritures n'est pas indifférent pour autant : il dépend de la tonalité du morceau, et une partition bien écrite reste cohérente.",
-        "body2": "Lorsque vous transposez une grille, ChordSheet applique une règle simple : les tonalités de fa, si bémol, mi bémol, la bémol, ré bémol et sol bémol s’écrivent en bémols ; les autres en dièses. Un accord d’origine écrit en bémol conserve cette écriture. C’est ce qui évite de lire un « la dièse » là où tout musicien attend un « si bémol »."
+        "body2": "Lorsque vous transposez une grille, Alviena applique une règle simple : les tonalités de fa, si bémol, mi bémol, la bémol, ré bémol et sol bémol s’écrivent en bémols ; les autres en dièses. Un accord d’origine écrit en bémol conserve cette écriture. C’est ce qui évite de lire un « la dièse » là où tout musicien attend un « si bémol »."
       },
       "slash": {
         "h2": "Les accords slash",
@@ -323,7 +323,7 @@
     },
     "bands": {
       "h1": "Partager son répertoire avec un groupe ou une classe",
-      "lead": "Comment fonctionne un groupe sur ChordSheet : qui voit quoi, comment on invite, et pourquoi une seule licence suffit.",
+      "lead": "Comment fonctionne un groupe sur Alviena : qui voit quoi, comment on invite, et pourquoi une seule licence suffit.",
       "create": {
         "h2": "Créer un groupe et inviter",
         "body": "Un groupe se crée en lui donnant un nom. Vous générez ensuite un lien d'invitation, valable sept jours, que vous transmettez comme vous voulez : message, courriel, sur papier. Celui qui l'ouvre rejoint le groupe, sans démarche d'inscription particulière au groupe lui-même."
@@ -426,7 +426,7 @@
       "breadcrumb": "Fil d'Ariane",
       "libraryLink": "Bibliothèque d'accords",
       "h1": "Accords {instrumentOf}",
-      "lead": "Les {count} accords {instrumentOf} de ChordSheet, rangés par famille. Chaque accord a sa page : le diagramme, les notes qui le composent, le détail de la position et les grilles du site qui l'utilisent.",
+      "lead": "Les {count} accords {instrumentOf} de Alviena, rangés par famille. Chaque accord a sa page : le diagramme, les notes qui le composent, le détail de la position et les grilles du site qui l'utilisent.",
       "otherInstruments": "Les mêmes accords sur un autre instrument",
       "otherInstrumentLink": "Accords {instrumentOf}",
       "families": {
@@ -448,8 +448,8 @@
       "breadcrumb": "Fil d'Ariane",
       "libraryLink": "Bibliothèque d'accords",
       "h1": "Accord {chord} {instrumentAt}",
-      "lead": "Le diagramme de l'accord {chord} {instrumentAt}, les notes qui le composent, et les grilles de ChordSheet qui l'utilisent.",
-      "leadFrench": "Le diagramme de l'accord {chord} {instrumentAt}, noté {frenchChord} en notation française. Les notes qui le composent, le détail de la position, et les grilles de ChordSheet qui l'utilisent.",
+      "lead": "Le diagramme de l'accord {chord} {instrumentAt}, les notes qui le composent, et les grilles de Alviena qui l'utilisent.",
+      "leadFrench": "Le diagramme de l'accord {chord} {instrumentAt}, noté {frenchChord} en notation française. Les notes qui le composent, le détail de la position, et les grilles de Alviena qui l'utilisent.",
       "diagramHeading": "Le diagramme",
       "diagramsHeading": "{count} positions",
       "notesHeading": "Les notes de {chord}",

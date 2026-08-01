@@ -104,7 +104,7 @@ export async function POST(req: NextRequest) {
 
         if (ocrUsed >= FREE_OCR_LIMIT && earnedCredits <= 0) {
           return NextResponse.json({
-            error: 'Limite d\'analyses atteinte pour ce mois. Passe à ChordSheet Pro pour des analyses illimitées.',
+            error: 'Limite d\'analyses atteinte pour ce mois. Passe à Alviena Pro pour des analyses illimitées.',
             upgradeRequired: true,
           }, { status: 429 });
         }

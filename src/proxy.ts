@@ -1,6 +1,7 @@
 import createMiddleware from 'next-intl/middleware';
-import type { NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { routing } from './i18n/routing';
+import { SITE_URL } from './lib/seo';
 
 const intl = createMiddleware(routing);
 
@@ -22,6 +23,47 @@ function isPrivate(pathname: string): boolean {
 }
 
 /**
+ * Hôte canonique, déduit de `NEXT_PUBLIC_BASE_URL` — la même variable qui gouverne
+ * déjà les canoniques, le sitemap et robots.txt. Il n'y a donc **qu'une** valeur à
+ * changer le jour de la bascule de domaine.
+ */
+const CANONICAL_HOST = (() => {
+  try {
+    return new URL(SITE_URL).host;
+  } catch {
+    return '';
+  }
+})();
+
+/**
+ * Un site, une adresse.
+ *
+ * Quatre extensions réservées, c'est quatre sites identiques si on les laisse toutes
+ * répondre : contenu dupliqué, autorité éparpillée, et un moteur qui choisit à notre
+ * place laquelle indexer. Les trois autres, plus l'adresse Vercel, renvoient donc en
+ * 301 vers l'hôte canonique — permanent, pour que le bénéfice des liens existants
+ * suive.
+ *
+ * Ne s'applique qu'en production : les déploiements de préversion ont un hôte
+ * aléatoire, et le développement local tourne sur localhost. Les rediriger vers la
+ * production rendrait les deux inutilisables.
+ */
+function canonicalRedirect(request: NextRequest): NextResponse | null {
+  if (process.env.VERCEL_ENV !== 'production') return null;
+  if (!CANONICAL_HOST) return null;
+
+  const host = request.headers.get('host');
+  if (!host || host === CANONICAL_HOST) return null;
+
+  const target = new URL(request.nextUrl.toString());
+  target.protocol = 'https:';
+  target.host = CANONICAL_HOST;
+  target.port = '';
+
+  return NextResponse.redirect(target, 301);
+}
+
+/**
  * `robots.txt` limite l'exploration mais n'empêche pas l'indexation : une URL
  * découverte par un lien externe peut être indexée sans jamais être lue — et une
  * page bloquée par robots.txt ne peut alors même plus être désindexée par une
@@ -31,6 +73,11 @@ function isPrivate(pathname: string): boolean {
  * insensible à l'oubli d'un `robots` dans un `generateMetadata`.
  */
 export default function proxy(request: NextRequest) {
+  // Avant tout le reste : inutile de calculer une locale ou un en-tête pour une
+  // réponse qui ne sera qu'une redirection.
+  const redirect = canonicalRedirect(request);
+  if (redirect) return redirect;
+
   const response = intl(request);
 
   if (response && isPrivate(request.nextUrl.pathname)) {

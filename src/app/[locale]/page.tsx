@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { BrandLogo } from '@/components/layout/brand-logo';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
@@ -95,7 +96,7 @@ function LandingNav({ scrolled }: { scrolled: boolean }) {
   return (
     <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-[var(--nav-bg)]/95 backdrop-blur-sm border-b border-white/8' : 'bg-transparent'}`}>
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <Image src="/logo-chordsheet.svg" alt="ChordSheet" height={28} width={122} priority />
+        <BrandLogo size="sm" className="text-[var(--nav-text)]" />
         <div className="hidden sm:flex items-center gap-7 text-[var(--nav-text)]/65 text-sm">
           <a href="#book" className="hover:text-[var(--nav-text)] transition-colors">{t('book')}</a>
           <a href="#groupes" className="flex items-center gap-1.5 hover:text-[var(--nav-text)] transition-colors">
@@ -238,7 +239,7 @@ export default function Home() {
           <div className="mb-5 flex justify-center">
             {/* Le logo est décoratif : la promesse du site est portée par le h1
                 ci-dessous, seul titre de niveau 1 de la page (il n'y en avait aucun). */}
-            <Image src="/logo-chordsheet.svg" alt="" aria-hidden height={64} width={280} priority className="w-auto h-12 sm:h-16" />
+            <BrandLogo size="lg" className="text-[var(--nav-text)]" />
           </div>
           <h1 className="text-[var(--nav-text)]/70 text-xl sm:text-2xl mb-3 font-light leading-snug">
             {t('hero.tagline')}
