@@ -55,12 +55,27 @@ function canonicalRedirect(request: NextRequest): NextResponse | null {
   const host = request.headers.get('host');
   if (!host || host === CANONICAL_HOST) return null;
 
+  // Le couple apex / www est arbitré par l'hébergeur, jamais ici.
+  //
+  // Vercel redirige déjà l'un vers l'autre selon le domaine désigné comme
+  // principal. Si nous redirigions dans l'autre sens, les deux se renverraient la
+  // balle sans fin et le site deviendrait inaccessible — c'est arrivé. Laisser
+  // passer les variantes www est donc une protection, pas un oubli : au pire l'hôte
+  // servi diffère de la canonique annoncée, ce que la balise `canonical` règle.
+  if (isWwwVariant(host, CANONICAL_HOST)) return null;
+
   const target = new URL(request.nextUrl.toString());
   target.protocol = 'https:';
   target.host = CANONICAL_HOST;
   target.port = '';
 
   return NextResponse.redirect(target, 301);
+}
+
+/** Les deux hôtes ne diffèrent-ils que par le préfixe `www.` ? */
+function isWwwVariant(a: string, b: string): boolean {
+  const bare = (h: string) => h.replace(/^www\./, '');
+  return a !== b && bare(a) === bare(b);
 }
 
 /**
