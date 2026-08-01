@@ -830,7 +830,9 @@
     "visitFilter_30": "30 derniers jours",
     "visitFilter_90": "90 derniers jours",
     "visitFilter_inactive": "Inactifs (+ de 90 jours)",
-    "visitFilter_never": "Jamais revenus"
+    "visitFilter_never": "Jamais revenus",
+    "chordIndex": "Index des accords",
+    "chordIndexDesc": "Recopie les accords de chaque grille dans un champ interrogeable. Nécessaire pour les pages d'accord et la recherche par accord. Sans danger à relancer."
   },
   "LegalMentions": {
     "pageTitle": "Mentions légales",
@@ -1295,6 +1297,14 @@
       "audioToChords": {
         "title": "Trouver les accords d'un morceau depuis un fichier audio",
         "description": "Analyser un enregistrement pour en tirer une première grille. Ce que l'analyse restitue vraiment, et ses limites."
+      },
+      "chordInstrument": {
+        "title": "Accords {instrument} : diagrammes, notes et positions",
+        "description": "Les {count} accords de {instrument} de ChordSheet. Pour chacun : le diagramme, les notes, le détail de la position et les grilles qui l'utilisent."
+      },
+      "chord": {
+        "title": "Accord {chord} {instrument} : diagramme, notes et position",
+        "description": "Comment jouer l'accord {chord} pour {instrument} : diagramme, notes ({notes}) et détail de la position. Et les grilles d'accords du site qui l'utilisent."
       }
     },
     "artist": {

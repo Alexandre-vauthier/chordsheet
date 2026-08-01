@@ -2,6 +2,8 @@ import { getTranslations } from 'next-intl/server';
 import { getChordsByInstrument, getAllExtendedChords } from '@/lib/chord-data';
 import { INSTRUMENTS, type InstrumentId } from '@/types';
 import { Editorial, EditorialSection, EditorialTable, EditorialLinks } from '@/components/seo/editorial';
+import { CHORD_PAGE_INSTRUMENTS, chordNamesFor } from '@/lib/chord-page';
+import { Link } from '@/i18n/navigation';
 
 /** La voix n'a pas de diagramme : elle n'a rien à faire dans un tableau d'accords. */
 const SHOWN: InstrumentId[] = INSTRUMENTS.filter((i) => i !== 'voice');
@@ -80,6 +82,25 @@ export async function ChordsEditorial({ locale }: { locale: string }) {
       <EditorialSection title={t('slash.h2')} id="accords-slash">
         <p>{t('slash.body')}</p>
         <p>{t('slash.body2')}</p>
+      </EditorialSection>
+
+      {/* Entrée vers les pages d'accord : c'est d'ici que les 443 pages deviennent
+          atteignables, cette page-ci étant elle-même liée depuis le pied de page. */}
+      <EditorialSection title={t('byInstrument.h2')} id="par-instrument">
+        <p>{t('byInstrument.body')}</p>
+        <ul className="flex flex-wrap gap-2 not-prose">
+          {CHORD_PAGE_INSTRUMENTS.map((id) => (
+            <li key={id}>
+              <Link
+                href={`/chords/${id}`}
+                className="inline-block px-3 py-1.5 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)]
+                  text-sm font-medium text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+              >
+                {t('byInstrument.link', { instrument: tInstrument(id), count: chordNamesFor(id).length })}
+              </Link>
+            </li>
+          ))}
+        </ul>
       </EditorialSection>
 
       <EditorialSection title={t('find.h2')} id="trouver">

@@ -830,7 +830,9 @@
     "visitFilter_30": "Last 30 days",
     "visitFilter_90": "Last 90 days",
     "visitFilter_inactive": "Inactive (90+ days)",
-    "visitFilter_never": "Never returned"
+    "visitFilter_never": "Never returned",
+    "chordIndex": "Chord index",
+    "chordIndexDesc": "Copies each chart's chords into a queryable field. Required by the chord pages and chord search. Safe to re-run."
   },
   "LegalMentions": {
     "pageTitle": "Legal notice",
@@ -1295,6 +1297,14 @@
       "audioToChords": {
         "title": "Get the chords of a track from an audio file",
         "description": "Analyse a recording to draft a chart. What the analysis really returns, and its limits."
+      },
+      "chordInstrument": {
+        "title": "{instrument} chords: diagrams, notes and shapes",
+        "description": "All {count} {instrument} chords on ChordSheet. For each one: the diagram, the notes, the shape in detail, and the charts that use it."
+      },
+      "chord": {
+        "title": "{chord} chord on {instrument}: diagram, notes and shape",
+        "description": "How to play the {chord} chord on {instrument}: diagram, notes ({notes}) and the shape in detail. Plus the chord charts on the site that use it."
       }
     },
     "artist": {

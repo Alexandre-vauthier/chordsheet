@@ -2,6 +2,7 @@ import type { MetadataRoute } from 'next';
 import { routing } from '@/i18n/routing';
 import { localeUrl } from '@/lib/seo';
 import { getPublicSheetIndex, songKey } from '@/lib/public-sheet-index';
+import { CHORD_PAGE_INSTRUMENTS, chordNamesFor, chordSlug, isCommonChord } from '@/lib/chord-page';
 
 export const revalidate = 86400;
 
@@ -64,6 +65,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entriesFor(path, now, changeFrequency, priority),
   );
 
+  // Les pages d'accord : leur contenu est dérivé de la bibliothèque, qui ne bouge
+  // qu'au rythme des versions du site — d'où « yearly ». Les accords courants (majeurs,
+  // mineurs, septièmes) passent devant : annoncer un Dbdim au même niveau qu'un Am
+  // dilue le signal au lieu de le renforcer.
+  const chordEntries = CHORD_PAGE_INSTRUMENTS.flatMap((instrument) => [
+    ...entriesFor(`/chords/${instrument}`, now, 'monthly', 0.7),
+    ...chordNamesFor(instrument).flatMap((name) =>
+      entriesFor(
+        `/chords/${instrument}/${chordSlug(name)}`,
+        now,
+        'yearly',
+        isCommonChord(name) ? 0.6 : 0.3,
+      ),
+    ),
+  ]);
+
   // Les grilles publiques : le vrai catalogue du site, et de loin le plus gros
   // volume. Sans elles, un moteur ne découvre une grille que s'il suit un lien
   // depuis /explore, dont la pagination est côté client.
@@ -115,5 +132,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ),
     );
 
-  return [...fixed, ...sheetEntries, ...artistEntries, ...songEntries];
+  return [...fixed, ...chordEntries, ...sheetEntries, ...artistEntries, ...songEntries];
 }

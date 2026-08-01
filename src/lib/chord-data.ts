@@ -735,6 +735,71 @@ const INSTRUMENT_TUNINGS: Partial<Record<InstrumentId, number[]>> = {
   bass:     [7, 2, 9, 4],          // G2 D2 A1 E1
 };
 
+/**
+ * Les notes réellement jouées par un doigté, corde par corde (grave → aigu).
+ *
+ * Tout est dérivé de l'accordage ci-dessus et du doigté lui-même : aucune liste de
+ * notes n'est saisie à la main, donc aucune ne peut se désynchroniser des
+ * diagrammes. Une corde étouffée ne produit pas de note et n'apparaît pas.
+ */
+export interface PlayedNote {
+  /** Numéro de corde tel qu'il figure dans les doigtés : 1 = la plus aiguë. */
+  string: number;
+  /** 0 = corde à vide. */
+  fret: number;
+  note: string;
+}
+
+export function chordPlayedNotes(chord: StringChord, instrumentId: InstrumentId): PlayedNote[] {
+  const tuning = INSTRUMENT_TUNINGS[instrumentId];
+  if (!tuning) return [];
+
+  const muted = new Set(chord.muted ?? []);
+  const open = new Set(chord.open ?? []);
+
+  // Case pressée par corde : les doigts d'abord, le barré ensuite pour les cordes
+  // qu'aucun doigt ne couvre — c'est ainsi que le diagramme les dessine.
+  const fretted = new Map<number, number>();
+  for (const [stringNo, fret] of chord.fingers ?? []) fretted.set(stringNo, fret);
+
+  const barre = chord.barre;
+  if (barre) {
+    const from = Math.min(barre.fromString, barre.toString);
+    const to = Math.max(barre.fromString, barre.toString);
+    for (let stringNo = from; stringNo <= to; stringNo++) {
+      if (!fretted.has(stringNo)) fretted.set(stringNo, barre.fret);
+    }
+  }
+
+  const notes: PlayedNote[] = [];
+  for (let stringNo = tuning.length; stringNo >= 1; stringNo--) {
+    if (muted.has(stringNo)) continue;
+
+    const fret = open.has(stringNo) ? 0 : fretted.get(stringNo);
+    // Ni à vide, ni frettée, ni étouffée : la donnée ne dit rien de cette corde, on
+    // n'invente pas une note pour elle.
+    if (fret === undefined) continue;
+
+    const semi = (tuning[stringNo - 1] + fret) % 12;
+    notes.push({ string: stringNo, fret, note: PIANO_NOTE_BY_SEMI[semi] });
+  }
+
+  return notes;
+}
+
+/** Les hauteurs distinctes d'un accord, du grave vers l'aigu, sans doublon d'octave. */
+export function chordPitchClasses(chord: StringChord | PianoChord, instrumentId: InstrumentId): string[] {
+  if (isPianoChordShape(chord)) {
+    // Les notes du piano portent leur octave (« C4 ») : on ne garde que la hauteur.
+    return [...new Set(chord.notes.map((n) => n.replace(/\d+$/, '')))];
+  }
+  return [...new Set(chordPlayedNotes(chord, instrumentId).map((n) => n.note))];
+}
+
+function isPianoChordShape(chord: StringChord | PianoChord): chord is PianoChord {
+  return Array.isArray((chord as PianoChord).notes);
+}
+
 // Note canonique pour le piano par demi-ton
 const PIANO_NOTE_BY_SEMI: Record<number, string> = {
   0:'C', 1:'C#', 2:'D', 3:'Eb', 4:'E', 5:'F',

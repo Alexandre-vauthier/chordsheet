@@ -37,6 +37,8 @@ export default function AdminPage() {
   const [proResult, setProResult] = useState('');
   const [backfillingSearch, setBackfillingSearch] = useState(false);
   const [backfillResult, setBackfillResult] = useState('');
+  const [backfillingChords, setBackfillingChords] = useState(false);
+  const [chordResult, setChordResult] = useState('');
   const [backfillingYears, setBackfillingYears] = useState(false);
   const [yearResult, setYearResult] = useState('');
   const [backfillingGenres, setBackfillingGenres] = useState(false);
@@ -226,6 +228,29 @@ export default function AdminPage() {
     }
   };
 
+  // Dépose le champ `chords` (accords à plat) sur les grilles antérieures à son
+  // introduction. C'est lui qui rend une grille visible depuis une page d'accord.
+  // Idempotent : une grille déjà à jour n'est pas réécrite.
+  const handleBackfillChords = async () => {
+    setBackfillingChords(true);
+    setChordResult('');
+    try {
+      const idToken = await getAuth().currentUser?.getIdToken();
+      if (!idToken) throw new Error(t('notConnected'));
+      const res = await fetch('/api/admin/backfill-chords', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || t('backfillError'));
+      setChordResult(t('backfillSuccess', { updated: data.updated, total: data.total }));
+    } catch (e) {
+      setChordResult(t('errorPrefix', { message: e instanceof Error ? e.message : t('unknownError') }));
+    } finally {
+      setBackfillingChords(false);
+    }
+  };
+
   // Renseigne l'année de sortie (depuis iTunes) des grilles qui n'en ont pas encore.
   // Traite un lot par appel : relancer tant que "reste" > 0.
   const handleBackfillYears = async () => {
@@ -332,6 +357,24 @@ export default function AdminPage() {
             className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
           >
             {backfillingSearch ? t('inProgress') : t('updateIndex')}
+          </button>
+        </div>
+      </div>
+
+      {/* Index des accords (champ chords) */}
+      <div className="mb-8 p-4 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <p className="text-sm font-medium text-[var(--ink)]">{t('chordIndex')}</p>
+          <p className="text-xs text-[var(--ink-faint)]">{t('chordIndexDesc')}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {chordResult && <span className="text-xs text-[var(--ink-light)]">{chordResult}</span>}
+          <button
+            onClick={handleBackfillChords}
+            disabled={backfillingChords}
+            className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+          >
+            {backfillingChords ? t('inProgress') : t('updateIndex')}
           </button>
         </div>
       </div>

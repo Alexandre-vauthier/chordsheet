@@ -100,6 +100,11 @@
         "tuner": "Accorder son instrument avant de jouer",
         "explore": "Grilles d'accords à jouer",
         "faq": "Questions fréquentes"
+      },
+      "byInstrument": {
+        "h2": "Une page par accord, instrument par instrument",
+        "body": "Chaque accord de la bibliothèque a sa propre page : le diagramme, les notes qui le composent, le détail de la position corde par corde, les accords voisins et les grilles du site qui l'utilisent. Le banjo et la basse n'en ont pas encore.",
+        "link": "{instrument} — {count} accords"
       }
     },
     "chordDetect": {
@@ -416,6 +421,54 @@
         "detect": "Identifier un accord au micro",
         "pricing": "Tarifs"
       }
+    },
+    "instrumentPage": {
+      "breadcrumb": "Fil d'Ariane",
+      "libraryLink": "Bibliothèque d'accords",
+      "h1": "Accords de {instrument}",
+      "lead": "Les {count} accords de {instrument} de ChordSheet, rangés par famille. Chaque accord a sa page : le diagramme, les notes qui le composent, le détail de la position et les grilles du site qui l'utilisent.",
+      "otherInstruments": "Les mêmes accords sur un autre instrument",
+      "otherInstrumentLink": "Accords de {instrument}",
+      "families": {
+        "major": "Majeurs",
+        "minor": "Mineurs",
+        "dom7": "Septièmes de dominante",
+        "maj7": "Septièmes majeures",
+        "min7": "Septièmes mineures",
+        "dim": "Diminués",
+        "aug": "Augmentés",
+        "sus2": "Sus2",
+        "sus4": "Sus4",
+        "sus": "Suspendus",
+        "add9": "Add9",
+        "other": "Autres"
+      }
+    },
+    "chordPage": {
+      "breadcrumb": "Fil d'Ariane",
+      "libraryLink": "Bibliothèque d'accords",
+      "h1": "Accord {chord} pour {instrument}",
+      "lead": "Le diagramme de l'accord {chord} pour {instrument}, les notes qui le composent, et les grilles de ChordSheet qui l'utilisent.",
+      "leadFrench": "Le diagramme de l'accord {chord} pour {instrument}, noté {frenchChord} en notation française. Les notes qui le composent, le détail de la position, et les grilles de ChordSheet qui l'utilisent.",
+      "diagramHeading": "Le diagramme",
+      "diagramsHeading": "{count} positions",
+      "notesHeading": "Les notes de {chord}",
+      "notesExplainer": "{count, plural, one {L'accord repose sur une seule hauteur.} other {L'accord repose sur # hauteurs distinctes.}} Une position peut les doubler à l'octave : la même note revient alors plusieurs fois sans changer l'accord.",
+      "fingeringHeading": "La position, corde par corde",
+      "fingeringHeadingVariant": "Position {position}, corde par corde",
+      "traitBarre": "Barré à la case {fret}",
+      "traitOpen": "{count, plural, one {# corde à vide} other {# cordes à vide}}",
+      "traitMuted": "{count, plural, one {# corde étouffée} other {# cordes étouffées}}",
+      "traitStartFret": "Position à partir de la case {fret}",
+      "colString": "Corde",
+      "colFret": "Case",
+      "colNote": "Note",
+      "fretOpen": "à vide",
+      "sheetsHeading": "Des grilles qui utilisent {chord}",
+      "sameRootHeading": "Les autres accords de {root}",
+      "sameFamilyHeading": "La même couleur, sur une autre fondamentale",
+      "elsewhereHeading": "{chord} sur les autres instruments",
+      "elsewhereLink": "{chord} pour {instrument}"
     }
   }
 }

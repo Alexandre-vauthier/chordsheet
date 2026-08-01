@@ -100,6 +100,11 @@
         "tuner": "Tune your instrument before you play",
         "explore": "Chord charts to play",
         "faq": "Frequently asked questions"
+      },
+      "byInstrument": {
+        "h2": "One page per chord, instrument by instrument",
+        "body": "Every chord in the library has its own page: the diagram, the notes it is built from, the shape string by string, neighbouring chords, and the charts on the site that use it. Banjo and bass are not covered yet.",
+        "link": "{instrument} — {count} chords"
       }
     },
     "chordDetect": {
@@ -416,6 +421,54 @@
         "detect": "Identify a chord with your microphone",
         "pricing": "Pricing"
       }
+    },
+    "instrumentPage": {
+      "breadcrumb": "Breadcrumb",
+      "libraryLink": "Chord library",
+      "h1": "{instrument} chords",
+      "lead": "All {count} {instrument} chords on ChordSheet, grouped by family. Every chord has its own page: the diagram, the notes it is built from, the shape in detail, and the charts on the site that use it.",
+      "otherInstruments": "The same chords on another instrument",
+      "otherInstrumentLink": "{instrument} chords",
+      "families": {
+        "major": "Major",
+        "minor": "Minor",
+        "dom7": "Dominant sevenths",
+        "maj7": "Major sevenths",
+        "min7": "Minor sevenths",
+        "dim": "Diminished",
+        "aug": "Augmented",
+        "sus2": "Sus2",
+        "sus4": "Sus4",
+        "sus": "Suspended",
+        "add9": "Add9",
+        "other": "Other"
+      }
+    },
+    "chordPage": {
+      "breadcrumb": "Breadcrumb",
+      "libraryLink": "Chord library",
+      "h1": "{chord} chord on {instrument}",
+      "lead": "The {chord} chord diagram for {instrument}, the notes it is built from, and the ChordSheet charts that use it.",
+      "leadFrench": "The {chord} chord diagram for {instrument} ({frenchChord}), the notes it is built from, the shape in detail, and the ChordSheet charts that use it.",
+      "diagramHeading": "The diagram",
+      "diagramsHeading": "{count} shapes",
+      "notesHeading": "The notes in {chord}",
+      "notesExplainer": "{count, plural, one {The chord is built from a single pitch.} other {The chord is built from # distinct pitches.}} A shape may double them an octave apart: the same note then appears more than once without changing the chord.",
+      "fingeringHeading": "The shape, string by string",
+      "fingeringHeadingVariant": "Shape {position}, string by string",
+      "traitBarre": "Barre at fret {fret}",
+      "traitOpen": "{count, plural, one {# open string} other {# open strings}}",
+      "traitMuted": "{count, plural, one {# muted string} other {# muted strings}}",
+      "traitStartFret": "Shape starting at fret {fret}",
+      "colString": "String",
+      "colFret": "Fret",
+      "colNote": "Note",
+      "fretOpen": "open",
+      "sheetsHeading": "Charts that use {chord}",
+      "sameRootHeading": "Other {root} chords",
+      "sameFamilyHeading": "The same colour, on another root",
+      "elsewhereHeading": "{chord} on other instruments",
+      "elsewhereLink": "{chord} for {instrument}"
     }
   }
 }

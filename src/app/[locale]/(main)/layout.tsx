@@ -22,7 +22,7 @@ const PUBLIC_EXACT = [
   '/import-chords', '/transpose', '/sheet-photo',
   '/bands', '/stage-mode', '/audio-to-chords',
 ];
-const PUBLIC_PREFIXES = ['/legal'];
+const PUBLIC_PREFIXES = ['/legal', '/chords/'];
 // /sheet/:id (mais pas /sheet/new ni /sheet/:id/edit), /artist/:name, /user/:id,
 // /song/:titre/:artiste, /session/:code (rejoindre une session éphémère sans compte
 // — pas /session lui-même, qui reste réservé aux hôtes Pro connectés)

@@ -1,16 +1,24 @@
-import type { Sheet } from '@/types';
+import type { Section, Sheet } from '@/types';
 import { parseChordInput } from '@/lib/chord-data';
 
 /**
- * Recherche d'une grille par accord (outil admin de la page Explore).
+ * Accords d'une grille : extraction, forme canonique, et recherche.
  *
- * Les accords ne sont pas indexés côté Firestore : ils vivent au fond de
- * `sections[].rows[][].chord`, hors de portée d'une requête. Le filtrage se fait
- * donc en mémoire, sur le lot déjà chargé par Explore.
+ * Les accords vivent au fond de `sections[].rows[][].chord`, hors de portée d'une
+ * requête Firestore. `toFirestore` en dépose donc une copie à plat dans le champ
+ * `chords`, ce qui rend possible un `array-contains` — c'est ce qui alimente les
+ * pages d'accord et la recherche par accord.
  */
 
+/**
+ * Plafond du champ indexé. Une grille dépasse rarement la vingtaine d'accords
+ * distincts ; le plafond ne protège que du cas pathologique, où un tableau immense
+ * ferait grossir l'index Firestore sans rien apporter.
+ */
+export const MAX_INDEXED_CHORDS = 60;
+
 /** Tous les accords distincts d'une grille, sous leur forme canonique. */
-export function collectSheetChords(sheet: Sheet): Set<string> {
+export function collectSheetChords(sheet: { sections?: Section[] }): Set<string> {
   const out = new Set<string>();
   for (const section of sheet.sections ?? []) {
     for (const row of section.rows ?? []) {
@@ -48,4 +56,13 @@ export function sheetHasChord(sheet: Sheet, query: string): boolean {
   const needle = normalizeChord(query);
   if (!needle) return true;
   return collectSheetChords(sheet).has(needle);
+}
+
+/**
+ * Le champ `chords` tel qu'il part en base : trié, plafonné, prêt pour un
+ * `array-contains`. Trié pour que deux sauvegardes d'une même grille produisent le
+ * même tableau, et n'écrivent donc pas un document identique pour rien.
+ */
+export function indexedChords(sheet: { sections?: Section[] }): string[] {
+  return [...collectSheetChords(sheet)].sort().slice(0, MAX_INDEXED_CHORDS);
 }

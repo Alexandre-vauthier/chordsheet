@@ -1,4 +1,5 @@
 import type { Sheet, Section, Row, NewSheet, Difficulty, BeatsPerMeasure, InstrumentId, CustomChord, StringChord, PianoChord, FingerPosition } from '@/types';
+import { indexedChords } from '@/lib/sheet-chords';
 import { isPianoChord } from '@/types';
 
 // Firestore n'accepte pas les tableaux imbriqués
@@ -87,6 +88,13 @@ interface FirestoreSheet {
   titleLower: string;
   artist: string;
   artistLower: string;
+  /**
+   * Accords distincts de la grille, à plat et sous forme canonique (minuscules).
+   * Recopiés depuis `sections` à chaque sauvegarde, uniquement pour rendre la grille
+   * interrogeable par accord : les accords eux-mêmes restent dans `sections`, qui
+   * fait foi.
+   */
+  chords: string[];
   key: string;
   tempo: string;
   ownerId: string;
@@ -114,6 +122,7 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
     titleLower: title.toLowerCase(),
     artist,
     artistLower: artist.toLowerCase(),
+    chords: indexedChords(sheet),
     key: sheet.key,
     tempo: sheet.tempo,
     ownerId: sheet.ownerId,

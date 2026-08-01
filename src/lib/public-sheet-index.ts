@@ -98,3 +98,41 @@ export const getArtistSheetRefs = cache(async (artist: string): Promise<PublicSh
     return [];
   }
 });
+
+/**
+ * Les grilles publiques qui utilisent un accord donné.
+ *
+ * S'appuie sur le champ `chords` déposé par `toFirestore` : sans lui, il faudrait
+ * parcourir toutes les grilles et fouiller leurs sections à chaque page d'accord.
+ * L'accord attendu est sous sa forme canonique, celle que produit `normalizeChord`.
+ */
+export const getSheetsWithChord = cache(async (chord: string, max = 12): Promise<PublicSheetRef[]> => {
+  if (!chord) return [];
+
+  try {
+    const snap = await getAdminDb()
+      .collection('sheets')
+      .where('isPublic', '==', true)
+      .where('chords', 'array-contains', chord)
+      .select('title', 'artist', 'updatedAt')
+      .limit(max)
+      .get();
+
+    const docs = snap.docs as { id: string; data: () => Record<string, unknown> }[];
+
+    return docs.map((d) => {
+      const data = d.data();
+      const updatedAt = data.updatedAt as { toDate?: () => Date } | undefined;
+      return {
+        id: d.id,
+        title: typeof data.title === 'string' ? data.title : '',
+        artist: typeof data.artist === 'string' ? data.artist : '',
+        updatedAt: updatedAt?.toDate ? updatedAt.toDate() : null,
+      };
+    });
+  } catch {
+    // Index composite absent ou reprise pas encore lancée : la page se passe de cette
+    // section plutôt que d'échouer.
+    return [];
+  }
+});
