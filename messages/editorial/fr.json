@@ -1,0 +1,421 @@
+{
+  "Editorial": {
+    "tuner": {
+      "howto": {
+        "h2": "Accorder son instrument au micro, étape par étape",
+        "items": [
+          "Autorisez l'accès au micro dans votre navigateur. Rien à installer, rien ne quitte votre appareil : l'analyse se fait sur place.",
+          "Choisissez le mode correspondant à votre instrument. Le mode restreint la détection à un intervalle serré autour des cordes attendues, ce qui écarte le ronflement du secteur et les parasites aigus.",
+          "Jouez une corde à vide et laissez-la sonner : une note tenue se mesure bien mieux qu’une note pincée sèchement.",
+          "Amenez l'aiguille sur zéro. L'échelle est graduée en cents, de −50 à +50.",
+          "Reprenez de la corde la plus grave à la plus aiguë, puis refaites un tour complet : en modifiant une corde, vous changez la tension du manche, donc les autres bougent un peu."
+        ],
+        "octave": "Un détail qui évite beaucoup d'erreurs : en mode instrument, une fréquence détectée à l'octave est ramenée sur la bonne corde. Vous ne pouvez donc pas accorder une corde une octave trop haut sans vous en apercevoir, ce qui est le piège classique des accordeurs chromatiques."
+      },
+      "frequencies": {
+        "h2": "Fréquences de l’accordage standard",
+        "intro": "Ces valeurs ne sont pas recopiées d'une table : elles sont calculées à partir du la de référence à 440 Hz, selon la formule du tempérament égal. Ce sont exactement les cibles que vise l'accordeur.",
+        "caption": "Accordages standards proposés, de la corde la plus grave à la plus aiguë",
+        "colString": "Corde",
+        "colNote": "Note",
+        "colFreq": "Fréquence",
+        "note": "Seuls les accordages standards sont proposés. L'accordeur ne comporte pas de variantes ouvertes ou abaissées ; pour un accordage particulier, le mode chromatique reste utilisable."
+      },
+      "chromatic": {
+        "h2": "Le mode chromatique",
+        "body": "Le mode chromatique écoute de 40 à 1 500 Hz et affiche la note la plus proche, sans présumer d'une corde cible. Il sert dès que l'instrument n'est pas dans la liste : voix, harmonica, cuivres, cordes accordées volontairement hors standard, ou simplement pour vérifier une hauteur."
+      },
+      "cents": {
+        "h2": "Lire l’écart en cents",
+        "body": "Un demi-ton vaut 100 cents. L'échelle affichée couvre donc un demi-ton de part et d'autre de la note visée. Au-delà de cinquante cents, l'accordeur bascule sur la note voisine : si la note affichée n'est pas celle que vous attendez, c'est que vous êtes à plus d'un demi-ton.",
+        "tip": "Un conseil de lutherie qui vaut pour tous les instruments à cordes : arrivez sur la note en montant. Une corde détendue puis remontée tient son accord bien mieux qu'une corde trop tendue puis relâchée."
+      },
+      "faq": {
+        "h2": "Questions fréquentes",
+        "q1": "Pourquoi le micro ne capte-t-il pas ma corde grave ?",
+        "a1": "Le mi grave d'une basse sonne à 41,20 Hz, sous le seuil utile de beaucoup de micros de téléphone et d'ordinateur portable. Jouez plus près du micro, ou accordez cette corde sur son harmonique à la douzième case, une octave au-dessus.",
+        "q2": "Le sol du ukulélé est-il vraiment plus aigu que le do ?",
+        "a2": "Oui, et le tableau ci-dessus le montre : le sol sonne à 392 Hz, le do à 261,63 Hz. C'est l'accordage ré-entrant, propre au ukulélé — les cordes ne vont pas du grave à l'aigu. Ce n'est pas une erreur d'accordage.",
+        "q3": "Faut-il préférer un accordeur à pince ?",
+        "a3": "En répétition ou sur scène, oui : une pince lit la vibration du bois et ignore le bruit ambiant. Ici c'est le micro qui écoute, ce qui suppose un environnement raisonnablement calme. Chez soi, la différence est négligeable."
+      },
+      "links": {
+        "h2": "Une fois accordé",
+        "chords": "Diagrammes d'accords pour votre instrument",
+        "chordDetect": "Identifier un accord joué au micro",
+        "explore": "Grilles d'accords à jouer"
+      }
+    },
+    "chords": {
+      "library": {
+        "h2": "Ce que contient la bibliothèque",
+        "intro": "La bibliothèque rassemble {total} diagrammes écrits à la main, répartis sur six instruments. Chaque instrument couvre les mêmes familles harmoniques sur les douze fondamentales, de manière à ce qu'aucun accord courant ne manque.",
+        "caption": "Diagrammes disponibles par instrument",
+        "colInstrument": "Instrument",
+        "colStatic": "Diagrammes",
+        "colGenerated": "Accords enrichis générés",
+        "families": "Familles couvertes : majeur, mineur, 7, maj7, min7, diminué, augmenté, sus2 et sus4. Le piano ajoute les accords sus et add9. La basse, elle, n’affiche que la fondamentale : sur quatre cordes graves, jouer un accord complet sonne brouillon, et les bassistes travaillent la note de fondation.",
+        "note": "Ces positions sont volontairement limitées aux doigtés principaux, pas à toutes les variantes possibles. Un accord manquant ou une erreur ? Écrivez-nous, on corrige."
+      },
+      "extended": {
+        "h2": "Les accords enrichis, construits à la demande",
+        "body": "Au-delà du catalogue, {formulas} formules d'accords enrichis sont calculées à la volée sur les douze fondamentales : neuvièmes, onzièmes, treizièmes, m7b5, dim7, mMaj7 et les altérations. C'est ce qui explique qu'un accord absent des diagrammes s'affiche quand même lorsqu'il apparaît dans une grille.",
+        "body2": "Le nombre de positions réellement produites varie d'un instrument à l'autre : certaines combinaisons n'ont pas de doigté jouable sur quatre cordes, alors qu'elles en ont un sur six. Le tableau ci-dessus donne le compte exact, instrument par instrument."
+      },
+      "reading": {
+        "h2": "Lire un diagramme",
+        "strings": "Sur un instrument à cordes, le diagramme représente le manche vu de face : les cordes en colonnes, les frettes en lignes. Les points marquent la position des doigts. Une croix au-dessus d'une corde signifie qu'elle ne doit pas sonner, un cercle qu'elle se joue à vide. Quand l'accord ne commence pas au sillet, la case de départ est indiquée sur le côté.",
+        "piano": "Au piano, le diagramme montre un fragment de clavier avec les touches à enfoncer. Les notes sont indiquées de la plus grave à la plus aiguë, dans la position la plus naturelle pour la main droite."
+      },
+      "notation": {
+        "h2": "Notation américaine et notation française",
+        "body": "Deux systèmes coexistent pour nommer les mêmes notes. Le système américain utilise des lettres, hérité de la notation anglo-saxonne ; le système latin utilise les syllabes de Guido d'Arezzo, en usage en France, en Italie et en Espagne. Ils désignent exactement les mêmes hauteurs.",
+        "caption": "Correspondance entre les deux notations",
+        "colUs": "Notation américaine",
+        "colFr": "Notation française",
+        "body2": "ChordSheet accepte les deux à la saisie : tapez « Lam » ou « Am », vous obtiendrez le même accord. L'affichage suit la préférence choisie dans votre profil et bascule partout à la fois. En revanche, les grilles sont toujours stockées en notation américaine — c'est ce qui permet de changer d'affichage sans jamais rien perdre.",
+        "minor": "Pour le mode mineur, le français ajoute « m » comme l’américain : La mineur s’écrit « Lam » ou « Am »."
+      },
+      "enharmony": {
+        "h2": "Dièses, bémols et équivalences",
+        "body": "Do dièse et ré bémol désignent la même hauteur, et se jouent avec le même doigté. On parle d'équivalence enharmonique. Le choix entre les deux écritures n'est pas indifférent pour autant : il dépend de la tonalité du morceau, et une partition bien écrite reste cohérente.",
+        "body2": "Lorsque vous transposez une grille, ChordSheet applique une règle simple : les tonalités de fa, si bémol, mi bémol, la bémol, ré bémol et sol bémol s’écrivent en bémols ; les autres en dièses. Un accord d’origine écrit en bémol conserve cette écriture. C’est ce qui évite de lire un « la dièse » là où tout musicien attend un « si bémol »."
+      },
+      "slash": {
+        "h2": "Les accords slash",
+        "body": "Un accord noté G/B se lit « sol sur si » : l'accord de sol, joué avec un si à la basse. Cette notation sert à écrire une ligne de basse qui descend ou monte sous des accords qui, eux, ne bougent pas — un procédé courant en chanson comme en pop.",
+        "body2": "La transposition traite les deux parties de l'accord. Un G/B monté d'un ton devient A/C#, et non A/B. C'est un détail que beaucoup d'outils de transposition manquent, et qui casse la ligne de basse quand il est omis."
+      },
+      "find": {
+        "h2": "Trouver un accord dont vous ignorez le nom",
+        "body": "Deux chemins existent. Vous pouvez sélectionner les notes que vous entendez ou que vous voyez sous vos doigts, et laisser la bibliothèque proposer les accords correspondants. Ou bien jouer l'accord dans votre micro et laisser la reconnaissance faire le travail."
+      },
+      "custom": {
+        "h2": "Créer votre propre doigté",
+        "body": "Si une position vous manque, vous pouvez la dessiner vous-même depuis l'édition d'une grille : placez vos doigts sur le manche, nommez l'accord, il sera enregistré avec la grille et s'affichera à sa place partout où il apparaît."
+      },
+      "links": {
+        "h2": "Pour aller plus loin",
+        "detect": "Identifier un accord au micro",
+        "tuner": "Accorder son instrument avant de jouer",
+        "explore": "Grilles d'accords à jouer",
+        "faq": "Questions fréquentes"
+      }
+    },
+    "chordDetect": {
+      "how": {
+        "h2": "Comment la reconnaissance fonctionne",
+        "items": [
+          "Le micro alimente une analyse spectrale du son, repliée en chromagramme : douze classes de hauteur, une par note, indépendamment de l'octave où elle est jouée.",
+          "Ce profil est comparé à des gabarits d’accords, un par famille et par fondamentale, par mesure de similarité.",
+          "Un score minimal est exigé avant de valider un résultat : en dessous, rien ne s'affiche plutôt que d'afficher faux.",
+          "Un vote majoritaire sur les dernières analyses lisse la sortie — c’est pourquoi l’affichage met une fraction de seconde à se stabiliser.",
+          "Les meilleurs candidats restent visibles avec leur score : quand l’outil hésite, il vous le dit au lieu de trancher à votre place."
+        ]
+      },
+      "recognizes": {
+        "h2": "Ce que l’outil reconnaît",
+        "body": "Douze familles d’accords sur les douze fondamentales : majeur, mineur, 7, m7, maj7, 6, m6, sus2, sus4, diminué, augmenté et m7b5. Les noms sont affichés en notation américaine."
+      },
+      "limits": {
+        "h2": "Ce qu’il ne peut pas faire, et pourquoi",
+        "body": "Un do sixte et un la mineur septième sont faits exactement des mêmes quatre notes. Aucune analyse fondée sur le contenu en notes ne peut les distinguer : seule la fonction harmonique dans le morceau tranche, et elle n'est pas audible dans un accord isolé. C'est précisément pour cela que les candidats sont affichés — à vous de choisir selon le contexte.",
+        "body2": "Les triades simples sont légèrement privilégiées. Sans ce biais, un simple do majeur serait constamment identifié comme un sus4 ou un maj7, parce que les harmoniques naturelles des cordes ajoutent des notes qui n'ont pas été jouées.",
+        "body3": "Enfin le renversement n'est pas détecté : le chromagramme ignore quelle note se trouve à la basse. Un do majeur joué avec un mi en dessous sera reconnu comme un do majeur."
+      },
+      "tips": {
+        "h2": "Obtenir un bon résultat",
+        "items": [
+          "Jouez l’accord plaqué et laissez-le sonner, plutôt que de gratter en boucle.",
+          "Un seul instrument à la fois : un accompagnement ou une batterie brouillent le profil.",
+          "Coupez ce qui fait du bruit autour, l’analyse écoute tout.",
+          "Si la confiance affichée reste basse, ré-attaquez l’accord plutôt que d’insister.",
+          "Un accord juste sur un instrument désaccordé ne sera pas reconnu : commencez par accorder."
+        ]
+      },
+      "without": {
+        "h2": "Identifier un accord sans micro",
+        "body": "En répétition bruyante, ou simplement sans instrument sous la main, la bibliothèque permet aussi de partir des notes : sélectionnez celles que vous voyez sous vos doigts et les accords correspondants vous sont proposés."
+      },
+      "links": {
+        "h2": "Pour aller plus loin",
+        "chords": "Voir le doigté de cet accord",
+        "tuner": "Accorder son instrument",
+        "explore": "Grilles d’accords à jouer"
+      }
+    },
+    "explore": {
+      "genres": {
+        "h2": "Parcourir par genre",
+        "body": "Les grilles publiques sont classées selon dix-neuf genres. Chaque lien ci-dessous filtre le catalogue."
+      },
+      "difficulty": {
+        "h2": "Les trois niveaux de difficulté, et comment ils sont calculés",
+        "body": "La difficulté n’est pas déclarée par l’auteur : elle est calculée automatiquement à partir des accords réellement présents dans la grille. La règle est publique et tient en trois lignes.",
+        "items": [
+          "Avancé dès qu’un accord avancé apparaît : diminué, augmenté, m7b5, mMaj, ou toute altération (b5, #5, b9, #9, #11, b13), ainsi que les onzièmes et treizièmes.",
+          "Intermédiaire à partir de deux accords intermédiaires — maj7, maj9, m7, m9, 7, 9 — ou dès que la grille compte dix accords différents.",
+          "Facile dans tous les autres cas. Les accords sus, 7sus et add sont classés comme basiques : ils sont courants chez les débutants et ne posent pas de difficulté de main gauche."
+        ],
+        "note": "Un morceau à trois accords ouverts sera donc toujours classé facile, même s’il est long ; un morceau qui enchaîne dix positions différentes sera classé intermédiaire même si chacune est simple. C’est le nombre de choses à mémoriser qui compte autant que leur difficulté propre."
+      },
+      "filters": {
+        "h2": "Filtrer et trier",
+        "body": "La recherche porte sur le titre, l’artiste, l’auteur de la grille et la tonalité. Les filtres se combinent : genre, difficulté, décennie. Le tri propose les plus récentes, les mieux notées ou les plus consultées, et un tirage aléatoire pour tomber sur quelque chose qu’on ne cherchait pas."
+      },
+      "content": {
+        "h2": "Ce que contient une grille",
+        "body": "Une grille se lit comme une partition simplifiée : des sections nommées — intro, couplet, refrain, pont — découpées en mesures, chaque mesure portant ses accords et leur durée en temps. S’y ajoutent la tonalité, le tempo, un éventuel capo, et les diagrammes de l’instrument que vous avez choisi.",
+        "body2": "Un même morceau peut avoir plusieurs versions : une grille simplifiée pour débuter, une autre plus fidèle à l’enregistrement. Quand c’est le cas, une page dédiée les rassemble."
+      },
+      "publish": {
+        "h2": "Publier votre grille",
+        "body": "Toute grille créée est privée par défaut. Vous pouvez la rendre publique — elle apparaît alors dans ce catalogue — ou la garder non répertoriée : accessible à qui possède le lien, invisible ici. C’est le bon compromis pour partager avec un professeur ou un groupe sans publier."
+      },
+      "links": {
+        "h2": "Pour aller plus loin",
+        "artists": "Parcourir par artiste",
+        "chords": "Bibliothèque d’accords",
+        "faq": "Questions fréquentes",
+        "pricing": "Tarifs"
+      }
+    },
+    "artists": {
+      "how": {
+        "h2": "Comment cette liste est constituée",
+        "body": "Cet annuaire n’est pas tenu à la main : il se construit à partir des grilles publiées. Dès qu’une grille devient publique, son artiste apparaît ici. L’index est alphabétique, et un artiste ne figure dans la liste que s’il a au moins une grille publique."
+      },
+      "page": {
+        "h2": "Ce que contient une page artiste",
+        "body": "Chaque page artiste rassemble toutes les grilles publiques de cet artiste, avec leur tonalité, leur difficulté calculée et la note attribuée par la communauté. C’est le point de départ naturel quand on veut travailler plusieurs morceaux du même répertoire."
+      },
+      "versions": {
+        "h2": "Plusieurs versions d’un même morceau",
+        "body": "Un morceau connu attire souvent plusieurs grilles : l’une simplifiée, l’autre fidèle à l’enregistrement, une troisième transposée pour une voix particulière. Quand plusieurs versions existent, une page dédiée les regroupe pour que vous choisissiez celle qui vous convient plutôt que de tomber sur la première publiée."
+      },
+      "missing": {
+        "h2": "Un artiste manque ?",
+        "body": "Rien ne s’ajoute automatiquement depuis une base extérieure : ce catalogue est celui de ce que les musiciens y déposent. Si un artiste n’apparaît pas, c’est que personne n’a encore publié de grille — la vôtre y a toute sa place."
+      },
+      "links": {
+        "h2": "Pour aller plus loin",
+        "explore": "Toutes les grilles",
+        "chords": "Bibliothèque d’accords",
+        "faq": "Questions fréquentes"
+      }
+    },
+    "importChords": {
+      "h1": "Importer une grille depuis un texte d'accords",
+      "lead": "Coller un texte où les accords sont écrits au-dessus des paroles, et obtenir une grille structurée. Voici ce que l'import reconnaît, et ce qu'il ne fait pas.",
+      "format": {
+        "h2": "Le format attendu",
+        "body": "L'import accepte le format le plus répandu sur les sites de tablatures : une ligne d'accords, puis la ligne de paroles correspondante en dessous, et des sections notées entre crochets. Vous collez le texte, l'analyse s'occupe du découpage en mesures."
+      },
+      "detect": {
+        "h2": "Comment une ligne d'accords est reconnue",
+        "body": "Une ligne est traitée comme une ligne d'accords si au moins quatre cinquièmes de ce qu'elle contient sont des accords valides. Ce seuil compte : il permet d'accepter une ligne qui porte une annotation au passage, tout en écartant une ligne de paroles qui contiendrait par hasard un mot comme « Am » ou « Do »."
+      },
+      "sections": {
+        "h2": "Les sections reconnues",
+        "body": "Douze étiquettes sont comprises, en français comme en anglais : intro, couplet, refrain, pré-refrain, pont, outro, solo, interlude, instrumental et hook, ainsi que les formes anglaises verse, chorus et bridge. La numérotation est conservée : « [Verse 2] » devient « Couplet 2 »."
+      },
+      "durations": {
+        "h2": "Comment les durées sont déduites",
+        "body": "Les durées ne sont pas devinées au hasard : elles viennent de l'alignement du texte. Un accord isolé sur sa ligne occupe la mesure entière. Deux à quatre accords se répartissent selon l'écart de colonnes entre eux dans le texte source, ce qui reproduit la manière dont ces fichiers sont écrits. Au-delà de quatre accords sur une même ligne, l'alignement devient trop peu fiable : chaque accord reçoit alors un temps et la ligne se découpe en mesures de quatre."
+      },
+      "ignored": {
+        "h2": "Ce qui est ignoré volontairement",
+        "body": "Beaucoup de choses traînent dans ces fichiers. Les tablatures en notation ASCII, les adresses web, les indications de grattage, les mentions de tempo, les en-têtes de difficulté ou d'accordage sont écartés automatiquement. Vous pouvez donc coller la page entière sans faire le ménage avant."
+      },
+      "limits": {
+        "h2": "Ce qui n'est pas importé",
+        "body": "Deux choses, à savoir avant de commencer. Les paroles ne sont pas reprises : seuls les accords et la structure le sont. Et la métrique n'est pas déduite du texte — toute grille importée arrive en quatre temps par mesure. Si votre morceau est à trois temps, il faut le régler après coup dans l'éditeur."
+      },
+      "after": {
+        "h2": "Corriger après l'import",
+        "body": "Le résultat est modifiable case par case : renommer une section, allonger un accord sur deux temps, diviser une mesure, en supprimer une. C'est le moment de replacer les nuances que le texte source ne portait pas."
+      },
+      "links": {
+        "h2": "Pour aller plus loin",
+        "chords": "Bibliothèque d'accords",
+        "photo": "Transcrire une photo de partition",
+        "faq": "Questions fréquentes",
+        "explore": "Voir des grilles existantes"
+      }
+    },
+    "transpose": {
+      "h1": "Transposer une grille d'accords",
+      "lead": "Changer la tonalité d'un morceau sans réécrire une seule mesure, et comprendre pourquoi le résultat s'écrit parfois en dièses, parfois en bémols.",
+      "intro": {
+        "h2": "Où se trouve la transposition",
+        "body": "La transposition n'est pas un outil séparé : elle vit dans l'écran de consultation d'une grille, sous forme d'un sélecteur en bas de page. Ouvrez n'importe quelle grille publique, montez ou descendez d'un demi-ton, tout se recalcule immédiatement."
+      },
+      "what": {
+        "h2": "Ce que transposer veut dire",
+        "body": "Transposer, c'est déplacer tous les accords du même nombre de demi-tons. Les rapports entre eux ne changent pas : un enchaînement qui sonnait juste continue de sonner juste, simplement plus haut ou plus bas. Le morceau reste le même, seule sa hauteur bouge."
+      },
+      "why": {
+        "h2": "Pourquoi transposer",
+        "body": "Trois raisons reviennent tout le temps. Adapter à la tessiture d'un chanteur, qui n'a pas à forcer sur un morceau écrit pour une autre voix. Éviter des barrés en trouvant une tonalité qui tombe sur des accords ouverts. Ou accompagner un instrument transpositeur, dont les notes écrites ne correspondent pas aux notes entendues."
+      },
+      "display": {
+        "h2": "La grille d'origine n'est pas modifiée",
+        "body": "C'est un affichage, pas une transformation. Vous pouvez transposer la grille de quelqu'un d'autre sans rien altérer, et revenir à la tonalité écrite d'un clic. L'amplitude va de six demi-tons vers le bas à six vers le haut, ce qui couvre les douze tonalités : au-delà, on retombe sur les mêmes accords."
+      },
+      "spelling": {
+        "h2": "Dièses ou bémols",
+        "body": "Le même son peut s'écrire de deux façons, et le choix n'est pas anodin. La règle appliquée est simple : les tonalités de fa, si bémol, mi bémol, la bémol, ré bémol et sol bémol s'écrivent en bémols, les autres en dièses. Et un accord écrit en bémol dans la grille d'origine conserve cette écriture. C'est ce qui évite de lire un « la dièse » là où tout musicien attend un « si bémol »."
+      },
+      "slash": {
+        "h2": "Les accords slash suivent",
+        "body": "Un accord noté G/B est transposé sur ses deux parties : monté d'un ton, il devient A/C dièse, et non A/B. La ligne de basse se déplace donc avec les accords, ce qui est le comportement attendu et que beaucoup d'outils manquent."
+      },
+      "capo": {
+        "h2": "Transposer ou poser un capo",
+        "body": "Les deux changent la hauteur, mais pas de la même façon. Le capo garde vos doigtés et monte le son : pratique pour jouer des accords ouverts dans une tonalité qui n'en offre pas. La transposition, elle, change les accords écrits et vous laisse jouer sans accessoire. Sur une grille, les deux se combinent : le capo est une donnée du morceau, la transposition un réglage de lecture."
+      },
+      "links": {
+        "h2": "Pour aller plus loin",
+        "explore": "Essayer sur une grille publique",
+        "chords": "Dièses, bémols et enharmonie",
+        "faq": "Questions fréquentes"
+      }
+    },
+    "sheetPhoto": {
+      "h1": "Transcrire une photo de partition en grille d'accords",
+      "lead": "Photographier une partition et en obtenir une grille modifiable. Ce que l'analyse lit bien, ce qu'elle lit mal, et ce que ça consomme.",
+      "how": {
+        "h2": "Comment ça se passe",
+        "body": "Vous déposez une ou plusieurs images. L'analyse transcrit la partition mesure par mesure, en reconstruit la structure — sections, répétitions, tonalité, métrique — puis produit une grille que vous pouvez modifier comme n'importe quelle autre."
+      },
+      "formats": {
+        "h2": "Formats acceptés",
+        "body": "Des images : JPG, PNG ou WebP. Les fichiers sont réduits avant l'envoi, vous n'avez donc pas à vous soucier du poids de vos photos. Un point à connaître : le format PDF n'est pas pris en charge. Si votre partition est un PDF, exportez d'abord les pages en images."
+      },
+      "quality": {
+        "h2": "Réussir sa photo",
+        "body": "La qualité de la transcription dépend directement de celle de l'image. Posez la partition à plat, éclairez-la de façon homogène, cadrez la page entière sans couper les portées, et évitez les ombres portées de votre propre main. Une page par image."
+      },
+      "multipage": {
+        "h2": "Une partition sur plusieurs pages",
+        "body": "Vous pouvez envoyer plusieurs images en une seule analyse : elles sont traitées dans l'ordre et produisent une grille unique. Si l'analyse échoue en signalant une partition trop longue, découpez en deux envois."
+      },
+      "quota": {
+        "h2": "Ce que ça consomme",
+        "body": "L'offre gratuite comprend deux analyses par mois. Ce compteur est commun à la transcription d'image et à l'analyse audio : deux analyses au total, quel que soit le moyen utilisé. L'offre Pro les rend illimitées."
+      },
+      "draft": {
+        "h2": "Le résultat est un point de départ",
+        "body": "Il faut le dire nettement : une transcription automatique n'est pas une partition relue. Les durées, les accords enrichis et les passages ambigus sont les points faibles. La grille produite vous appartient et se corrige mesure par mesure — considérez-la comme un premier jet qui vous épargne la saisie, pas comme un résultat définitif."
+      },
+      "links": {
+        "h2": "Pour aller plus loin",
+        "import": "Importer depuis un texte d'accords",
+        "pricing": "Tarifs",
+        "faq": "Questions fréquentes",
+        "chords": "Bibliothèque d'accords"
+      }
+    },
+    "bands": {
+      "h1": "Partager son répertoire avec un groupe ou une classe",
+      "lead": "Comment fonctionne un groupe sur ChordSheet : qui voit quoi, comment on invite, et pourquoi une seule licence suffit.",
+      "create": {
+        "h2": "Créer un groupe et inviter",
+        "body": "Un groupe se crée en lui donnant un nom. Vous générez ensuite un lien d'invitation, valable sept jours, que vous transmettez comme vous voulez : message, courriel, sur papier. Celui qui l'ouvre rejoint le groupe, sans démarche d'inscription particulière au groupe lui-même."
+      },
+      "roles": {
+        "h2": "Les deux rôles",
+        "body": "Il n'y a que deux rôles, et c'est volontaire. Le leader gère : il modifie le nom, la description et la photo du groupe, rattache ou retire des grilles, et peut retirer un membre. Le membre consulte le répertoire, joue, et ajoute des grilles à son propre book. Le créateur du groupe en est leader d'office et ne peut pas le quitter — il faut d'abord le transmettre ou le supprimer."
+      },
+      "sharing": {
+        "h2": "Qui voit quelles grilles",
+        "body": "Les grilles rattachées au groupe sont accessibles à tous ses membres, y compris celles que vous gardez privées par ailleurs. C'est le point important : vous n'avez pas à publier une grille pour la partager avec votre groupe. Les setlists créées dans le groupe sont partagées de la même façon."
+      },
+      "license": {
+        "h2": "Une seule licence suffit pour tout le groupe",
+        "body": "C'est la question qu'on nous pose le plus souvent. Créer un groupe demande un abonnement Pro, mais **seule la personne qui crée le groupe** en a besoin. Les membres invités utilisent le répertoire partagé, les setlists et le mode concert avec un compte gratuit. Un groupe de cinq musiciens ne paie donc pas cinq abonnements."
+      },
+      "teachers": {
+        "h2": "Pour un professeur",
+        "body": "Le fonctionnement se prête bien à l'enseignement. Une classe devient un groupe : vous créez la grille une fois, tous les élèves l'ont dans leur book. Plusieurs classes deviennent plusieurs groupes, chacun avec son répertoire. Et chaque élève transpose de son côté, pour sa voix ou son instrument, sans que cela n'affecte la version des autres."
+      },
+      "session": {
+        "h2": "Sans compte et sans abonnement",
+        "body": "Pour un besoin ponctuel — un bœuf, une répétition avec quelqu'un de passage — la session live évite d'avoir à créer un groupe. Un code à six caractères, valable six heures, que vos invités saisissent sans créer de compte."
+      },
+      "links": {
+        "h2": "Pour aller plus loin",
+        "stage": "Le mode concert",
+        "pricing": "Tarifs",
+        "faq": "Questions fréquentes",
+        "explore": "Voir des grilles"
+      }
+    },
+    "stageMode": {
+      "h1": "Le mode concert : jouer sans quitter la grille des yeux",
+      "lead": "Une setlist en plein écran, synchronisée entre tous les appareils du groupe, avec accompagnement et boîte à rythmes.",
+      "setlist": {
+        "h2": "Une setlist en plein écran",
+        "body": "Vous préparez l'ordre des morceaux à l'avance, puis vous basculez en mode concert : la grille occupe tout l'écran, sans interface parasite, et vous passez d'un titre au suivant d'un geste. C'est pensé pour un pupitre ou une tablette posée sur un ampli."
+      },
+      "sync": {
+        "h2": "La synchronisation entre appareils",
+        "body": "C'est la partie la plus travaillée. Quand un membre lance un morceau, tous les appareils du groupe basculent sur la même grille, et la position de lecture est calculée à partir d'un horodatage commun plutôt que transmise en continu. Les appareils alignent leur horloge sur celle du serveur par une série d'allers-retours dont on retient le plus rapide — le même principe que la synchronisation d'horloge des ordinateurs. Résultat : tout le monde voit la même mesure au même instant, même sur un réseau irrégulier."
+      },
+      "accompaniment": {
+        "h2": "L'accompagnement",
+        "body": "Six instruments peuvent jouer en même temps — guitare, basse, piano, mandoline, banjo et ukulélé — chacun en accords plaqués ou en arpèges. Le tempo se règle de quarante à trois cents battements par minute, avec un métronome dont on peut couper le son sans arrêter la lecture. Vous pouvez lancer un morceau entier, une section, ou une seule mesure pour travailler un passage."
+      },
+      "groove": {
+        "h2": "La boîte à rythmes",
+        "body": "Dix-huit motifs répartis en six familles : rock et pop, jazz et blues, reggae et latin, funk et soul, hip hop, country et folk. Quinze voix de batterie, échantillonnées sur une boîte à rythmes des années quatre-vingt. Les motifs s'écrivent sur deux mesures, de sorte que la seconde varie — un tour de batterie, des notes fantômes — au lieu de tourner en boucle identique."
+      },
+      "live": {
+        "h2": "Les sessions live",
+        "body": "Plus léger qu'un groupe : un code à six caractères, choisi sans lettres ni chiffres ambigus pour être dicté à voix haute, valable six heures. Vos invités rejoignent sans créer de compte, et n'importe quel participant peut pousser une grille sur les écrans de tous les autres."
+      },
+      "links": {
+        "h2": "Pour aller plus loin",
+        "bands": "Les groupes",
+        "pricing": "Tarifs",
+        "explore": "Voir des grilles",
+        "faq": "Questions fréquentes"
+      }
+    },
+    "audioToChords": {
+      "h1": "Trouver les accords d'un morceau depuis un fichier audio",
+      "lead": "Soumettre un enregistrement et obtenir une première grille. À lire avant : ce que l'analyse rend vraiment.",
+      "expect": {
+        "h2": "Ce que vous obtiendrez, et ce que vous n’obtiendrez pas",
+        "body": "Autant l'annoncer d'emblée plutôt que de vous laisser le découvrir. L'analyse restitue des accords **majeurs et mineurs**. Elle ne restitue pas les enrichissements : une septième, une neuvième, un sus4 présents dans l'enregistrement ressortiront en accord simple. Le résultat est un brouillon à corriger, qui vous épargne le repiquage à l'oreille — pas une transcription."
+      },
+      "how": {
+        "h2": "Comment ça se passe",
+        "body": "L'enregistrement passe par trois étapes. Les pistes sont d'abord séparées, pour isoler ce qui porte l'harmonie et écarter la batterie et le chant. L'harmonie est ensuite estimée mesure par mesure, avec le tempo et la tonalité. Enfin le découpage en sections est proposé, et les mesures identiques regroupées."
+      },
+      "input": {
+        "h2": "Ce que vous pouvez soumettre",
+        "body": "Un fichier audio, ou un lien vers une vidéo en ligne. Le fichier est le chemin le plus fiable : la récupération depuis un lien dépend d'un service tiers qui peut refuser la demande."
+      },
+      "fix": {
+        "h2": "Corriger efficacement",
+        "body": "Prenez les choses dans cet ordre. Vérifiez d'abord la tonalité : si elle est fausse, tout le reste le sera. Contrôlez ensuite le découpage en sections, plus facile à reconnaître à l'oreille que les accords. Terminez par les mesures douteuses, celles où l'accord change en cours de route — c'est là que l'estimation se trompe le plus."
+      },
+      "quota": {
+        "h2": "Ce que ça consomme",
+        "body": "Deux analyses par mois en offre gratuite. Ce compteur est commun avec la transcription de photos : deux analyses au total, quel que soit le moyen. Illimité en Pro."
+      },
+      "when": {
+        "h2": "Quand préférer une autre voie",
+        "body": "Si le morceau existe déjà en grille sur un site d'accords, l'import de texte donnera un meilleur résultat en moins de temps. Si vous avez la partition sous les yeux, la photo sera plus fidèle. L'analyse audio est faite pour les cas où vous n'avez que l'enregistrement."
+      },
+      "links": {
+        "h2": "Pour aller plus loin",
+        "import": "Importer depuis un texte d'accords",
+        "photo": "Transcrire une photo de partition",
+        "detect": "Identifier un accord au micro",
+        "pricing": "Tarifs"
+      }
+    }
+  }
+}

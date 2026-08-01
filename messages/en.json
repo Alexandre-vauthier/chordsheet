@@ -51,7 +51,14 @@
     "linkChordDetect": "Identify a chord",
     "linkTuner": "Online tuner",
     "linkNewSheet": "Create a chart",
-    "linkPricing": "Pricing"
+    "linkPricing": "Pricing",
+    "colGuides": "Guides",
+    "linkImport": "Import a chord text",
+    "linkTranspose": "Transpose a chart",
+    "linkSheetPhoto": "Score photo to chart",
+    "linkAudio": "Chords from audio",
+    "linkBands": "Playing in a band",
+    "linkStage": "Stage mode"
   },
   "Landing": {
     "nav": {
@@ -1061,7 +1068,7 @@
     "billingToggleLabel": "Choose monthly or yearly billing"
   },
   "Chords": {
-    "pageTitle": "Chord library",
+    "pageTitle": "Chord library: guitar, ukulele, mandolin, banjo, bass and piano",
     "pageSubtitle": "All chords in the library, by instrument and category.",
     "libraryNote": "These chords are generated automatically and deliberately limited to the main positions, not every possible variation. Spotted an error or a missing chord? <contact>Get in touch</contact> and we'll fix or add it. You can also create your own fingerings right in the sheet editor.",
     "searchPlaceholder": "Search for a chord…",
@@ -1264,6 +1271,30 @@
       "legalNotice": {
         "title": "Legal notice",
         "description": "Publisher, host and intellectual property of the ChordSheet website."
+      },
+      "importChords": {
+        "title": "Import a chord chart from plain text",
+        "description": "Paste chord text and get a structured chart. Formats recognised, sections, inferred durations, and what is not imported."
+      },
+      "transpose": {
+        "title": "Transpose a chord chart",
+        "description": "Change the key of a song without rewriting a bar. Sharps or flats, slash chords, capo: the rule applied."
+      },
+      "sheetPhoto": {
+        "title": "Score photo to chord chart",
+        "description": "Photograph a score, get an editable chart. Accepted formats, shooting tips and real limits."
+      },
+      "bands": {
+        "title": "Share your repertoire with a band or a class",
+        "description": "Bands on ChordSheet: roles, link invitations, shared repertoire. One Pro licence covers the whole band."
+      },
+      "stageMode": {
+        "title": "Stage mode: full-screen setlist and synchronisation",
+        "description": "Play live without putting your instrument down: full-screen setlist, device synchronisation, accompaniment and drum machine."
+      },
+      "audioToChords": {
+        "title": "Get the chords of a track from an audio file",
+        "description": "Analyse a recording to draft a chart. What the analysis really returns, and its limits."
       }
     },
     "artist": {
@@ -1300,5 +1331,19 @@
     "candidates": "Candidates",
     "chromagram": "Chromagram (energy per note)",
     "footnote": "Recognises 12 families: maj, min, 7, m7, maj7, 6, m6, sus2, sus4, dim, aug, m7b5. American notation. Note: chords made of the same notes cannot be told apart (e.g. C6 = Am7)."
+  },
+  "About": {
+    "h1": "About us",
+    "lead": "A story of family, strings, and memory.",
+    "p1": "Our father is a guitarist. We grew up with guitars lying around in corners, chords drifting out of a room, a house where music was a language of its own. For <b>Alexandre</b>, it really took hold at thirteen — that feeling of putting your fingers on a neck and sensing something fall into place. His younger brother <b>Julien</b> went for the drums. Two and a half years apart, two different approaches, one shared playground.",
+    "p2": "At fifteen or sixteen we started our first band. We knew very little but we played gigs, fell flat, started again. We spent hours on forums, on Guitar Pro, working out tablature, swapping things found late at night. Music became our way of getting together — birthdays, Christmas, weekends: so many chances to ask for another instrument. A bass. A ukulele. A piano. A banjo, a mandolin, a pan flute, a melodica, castanets. We tried everything, from metal to classical, with no hierarchy and no borders.",
+    "p3": "Twenty years have gone by. We are thirty-five now, and we still play together — with more maturity, a better ear, more experience. Yet the struggle is strangely unchanged: <i>what were the chords again? What is the structure? What order do we play it in?</i> And with it a quiet frustration: all those songs learnt twenty years ago, those riffs, those progressions, those arrangements — gone. Lost somewhere between two house moves and a hard drive upgrade.",
+    "p4": "ChordSheet came out of that. Out of a simple, slightly painful need: <b>not to lose what we had learnt</b>. To remember. To have somewhere to write a chart down properly, to find a chord at two in the morning before a rehearsal, to share the structure of a song without sending a blurry photo of a spiral notebook.",
+    "p5": "We built it together. Alexandre on the technical side, Julien — known as <b>Piza</b> — on the musical vision, the theory, the rigour of someone who genuinely reads a score. What one of us cannot do, the other carries. That has been how we work from the start.",
+    "p6": "Building the tool, we realised it was not only for us. A band in rehearsal needs one shared reading — not five different versions of the same song on five phones. A guitar teacher needs to hand charts to a class without it turning into a puzzle. A musician on their own needs a book, a repertoire, something personal that lasts.",
+    "p7": "ChordSheet handles many instruments because we do. It is built for playing together because that is the only reason we started. And it looks ahead — AI to transcribe a score, organising a gig, sharing within a band — because we now have the technical means to solve problems we have been carrying since our teens.",
+    "closing": "It is a tool made by musicians, for musicians. No more, no less.",
+    "roleAlexandre": "Development & design",
+    "roleJulien": "Musical vision & theory"
   }
 }

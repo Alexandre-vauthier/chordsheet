@@ -1,0 +1,421 @@
+{
+  "Editorial": {
+    "tuner": {
+      "howto": {
+        "h2": "Tuning with your microphone, step by step",
+        "items": [
+          "Allow microphone access in your browser. Nothing to install, and nothing leaves your device: the analysis runs locally.",
+          "Pick the mode matching your instrument. The mode narrows detection to a tight range around the expected strings, which rules out mains hum and high-frequency noise.",
+          "Play an open string and let it ring: a sustained note measures far better than a sharply plucked one.",
+          "Bring the needle to zero. The scale is graduated in cents, from −50 to +50.",
+          "Work from the lowest string to the highest, then go round again: changing one string changes the tension on the neck, so the others drift slightly."
+        ],
+        "octave": "One detail that prevents a lot of mistakes: in instrument mode, a frequency detected an octave away is folded back onto the right string. You cannot tune a string a full octave too high without noticing — the classic trap of chromatic tuners."
+      },
+      "frequencies": {
+        "h2": "Standard tuning frequencies",
+        "intro": "These values are not copied from a table: they are computed from the 440 Hz reference A using equal temperament. They are exactly the targets the tuner aims for.",
+        "caption": "Standard tunings offered, from the lowest string to the highest",
+        "colString": "String",
+        "colNote": "Note",
+        "colFreq": "Frequency",
+        "note": "Only standard tunings are offered. The tuner has no open or dropped variants; for an unusual tuning, chromatic mode still works."
+      },
+      "chromatic": {
+        "h2": "Chromatic mode",
+        "body": "Chromatic mode listens from 40 to 1,500 Hz and shows the nearest note, without assuming a target string. It comes in handy whenever the instrument is not on the list: voice, harmonica, brass, strings deliberately tuned off standard, or simply to check a pitch."
+      },
+      "cents": {
+        "h2": "Reading the cent deviation",
+        "body": "A semitone is 100 cents, so the scale covers one semitone either side of the target note. Beyond fifty cents the tuner switches to the neighbouring note: if the note shown is not the one you expect, you are more than a semitone off.",
+        "tip": "A piece of luthier advice that holds for every string instrument: arrive at the note from below. A string loosened and then brought up holds its tuning far better than one overtightened and released."
+      },
+      "faq": {
+        "h2": "Frequently asked questions",
+        "q1": "Why does the microphone miss my low string?",
+        "a1": "A bass low E sounds at 41.20 Hz, below the useful range of many phone and laptop microphones. Play closer to the microphone, or tune that string on its twelfth-fret harmonic, one octave higher.",
+        "q2": "Is the ukulele G really higher than the C?",
+        "a2": "Yes, and the table above shows it: the G sounds at 392 Hz, the C at 261.63 Hz. That is re-entrant tuning, specific to the ukulele — the strings do not run low to high. It is not a tuning mistake.",
+        "q3": "Should I prefer a clip-on tuner?",
+        "a3": "In rehearsal or on stage, yes: a clip reads the vibration of the wood and ignores ambient noise. Here the microphone listens, which assumes a reasonably quiet room. At home the difference is negligible."
+      },
+      "links": {
+        "h2": "Once you are in tune",
+        "chords": "Chord diagrams for your instrument",
+        "chordDetect": "Identify a chord played into the microphone",
+        "explore": "Chord charts to play"
+      }
+    },
+    "chords": {
+      "library": {
+        "h2": "What the library contains",
+        "intro": "The library gathers {total} hand-written diagrams across six instruments. Each instrument covers the same harmonic families on all twelve roots, so that no common chord is missing.",
+        "caption": "Diagrams available per instrument",
+        "colInstrument": "Instrument",
+        "colStatic": "Diagrams",
+        "colGenerated": "Extended chords generated",
+        "families": "Families covered: major, minor, 7, maj7, min7, diminished, augmented, sus2 and sus4. Piano adds sus and add9 chords. Bass shows the root only: on four low strings a full chord sounds muddy, and bass players work the foundation note.",
+        "note": "These positions are deliberately limited to the main fingerings, not every possible variation. A chord missing, or a mistake? Write to us and we will fix it."
+      },
+      "extended": {
+        "h2": "Extended chords, built on demand",
+        "body": "Beyond the catalogue, {formulas} extended chord formulas are computed on the fly across the twelve roots: ninths, elevenths, thirteenths, m7b5, dim7, mMaj7 and altered chords. That is why a chord absent from the diagrams still appears when it turns up in a chart.",
+        "body2": "The number of positions actually produced varies by instrument: some combinations have no playable fingering on four strings while they do on six. The table above gives the exact count, instrument by instrument."
+      },
+      "reading": {
+        "h2": "Reading a diagram",
+        "strings": "On a string instrument the diagram shows the neck head-on: strings as columns, frets as rows. Dots mark where the fingers go. A cross above a string means it must not ring, a circle means it is played open. When the chord does not start at the nut, the starting fret is shown at the side.",
+        "piano": "On piano the diagram shows a fragment of keyboard with the keys to press. Notes run from lowest to highest, in the most natural position for the right hand."
+      },
+      "notation": {
+        "h2": "American and French notation",
+        "body": "Two systems name the same notes. The American system uses letters, inherited from Anglo-Saxon notation; the Latin system uses the syllables of Guido of Arezzo, in use across France, Italy and Spain. They refer to exactly the same pitches.",
+        "caption": "Correspondence between the two notations",
+        "colUs": "American notation",
+        "colFr": "French notation",
+        "body2": "ChordSheet accepts both when you type: enter “Lam” or “Am” and you get the same chord. Display follows the preference set in your profile and switches everywhere at once. Charts, however, are always stored in American notation — which is what lets you change the display without ever losing anything.",
+        "minor": "For minor chords, French adds “m” just as American does: A minor is written “Lam” or “Am”."
+      },
+      "enharmony": {
+        "h2": "Sharps, flats and equivalences",
+        "body": "C sharp and D flat name the same pitch and use the same fingering. This is called enharmonic equivalence. The choice between the two spellings still matters: it depends on the key of the piece, and a well-written score stays consistent.",
+        "body2": "When you transpose a chart, ChordSheet applies a simple rule: the keys of F, B flat, E flat, A flat, D flat and G flat are written with flats; the others with sharps. A chord originally written with a flat keeps that spelling. This is what stops you reading “A sharp” where every musician expects “B flat”."
+      },
+      "slash": {
+        "h2": "Slash chords",
+        "body": "A chord written G/B reads “G over B”: the G chord, played with a B in the bass. This notation writes a bass line that walks down or up underneath chords that do not themselves move — common in songwriting and pop alike.",
+        "body2": "Transposition handles both halves of the chord. A G/B moved up a tone becomes A/C#, not A/B. Many transposition tools miss this detail, and the bass line breaks when they do."
+      },
+      "find": {
+        "h2": "Finding a chord whose name you do not know",
+        "body": "There are two routes. You can select the notes you hear, or see under your fingers, and let the library suggest matching chords. Or play the chord into your microphone and let recognition do the work."
+      },
+      "custom": {
+        "h2": "Creating your own fingering",
+        "body": "If a position is missing you can draw it yourself while editing a chart: place your fingers on the neck, name the chord, and it will be saved with the chart and shown in its place wherever it appears."
+      },
+      "links": {
+        "h2": "Going further",
+        "detect": "Identify a chord with your microphone",
+        "tuner": "Tune your instrument before you play",
+        "explore": "Chord charts to play",
+        "faq": "Frequently asked questions"
+      }
+    },
+    "chordDetect": {
+      "how": {
+        "h2": "How recognition works",
+        "items": [
+          "The microphone feeds a spectral analysis, folded into a chromagram: twelve pitch classes, one per note, regardless of the octave played.",
+          "That profile is compared to chord templates, one per family and root, by similarity measurement.",
+          "A minimum score is required before a result is accepted: below it, nothing is shown rather than showing something wrong.",
+          "A majority vote over the last few analyses smooths the output — which is why the display takes a fraction of a second to settle.",
+          "The best candidates stay visible with their scores: when the tool hesitates, it says so instead of deciding for you."
+        ]
+      },
+      "recognizes": {
+        "h2": "What the tool recognises",
+        "body": "Twelve chord families across the twelve roots: major, minor, 7, m7, maj7, 6, m6, sus2, sus4, diminished, augmented and m7b5. Names are shown in American notation."
+      },
+      "limits": {
+        "h2": "What it cannot do, and why",
+        "body": "A C sixth and an A minor seventh are made of exactly the same four notes. No analysis based on note content can tell them apart: only harmonic function within the piece decides, and that is not audible in an isolated chord. This is precisely why candidates are shown — you choose according to context.",
+        "body2": "Simple triads are slightly favoured. Without that bias a plain C major would constantly be read as a sus4 or a maj7, because the natural harmonics of the strings add notes that were never played.",
+        "body3": "Finally, inversions are not detected: the chromagram ignores which note sits in the bass. A C major played with an E underneath is recognised as a C major."
+      },
+      "tips": {
+        "h2": "Getting a good result",
+        "items": [
+          "Play the chord as a block and let it ring, rather than strumming continuously.",
+          "One instrument at a time: accompaniment or drums blur the profile.",
+          "Turn off whatever is making noise around you — the analysis hears everything.",
+          "If the confidence stays low, attack the chord again rather than holding on.",
+          "A correct chord on an out-of-tune instrument will not be recognised: start by tuning."
+        ]
+      },
+      "without": {
+        "h2": "Identifying a chord without a microphone",
+        "body": "In a noisy rehearsal, or simply without an instrument to hand, the library also lets you start from the notes: select the ones under your fingers and matching chords are suggested."
+      },
+      "links": {
+        "h2": "Going further",
+        "chords": "See the fingering for this chord",
+        "tuner": "Tune your instrument",
+        "explore": "Chord charts to play"
+      }
+    },
+    "explore": {
+      "genres": {
+        "h2": "Browse by genre",
+        "body": "Public chord charts are sorted into nineteen genres. Each link below filters the catalogue."
+      },
+      "difficulty": {
+        "h2": "The three difficulty levels, and how they are worked out",
+        "body": "Difficulty is not declared by the author: it is computed automatically from the chords actually present in the chart. The rule is public and fits in three lines.",
+        "items": [
+          "Advanced as soon as one advanced chord appears: diminished, augmented, m7b5, mMaj, or any alteration (b5, #5, b9, #9, #11, b13), along with elevenths and thirteenths.",
+          "Intermediate from two intermediate chords — maj7, maj9, m7, m9, 7, 9 — or as soon as the chart uses ten different chords.",
+          "Easy in every other case. Sus, 7sus and add chords count as basic: they are common for beginners and pose no left-hand difficulty."
+        ],
+        "note": "A three-open-chord song is therefore always rated easy, however long it runs; a song cycling through ten different positions is rated intermediate even if each one is simple. How much there is to memorise counts as much as how hard each shape is."
+      },
+      "filters": {
+        "h2": "Filtering and sorting",
+        "body": "Search covers title, artist, chart author and key. Filters combine: genre, difficulty, decade. Sorting offers most recent, best rated or most viewed, plus a random pick for stumbling on something you were not looking for."
+      },
+      "content": {
+        "h2": "What a chord chart contains",
+        "body": "A chart reads like a simplified score: named sections — intro, verse, chorus, bridge — split into bars, each bar carrying its chords and their length in beats. Add to that the key, the tempo, a capo if any, and the diagrams for the instrument you picked.",
+        "body2": "A single song may have several versions: a simplified chart to get started, another closer to the recording. When that happens, a dedicated page brings them together."
+      },
+      "publish": {
+        "h2": "Publishing your chart",
+        "body": "Every chart you create is private by default. You can make it public — it then appears in this catalogue — or keep it unlisted: reachable by anyone with the link, invisible here. That is the right middle ground for sharing with a teacher or a band without publishing."
+      },
+      "links": {
+        "h2": "Going further",
+        "artists": "Browse by artist",
+        "chords": "Chord library",
+        "faq": "Frequently asked questions",
+        "pricing": "Pricing"
+      }
+    },
+    "artists": {
+      "how": {
+        "h2": "How this list is built",
+        "body": "This directory is not maintained by hand: it is built from published charts. As soon as a chart becomes public, its artist appears here. The index is alphabetical, and an artist only shows up with at least one public chart."
+      },
+      "page": {
+        "h2": "What an artist page contains",
+        "body": "Each artist page gathers every public chart for that artist, with its key, its computed difficulty and the rating given by the community. It is the natural starting point when you want to work through several songs from the same repertoire."
+      },
+      "versions": {
+        "h2": "Several versions of the same song",
+        "body": "A well-known song often attracts several charts: one simplified, another faithful to the recording, a third transposed for a particular voice. When several versions exist, a dedicated page groups them so you pick the one that suits you rather than landing on whichever was published first."
+      },
+      "missing": {
+        "h2": "An artist is missing?",
+        "body": "Nothing is pulled in automatically from an outside database: this catalogue is what musicians put into it. If an artist does not appear, nobody has published a chart yet — yours would be welcome."
+      },
+      "links": {
+        "h2": "Going further",
+        "explore": "All chord charts",
+        "chords": "Chord library",
+        "faq": "Frequently asked questions"
+      }
+    },
+    "importChords": {
+      "h1": "Import a chord chart from plain text",
+      "lead": "Paste text with chords written above the lyrics and get a structured chart. Here is what the import recognises, and what it does not do.",
+      "format": {
+        "h2": "The expected format",
+        "body": "The import accepts the format most common on tablature sites: a line of chords, the matching lyric line underneath, and sections written in brackets. You paste the text and the analysis handles the split into bars."
+      },
+      "detect": {
+        "h2": "How a chord line is recognised",
+        "body": "A line is treated as a chord line when at least four fifths of what it contains are valid chords. That threshold matters: it lets through a line carrying a passing annotation, while ruling out a lyric line that happens to contain a word like “Am” or “Do”."
+      },
+      "sections": {
+        "h2": "Sections recognised",
+        "body": "Twelve labels are understood, in English and French alike: intro, verse, chorus, pre-chorus, bridge, outro, solo, interlude, instrumental and hook, along with the French forms couplet and refrain. Numbering is kept: “[Verse 2]” stays “Verse 2”."
+      },
+      "durations": {
+        "h2": "How durations are inferred",
+        "body": "Durations are not guessed at random: they come from the alignment of the text. A single chord on its line takes the whole bar. Two to four chords are spread according to the column gaps between them in the source, which reproduces the way these files are written. Beyond four chords on one line the alignment becomes too unreliable: each chord then gets one beat and the line is split into four-beat bars."
+      },
+      "ignored": {
+        "h2": "What is deliberately ignored",
+        "body": "Plenty of clutter sits in these files. ASCII tablature, web addresses, strumming patterns, tempo markings and difficulty or tuning headers are stripped automatically. You can paste the whole page without tidying up first."
+      },
+      "limits": {
+        "h2": "What is not imported",
+        "body": "Two things, worth knowing before you start. Lyrics are not carried over: only the chords and the structure are. And the time signature is not inferred from the text — every imported chart arrives in four beats per bar. If your song is in three, set it afterwards in the editor."
+      },
+      "after": {
+        "h2": "Fixing things after import",
+        "body": "The result is editable cell by cell: rename a section, stretch a chord over two beats, split a bar, delete one. This is the moment to put back the nuances the source text never carried."
+      },
+      "links": {
+        "h2": "Going further",
+        "chords": "Chord library",
+        "photo": "Transcribe a photo of a score",
+        "faq": "Frequently asked questions",
+        "explore": "Browse existing charts"
+      }
+    },
+    "transpose": {
+      "h1": "Transpose a chord chart",
+      "lead": "Change the key of a song without rewriting a single bar, and understand why the result is sometimes written in sharps and sometimes in flats.",
+      "intro": {
+        "h2": "Where transposition lives",
+        "body": "Transposition is not a separate tool: it sits in the chart view, as a selector at the bottom of the page. Open any public chart, move up or down a semitone, and everything recalculates at once."
+      },
+      "what": {
+        "h2": "What transposing means",
+        "body": "Transposing moves every chord by the same number of semitones. The relationships between them do not change: a progression that sounded right still does, simply higher or lower. The song stays the same, only its pitch moves."
+      },
+      "why": {
+        "h2": "Why transpose",
+        "body": "Three reasons come up constantly. Fitting a singer’s range, so they are not straining on a song written for another voice. Avoiding barre chords by finding a key that falls on open shapes. Or accompanying a transposing instrument, whose written notes differ from the notes heard."
+      },
+      "display": {
+        "h2": "The original chart is untouched",
+        "body": "This is a display, not a transformation. You can transpose someone else’s chart without altering anything, and return to the written key in one click. The range runs from six semitones down to six up, which covers all twelve keys: beyond that you land back on the same chords."
+      },
+      "spelling": {
+        "h2": "Sharps or flats",
+        "body": "The same sound can be written two ways, and the choice is not neutral. The rule applied is simple: the keys of F, B flat, E flat, A flat, D flat and G flat are written with flats, the others with sharps. And a chord written with a flat in the original keeps that spelling. This is what stops you reading “A sharp” where every musician expects “B flat”."
+      },
+      "slash": {
+        "h2": "Slash chords follow",
+        "body": "A chord written G/B is transposed on both halves: moved up a tone it becomes A/C sharp, not A/B. The bass line therefore travels with the chords, which is the expected behaviour and one many tools miss."
+      },
+      "capo": {
+        "h2": "Transposing or using a capo",
+        "body": "Both change the pitch, but not in the same way. A capo keeps your fingerings and raises the sound: handy for playing open shapes in a key that offers none. Transposing changes the written chords and lets you play without an accessory. On a chart the two combine: the capo is part of the song, transposition is a reading setting."
+      },
+      "links": {
+        "h2": "Going further",
+        "explore": "Try it on a public chart",
+        "chords": "Sharps, flats and enharmony",
+        "faq": "Frequently asked questions"
+      }
+    },
+    "sheetPhoto": {
+      "h1": "Turn a photo of a score into a chord chart",
+      "lead": "Photograph a score and get an editable chart. What the analysis reads well, what it reads badly, and what it costs.",
+      "how": {
+        "h2": "How it works",
+        "body": "You drop in one or more images. The analysis transcribes the score bar by bar, rebuilds its structure — sections, repeats, key, time signature — then produces a chart you can edit like any other."
+      },
+      "formats": {
+        "h2": "Accepted formats",
+        "body": "Images: JPG, PNG or WebP. Files are resized before upload, so you need not worry about the size of your photos. One thing to know: PDF is not supported. If your score is a PDF, export the pages as images first."
+      },
+      "quality": {
+        "h2": "Taking a good photo",
+        "body": "Transcription quality depends directly on image quality. Lay the score flat, light it evenly, frame the whole page without cutting off staves, and avoid the shadow of your own hand. One page per image."
+      },
+      "multipage": {
+        "h2": "A score across several pages",
+        "body": "You can send several images in a single analysis: they are processed in order and produce one chart. If the analysis fails reporting a score that is too long, split it into two submissions."
+      },
+      "quota": {
+        "h2": "What it costs",
+        "body": "The free plan includes two analyses per month. That counter is shared between image transcription and audio analysis: two analyses in total, whichever route you take. The Pro plan makes them unlimited."
+      },
+      "draft": {
+        "h2": "The result is a starting point",
+        "body": "This needs saying plainly: an automatic transcription is not a proofread score. Durations, extended chords and ambiguous passages are the weak spots. The chart produced is yours and can be corrected bar by bar — treat it as a first draft that spares you the typing, not as a finished result."
+      },
+      "links": {
+        "h2": "Going further",
+        "import": "Import from a chord text",
+        "pricing": "Pricing",
+        "faq": "Frequently asked questions",
+        "chords": "Chord library"
+      }
+    },
+    "bands": {
+      "h1": "Share your repertoire with a band or a class",
+      "lead": "How a band works on ChordSheet: who sees what, how you invite people, and why one licence is enough.",
+      "create": {
+        "h2": "Creating a band and inviting people",
+        "body": "You create a band by giving it a name. You then generate an invitation link, valid for seven days, and pass it on however you like: message, email, on paper. Whoever opens it joins the band, with no separate sign-up for the band itself."
+      },
+      "roles": {
+        "h2": "The two roles",
+        "body": "There are only two roles, deliberately. A leader manages: they change the name, description and photo, attach or remove charts, and can remove a member. A member reads the repertoire, plays, and adds charts to their own book. Whoever creates the band is a leader by default and cannot leave it — it has to be handed over or deleted first."
+      },
+      "sharing": {
+        "h2": "Who sees which charts",
+        "body": "Charts attached to the band are available to every member, including ones you keep private elsewhere. That is the key point: you do not have to publish a chart to share it with your band. Setlists created in the band are shared the same way."
+      },
+      "license": {
+        "h2": "One licence covers the whole band",
+        "body": "This is the question we get most. Creating a band requires a Pro subscription, but **only the person creating it** needs one. Invited members use the shared repertoire, the setlists and stage mode on a free account. A five-piece band therefore does not pay five subscriptions."
+      },
+      "teachers": {
+        "h2": "For a teacher",
+        "body": "The model suits teaching well. A class becomes a band: you write the chart once and every student has it in their book. Several classes become several bands, each with its own repertoire. And each student transposes on their side, for their voice or their instrument, without affecting anyone else’s version."
+      },
+      "session": {
+        "h2": "Without an account or a subscription",
+        "body": "For a one-off — a jam, a rehearsal with someone passing through — a live session avoids creating a band at all. A six-character code, valid six hours, that your guests enter without creating an account."
+      },
+      "links": {
+        "h2": "Going further",
+        "stage": "Stage mode",
+        "pricing": "Pricing",
+        "faq": "Frequently asked questions",
+        "explore": "Browse charts"
+      }
+    },
+    "stageMode": {
+      "h1": "Stage mode: play without looking away from the chart",
+      "lead": "A full-screen setlist, synchronised across every device in the band, with accompaniment and a drum machine.",
+      "setlist": {
+        "h2": "A full-screen setlist",
+        "body": "You set the running order in advance, then switch to stage mode: the chart fills the screen with no clutter, and you move from one song to the next with a single gesture. It is designed for a music stand or a tablet sitting on an amp."
+      },
+      "sync": {
+        "h2": "Synchronisation across devices",
+        "body": "This is the most carefully built part. When one member starts a song, every device in the band switches to the same chart, and the playback position is computed from a shared timestamp rather than streamed continuously. Devices align their clocks with the server through a series of round trips, keeping the fastest — the same principle as computer clock synchronisation. The result: everyone sees the same bar at the same moment, even on a patchy network."
+      },
+      "accompaniment": {
+        "h2": "Accompaniment",
+        "body": "Six instruments can play at once — guitar, bass, piano, mandolin, banjo and ukulele — each in block chords or arpeggios. Tempo runs from forty to three hundred beats per minute, with a metronome you can mute without stopping playback. You can start a whole song, a section, or a single bar to work on a passage."
+      },
+      "groove": {
+        "h2": "The drum machine",
+        "body": "Eighteen patterns across six families: rock and pop, jazz and blues, reggae and Latin, funk and soul, hip hop, country and folk. Fifteen drum voices, sampled from an eighties drum machine. Patterns are written over two bars, so the second one varies — a fill, ghost notes — instead of looping identically."
+      },
+      "live": {
+        "h2": "Live sessions",
+        "body": "Lighter than a band: a six-character code, chosen without ambiguous letters or digits so it can be read aloud, valid for six hours. Guests join without creating an account, and any participant can push a chart to everyone else’s screen."
+      },
+      "links": {
+        "h2": "Going further",
+        "bands": "Bands",
+        "pricing": "Pricing",
+        "explore": "Browse charts",
+        "faq": "Frequently asked questions"
+      }
+    },
+    "audioToChords": {
+      "h1": "Get the chords of a track from an audio file",
+      "lead": "Submit a recording and get a first draft chart. Read this first: what the analysis actually returns.",
+      "expect": {
+        "h2": "What you will get, and what you will not",
+        "body": "Better said up front than discovered later. The analysis returns **major and minor** chords. It does not return extensions: a seventh, a ninth or a sus4 present in the recording will come back as a plain chord. The result is a draft to correct, saving you the work of picking it out by ear — not a transcription."
+      },
+      "how": {
+        "h2": "How it works",
+        "body": "The recording goes through three stages. The tracks are first separated, to isolate what carries the harmony and set aside drums and vocals. The harmony is then estimated bar by bar, along with tempo and key. Finally a split into sections is proposed, and identical bars grouped."
+      },
+      "input": {
+        "h2": "What you can submit",
+        "body": "An audio file, or a link to an online video. The file is the more reliable route: fetching from a link depends on a third-party service that may refuse the request."
+      },
+      "fix": {
+        "h2": "Correcting efficiently",
+        "body": "Take it in this order. Check the key first: if that is wrong, everything else will be. Then check the split into sections, easier to recognise by ear than the chords. Finish with the doubtful bars, the ones where the chord changes midway — that is where the estimate goes wrong most often."
+      },
+      "quota": {
+        "h2": "What it costs",
+        "body": "Two analyses per month on the free plan. That counter is shared with photo transcription: two analyses in total, whichever route you take. Unlimited on Pro."
+      },
+      "when": {
+        "h2": "When another route is better",
+        "body": "If the song already exists as a chart on a chord site, importing the text will give a better result in less time. If you have the score in front of you, a photo will be more faithful. Audio analysis is for the cases where all you have is the recording."
+      },
+      "links": {
+        "h2": "Going further",
+        "import": "Import from a chord text",
+        "photo": "Transcribe a photo of a score",
+        "detect": "Identify a chord with your microphone",
+        "pricing": "Pricing"
+      }
+    }
+  }
+}

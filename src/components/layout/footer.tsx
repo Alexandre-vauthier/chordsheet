@@ -37,6 +37,17 @@ export function Footer() {
       ],
     },
     {
+      heading: t('colGuides'),
+      links: [
+        { href: '/import-chords', label: t('linkImport') },
+        { href: '/transpose', label: t('linkTranspose') },
+        { href: '/sheet-photo', label: t('linkSheetPhoto') },
+        { href: '/audio-to-chords', label: t('linkAudio') },
+        { href: '/bands', label: t('linkBands') },
+        { href: '/stage-mode', label: t('linkStage') },
+      ],
+    },
+    {
       heading: t('colAbout'),
       links: [
         { href: '/about', label: t('about') },
@@ -61,7 +72,7 @@ export function Footer() {
     <footer className="mt-auto border-t border-[var(--line)] bg-[var(--cell-bg)] print:hidden">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-6 gap-y-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-6 gap-y-8">
           {columns.map(col => (
             <nav key={col.heading} aria-label={col.heading}>
               <h2 className="text-[11px] font-semibold uppercase tracking-wider text-[var(--ink-light)] mb-3">

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { buildAlternates, buildOpenGraph } from '@/lib/seo';
 import { ChordsClient } from './chords-client';
+import { ChordsEditorial } from './chords-editorial';
 
 const PATH = '/chords';
 
@@ -28,5 +29,10 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  return <ChordsClient />;
+  return (
+    <>
+      <ChordsClient />
+      <ChordsEditorial locale={locale} />
+    </>
+  );
 }

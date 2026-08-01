@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { buildAlternates, buildOpenGraph } from '@/lib/seo';
 import { ExploreClient } from './explore-client';
+import { ExploreEditorial } from './explore-editorial';
 
 const PATH = '/explore';
 
@@ -29,5 +30,10 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  return <ExploreClient />;
+  return (
+    <>
+      <ExploreClient />
+      <ExploreEditorial locale={locale} />
+    </>
+  );
 }

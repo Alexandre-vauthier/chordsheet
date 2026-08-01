@@ -51,7 +51,14 @@
     "linkChordDetect": "Identifier un accord",
     "linkTuner": "Accordeur en ligne",
     "linkNewSheet": "Créer une grille",
-    "linkPricing": "Tarifs"
+    "linkPricing": "Tarifs",
+    "colGuides": "Guides",
+    "linkImport": "Importer un texte d'accords",
+    "linkTranspose": "Transposer une grille",
+    "linkSheetPhoto": "Photo de partition en grille",
+    "linkAudio": "Accords depuis un audio",
+    "linkBands": "Jouer en groupe",
+    "linkStage": "Mode concert"
   },
   "Landing": {
     "nav": {
@@ -1061,7 +1068,7 @@
     "billingToggleLabel": "Choisir la facturation mensuelle ou annuelle"
   },
   "Chords": {
-    "pageTitle": "Bibliothèque d'accords",
+    "pageTitle": "Bibliothèque d'accords : guitare, ukulélé, mandoline, banjo, basse et piano",
     "pageSubtitle": "Tous les accords de la bibliothèque, par instrument et catégorie.",
     "libraryNote": "Ces accords sont générés automatiquement et volontairement limités aux positions principales, pas à toutes les variantes possibles. Une erreur ou un accord manquant ? <contact>Écrivez-nous</contact>, on corrige ou on ajoute. Vous pouvez aussi créer vos propres doigtés directement dans l'édition d'une grille.",
     "searchPlaceholder": "Rechercher un accord…",
@@ -1264,6 +1271,30 @@
       "legalNotice": {
         "title": "Mentions légales",
         "description": "Éditeur, hébergeur et propriété intellectuelle du site ChordSheet."
+      },
+      "importChords": {
+        "title": "Importer une grille depuis un texte d'accords",
+        "description": "Collez un texte d'accords et obtenez une grille structurée. Formats reconnus, sections, durées déduites, et ce qui n'est pas importé."
+      },
+      "transpose": {
+        "title": "Transposer une grille d'accords",
+        "description": "Changer la tonalité d'un morceau sans réécrire une mesure. Dièses ou bémols, accords slash, capo : la règle appliquée."
+      },
+      "sheetPhoto": {
+        "title": "Photo de partition en grille d'accords",
+        "description": "Photographiez une partition, obtenez une grille modifiable. Formats acceptés, conseils de prise de vue et limites réelles."
+      },
+      "bands": {
+        "title": "Partager son répertoire avec un groupe ou une classe",
+        "description": "Groupes sur ChordSheet : rôles, invitations par lien, répertoire partagé. Une seule licence Pro suffit pour tout le groupe."
+      },
+      "stageMode": {
+        "title": "Mode concert : setlist plein écran et synchronisation",
+        "description": "Jouer sur scène sans lâcher l'instrument : setlist plein écran, synchronisation entre appareils, accompagnement et boîte à rythmes."
+      },
+      "audioToChords": {
+        "title": "Trouver les accords d'un morceau depuis un fichier audio",
+        "description": "Analyser un enregistrement pour en tirer une première grille. Ce que l'analyse restitue vraiment, et ses limites."
       }
     },
     "artist": {
@@ -1300,5 +1331,19 @@
     "candidates": "Candidats",
     "chromagram": "Chromagramme (énergie par note)",
     "footnote": "Reconnaît 12 familles : maj, min, 7, m7, maj7, 6, m6, sus2, sus4, dim, aug, m7b5. Notation américaine. À noter : les accords faits des mêmes notes sont indiscernables (ex. C6 = Am7)."
+  },
+  "About": {
+    "h1": "Qui sommes-nous ?",
+    "lead": "Une histoire de famille, de cordes, et de mémoire.",
+    "p1": "Notre père est guitariste. On a grandi avec des guitares qui traînaient dans les coins, des accords qui s'échappaient d'une pièce, une maison où la musique était une langue à part entière. Pour <b>Alexandre</b>, c'est à 13 ans que ça a vraiment mordu — cette sensation de poser les doigts sur un manche et de sentir que quelque chose se met en place. Son frère cadet <b>Julien</b>, lui, a choisi la batterie. Deux ans et demi d'écart, deux approches différentes, un seul terrain de jeu commun.",
+    "p2": "À 15 ou 16 ans, on monte notre premier groupe. On ne sait pas grand-chose mais on joue des concerts, on se plante, on recommence. On passe des heures sur les forums, sur Guitar Pro, à déchiffrer des tablatures, à s'échanger des trucs trouvés la nuit. La musique devient notre façon de nous retrouver — les anniversaires, Noël, les week-ends : autant d'occasions de demander un nouvel instrument. Une basse. Un ukulélé. Un piano. Un banjo, une mandoline, une flûte de pan, un mélodica, des castagnettes. On essaie tout, du métal au classique, sans hiérarchie, sans frontière.",
+    "p3": "Vingt ans ont passé. On a 35 ans aujourd'hui, et on joue toujours ensemble — avec plus de maturité, plus d'oreille, plus d'expérience. Mais le combat reste étrangement le même : <i>c'est quoi les accords déjà ? C'est quelle structure ? On joue dans quel ordre ?</i> Et avec ça, une frustration tranquille : toutes ces chansons apprises il y a vingt ans, ces riffs, ces progressions, ces arrangements — évaporés. Perdus quelque part entre deux déménagements et une mise à jour de disque dur.",
+    "p4": "ChordSheet est né de là. D'un besoin simple et un peu douloureux : <b>ne pas perdre ce qu'on a appris</b>. Se souvenir. Avoir un endroit où poser une grille proprement, retrouver un accord à 2h du matin avant une répèt, partager la structure d'un morceau sans envoyer une photo floue d'un carnet à spirales.",
+    "p5": "On l'a construit à deux. Alexandre sur la technique, Julien — alias <b>Piza</b> — sur la vision musicale, le solfège, la rigueur de quelqu'un qui lit vraiment une partition. Ce que l'un ne sait pas faire, l'autre le porte. C'est un peu notre fonctionnement depuis le début.",
+    "p6": "En construisant l'outil, on a réalisé qu'il ne s'adressait pas qu'à nous. Un groupe qui répète a besoin d'une lecture commune — pas cinq versions différentes du même morceau notées sur cinq téléphones. Un prof de guitare a besoin de partager ses grilles à ses élèves sans que ça ressemble à un puzzle. Un musicien seul a besoin de son book, de son répertoire, quelque chose de personnel et de durable.",
+    "p7": "ChordSheet est multi-instruments parce qu'on l'est. Il est conçu pour jouer ensemble parce que c'est la seule raison pour laquelle on a commencé. Et il regarde vers l'avenir — l'IA pour retranscrire une partition, l'organisation d'un concert, le partage au sein d'un groupe — parce qu'on a les moyens techniques aujourd'hui de régler des problèmes qu'on traînait depuis l'adolescence.",
+    "closing": "C'est un outil fait par des musiciens, pour des musiciens. Pas plus, pas moins.",
+    "roleAlexandre": "Développement & design",
+    "roleJulien": "Vision musicale & solfège"
   }
 }

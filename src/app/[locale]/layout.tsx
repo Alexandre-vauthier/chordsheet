@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from 'next/navigation';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
+import { getMessages } from 'next-intl/server';
 import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { SITE_URL, SITE_NAME, buildAlternates, buildOpenGraph } from '@/lib/seo';
 import { DM_Sans, DM_Mono, Playfair_Display } from "next/font/google";
@@ -63,12 +64,18 @@ export default async function RootLayout({
   }
   setRequestLocale(locale);
 
+  // Le provider recevait jusqu'ici l'intégralité des messages : sans prop `messages`,
+  // next-intl sérialise tout vers le navigateur, sur chaque page. Les dictionnaires
+  // pèsent déjà ~70 Ko, et le namespace Editorial n'est lu que côté serveur — il n'a
+  // donc aucune raison de traverser le réseau.
+  const { Editorial: _editorial, ...clientMessages } = await getMessages();
+
   return (
     <html lang={locale} data-theme="dark" data-scroll-behavior="smooth">
       <body
         className={`${dmSans.variable} ${dmMono.variable} ${playfair.variable} font-sans antialiased`}
       >
-        <NextIntlClientProvider>
+        <NextIntlClientProvider messages={clientMessages}>
           <Providers>{children}</Providers>
         </NextIntlClientProvider>
       </body>

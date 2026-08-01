@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { buildAlternates, buildOpenGraph } from '@/lib/seo';
 import { ArtistsClient } from './artists-client';
+import { ArtistsEditorial } from './artists-editorial';
 
 const PATH = '/artists';
 
@@ -22,5 +23,10 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  return <ArtistsClient />;
+  return (
+    <>
+      <ArtistsClient />
+      <ArtistsEditorial locale={locale} />
+    </>
+  );
 }

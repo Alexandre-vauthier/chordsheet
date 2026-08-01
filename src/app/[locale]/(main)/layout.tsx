@@ -18,6 +18,9 @@ import { usePathname, useRouter } from '@/i18n/navigation';
 const PUBLIC_EXACT = [
   '/explore', '/chords', '/chord-detect', '/tuner', '/pricing', '/contact',
   '/about', '/faq', '/credits', '/artists',
+  // Guides éditoriaux : pages publiques sans aucune donnée utilisateur.
+  '/import-chords', '/transpose', '/sheet-photo',
+  '/bands', '/stage-mode', '/audio-to-chords',
 ];
 const PUBLIC_PREFIXES = ['/legal'];
 // /sheet/:id (mais pas /sheet/new ni /sheet/:id/edit), /artist/:name, /user/:id,
