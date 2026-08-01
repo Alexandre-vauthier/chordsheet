@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 // Identification d'un accord au micro (accessible depuis la bibliothèque d'accords).
 // Micro → chromagramme → comparaison aux templates (cf. use-chord-listener).
 
@@ -9,6 +11,7 @@ import { Link } from '@/i18n/navigation';
 const NOTE_LABELS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
 export function ChordDetectClient() {
+  const t = useTranslations('ChordDetect');
   const { listening, chord, confidence, chroma, candidates, error, start, stop } = useChordListener();
 
   return (
@@ -20,13 +23,12 @@ export function ChordDetectClient() {
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
         </svg>
-        Bibliothèque d&apos;accords
+        {t('backToLibrary')}
       </Link>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-[var(--ink)]">Identifier un accord au micro</h1>
+        <h1 className="text-2xl font-bold text-[var(--ink)]">{t('h1')}</h1>
         <p className="text-sm text-[var(--ink-light)] mt-1">
-          Joue un accord : le micro écoute et l&apos;accord détecté s&apos;affiche en direct,
-          avec les meilleurs candidats.
+          {t('intro')}
         </p>
       </div>
 
@@ -39,19 +41,19 @@ export function ChordDetectClient() {
           }`}
         >
           <span className={`w-3 h-3 rounded-full bg-white ${listening ? 'animate-pulse' : ''}`} />
-          {listening ? 'Arrêter' : 'REC — écouter'}
+          {listening ? t('stop') : t('start')}
         </button>
       </div>
 
       {error && (
         <p className="text-sm text-red-500 text-center mb-6">
-          Micro indisponible : {error}
+          {t('micUnavailable', { error })}
         </p>
       )}
 
       {/* Accord détecté */}
       <div className="rounded-2xl border border-[var(--line)] bg-[var(--cell-bg)] p-8 text-center mb-6">
-        <p className="text-xs uppercase tracking-wide text-[var(--ink-faint)] mb-2">Accord détecté</p>
+        <p className="text-xs uppercase tracking-wide text-[var(--ink-faint)] mb-2">{t('detected')}</p>
         <div className="text-6xl font-bold text-[var(--ink)] min-h-[4.5rem] flex items-center justify-center">
           {chord || (listening ? '…' : '—')}
         </div>
@@ -64,7 +66,7 @@ export function ChordDetectClient() {
               />
             </div>
             <p className="text-xs text-[var(--ink-faint)] mt-1">
-              Confiance {Math.round(confidence * 100)}%
+              {t('confidence', { percent: Math.round(confidence * 100) })}
             </p>
           </div>
         )}
@@ -73,7 +75,7 @@ export function ChordDetectClient() {
       {/* Top 3 candidats — pour juger les hésitations */}
       {listening && candidates.length > 0 && (
         <div className="rounded-xl border border-[var(--line)] bg-[var(--cell-bg)] p-4 mb-6">
-          <p className="text-xs uppercase tracking-wide text-[var(--ink-faint)] mb-2">Candidats</p>
+          <p className="text-xs uppercase tracking-wide text-[var(--ink-faint)] mb-2">{t('candidates')}</p>
           <div className="space-y-1.5">
             {candidates.map((c, i) => (
               <div key={c.name} className="flex items-center gap-2 text-sm">
@@ -98,7 +100,7 @@ export function ChordDetectClient() {
       {/* Chromagramme — énergie par note */}
       {listening && (
         <div className="rounded-xl border border-[var(--line)] bg-[var(--cell-bg)] p-4">
-          <p className="text-xs uppercase tracking-wide text-[var(--ink-faint)] mb-3">Chromagramme (énergie par note)</p>
+          <p className="text-xs uppercase tracking-wide text-[var(--ink-faint)] mb-3">{t('chromagram')}</p>
           <div className="flex items-end gap-1.5 h-28">
             {chroma.map((v, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
@@ -114,8 +116,7 @@ export function ChordDetectClient() {
       )}
 
       <p className="text-xs text-[var(--ink-faint)] mt-8 text-center">
-        Reconnaît 12 familles : maj, min, 7, m7, maj7, 6, m6, sus2, sus4, dim, aug, m7b5.
-        Notation américaine. À noter : les accords faits des mêmes notes sont indiscernables (ex. C6 = Am7).
+        {t('footnote')}
       </p>
     </div>
   );

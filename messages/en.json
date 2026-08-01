@@ -1265,6 +1265,40 @@
         "title": "Legal notice",
         "description": "Publisher, host and intellectual property of the ChordSheet website."
       }
+    },
+    "artist": {
+      "title": "Chord charts by {artist}",
+      "description": "Every chord chart by {artist} shared on ChordSheet: read, transpose and play this artist's songs."
     }
+  },
+  "Tuner": {
+    "h1": "Online tuner for guitar, bass, ukulele, mandolin and banjo",
+    "intro": "Pick your instrument, turn on the microphone and play an open string.",
+    "chromatic": "Chromatic",
+    "startMic": "Turn on the microphone",
+    "stopMic": "Turn off the microphone",
+    "micDenied": "Microphone denied. Allow microphone access in your browser, then try again.",
+    "micUnavailable": "Microphone unavailable on this device or browser.",
+    "statusIdle": "Play a string…",
+    "statusInTune": "In tune ✓",
+    "statusFlat": "Too low — tighten the string",
+    "statusSharp": "Too high — loosen the string",
+    "scaleFlat": "♭ low",
+    "scaleTrue": "in tune",
+    "scaleSharp": "high ♯",
+    "stringsLabel": "Strings (low → high)"
+  },
+  "ChordDetect": {
+    "backToLibrary": "Chord library",
+    "h1": "Identify a chord with your microphone",
+    "intro": "Play a chord: the microphone listens and the detected chord appears live, along with the closest candidates.",
+    "start": "REC — listen",
+    "stop": "Stop",
+    "micUnavailable": "Microphone unavailable: {error}",
+    "detected": "Detected chord",
+    "confidence": "Confidence {percent}%",
+    "candidates": "Candidates",
+    "chromagram": "Chromagram (energy per note)",
+    "footnote": "Recognises 12 families: maj, min, 7, m7, maj7, 6, m6, sus2, sus4, dim, aug, m7b5. American notation. Note: chords made of the same notes cannot be told apart (e.g. C6 = Am7)."
   }
 }

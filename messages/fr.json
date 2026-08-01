@@ -1265,6 +1265,40 @@
         "title": "Mentions légales",
         "description": "Éditeur, hébergeur et propriété intellectuelle du site ChordSheet."
       }
+    },
+    "artist": {
+      "title": "Grilles d'accords de {artist}",
+      "description": "Toutes les grilles d'accords de {artist} partagées sur ChordSheet : consultez, transposez et jouez les morceaux de cet artiste."
     }
+  },
+  "Tuner": {
+    "h1": "Accordeur en ligne pour guitare, basse, ukulélé, mandoline et banjo",
+    "intro": "Choisis ton instrument, active le micro et joue une corde à vide.",
+    "chromatic": "Chromatique",
+    "startMic": "Activer le micro",
+    "stopMic": "Arrêter le micro",
+    "micDenied": "Micro refusé. Autorise l'accès au micro dans ton navigateur puis réessaie.",
+    "micUnavailable": "Micro indisponible sur cet appareil ou ce navigateur.",
+    "statusIdle": "Joue une corde…",
+    "statusInTune": "Juste ✓",
+    "statusFlat": "Trop grave — serre la corde",
+    "statusSharp": "Trop aigu — desserre la corde",
+    "scaleFlat": "♭ grave",
+    "scaleTrue": "juste",
+    "scaleSharp": "aigu ♯",
+    "stringsLabel": "Cordes (grave → aigu)"
+  },
+  "ChordDetect": {
+    "backToLibrary": "Bibliothèque d'accords",
+    "h1": "Identifier un accord au micro",
+    "intro": "Joue un accord : le micro écoute et l'accord détecté s'affiche en direct, avec les meilleurs candidats.",
+    "start": "REC — écouter",
+    "stop": "Arrêter",
+    "micUnavailable": "Micro indisponible : {error}",
+    "detected": "Accord détecté",
+    "confidence": "Confiance {percent}%",
+    "candidates": "Candidats",
+    "chromagram": "Chromagramme (énergie par note)",
+    "footnote": "Reconnaît 12 familles : maj, min, 7, m7, maj7, 6, m6, sus2, sus4, dim, aug, m7b5. Notation américaine. À noter : les accords faits des mêmes notes sont indiscernables (ex. C6 = Am7)."
   }
 }

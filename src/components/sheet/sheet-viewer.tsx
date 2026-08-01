@@ -39,6 +39,14 @@ function hasLocalInstrument(): boolean {
   return !!(v && (INSTRUMENTS as readonly string[]).includes(v));
 }
 
+/**
+ * Amplitude de transposition, en demi-tons. La valeur reprend celle annoncée dans la
+ * FAQ ; le code ne bornait rien jusqu'ici, si bien que le compteur affiché pouvait
+ * dériver au-delà de l'octave alors que le calcul est modulo 12 — +13 sonnait comme
+ * +1 mais s'affichait « +13 ».
+ */
+const TRANSPOSE_LIMIT = 6;
+
 // Map instrument -> style de jeu (plaqué / arpège). Une entrée = instrument activé.
 type AccompMap = Record<string, PlayStyle>;
 
@@ -850,8 +858,9 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               {/* Tonalité + transpose */}
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => setTranspose(t => t - 1)}
-                  className="w-5 h-5 flex items-center justify-center rounded border border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors text-xs font-medium"
+                  onClick={() => setTranspose(t => Math.max(-TRANSPOSE_LIMIT, t - 1))}
+                  disabled={transpose <= -TRANSPOSE_LIMIT}
+                  className="w-5 h-5 flex items-center justify-center rounded border border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors text-xs font-medium disabled:opacity-30 disabled:hover:border-[var(--line)] disabled:hover:text-[var(--ink-light)]"
                 >−</button>
                 <span className="flex items-center gap-1 px-1.5 py-0.5 bg-[var(--cell-bg)] text-[var(--ink)] rounded text-xs min-w-[3rem] justify-center border border-[var(--line)]">
                   {displayKey || '—'}
@@ -860,8 +869,9 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   )}
                 </span>
                 <button
-                  onClick={() => setTranspose(t => t + 1)}
-                  className="w-5 h-5 flex items-center justify-center rounded border border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors text-xs font-medium"
+                  onClick={() => setTranspose(t => Math.min(TRANSPOSE_LIMIT, t + 1))}
+                  disabled={transpose >= TRANSPOSE_LIMIT}
+                  className="w-5 h-5 flex items-center justify-center rounded border border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors text-xs font-medium disabled:opacity-30 disabled:hover:border-[var(--line)] disabled:hover:text-[var(--ink-light)]"
                 >+</button>
                 {transpose !== 0 && (
                   <button

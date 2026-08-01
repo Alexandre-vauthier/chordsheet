@@ -2,7 +2,8 @@
 
 // Prototype de détection d'accords en temps réel au micro.
 // Reprend la méthode du service Python (services/chord-detector/chord_utils.py) :
-// chromagramme → comparaison cosinus à 36 templates (maj / min / dom7).
+// chromagramme → comparaison cosinus aux gabarits d'accords : 12 familles
+// (maj, min, 7, m7, maj7, 6, m6, sus2, sus4, dim, aug, m7b5) × 12 fondamentales = 144.
 // Objectif : évaluer la précision en conditions réelles avant d'envisager le
 // suivi automatique de la grille. Rien n'est branché sur le sheet-viewer.
 

@@ -1,21 +1,21 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 import { usePitchDetect } from '@/lib/use-pitch-detect';
 import { TUNINGS, analyzeFreq, matchString, type TunerInstrument } from '@/lib/tuner-data';
 
 type Mode = TunerInstrument | 'chromatic';
 
-const MODES: { id: Mode; label: string }[] = [
-  { id: 'guitar', label: 'Guitare' },
-  { id: 'bass', label: 'Basse' },
-  { id: 'ukulele', label: 'Ukulélé' },
-  { id: 'mandolin', label: 'Mandoline' },
-  { id: 'banjo', label: 'Banjo' },
-  { id: 'chromatic', label: 'Chromatique' },
-];
+const MODES: Mode[] = ['guitar', 'bass', 'ukulele', 'mandolin', 'banjo', 'chromatic'];
 
 export function TunerClient() {
+  const t = useTranslations('Tuner');
+  // Les cinq instruments réutilisent le namespace Instruments, déjà traduit et
+  // partagé avec le reste de l'application ; seul « chromatique » lui est propre.
+  const tInstrument = useTranslations('Instruments');
+  const modeLabel = (m: Mode) => (m === 'chromatic' ? t('chromatic') : tInstrument(m));
+
   const [mode, setMode] = useState<Mode>('guitar');
 
   // Plage de détection bornée à l'instrument (±3 demi-tons autour des cordes) : élimine
@@ -42,29 +42,29 @@ export function TunerClient() {
   const pos = cents == null ? 50 : Math.max(2, Math.min(98, 50 + cents)); // aiguille (0-100%)
 
   const status =
-    cents == null ? 'Joue une corde…'
-      : inTune ? 'Juste ✓'
-        : cents < 0 ? 'Trop grave — serre la corde'
-          : 'Trop aigu — desserre la corde';
+    cents == null ? t('statusIdle')
+      : inTune ? t('statusInTune')
+        : cents < 0 ? t('statusFlat')
+          : t('statusSharp');
 
   return (
     <div className="max-w-xl mx-auto px-4 sm:px-6 py-8">
-      <h1 className="font-playfair text-2xl font-bold text-[var(--ink)] mb-1">Accordeur</h1>
-      <p className="text-sm text-[var(--ink-light)] mb-6">Choisis ton instrument, active le micro et joue une corde à vide.</p>
+      <h1 className="font-playfair text-2xl font-bold text-[var(--ink)] mb-1">{t('h1')}</h1>
+      <p className="text-sm text-[var(--ink-light)] mb-6">{t('intro')}</p>
 
       {/* Sélecteur d'instrument */}
       <div className="flex flex-wrap gap-2 mb-6">
         {MODES.map((m) => (
           <button
-            key={m.id}
-            onClick={() => setMode(m.id)}
+            key={m}
+            onClick={() => setMode(m)}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
-              mode === m.id
+              mode === m
                 ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
                 : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
             }`}
           >
-            {m.label}
+            {modeLabel(m)}
           </button>
         ))}
       </div>
@@ -78,13 +78,13 @@ export function TunerClient() {
               onClick={start}
               className="px-6 py-2.5 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm font-medium rounded-lg transition-colors"
             >
-              Activer le micro
+              {t('startMic')}
             </button>
             {error === 'denied' && (
-              <p className="text-sm text-red-500 mt-3">Micro refusé. Autorise l&apos;accès au micro dans ton navigateur puis réessaie.</p>
+              <p className="text-sm text-red-500 mt-3">{t('micDenied')}</p>
             )}
             {error === 'error' && (
-              <p className="text-sm text-red-500 mt-3">Micro indisponible sur cet appareil / navigateur.</p>
+              <p className="text-sm text-red-500 mt-3">{t('micUnavailable')}</p>
             )}
           </div>
         ) : (
@@ -113,7 +113,7 @@ export function TunerClient() {
               />
             </div>
             <div className="flex justify-between text-[10px] text-[var(--ink-faint)] px-1">
-              <span>♭ grave</span><span>juste</span><span>aigu ♯</span>
+              <span>{t('scaleFlat')}</span><span>{t('scaleTrue')}</span><span>{t('scaleSharp')}</span>
             </div>
 
             <p className={`mt-4 text-sm font-medium ${inTune ? 'text-green-500' : 'text-[var(--ink-light)]'}`}>{status}</p>
@@ -122,7 +122,7 @@ export function TunerClient() {
               onClick={stop}
               className="mt-5 px-4 py-2 border border-[var(--line)] text-[var(--ink-light)] text-sm rounded-lg hover:border-[var(--ink-faint)] transition-colors"
             >
-              Arrêter le micro
+              {t('stopMic')}
             </button>
           </>
         )}
@@ -131,7 +131,7 @@ export function TunerClient() {
       {/* Cordes cibles (mode instrument) */}
       {strings && (
         <div className="mt-6">
-          <p className="text-xs text-[var(--ink-faint)] uppercase tracking-wide mb-2">Cordes (grave → aigu)</p>
+          <p className="text-xs text-[var(--ink-faint)] uppercase tracking-wide mb-2">{t('stringsLabel')}</p>
           <div className="flex flex-wrap gap-2">
             {strings.map((str, i) => {
               const active = listening && target?.index === i;
