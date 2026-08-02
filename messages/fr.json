@@ -909,7 +909,13 @@
     "keyCheck": "Tonalité déduite (mesure)",
     "keyCheckDesc": "Compare la tonalité déduite des accords à celle déjà renseignée, sur les grilles qui ont les deux. Lecture seule, rien n'est modifié. Le détail des écarts va dans la console.",
     "keyCheckAction": "Mesurer",
-    "keyCheckResult": "{compared} comparées · {exact} exactes · {relative} relatives · {different} différentes"
+    "keyCheckResult": "{compared} comparées · {exact} exactes · {relative} relatives · {different} différentes",
+    "rebuildKeys": "Recalculer les tonalités",
+    "rebuildKeysDesc": "Remplace la tonalité de chaque grille par celle déduite de ses accords, et vide celles qui n'ont pas assez d'accords. Rend le champ cohérent avec ce que la grille affiche. Irréversible : le détail est annoncé avant.",
+    "rebuildKeysAction": "Recalculer",
+    "rebuildKeysNone": "Aucune tonalité à modifier.",
+    "rebuildKeysConfirm": "{recalculees} tonalités recalculées et {videes} vidées. Confirmer ?",
+    "rebuildKeysDone": "{recalculees} recalculées, {videes} vidées."
   },
   "LegalMentions": {
     "pageTitle": "Mentions légales",

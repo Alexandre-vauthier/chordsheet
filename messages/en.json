@@ -909,7 +909,13 @@
     "keyCheck": "Detected key (measure)",
     "keyCheckDesc": "Compares the key detected from the chords with the one already set, on charts that have both. Read-only, nothing is changed. Mismatches are logged to the console.",
     "keyCheckAction": "Measure",
-    "keyCheckResult": "{compared} compared · {exact} exact · {relative} relative · {different} different"
+    "keyCheckResult": "{compared} compared · {exact} exact · {relative} relative · {different} different",
+    "rebuildKeys": "Rebuild keys",
+    "rebuildKeysDesc": "Replaces each chart's key with the one detected from its chords, and clears those with too few chords. Makes the field consistent with what the chart shows. Irreversible: the detail is shown first.",
+    "rebuildKeysAction": "Rebuild",
+    "rebuildKeysNone": "No key to change.",
+    "rebuildKeysConfirm": "{recalculees} keys rebuilt and {videes} cleared. Confirm?",
+    "rebuildKeysDone": "{recalculees} rebuilt, {videes} cleared."
   },
   "LegalMentions": {
     "pageTitle": "Legal notice",

@@ -38,6 +38,8 @@ export default function AdminPage() {
   const [proResult, setProResult] = useState('');
   const [backfillingSearch, setBackfillingSearch] = useState(false);
   const [backfillResult, setBackfillResult] = useState('');
+  const [rebuildingKeys, setRebuildingKeys] = useState(false);
+  const [rebuildResult, setRebuildResult] = useState('');
   const [checkingKeys, setCheckingKeys] = useState(false);
   const [keyResult, setKeyResult] = useState('');
   const [backfillingBpm, setBackfillingBpm] = useState(false);
@@ -232,6 +234,45 @@ export default function AdminPage() {
       setBackfillResult(t('errorPrefix', { message: e instanceof Error ? e.message : t('unknownError') }));
     } finally {
       setBackfillingSearch(false);
+    }
+  };
+
+  /**
+   * Recalcule toutes les tonalités depuis les accords. En deux temps, comme la purge :
+   * on compte, on annonce, on ne modifie qu'après confirmation.
+   */
+  const handleRebuildKeys = async () => {
+    setRebuildingKeys(true);
+    setRebuildResult('');
+    try {
+      const idToken = await getAuth().currentUser?.getIdToken();
+      if (!idToken) throw new Error(t('notConnected'));
+      const headers = { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' };
+
+      const compte = await fetch('/api/admin/rebuild-keys', {
+        method: 'POST', headers, body: JSON.stringify({ dryRun: true }),
+      });
+      const apercu = await compte.json().catch(() => ({}));
+      if (!compte.ok) throw new Error(apercu.error || t('backfillError'));
+
+      console.table(apercu.apercu);
+      const touchees = apercu.recalculees + apercu.videes;
+      if (touchees === 0) { setRebuildResult(t('rebuildKeysNone')); return; }
+      if (!confirm(t('rebuildKeysConfirm', { recalculees: apercu.recalculees, videes: apercu.videes }))) {
+        setRebuildResult('');
+        return;
+      }
+
+      const res = await fetch('/api/admin/rebuild-keys', {
+        method: 'POST', headers, body: JSON.stringify({ dryRun: false }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || t('backfillError'));
+      setRebuildResult(t('rebuildKeysDone', { recalculees: data.recalculees, videes: data.videes }));
+    } catch (e) {
+      setRebuildResult(t('errorPrefix', { message: e instanceof Error ? e.message : t('unknownError') }));
+    } finally {
+      setRebuildingKeys(false);
     }
   };
 
@@ -491,6 +532,16 @@ export default function AdminPage() {
           runningLabel={t('inProgress')}
           result={bpmResult}
           onRun={handleBackfillBpm}
+        />
+        <AdminTile
+          title={t('rebuildKeys')}
+          description={t('rebuildKeysDesc')}
+          action={t('rebuildKeysAction')}
+          running={rebuildingKeys}
+          runningLabel={t('inProgress')}
+          result={rebuildResult}
+          onRun={handleRebuildKeys}
+          danger
         />
         <AdminTile
           title={t('keyCheck')}

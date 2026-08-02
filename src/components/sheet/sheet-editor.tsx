@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { transposeKey } from '@/lib/transpose';
 import { detectKey } from '@/lib/key-detection';
 import { useTranslations } from 'next-intl';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
@@ -401,22 +402,18 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
       updateSheet({ tempo: String(suggestedTempo) });
     }
   }, [suggestedTempo, sheet.tempo, updateSheet]);
-  useEffect(() => {
-    if (!keyTouchedRef.current && !sheet.key.trim() && suggestedKey) {
-      keyTouchedRef.current = true;
-      updateSheet({ key: suggestedKey });
-    }
-  }, [suggestedKey, sheet.key, updateSheet]);
-
   /**
-   * Tonalité déduite des accords, en dernier recours.
+   * La tonalité d'une grille est celle de ses **accords écrits**, pas celle de
+   * l'enregistrement.
    *
-   * Mesurée sur soixante grilles réelles : 62 % exactes, 82 % dans la bonne armure,
-   * 12 % franchement fausses. Trop pour décider à la place de l'auteur, assez pour
-   * combler un champ vide qu'aucun service n'a su remplir — ce qui est le cas courant
-   * depuis que Deezer donne le tempo mais pas la tonalité.
+   * C'est la seule définition cohérente avec le reste de la page : les accords, les
+   * diagrammes, la transposition et le suivi au micro sont tous dans ce domaine. Une
+   * tonalité venue d'ailleurs serait le seul élément qui ne correspond à rien de
+   * visible. Ce qui sonne se déduit du capo, qui est déjà affiché.
    *
-   * Elle ne passe qu'après le service externe, et jamais sur un champ déjà rempli.
+   * Les accords font donc autorité, et le service externe ne sert qu'à amorcer une
+   * grille encore vide — sa réponse étant celle de l'enregistrement, on lui retire le
+   * capo pour la ramener dans le bon domaine.
    */
   const deducedKey = useMemo(() => {
     const suite: string[] = [];
@@ -432,10 +429,14 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   }, [sheet.sections]);
 
   useEffect(() => {
-    if (keyTouchedRef.current || sheet.key.trim() || suggestedKey || !deducedKey) return;
-    keyTouchedRef.current = true;
-    updateSheet({ key: deducedKey });
-  }, [deducedKey, suggestedKey, sheet.key, updateSheet]);
+    if (keyTouchedRef.current) return;
+
+    // Les accords priment. À défaut, la réponse du service, ramenée aux positions.
+    const proposee = deducedKey
+      ?? (suggestedKey ? transposeKey(suggestedKey, -(sheet.capo ?? 0)) : null);
+
+    if (proposee && proposee !== sheet.key) updateSheet({ key: proposee });
+  }, [deducedKey, suggestedKey, sheet.capo, sheet.key, updateSheet]);
 
   // Mettre à jour une section
   const updateSection = useCallback((sectionId: string, updates: Partial<Section>) => {
