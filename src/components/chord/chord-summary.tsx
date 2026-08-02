@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { Section, InstrumentId, StringChord, PianoChord, CustomChord } from '@/types';
 import { ChordCard } from './chord-card';
 import { useChordNotation } from '@/lib/use-chord-notation';
@@ -42,6 +43,7 @@ export function ChordSummary({
   capo = 0,
   compact = false,
 }: ChordSummaryProps) {
+  const t = useTranslations('ChordSummary');
   const translate = useChordNotation();
   const { overrides, additions } = useLibraryChords();
 
@@ -184,7 +186,7 @@ export function ChordSummary({
                     {translate(chordName)}
                   </span>
                   <span className="text-[10px] text-[var(--ink-faint)] mt-1">
-                    Non trouvé
+                    {t('notFound')}
                   </span>
                 </div>
                 {editable && onEditChord && (
@@ -192,7 +194,7 @@ export function ChordSummary({
                     onClick={() => onEditChord(chordName, null)}
                     className="cursor-pointer mt-2 text-xs text-[var(--accent)] hover:underline"
                   >
-                    + Créer
+                    {t('create')}
                   </button>
                 )}
               </div>
@@ -236,16 +238,16 @@ export function ChordSummary({
                       onClick={() => onEditChord(chordName, currentChord)}
                       className="cursor-pointer text-xs text-[var(--ink-light)] hover:text-[var(--accent)] hover:underline"
                     >
-                      Modifier
+                      {t('edit')}
                     </button>
                   )}
                   {onDeleteCustomChord && isTrulyCustom && (
                     <button
                       onClick={() => onDeleteCustomChord(chordName)}
                       className="cursor-pointer text-xs text-[var(--ink-faint)] hover:text-red-500 hover:underline"
-                      title="Supprimer la version personnalisée"
+                      title={t("removeCustomTitle")}
                     >
-                      Supprimer
+                      {t('remove')}
                     </button>
                   )}
                 </div>

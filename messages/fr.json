@@ -1447,5 +1447,69 @@
     "banjo": "au banjo",
     "bass": "à la basse",
     "voice": "à la voix"
+  },
+  "SheetView": {
+    "notFound": "Grille non trouvée",
+    "private": "Cette grille est privée",
+    "loadFailed": "Erreur lors du chargement",
+    "deleteConfirm": "Supprimer cette grille ? Cette action est irréversible.",
+    "deleteFailed": "Erreur lors de la suppression",
+    "anonymous": "Utilisateur",
+    "backToDashboard": "Retour au dashboard",
+    "myRating": "Ma note :",
+    "rate": "Noter :",
+    "actions": "Actions",
+    "print": "Imprimer / PDF",
+    "bookmarkAdd": "Ajouter aux favoris",
+    "bookmarked": "Dans mes favoris",
+    "addToSet": "Ajouter à un set",
+    "addToGroup": "Ajouter à un groupe",
+    "duplicate": "Dupliquer",
+    "edit": "Modifier",
+    "delete": "Supprimer"
+  },
+  "SongVersions": {
+    "reviews": "{count, plural, one {# avis} other {# avis}}",
+    "by": "par {name}",
+    "anonymous": "Anonyme",
+    "capo": "Capo {fret}",
+    "explore": "Explorer",
+    "backToExplore": "Retour à Explorer",
+    "available": "{count, plural, one {# version disponible} other {# versions disponibles}}",
+    "empty": "Aucune version trouvée."
+  },
+  "PublicProfile": {
+    "notFound": "Auteur introuvable ou aucune grille publiée.",
+    "favoritesReceived": "favoris reçus",
+    "seeAll": "voir tout",
+    "seeAllParen": "(voir tout)",
+    "noPublished": "Aucune grille publiée",
+    "noPublishedHint": "Publie une grille pour qu'elle apparaisse ici et soit visible par la communauté.",
+    "createSheet": "Créer une grille",
+    "myPrivate": "Mes grilles privées",
+    "noPublishedShort": "Aucune grille publiée.",
+    "bookmarked": "Grilles favorisées",
+    "rated": "Grilles notées",
+    "published": "Grilles publiées",
+    "recent": "Récentes",
+    "bestRated": "Mieux notées",
+    "noBookmarked": "Aucune grille favorisée pour le moment.",
+    "noRated": "Aucune grille notée pour le moment."
+  },
+  "ChordSummary": {
+    "notFound": "Non trouvé",
+    "create": "+ Créer",
+    "edit": "Modifier",
+    "remove": "Supprimer",
+    "removeCustomTitle": "Supprimer la version personnalisée"
+  },
+  "SheetComments": {
+    "privateNotice": "Privé : visible uniquement par toi et l'auteur de la grille.",
+    "signInToComment": "pour laisser un commentaire privé à l'auteur.",
+    "forkSheet": "Dupliquer la grille",
+    "forkInvite": "Cette version ne te convient pas complètement, et c'est ok 👍",
+    "forkLink": "créer ta propre version",
+    "ratingPending": "Ta note en dessous de 5 sera enregistrée une fois ton commentaire envoyé.",
+    "placeholder": "Ton message à l'auteur…"
   }
 }

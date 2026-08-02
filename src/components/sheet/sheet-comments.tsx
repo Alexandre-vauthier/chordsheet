@@ -1,17 +1,19 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { useAuth } from '@/lib/auth-context';
 import type { CommentThread, SheetCommentMessage, UseSheetCommentsResult } from '@/lib/use-sheet-comments';
 
 function LockNote() {
+  const t = useTranslations('SheetComments');
   return (
     <p className="flex items-center gap-1.5 text-xs text-[var(--ink-faint)]">
       <svg className="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
         <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7a4 4 0 018 0v4" />
       </svg>
-      Privé : visible uniquement par toi et l&apos;auteur de la grille.
+      {t('privateNotice')}
     </p>
   );
 }
@@ -75,6 +77,7 @@ function MessageBubble({ message, mine }: { message: SheetCommentMessage; mine: 
 }
 
 export function SheetComments({ sheetId, invite = false, state }: { sheetId: string; invite?: boolean; state: UseSheetCommentsResult }) {
+  const t = useTranslations('SheetComments');
   const { user } = useAuth();
   const { isOwner, threads, loading, send, canComment } = state;
 
@@ -92,7 +95,7 @@ export function SheetComments({ sheetId, invite = false, state }: { sheetId: str
       {/* Non connecté */}
       {!canComment && (
         <p className="mt-4 text-sm text-[var(--ink-light)]">
-          <Link href="/login" className="text-[var(--accent)] hover:underline">Connecte-toi</Link> pour laisser un commentaire privé à l&apos;auteur.
+          <Link href="/login" className="text-[var(--accent)] hover:underline">Connecte-toi</Link> {t('signInToComment')}
         </p>
       )}
 
@@ -108,7 +111,7 @@ export function SheetComments({ sheetId, invite = false, state }: { sheetId: str
               href={`/sheet/new?forkFrom=${sheetId}`}
               className="inline-block mt-2 px-3 py-1.5 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-xs font-medium rounded-lg transition-colors"
             >
-              Dupliquer la grille
+              {t('forkSheet')}
             </Link>
           </div>
         </div>
@@ -132,7 +135,7 @@ export function SheetComments({ sheetId, invite = false, state }: { sheetId: str
         <div className="mt-4 space-y-3">
           {invite && (
             <div className="p-4 rounded-xl bg-[var(--accent-soft)] border border-[var(--accent)]/30 space-y-2">
-              <p className="text-sm font-semibold text-[var(--ink)]">Cette version ne te convient pas complètement, et c&apos;est ok 👍</p>
+              <p className="text-sm font-semibold text-[var(--ink)]">{t('forkInvite')}</p>
               <p className="text-sm text-[var(--ink-light)]">
                 Une grille se construit à plusieurs : plutôt qu&apos;une note en passant, aide l&apos;auteur à progresser.
                 Dis-lui en deux mots ce qui coince, par exemple : un accord qui sonne faux, une structure à revoir
@@ -140,11 +143,11 @@ export function SheetComments({ sheetId, invite = false, state }: { sheetId: str
               </p>
               <p className="text-sm text-[var(--ink-light)]">
                 Tu peux aussi{' '}
-                <Link href={`/sheet/new?forkFrom=${sheetId}`} className="text-[var(--accent)] font-medium hover:underline">créer ta propre version</Link>
+                <Link href={`/sheet/new?forkFrom=${sheetId}`} className="text-[var(--accent)] font-medium hover:underline">{t('forkLink')}</Link>
                 {' '}pour l&apos;adapter exactement à ta main.
               </p>
               <p className="text-xs text-[var(--ink-faint)] pt-0.5">
-                Ta note en dessous de 5 sera enregistrée une fois ton commentaire envoyé.
+                {t('ratingPending')}
               </p>
             </div>
           )}
@@ -157,7 +160,7 @@ export function SheetComments({ sheetId, invite = false, state }: { sheetId: str
           ) : (
             <p className="text-sm text-[var(--ink-faint)]">Pose une question ou laisse un mot à l&apos;auteur. Toi seul et l&apos;auteur verrez cet échange.</p>
           )}
-          <Composer onSend={(text) => send(text)} placeholder="Ton message à l'auteur…" />
+          <Composer onSend={(text) => send(text)} placeholder={t("placeholder")} />
         </div>
       ) : null}
     </section>

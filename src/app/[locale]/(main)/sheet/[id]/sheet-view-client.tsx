@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { doc, getDoc, updateDoc, increment, deleteDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
@@ -99,6 +100,7 @@ function MenuEntry({
 }
 
 export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
+  const t = useTranslations('SheetView');
   const router = useRouter();
   const { user, isAdmin } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
@@ -127,7 +129,7 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
         const docSnap = await getDoc(docRef);
 
         if (!docSnap.exists()) {
-          setError('Grille non trouvée');
+          setError(t('notFound'));
           return;
         }
 
@@ -136,7 +138,7 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
 
         // Vérifier les droits d'accès
         if (!data.isPublic && !data.isUnlisted && data.ownerId !== user?.id && !isAdmin) {
-          setError('Cette grille est privée');
+          setError(t('private'));
           return;
         }
 
@@ -153,7 +155,7 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
         // Le serveur a déjà fourni la grille : un échec de relecture ne doit pas
         // effacer une page qui s'affiche correctement, il ne coûte que les paroles
         // et l'incrément de vue.
-        if (!initialSheet) setError('Erreur lors du chargement');
+        if (!initialSheet) setError(t('loadFailed'));
       } finally {
         setLoading(false);
       }
@@ -179,13 +181,13 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
   };
 
   const handleAdminDelete = async () => {
-    if (!confirm('Supprimer cette grille ? Cette action est irréversible.')) return;
+    if (!confirm(t('deleteConfirm'))) return;
     try {
       await deleteDoc(doc(getDb(), 'sheets', id));
       router.push('/explore');
     } catch (err) {
       console.error('Error deleting sheet:', err);
-      alert('Erreur lors de la suppression');
+      alert(t('deleteFailed'));
     }
   };
 
@@ -223,7 +225,7 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
         await addDoc(collection(getDb(), 'notifications'), {
           userId: sheet.ownerId,
           fromId: user.id,
-          fromName: user.displayName || 'Utilisateur',
+          fromName: user.displayName || t('anonymous'),
           sheetId: sheet.id,
           sheetTitle: sheet.title || '',
           kind: 'rating',
@@ -288,7 +290,7 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
           onClick={() => router.push('/dashboard')}
           className="text-[var(--accent)] hover:underline"
         >
-          Retour au dashboard
+          {t('backToDashboard')}
         </button>
       </div>
     );
@@ -331,7 +333,7 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
           {canRate && !ratingLoading && (
             <div className="flex items-center gap-1.5 shrink-0">
               <span className="text-xs text-[var(--ink-light)] hidden sm:inline">
-                {userRating ? 'Ma note :' : 'Noter :'}
+                {userRating ? t('myRating') : t('rate')}
               </span>
               <RatingStars value={userRating} onChange={handleRate} size="sm" />
             </div>
@@ -342,7 +344,7 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
             <button
               onClick={() => setMenuOpen(v => !v)}
               className="w-8 h-8 flex items-center justify-center rounded-full text-[var(--ink-light)] hover:bg-[var(--line)] hover:text-[var(--ink)] transition-colors text-lg leading-none"
-              title="Actions"
+              title={t("actions")}
             >
               •••
             </button>
@@ -354,7 +356,7 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
                     différents d'une ligne à l'autre selon la police système. */}
                 <MenuEntry
                   icon={<Icon d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />}
-                  label="Imprimer / PDF"
+                  label={t('print')}
                   locked={!user}
                   lockedHref={loginHref}
                   onClick={() => { handlePrint(); setMenuOpen(false); }}
@@ -365,7 +367,7 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                     </svg>
                   }
-                  label={sheetIsBookmarked ? 'Dans mes favoris' : 'Ajouter aux favoris'}
+                  label={sheetIsBookmarked ? t('bookmarked') : t('bookmarkAdd')}
                   tone={sheetIsBookmarked ? 'active' : 'normal'}
                   locked={!user}
                   lockedHref={loginHref}
@@ -378,14 +380,14 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
                         elle gère la création de set à la volée et le rattachement. */}
                     <MenuEntry
                       icon={<Icon d="M4 6h16M4 10h16M4 14h10M4 18h10M18 14v6m3-3h-6" />}
-                      label="Ajouter à un set"
+                      label={t('addToSet')}
                       locked={!user}
                       lockedHref={loginHref}
                       onClick={() => { setMenuOpen(false); openAddTo(sheet, 'set'); }}
                     />
                     <MenuEntry
                       icon={<Icon d="M17 20h5v-1a4 4 0 00-3-3.87M9 20H4v-1a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-4a3 3 0 11-3-3M7 11a3 3 0 11-3-3" />}
-                      label="Ajouter à un groupe"
+                      label={t('addToGroup')}
                       locked={!user}
                       lockedHref={loginHref}
                       onClick={() => { setMenuOpen(false); openAddTo(sheet, 'group'); }}
@@ -395,7 +397,7 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
                 {!isActualOwner && (
                   <MenuEntry
                     icon={<Icon d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />}
-                    label="Dupliquer"
+                    label={t('duplicate')}
                     locked={!user}
                     lockedHref={loginHref}
                     onClick={() => { handleFork(); setMenuOpen(false); }}
@@ -410,7 +412,7 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
                     <svg className="w-4 h-4 shrink-0 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
-                    Modifier
+                    {t('edit')}
                   </Link>
                 )}
                 {isAdmin && (
@@ -423,7 +425,7 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
                       <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
-                      Supprimer
+                      {t('delete')}
                     </button>
                   </>
                 )}

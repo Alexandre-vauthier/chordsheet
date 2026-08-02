@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
@@ -28,6 +29,7 @@ function VersionRow({ sheet, isBookmarked, onToggleBookmark }: {
   isBookmarked: boolean;
   onToggleBookmark?: () => void;
 }) {
+  const t = useTranslations('SongVersions');
   const translate = useChordNotation();
 
   const uniqueChords = [...new Set(
@@ -50,7 +52,7 @@ function VersionRow({ sheet, isBookmarked, onToggleBookmark }: {
             <span className="text-sm font-semibold text-[var(--ink)] ml-0.5">
               {sheet.averageRating?.toFixed(1)}
             </span>
-            <div className="text-[10px] text-[var(--ink-faint)]">{sheet.ratingCount} avis</div>
+            <div className="text-[10px] text-[var(--ink-faint)]">{t('reviews', { count: sheet.ratingCount })}</div>
           </>
         ) : (
           <span className="text-xs text-[var(--ink-faint)]">—</span>
@@ -64,7 +66,7 @@ function VersionRow({ sheet, isBookmarked, onToggleBookmark }: {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="text-sm font-medium text-[var(--ink)] group-hover:text-[var(--accent)] transition-colors">
-            par {sheet.ownerName || 'Anonyme'}
+            {t('by', { name: sheet.ownerName || t('anonymous') })}
           </span>
           {sheet.difficulty && (
             <span className="text-[10px] px-1.5 py-0.5 bg-[var(--line)] text-[var(--ink-faint)] rounded">
@@ -78,7 +80,7 @@ function VersionRow({ sheet, isBookmarked, onToggleBookmark }: {
           )}
           {sheet.capo != null && sheet.capo > 0 && (
             <span className="text-[10px] px-1.5 py-0.5 bg-blue-50 text-blue-700 rounded">
-              Capo {sheet.capo}
+              {t('capo', { fret: sheet.capo })}
             </span>
           )}
         </div>
@@ -118,6 +120,7 @@ function VersionRow({ sheet, isBookmarked, onToggleBookmark }: {
 }
 
 export function SongVersionsClient({ title, artist, initialSheets }: SongVersionsClientProps) {
+  const t = useTranslations('SongVersions');
   const { user, isAdmin, loading: authLoading } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
   const [sheets, setSheets] = useState<Sheet[]>(initialSheets ?? []);
@@ -181,7 +184,7 @@ export function SongVersionsClient({ title, artist, initialSheets }: SongVersion
         href="/explore"
         className="text-sm text-[var(--ink-faint)] hover:text-[var(--accent)] transition-colors mb-6 inline-flex items-center gap-1"
       >
-        ← Explorer
+        ← {t('explore')}
       </Link>
 
       {/* Header */}
@@ -203,7 +206,7 @@ export function SongVersionsClient({ title, artist, initialSheets }: SongVersion
           </Link>
           {!loading && (
             <p className="text-sm text-[var(--ink-faint)] mt-1">
-              {sheets.length} version{sheets.length > 1 ? 's' : ''} disponible{sheets.length > 1 ? 's' : ''}
+              {t('available', { count: sheets.length })}
             </p>
           )}
         </div>
@@ -229,9 +232,9 @@ export function SongVersionsClient({ title, artist, initialSheets }: SongVersion
         </div>
       ) : (
         <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-8 text-center text-[var(--ink-faint)]">
-          <p>Aucune version trouvée.</p>
+          <p>{t('empty')}</p>
           <Link href="/explore" className="mt-4 inline-block text-sm text-[var(--accent)] hover:underline">
-            Retour à Explorer
+            {t('backToExplore')}
           </Link>
         </div>
       )}

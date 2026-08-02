@@ -1447,5 +1447,69 @@
     "banjo": "on banjo",
     "bass": "on bass",
     "voice": "on voice"
+  },
+  "SheetView": {
+    "notFound": "Chart not found",
+    "private": "This chart is private",
+    "loadFailed": "Loading failed",
+    "deleteConfirm": "Delete this chart? This cannot be undone.",
+    "deleteFailed": "Deletion failed",
+    "anonymous": "User",
+    "backToDashboard": "Back to my book",
+    "myRating": "My rating:",
+    "rate": "Rate:",
+    "actions": "Actions",
+    "print": "Print / PDF",
+    "bookmarkAdd": "Add to favourites",
+    "bookmarked": "In my favourites",
+    "addToSet": "Add to a set",
+    "addToGroup": "Add to a band",
+    "duplicate": "Duplicate",
+    "edit": "Edit",
+    "delete": "Delete"
+  },
+  "SongVersions": {
+    "reviews": "{count, plural, one {# review} other {# reviews}}",
+    "by": "by {name}",
+    "anonymous": "Anonymous",
+    "capo": "Capo {fret}",
+    "explore": "Browse",
+    "backToExplore": "Back to browsing",
+    "available": "{count, plural, one {# version available} other {# versions available}}",
+    "empty": "No version found."
+  },
+  "PublicProfile": {
+    "notFound": "Author not found, or no published chart.",
+    "favoritesReceived": "favourites received",
+    "seeAll": "see all",
+    "seeAllParen": "(see all)",
+    "noPublished": "No published chart",
+    "noPublishedHint": "Publish a chart for it to appear here and be visible to everyone.",
+    "createSheet": "Create a chart",
+    "myPrivate": "My private charts",
+    "noPublishedShort": "No published chart.",
+    "bookmarked": "Favourited charts",
+    "rated": "Rated charts",
+    "published": "Published charts",
+    "recent": "Recent",
+    "bestRated": "Best rated",
+    "noBookmarked": "No favourited chart yet.",
+    "noRated": "No rated chart yet."
+  },
+  "ChordSummary": {
+    "notFound": "Not found",
+    "create": "+ Create",
+    "edit": "Edit",
+    "remove": "Remove",
+    "removeCustomTitle": "Remove the custom shape"
+  },
+  "SheetComments": {
+    "privateNotice": "Private: visible only to you and the chart's author.",
+    "signInToComment": "to leave a private comment for the author.",
+    "forkSheet": "Duplicate the chart",
+    "forkInvite": "This version doesn't quite suit you, and that's fine 👍",
+    "forkLink": "create your own version",
+    "ratingPending": "Your rating below 5 will be saved once your comment is sent.",
+    "placeholder": "Your message to the author…"
   }
 }

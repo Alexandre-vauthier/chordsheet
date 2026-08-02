@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
+import { useTranslations } from 'next-intl';
 import { collection, query, where, getDocs, getDoc, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
@@ -27,6 +28,7 @@ interface UserPageProps {
 }
 
 export default function UserPage({ params }: UserPageProps) {
+  const t = useTranslations('PublicProfile');
   const { id } = use(params);
   const { user } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
@@ -154,7 +156,7 @@ export default function UserPage({ params }: UserPageProps) {
   if (!publicUser) {
     return (
       <div className="max-w-[1270px] mx-auto px-4 sm:px-6 py-16 text-center text-[var(--ink-faint)]">
-        Auteur introuvable ou aucune grille publiée.
+        {t('notFound')}
       </div>
     );
   }
@@ -243,7 +245,7 @@ export default function UserPage({ params }: UserPageProps) {
           }`}
         >
           <div className="text-2xl font-bold text-[var(--ink)]">{reputation.totalBookmarks.toLocaleString('fr-FR')}</div>
-          <div className="text-xs text-[var(--ink-light)] mt-0.5">favoris reçus</div>
+          <div className="text-xs text-[var(--ink-light)] mt-0.5">{t('favoritesReceived')}</div>
         </button>
         <button
           onClick={() => setFilter(f => f === 'rated' ? 'all' : 'rated')}
@@ -299,18 +301,18 @@ export default function UserPage({ params }: UserPageProps) {
       {/* Tri + titre section */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)] flex items-center gap-2">
-          {filter === 'bookmarked' ? 'Grilles favorisées' : filter === 'rated' ? 'Grilles notées' : 'Grilles publiées'}
+          {filter === 'bookmarked' ? t('bookmarked') : filter === 'rated' ? t('rated') : t('published')}
           {filter !== 'all' && (
             <button onClick={() => setFilter('all')}
               className="normal-case tracking-normal text-[var(--accent)] hover:underline font-normal">
-              (voir tout)
+              {t('seeAllParen')}
             </button>
           )}
         </h2>
         <div className="flex rounded-lg overflow-hidden border border-[var(--line)] text-xs">
           {([
-            { value: 'recent' as SortOption, label: 'Récentes' },
-            { value: 'rated' as SortOption, label: 'Mieux notées' },
+            { value: 'recent' as SortOption, label: t('recent') },
+            { value: 'rated' as SortOption, label: t('bestRated') },
             { value: 'viewed' as SortOption, label: 'Plus vues' },
           ]).map(({ value, label }) => (
             <button
@@ -331,8 +333,8 @@ export default function UserPage({ params }: UserPageProps) {
       {/* Grilles */}
       {visibleSheets.length === 0 && filter !== 'all' ? (
         <div className="py-12 text-center text-[var(--ink-faint)]">
-          {filter === 'bookmarked' ? 'Aucune grille favorisée pour le moment.' : 'Aucune grille notée pour le moment.'}
-          <button onClick={() => setFilter('all')} className="ml-2 text-[var(--accent)] hover:underline">voir tout</button>
+          {filter === 'bookmarked' ? t('noBookmarked') : t('noRated')}
+          <button onClick={() => setFilter('all')} className="ml-2 text-[var(--accent)] hover:underline">{t('seeAll')}</button>
         </div>
       ) : sortedSheets.length === 0 ? (
         user?.id === id ? (
@@ -345,28 +347,28 @@ export default function UserPage({ params }: UserPageProps) {
                 <line x1="12" y1="8" x2="12" y2="22"/>
               </svg>
             </div>
-            <p className="font-medium text-[var(--ink)] mb-1">Aucune grille publiée</p>
+            <p className="font-medium text-[var(--ink)] mb-1">{t('noPublished')}</p>
             <p className="text-sm text-[var(--ink-faint)] mb-5 max-w-xs mx-auto">
-              Publie une grille pour qu&apos;elle apparaisse ici et soit visible par la communauté.
+              {t('noPublishedHint')}
             </p>
             <div className="flex items-center justify-center gap-3 flex-wrap">
               <Link
                 href="/sheet/new"
                 className="px-4 py-2 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm font-medium rounded-lg transition-colors"
               >
-                Créer une grille
+                {t('createSheet')}
               </Link>
               <Link
                 href="/dashboard?tab=mine"
                 className="px-4 py-2 border border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] text-sm font-medium rounded-lg transition-colors"
               >
-                Mes grilles privées
+                {t('myPrivate')}
               </Link>
             </div>
           </div>
         ) : (
           <div className="py-16 text-center text-[var(--ink-faint)]">
-            Aucune grille publiée.
+            {t('noPublishedShort')}
           </div>
         )
       ) : (
