@@ -106,7 +106,7 @@ function VersionRow({ sheet, isBookmarked, onToggleBookmark }: {
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleBookmark(); }}
             className={`p-1.5 rounded-full transition-all
               ${isBookmarked ? 'text-amber-500' : 'text-gray-300 opacity-0 group-hover:opacity-100 hover:text-amber-400'}`}
-            title={isBookmarked ? 'Retirer du book' : 'Ajouter au book'}
+            title={isBookmarked ? t('bookmarkRemove') : t('bookmarkAdd')}
           >
             {isBookmarked ? '★' : '☆'}
           </button>

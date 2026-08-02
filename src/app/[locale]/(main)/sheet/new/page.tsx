@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
@@ -17,6 +18,7 @@ import { useRouter } from '@/i18n/navigation';
 type Mode = 'choose' | 'blank' | 'import' | 'analyze' | 'youtube';
 
 export default function NewSheetPage() {
+  const t = useTranslations('NewSheet');
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -65,7 +67,7 @@ export default function NewSheetPage() {
       router.push(`/sheet/${docRef.id}/edit`);
     } catch (error) {
       console.error('Error creating sheet:', error);
-      alert('Erreur lors de la création de la grille');
+      alert(t('createError'));
     } finally {
       setIsSaving(false);
     }
@@ -80,7 +82,7 @@ export default function NewSheetPage() {
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-16">
         <div className="mb-10 text-center">
           <h1 className="font-playfair text-3xl font-bold text-[var(--ink)] mb-2">Nouvelle grille</h1>
-          <p className="text-[var(--ink-light)] text-sm">Comment veux-tu créer ta grille ?</p>
+          <p className="text-[var(--ink-light)] text-sm">{t('how')}</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -103,7 +105,7 @@ export default function NewSheetPage() {
                 Grille vierge
               </div>
               <div className="text-xs text-[var(--ink-faint)] mt-1">
-                Créer depuis zéro
+                {t('fromScratch')}
               </div>
             </div>
           </button>
@@ -125,10 +127,10 @@ export default function NewSheetPage() {
             </div>
             <div className="text-center">
               <div className="font-semibold text-[var(--ink)] text-sm group-hover:text-[var(--accent)] transition-colors">
-                Importer du texte
+                {t('importText')}
               </div>
               <div className="text-xs text-[var(--ink-faint)] mt-1">
-                Coller depuis un site de tablatures
+                {t('importTextHint')}
               </div>
             </div>
           </button>
@@ -148,10 +150,10 @@ export default function NewSheetPage() {
             </div>
             <div className="text-center">
               <div className="font-semibold text-[var(--ink)] text-sm group-hover:text-[var(--accent)] transition-colors">
-                Lire une partition
+                {t('readScore')}
               </div>
               <div className="text-xs text-[var(--ink-faint)] mt-1">
-                Photo ou image analysée par IA
+                {t('readScoreHint')}
               </div>
             </div>
           </button>
@@ -170,10 +172,10 @@ export default function NewSheetPage() {
             </div>
             <div className="text-center">
               <div className="font-semibold text-[var(--ink)] text-sm group-hover:text-[var(--accent)] transition-colors">
-                Depuis un audio
+                {t('fromAudio')}
               </div>
               <div className="text-xs text-[var(--ink-faint)] mt-1">
-                Lien YouTube ou fichier — accords détectés (brouillon)
+                {t('fromAudioHint')}
               </div>
             </div>
           </button>

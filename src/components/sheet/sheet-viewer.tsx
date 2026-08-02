@@ -527,7 +527,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
           {sheet.capo ? (
             <button
               onClick={() => setCapoActive(v => !v)}
-              title={capoActive ? 'Capo posé : accords piano transposés et suivi micro adaptés (cliquer si vous jouez sans le capo)' : 'Capo retiré : accords à leur hauteur réelle (cliquer pour le remettre)'}
+              title={capoActive ? t('capoOn') : t('capoOff')}
               className={`sm:hidden print:hidden absolute bottom-0 right-0 px-2 py-0.5 rounded-md text-xs font-bold border border-black/10 shadow-sm bg-[linear-gradient(90deg,#e74c3c,#f1c40f,#2ecc71,#3498db,#9b59b6)] text-black transition-opacity ${capoActive ? '' : 'line-through opacity-60'}`}
             >
               {t('capo', { n: sheet.capo })}
@@ -886,7 +886,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               {sheet.capo ? (
                 <button
                   onClick={() => setCapoActive(v => !v)}
-                  title={capoActive ? 'Capo posé : accords piano transposés et suivi micro adaptés (cliquer si vous jouez sans le capo)' : 'Capo retiré : accords à leur hauteur réelle (cliquer pour le remettre)'}
+                  title={capoActive ? t('capoOn') : t('capoOff')}
                   className={`px-2 py-0.5 rounded-md text-xs font-bold border border-black/10 shadow-sm bg-[linear-gradient(90deg,#e74c3c,#f1c40f,#2ecc71,#3498db,#9b59b6)] text-black transition-opacity ${capoActive ? '' : 'line-through opacity-60'}`}
                 >
                   {t('capo', { n: sheet.capo })}

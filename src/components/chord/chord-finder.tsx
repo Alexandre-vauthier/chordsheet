@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import type { InstrumentId, StringChord, PianoChord, FingerPosition, ChordBarre } from '@/types';
 import { playChord, playNote, OPEN_FREQS, noteNameToFreq, preloadInstrument } from '@/lib/chord-audio';
 import { selectionToPitchClasses, pianoPitchClasses, findMatchingChords, type ChordMatch } from '@/lib/chord-finder';
@@ -21,12 +22,12 @@ const PIANO_NOTES = [
   'C6',
 ];
 
-const INSTRUMENTS: { id: InstrumentId; label: string }[] = [
-  { id: 'guitar',   label: 'Guitare' },
-  { id: 'ukulele',  label: 'Ukulélé' },
-  { id: 'piano',    label: 'Piano' },
-  { id: 'mandolin', label: 'Mandoline' },
-  { id: 'banjo',    label: 'Banjo' },
+const INSTRUMENTS: { id: InstrumentId }[] = [
+  { id: 'guitar' },
+  { id: 'ukulele' },
+  { id: 'piano' },
+  { id: 'mandolin' },
+  { id: 'banjo' },
 ];
 
 interface ChordFinderProps {
@@ -37,6 +38,8 @@ interface ChordFinderProps {
 }
 
 export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, onSelect }: ChordFinderProps) {
+  const t = useTranslations('ChordFinder');
+  const tInstrument = useTranslations('Instruments');
   const [instrumentId, setInstrumentId] = useState<InstrumentId>(initialInstrument);
 
   useEffect(() => {
@@ -167,7 +170,7 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, 
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[var(--line)]">
           <div>
-            <h2 className="text-lg font-semibold text-[var(--ink)]">Identifier un accord</h2>
+            <h2 className="text-lg font-semibold text-[var(--ink)]">{t('title')}</h2>
             <p className="text-xs text-[var(--ink-faint)] mt-0.5">
               Cliquez sur les cases ou les notes — les accords correspondants s&apos;affichent en temps réel
             </p>
@@ -182,7 +185,7 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, 
             <div className="mb-4">
               <p className="text-xs text-[var(--ink-faint)] mb-2">Instrument</p>
               <div className="flex flex-wrap gap-1">
-                {INSTRUMENTS.map(({ id, label }) => (
+                {INSTRUMENTS.map(({ id }) => (
                   <button
                     key={id}
                     onClick={() => handleInstrumentChange(id)}
@@ -192,7 +195,7 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, 
                         : 'bg-[var(--cell-bg)] text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)]'
                     }`}
                   >
-                    {label}
+                    {tInstrument(id)}
                   </button>
                 ))}
               </div>
@@ -223,7 +226,7 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, 
                       onChange={() => setBarre(b => b ? null : { fret: 1, fromString: 1, toString: config.strings })}
                       className="rounded"
                     />
-                    Barré
+                    {t('barre')}
                   </label>
                   {barre && (
                     <div className="flex items-center gap-2">
@@ -235,7 +238,7 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, 
                     </div>
                   )}
                   <div className="flex items-center gap-2">
-                    <label className="text-xs text-[var(--ink-faint)]">Départ</label>
+                    <label className="text-xs text-[var(--ink-faint)]">{t('startFret')}</label>
                     <input type="number" min={1} max={12} value={startFret}
                       onChange={e => setStartFret(parseInt(e.target.value) || 1)}
                       className="w-12 px-1.5 py-0.5 border border-[var(--line)] rounded text-xs"
@@ -252,13 +255,13 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, 
                 disabled={!hasSelection}
                 className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-[var(--accent)] text-white rounded-lg text-xs font-medium disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#b54a2a] transition-colors"
               >
-                ▶ Jouer
+                {t('play')}
               </button>
               <button
                 onClick={handleClear}
                 className="cursor-pointer px-3 py-1.5 border border-[var(--line)] text-[var(--ink-light)] rounded-lg text-xs hover:bg-[var(--cell-hover)] transition-colors"
               >
-                Effacer
+                {t('clear')}
               </button>
             </div>
           </div>
@@ -269,8 +272,8 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, 
               {hasSelection
                 ? matches.length > 0
                   ? `${matches.length} accord${matches.length > 1 ? 's' : ''} trouvé${matches.length > 1 ? 's' : ''}`
-                  : 'Aucun accord ne correspond — essayez d\'autres positions'
-                : 'Cliquez sur le manche pour commencer…'}
+                  : t('noMatch')
+                : t('start')}
             </p>
             <div className="space-y-2">
               {matches.map(({ chord, score }) => (
@@ -291,6 +294,7 @@ function isPianoChord(chord: StringChord | PianoChord): chord is PianoChord {
 }
 
 function MatchCard({ chord, instrumentId, score, onSelect }: { chord: StringChord | PianoChord; instrumentId: InstrumentId; score: number; onSelect?: (name: string) => void }) {
+  const t = useTranslations('ChordFinder');
   const pct = Math.round(score * 100);
   return (
     <div
@@ -299,7 +303,7 @@ function MatchCard({ chord, instrumentId, score, onSelect }: { chord: StringChor
         playChord(chord, instrumentId);
         onSelect?.(chord.name);
       }}
-      title={onSelect ? `Insérer "${chord.name}"` : 'Cliquer pour écouter'}
+      title={onSelect ? t('insert', { chord: chord.name }) : t('listen')}
     >
       <div className="flex-shrink-0 w-16 h-16 flex items-center justify-center group-hover:opacity-80 transition-opacity">
         {isPianoChord(chord) ? (

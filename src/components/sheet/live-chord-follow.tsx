@@ -14,6 +14,7 @@
 // le sheet-viewer) ; le surlignage se fait par le DOM (toggle de classe).
 
 import { useEffect, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useChordListener } from '@/lib/use-chord-listener';
 import { chordsMatch } from '@/lib/chord-match';
 import { clampMsPerBeat, updateMsPerBeat, shouldAnticipate } from '@/lib/follow-tempo';
@@ -96,6 +97,7 @@ export function LiveChordFollow({
   // accompagnement) : active l'annulation d'écho pour éviter le repiquage.
   outputActive?: boolean;
 }) {
+  const t = useTranslations('LiveFollow');
   const { listening, chord, audible, start, stop, error } = useChordListener(outputActive);
 
   const groupsRef = useRef<ChordGroup[]>(buildGroups(sequence));
@@ -230,7 +232,7 @@ export function LiveChordFollow({
     <div className="fixed bottom-5 right-5 z-40 flex items-end gap-3 print:hidden">
       {listening && (
         <div className="px-3 py-2 rounded-xl bg-[var(--cream)] border border-[var(--line)] shadow-lg text-center min-w-[68px]">
-          <div className="text-[10px] uppercase tracking-wide text-[var(--ink-faint)]">Écoute</div>
+          <div className="text-[10px] uppercase tracking-wide text-[var(--ink-faint)]">{t('listening')}</div>
           <div className="text-xl font-bold text-[var(--ink)] leading-tight min-h-[1.75rem]">
             {chord || '…'}
           </div>
@@ -245,12 +247,12 @@ export function LiveChordFollow({
         )}
         {autoStopped && !listening && (
           <div className="absolute bottom-full mb-2 right-0 max-w-[220px] text-xs text-[var(--ink-light)] bg-[var(--cream)] border border-[var(--line)] rounded-lg px-2 py-1 shadow">
-            Suivi coupé : relance-le pour éviter que le son joué repique dans le micro.
+            {t('muted')}
           </div>
         )}
         <button
           onClick={listening ? stop : () => { setAutoStopped(false); start(); }}
-          title={listening ? 'Arrêter le suivi micro' : 'Suivre au micro — surligne l’accord joué et fait défiler'}
+          title={listening ? t('stop') : t('start')}
           className={`flex items-center gap-2 h-12 px-4 rounded-full shadow-lg font-semibold text-white transition-colors ${
             listening ? 'bg-red-600 hover:bg-red-700' : 'bg-[var(--accent)] hover:bg-[#a83d25]'
           }`}

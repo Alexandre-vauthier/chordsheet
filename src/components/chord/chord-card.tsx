@@ -1,6 +1,7 @@
 'use client';
 
 import type { StringChord, PianoChord, InstrumentId } from '@/types';
+import { useTranslations } from 'next-intl';
 import { isPianoChord } from '@/types';
 import { ChordDiagram } from './chord-diagram';
 import { PianoKeyboard } from './piano-keyboard';
@@ -26,6 +27,7 @@ export function ChordCard({
   selected = false,
   displayName,
 }: ChordCardProps) {
+  const t = useTranslations('ChordCard');
   const instrument = INSTRUMENT_CONFIG[instrumentId];
 
   const handleDiagramClick = (e: React.MouseEvent) => {
@@ -46,7 +48,7 @@ export function ChordCard({
       <div
         className="group/play relative flex justify-center cursor-pointer"
         onClick={handleDiagramClick}
-        title="Cliquer pour écouter"
+        title={t('listen')}
       >
         {isPianoChord(chord) ? (
           <PianoKeyboard chord={chord} />

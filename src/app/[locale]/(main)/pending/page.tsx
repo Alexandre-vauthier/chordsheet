@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
@@ -9,6 +10,7 @@ import type { Sheet } from '@/types';
 import { Link, useRouter } from '@/i18n/navigation';
 
 export default function PendingPage() {
+  const t = useTranslations('Pending');
   const { user, isAdmin, loading } = useAuth();
   const router = useRouter();
   const [sheets, setSheets] = useState<Sheet[]>([]);
@@ -57,7 +59,7 @@ export default function PendingPage() {
           </svg>
         </div>
         <div>
-          <h1 className="font-playfair text-2xl font-bold text-[var(--ink)]">À valider</h1>
+          <h1 className="font-playfair text-2xl font-bold text-[var(--ink)]">{t('title')}</h1>
           <p className="text-[var(--ink-faint)] text-sm mt-0.5">{sheets.length} grille{sheets.length !== 1 ? 's' : ''} en attente</p>
         </div>
       </div>
@@ -67,7 +69,7 @@ export default function PendingPage() {
           <svg className="w-12 h-12 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
-          Aucune grille à valider.
+          {t('empty')}
         </div>
       ) : (
         <div className="space-y-2">
@@ -88,7 +90,7 @@ export default function PendingPage() {
                   href={`/sheet/${sheet.id}/edit`}
                   className="px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-medium hover:bg-amber-400 transition-colors"
                 >
-                  Éditer
+                  {t('edit')}
                 </Link>
               </div>
             </div>

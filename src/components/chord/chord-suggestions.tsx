@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import type { StringChord, PianoChord, InstrumentId } from '@/types';
 import { isPianoChord } from '@/types';
 import { useChordVariants } from '@/lib/use-chord-variants';
@@ -25,6 +26,7 @@ export function ChordSuggestions({
   position = 'bottom',
   capo = 0,
 }: ChordSuggestionsProps) {
+  const t = useTranslations('ChordCard');
   const [currentIndex, setCurrentIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -72,7 +74,7 @@ export function ChordSuggestions({
         <div
           className="group/play relative flex justify-center cursor-pointer"
           onClick={handleDiagramClick}
-          title="Cliquer pour écouter"
+          title={t('listen')}
         >
           {isPianoChord(currentChord) ? (
             <PianoKeyboard chord={currentChord} />

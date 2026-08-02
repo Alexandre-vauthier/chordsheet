@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import type { InstrumentId, StringChord, PianoChord, FingerPosition, ChordBarre } from '@/types';
 import { INSTRUMENTS } from '@/types';
 import { playChord, playNote, OPEN_FREQS, noteNameToFreq, ensureAudioContext, preloadInstrument } from '@/lib/chord-audio';
@@ -8,7 +9,7 @@ import { playChord, playNote, OPEN_FREQS, noteNameToFreq, ensureAudioContext, pr
 // Configuration par instrument
 const INSTRUMENT_CONFIG: Record<Exclude<InstrumentId, 'piano' | 'voice' | 'percussion'>, { strings: number; frets: number; label: string }> = {
   guitar: { strings: 6, frets: 5, label: 'Guitare' },
-  ukulele: { strings: 4, frets: 5, label: 'Ukulélé' },
+  ukulele: { strings: 4, frets: 5, label: 'Ukulele' },
   mandolin: { strings: 4, frets: 5, label: 'Mandoline' },
   banjo: { strings: 4, frets: 5, label: 'Banjo' },
   bass: { strings: 4, frets: 5, label: 'Basse' },
@@ -27,7 +28,14 @@ interface ChordEditorProps {
   onCancel?: () => void;
 }
 
+/** Émoji par instrument. Le nom, lui, vient des traductions. */
+const INSTRUMENT_EMOJI: Record<string, string> = {
+  guitar: '🎸', ukulele: '🪕', mandolin: '🎻', banjo: '🪕', piano: '🎹', bass: '🎸',
+};
+
 export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: ChordEditorProps) {
+  const t = useTranslations('ChordEditor');
+  const tInstrument = useTranslations('Instruments');
   const [instrumentId, setInstrumentId] = useState<InstrumentId>(initialInstrument);
   const [chordName, setChordName] = useState('');
   const [chordFull, setChordFull] = useState('');
@@ -234,11 +242,7 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
                   : 'bg-[var(--cell-bg)] text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)]'
               }`}
             >
-              {inst === 'guitar' ? '🎸 Guitare' :
-               inst === 'ukulele' ? '🪕 Ukulélé' :
-               inst === 'mandolin' ? '🎻 Mandoline' :
-               inst === 'banjo' ? '🪕 Banjo' :
-               '🎹 Piano'}
+              {INSTRUMENT_EMOJI[inst] ?? '🎵'} {tInstrument(inst)}
             </button>
           ))}
         </div>
@@ -263,7 +267,7 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
             type="text"
             value={chordFull}
             onChange={(e) => setChordFull(e.target.value)}
-            placeholder="La mineur 7"
+            placeholder={t('namePlaceholder')}
             className="w-full px-3 py-2 border border-[var(--line)] rounded-lg text-sm
               focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:border-transparent"
           />
@@ -300,7 +304,7 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
                 onChange={toggleBarre}
                 className="w-4 h-4 rounded border-[var(--line)] text-[var(--accent)]"
               />
-              <span className="text-sm">Barré</span>
+              <span className="text-sm">{t('barre')}</span>
             </label>
           </div>
 
@@ -318,7 +322,7 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
                 />
               </div>
               <div>
-                <label className="block text-xs text-[var(--ink-faint)] mb-1">De corde</label>
+                <label className="block text-xs text-[var(--ink-faint)] mb-1">{t('fromString')}</label>
                 <input
                   type="number"
                   min={1}
@@ -329,7 +333,7 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
                 />
               </div>
               <div>
-                <label className="block text-xs text-[var(--ink-faint)] mb-1">À corde</label>
+                <label className="block text-xs text-[var(--ink-faint)] mb-1">{t('toString')}</label>
                 <input
                   type="number"
                   min={1}
@@ -343,7 +347,7 @@ export function ChordEditor({ initialInstrument = 'guitar', onSave, onCancel }: 
           )}
 
           <div className="mt-3">
-            <label className="block text-xs text-[var(--ink-faint)] mb-1">Case de départ</label>
+            <label className="block text-xs text-[var(--ink-faint)] mb-1">{t('startFret')}</label>
             <input
               type="number"
               min={1}

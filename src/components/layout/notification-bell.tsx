@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { useNotifications, type AppNotification } from '@/lib/use-notifications';
 
 export function NotificationBell() {
+  const t = useTranslations('Notifications');
   const { items, unreadCount, markRead, markAllRead } = useNotifications();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -53,7 +55,7 @@ export function NotificationBell() {
           </div>
           <div className="max-h-96 overflow-y-auto py-1">
             {items.length === 0 ? (
-              <p className="px-4 py-6 text-sm text-[var(--ink-faint)] text-center">Aucune notification.</p>
+              <p className="px-4 py-6 text-sm text-[var(--ink-faint)] text-center">{t('empty')}</p>
             ) : (
               items.map((n) => (
                 <button
@@ -66,7 +68,7 @@ export function NotificationBell() {
                     <span className="block text-sm text-[var(--ink)]">
                       {n.kind === 'rating'
                         ? <><b>{n.fromName}</b> a noté ta grille{n.rating ? ` ${'★'.repeat(n.rating)}` : ''}</>
-                        : <><b>{n.fromName}</b> a écrit un commentaire</>}
+                        : <><b>{n.fromName}</b> {t('wroteComment')}</>}
                     </span>
                     {n.sheetTitle && (
                       <span className="block text-xs text-[var(--ink-light)] truncate">« {n.sheetTitle} »</span>

@@ -364,7 +364,9 @@
     "clickToListen": "Cliquer pour écouter",
     "metronomeMenu": "Métronome et décompte",
     "metronomeClick": "Clic du métronome",
-    "countIn": "Décompte au démarrage"
+    "countIn": "Décompte au démarrage",
+    "capoOn": "Capo posé : accords piano transposés et suivi micro adaptés (cliquer si tu joues sans le capo)",
+    "capoOff": "Capo retiré : accords à leur hauteur réelle (cliquer pour le remettre)"
   },
   "Groups": {
     "title": "Mes groupes",
@@ -1476,7 +1478,9 @@
     "explore": "Explorer",
     "backToExplore": "Retour à Explorer",
     "available": "{count, plural, one {# version disponible} other {# versions disponibles}}",
-    "empty": "Aucune version trouvée."
+    "empty": "Aucune version trouvée.",
+    "bookmarkAdd": "Ajouter aux favoris",
+    "bookmarkRemove": "Retirer des favoris"
   },
   "PublicProfile": {
     "notFound": "Auteur introuvable ou aucune grille publiée.",
@@ -1511,5 +1515,117 @@
     "forkLink": "créer ta propre version",
     "ratingPending": "Ta note en dessous de 5 sera enregistrée une fois ton commentaire envoyé.",
     "placeholder": "Ton message à l'auteur…"
+  },
+  "ChordFinder": {
+    "title": "Identifier un accord",
+    "barre": "Barré",
+    "startFret": "Départ",
+    "play": "▶ Jouer",
+    "clear": "Effacer",
+    "noMatch": "Aucun accord ne correspond — essaie d'autres positions",
+    "start": "Clique sur le manche pour commencer…",
+    "listen": "Cliquer pour écouter",
+    "insert": "Insérer « {chord} »"
+  },
+  "LiveFollow": {
+    "listening": "Écoute",
+    "muted": "Suivi coupé : relance-le pour éviter que le son joué repique dans le micro.",
+    "stop": "Arrêter le suivi micro",
+    "start": "Suivre au micro — surligne l'accord joué et fait défiler"
+  },
+  "CreatorLevels": {
+    "Découvreur": "Découvreur",
+    "Contributeur": "Contributeur",
+    "Référence": "Référence",
+    "Maître": "Maître"
+  },
+  "Pending": {
+    "title": "À valider",
+    "empty": "Aucune grille à valider.",
+    "edit": "Éditer",
+    "loadError": "Erreur de chargement"
+  },
+  "JoinGroup": {
+    "invited": "Tu as été invité à rejoindre ce groupe.",
+    "join": "Rejoindre le groupe",
+    "invalidTitle": "Lien invalide ou expiré",
+    "invalidBody": "Ce lien d'invitation n'est plus valide. Demande un nouveau lien à ton groupe.",
+    "retry": "Réessayer"
+  },
+  "NewSheet": {
+    "how": "Comment veux-tu créer ta grille ?",
+    "fromScratch": "Créer depuis zéro",
+    "importText": "Importer du texte",
+    "importTextHint": "Coller depuis un site de tablatures",
+    "readScore": "Lire une partition",
+    "readScoreHint": "Photo ou image analysée par IA",
+    "fromAudio": "Depuis un audio",
+    "fromAudioHint": "Lien YouTube ou fichier — accords détectés (brouillon)",
+    "createError": "Erreur lors de la création de la grille"
+  },
+  "EditSheet": {
+    "notFound": "Grille non trouvée",
+    "forbidden": "Vous n'êtes pas autorisé à modifier cette grille",
+    "loadError": "Erreur lors du chargement de la grille",
+    "saveError": "Erreur lors de la sauvegarde",
+    "backToDashboard": "Retour au dashboard"
+  },
+  "ChordEditor": {
+    "namePlaceholder": "La mineur 7",
+    "barre": "Barré",
+    "fromString": "De corde",
+    "toString": "À corde",
+    "startFret": "Case de départ",
+    "addChord": "Ajouter un accord",
+    "augmented": "Augmenté",
+    "diminished": "Diminué",
+    "startFretShort": "Case départ :",
+    "tapFrets": "Clique sur les cases pour placer tes doigts",
+    "chordName": "Nom de l'accord (ex : C#m7)",
+    "listen": "▶ Écouter",
+    "editTitle": "Modifier l'accord : {chord}"
+  },
+  "ChordEditorCategories": {
+    "major": "Majeur",
+    "minor": "Mineur",
+    "dom7": "7 (Dominante)",
+    "maj7": "Maj 7",
+    "min7": "Min 7",
+    "dim": "Diminué",
+    "aug": "Augmenté",
+    "sus": "Sus / Add",
+    "other": "Autre"
+  },
+  "AudioImport": {
+    "title": "Depuis un audio",
+    "subtitle": "Lien YouTube ou fichier : les accords sont extraits de l'audio.",
+    "chooseFile": "Choisir un fichier audio (MP3, WAV…)",
+    "noticeStart": "La détection est automatique (séparation des pistes puis reconnaissance) : elle donne un",
+    "noticeStrong": "brouillon en accords majeurs/mineurs",
+    "noticeEnd": ", à corriger dans l'éditeur. L'analyse peut prendre 1 à 3 minutes.",
+    "running": "L'analyse tourne sur le serveur (~3-4 min). Tu peux laisser cette fenêtre ouverte.",
+    "quotaTitle": "Limite d'analyses atteinte ce mois-ci",
+    "goPro": "Passer à Pro",
+    "analyse": "Analyser",
+    "analysing": "Analyse…",
+    "reanalyse": "Ré-analyser",
+    "create": "Créer la grille",
+    "creating": "Création…",
+    "stepStructuring": "Structuration de la grille…",
+    "stepUploading": "Envoi de l'audio…",
+    "stepPreparing": "Préparation…",
+    "errStructuring": "Erreur de structuration.",
+    "errConnection": "Perte de connexion au suivi de l'analyse.",
+    "errCreate": "Erreur lors de la création de la grille."
+  },
+  "Notifications": {
+    "empty": "Aucune notification.",
+    "wroteComment": "a écrit un commentaire"
+  },
+  "Concert": {
+    "end": "Terminer le concert"
+  },
+  "ChordCard": {
+    "listen": "Cliquer pour écouter"
   }
 }

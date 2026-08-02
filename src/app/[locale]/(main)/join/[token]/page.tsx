@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { doc, getDoc } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
@@ -8,6 +9,7 @@ import { useGroups } from '@/lib/use-groups';
 import { useRouter } from '@/i18n/navigation';
 
 export default function JoinGroupPage({ params }: { params: Promise<{ token: string }> }) {
+  const t = useTranslations('JoinGroup');
   const { token } = use(params);
   const router = useRouter();
   const { joinGroup } = useGroups();
@@ -49,8 +51,8 @@ export default function JoinGroupPage({ params }: { params: Promise<{ token: str
       {status === 'invalid' && (
         <div className="space-y-3">
           <div className="text-4xl">⚠️</div>
-          <h1 className="font-playfair text-xl font-bold text-[var(--ink)]">Lien invalide ou expiré</h1>
-          <p className="text-sm text-[var(--ink-light)]">Ce lien d&apos;invitation n&apos;est plus valide. Demande un nouveau lien à ton groupe.</p>
+          <h1 className="font-playfair text-xl font-bold text-[var(--ink)]">{t('invalidTitle')}</h1>
+          <p className="text-sm text-[var(--ink-light)]">{t('invalidBody')}</p>
         </div>
       )}
 
@@ -60,13 +62,13 @@ export default function JoinGroupPage({ params }: { params: Promise<{ token: str
           <h1 className="font-playfair text-xl font-bold text-[var(--ink)]">
             Rejoindre <span className="text-[var(--accent)]">{groupName}</span>
           </h1>
-          <p className="text-sm text-[var(--ink-light)]">Tu as été invité à rejoindre ce groupe.</p>
+          <p className="text-sm text-[var(--ink-light)]">{t('invited')}</p>
           <button
             onClick={handleJoin}
             disabled={status === 'joining'}
             className="px-6 py-3 bg-[var(--accent)] hover:bg-[#a83d25] text-white font-medium rounded-lg transition-colors disabled:opacity-50"
           >
-            {status === 'joining' ? 'Rejoindre…' : 'Rejoindre le groupe'}
+            {status === 'joining' ? `${t('join')}…` : t('join')}
           </button>
         </div>
       )}
@@ -80,7 +82,7 @@ export default function JoinGroupPage({ params }: { params: Promise<{ token: str
             onClick={() => setStatus('ready')}
             className="text-sm text-[var(--accent)] underline"
           >
-            Réessayer
+            {t('retry')}
           </button>
         </div>
       )}

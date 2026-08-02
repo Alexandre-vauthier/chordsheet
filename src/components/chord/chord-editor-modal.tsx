@@ -1,19 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import type { InstrumentId, StringChord, PianoChord, FingerPosition, ChordBarre } from '@/types';
 import { playChord, playNote, OPEN_FREQS, noteNameToFreq, ensureAudioContext, preloadInstrument } from '@/lib/chord-audio';
 
 const CATEGORY_OPTIONS = [
-  { value: 'major', label: 'Majeur' },
-  { value: 'minor', label: 'Mineur' },
-  { value: 'dom7', label: '7 (Dominant)' },
-  { value: 'maj7', label: 'Maj 7' },
-  { value: 'min7', label: 'Min 7' },
-  { value: 'dim', label: 'Diminué' },
-  { value: 'aug', label: 'Augmenté' },
-  { value: 'sus', label: 'Sus / Add' },
-  { value: 'other', label: 'Autre' },
+  { value: 'major' },
+  { value: 'minor' },
+  { value: 'dom7' },
+  { value: 'maj7' },
+  { value: 'min7' },
+  { value: 'dim' },
+  { value: 'aug' },
+  { value: 'sus' },
+  { value: 'other' },
 ];
 
 interface ChordEditorModalProps {
@@ -57,6 +58,8 @@ export function ChordEditorModal({
   forcedCategory,
   onCategoryChange,
 }: ChordEditorModalProps) {
+  const t = useTranslations('ChordEditor');
+  const tCategory = useTranslations('ChordEditorCategories');
   const isPiano = instrumentId === 'piano';
   const isVoice = instrumentId === 'voice';
   const config = (!isPiano && !isVoice) ? INSTRUMENT_CONFIG[instrumentId as Exclude<InstrumentId, 'piano' | 'voice' | 'percussion'>] : null;
@@ -229,7 +232,7 @@ export function ChordEditorModal({
       <div className="bg-[var(--cell-bg)] rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
         <div className="p-4 border-b border-[var(--line)]">
           <h2 className="text-lg font-medium text-[var(--ink)] mb-2">
-            {chordName ? `Modifier l'accord : ${chordName}` : 'Ajouter un accord'}
+            {chordName ? t('editTitle', { chord: chordName }) : t('addChord')}
           </h2>
           {!chordName && (
             <div className="flex gap-2 mt-2">
@@ -237,7 +240,7 @@ export function ChordEditorModal({
                 type="text"
                 value={editableName}
                 onChange={(e) => setEditableName(e.target.value)}
-                placeholder="Nom de l'accord (ex: C#m7)"
+                placeholder={t('chordName')}
                 className="flex-1 px-3 py-2 border border-[var(--line)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 autoFocus
               />
@@ -247,15 +250,15 @@ export function ChordEditorModal({
                   onChange={(e) => onCategoryChange(e.target.value)}
                   className="cursor-pointer px-2 py-2 border border-[var(--line)] rounded-lg text-sm bg-[var(--cell-bg)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
                 >
-                  {CATEGORY_OPTIONS.map(({ value, label }) => (
-                    <option key={value} value={value}>{label}</option>
+                  {CATEGORY_OPTIONS.map(({ value }) => (
+                    <option key={value} value={value}>{tCategory(value)}</option>
                   ))}
                 </select>
               )}
             </div>
           )}
           <p className="text-sm text-[var(--ink-light)] mt-2">
-            Cliquez sur les cases pour placer vos doigts
+            {t('tapFrets')}
           </p>
         </div>
 
@@ -288,10 +291,10 @@ export function ChordEditorModal({
                     onChange={() => setBarre(barre ? null : { fret: 1, fromString: 1, toString: config.strings })}
                     className="w-4 h-4 rounded"
                   />
-                  <span className="text-sm">Barré</span>
+                  <span className="text-sm">{t('barre')}</span>
                 </label>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-[var(--ink-faint)]">Case départ:</span>
+                  <span className="text-xs text-[var(--ink-faint)]">{t('startFretShort')}</span>
                   <input
                     type="number"
                     min={1}
@@ -349,7 +352,7 @@ export function ChordEditorModal({
             onClick={handlePlay}
             className="cursor-pointer px-4 py-2 text-sm bg-[var(--line)] hover:bg-[var(--cell-hover)] rounded-lg transition-colors"
           >
-            ▶ Écouter
+            {t('listen')}
           </button>
           <button
             onClick={onClose}

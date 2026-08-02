@@ -1,10 +1,12 @@
 'use client';
 
 import { useGroups } from '@/lib/use-groups';
+import { useTranslations } from 'next-intl';
 import { useAuth } from '@/lib/auth-context';
 import { Link, useRouter } from '@/i18n/navigation';
 
 export function ConcertBanner() {
+  const t = useTranslations('Concert');
   const { groups, endConcert } = useGroups();
   const { user } = useAuth();
   const router = useRouter();
@@ -33,7 +35,7 @@ export function ConcertBanner() {
           <button
             onClick={() => endConcert(group.id!).catch(() => {})}
             className="shrink-0 text-white/60 hover:text-white text-lg leading-none transition-colors"
-            title="Terminer le concert"
+            title={t('end')}
           >
             ×
           </button>

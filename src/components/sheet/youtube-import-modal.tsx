@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { collection, addDoc, serverTimestamp, doc, onSnapshot } from 'firebase/firestore';
 import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject, type StorageReference } from 'firebase/storage';
 import { getAuth, getDb, getStorage } from '@/lib/firebase';
@@ -54,6 +55,7 @@ function resultToSections(data: SheetResult): Section[] {
 }
 
 export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
+  const t = useTranslations('AudioImport');
   const { user } = useAuth();
   const router = useRouter();
   const [url, setUrl] = useState('');
@@ -141,7 +143,7 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
     if (finishingRef.current) return;
     finishingRef.current = true;
     cleanupUpload(); // le worker a déjà lu le fichier
-    setStep('Structuration de la grille…');
+    setStep(t('stepStructuring'));
     setProgress(100);
     try {
       const res = await fetch('/api/analyze-audio/finish', {
@@ -150,7 +152,7 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
         body: JSON.stringify({ jobId }),
       });
       const data = await res.json().catch(() => ({} as { error?: string; result?: SheetResult }));
-      if (!res.ok) throw new Error(data.error ?? 'Erreur de structuration.');
+      if (!res.ok) throw new Error(data.error ?? t('errStructuring'));
       setResult(data.result as SheetResult);
       setStatus('done');
     } catch (e) {
@@ -181,7 +183,7 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
         }
       },
       () => {
-        setError('Perte de connexion au suivi de l\'analyse.');
+        setError(t('errConnection'));
         setStatus('error');
         cleanupUpload();
       },
@@ -195,7 +197,7 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
     setError('');
     setResult(null);
     setProgress(0);
-    setStep(file ? 'Envoi de l\'audio…' : 'Préparation…');
+    setStep(file ? t('stepUploading') : t('stepPreparing'));
     finishingRef.current = false;
     try {
       let payload: Record<string, string>;
@@ -260,7 +262,7 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
       });
       router.push(`/sheet/${ref.id}/edit`);
     } catch {
-      setError('Erreur lors de la création de la grille.');
+      setError(t('errCreate'));
       setIsCreating(false);
     }
   };
@@ -272,8 +274,8 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
       <div className="bg-[var(--cream)] rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[var(--line)]">
           <div>
-            <h2 className="font-playfair text-lg font-bold text-[var(--ink)]">Depuis un audio</h2>
-            <p className="text-xs text-[var(--ink-faint)] mt-0.5">Lien YouTube ou fichier : les accords sont extraits de l&apos;audio.</p>
+            <h2 className="font-playfair text-lg font-bold text-[var(--ink)]">{t('title')}</h2>
+            <p className="text-xs text-[var(--ink-faint)] mt-0.5">{t('subtitle')}</p>
           </div>
           <div className="flex items-center gap-3">
             {!userIsPro && remainingOcr !== Infinity && (
@@ -306,7 +308,7 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 18V5l12-2v13M9 13l12-2M6 21a3 3 0 100-6 3 3 0 000 6z" />
             </svg>
-            {file ? file.name : 'Choisir un fichier audio (MP3, WAV…)'}
+            {file ? file.name : t('chooseFile')}
           </button>
           <input
             ref={fileInputRef}
@@ -317,8 +319,8 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
           />
 
           <p className="text-xs text-[var(--ink-faint)] leading-relaxed">
-            La détection est automatique (séparation des pistes puis reconnaissance) : elle donne un
-            <strong> brouillon en accords majeurs/mineurs</strong>, à corriger dans l&apos;éditeur. L&apos;analyse peut prendre 1 à 3 minutes.
+            {t('noticeStart')}{' '}
+            <strong>{t('noticeStrong')}</strong>{t('noticeEnd')}
           </p>
 
           {status === 'loading' && (
@@ -334,7 +336,7 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
                 />
               </div>
               <p className="text-xs text-[var(--ink-faint)] text-center">
-                L’analyse tourne sur le serveur (~3-4 min). Tu peux laisser cette fenêtre ouverte.
+                {t('running')}
               </p>
             </div>
           )}
@@ -345,9 +347,9 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
 
           {status === 'upgrade' && (
             <div className="rounded-xl border border-[var(--line)] bg-[var(--cell-bg)] p-5 text-center space-y-3">
-              <p className="font-semibold text-[var(--ink)] text-sm">Limite d&apos;analyses atteinte ce mois-ci</p>
+              <p className="font-semibold text-[var(--ink)] text-sm">{t('quotaTitle')}</p>
               <Link href="/pricing" onClick={onClose} className="inline-block px-5 py-2 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm font-medium rounded-lg transition-colors">
-                Passer à Pro
+                {t('goPro')}
               </Link>
             </div>
           )}
@@ -400,7 +402,7 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
               disabled={(!url.trim() && !file) || status === 'loading'}
               className="px-5 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-40 cursor-pointer"
             >
-              {status === 'loading' ? 'Analyse…' : status === 'done' ? 'Ré-analyser' : 'Analyser'}
+              {status === 'loading' ? t('analysing') : status === 'done' ? t('reanalyse') : t('analyse')}
             </button>
             {status === 'done' && (
               <button
@@ -408,7 +410,7 @@ export function YoutubeImportModal({ onClose }: { onClose: () => void }) {
                 disabled={isCreating}
                 className="px-5 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
               >
-                {isCreating ? 'Création…' : 'Créer la grille'}
+                {isCreating ? t('creating') : t('create')}
               </button>
             )}
           </div>

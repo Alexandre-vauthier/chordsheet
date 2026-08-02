@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
@@ -15,6 +16,7 @@ interface EditSheetPageProps {
 }
 
 export default function EditSheetPage({ params }: EditSheetPageProps) {
+  const t = useTranslations('EditSheet');
   const { id } = use(params);
   const router = useRouter();
   const { user, isAdmin } = useAuth();
@@ -31,7 +33,7 @@ export default function EditSheetPage({ params }: EditSheetPageProps) {
         const docSnap = await getDoc(docRef);
 
         if (!docSnap.exists()) {
-          setError('Grille non trouvée');
+          setError(t('notFound'));
           return;
         }
 
@@ -46,14 +48,14 @@ export default function EditSheetPage({ params }: EditSheetPageProps) {
           authorized = memberIds.includes(user.id);
         }
         if (!authorized) {
-          setError('Vous n\'êtes pas autorisé à modifier cette grille');
+          setError(t('forbidden'));
           return;
         }
 
         setSheet(fromFirestore(docSnap.id, data));
       } catch (err) {
         console.error('Error loading sheet:', err);
-        setError('Erreur lors du chargement de la grille');
+        setError(t('loadError'));
       } finally {
         setLoading(false);
       }
@@ -81,7 +83,7 @@ export default function EditSheetPage({ params }: EditSheetPageProps) {
       setSheet(updatedSheet as Sheet);
     } catch (error) {
       console.error('Error saving sheet:', error);
-      alert('Erreur lors de la sauvegarde');
+      alert(t('saveError'));
     } finally {
       setIsSaving(false);
     }
@@ -103,7 +105,7 @@ export default function EditSheetPage({ params }: EditSheetPageProps) {
           onClick={() => router.push('/dashboard')}
           className="text-[var(--accent)] hover:underline"
         >
-          Retour au dashboard
+          {t('backToDashboard')}
         </button>
       </div>
     );

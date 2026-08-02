@@ -364,7 +364,9 @@
     "clickToListen": "Click to listen",
     "metronomeMenu": "Metronome and count-in",
     "metronomeClick": "Metronome click",
-    "countIn": "Count-in before playing"
+    "countIn": "Count-in before playing",
+    "capoOn": "Capo on: piano chords transposed and mic following adjusted (click if you play without the capo)",
+    "capoOff": "Capo off: chords at their real pitch (click to put it back)"
   },
   "Groups": {
     "title": "My bands",
@@ -1476,7 +1478,9 @@
     "explore": "Browse",
     "backToExplore": "Back to browsing",
     "available": "{count, plural, one {# version available} other {# versions available}}",
-    "empty": "No version found."
+    "empty": "No version found.",
+    "bookmarkAdd": "Add to favourites",
+    "bookmarkRemove": "Remove from favourites"
   },
   "PublicProfile": {
     "notFound": "Author not found, or no published chart.",
@@ -1511,5 +1515,117 @@
     "forkLink": "create your own version",
     "ratingPending": "Your rating below 5 will be saved once your comment is sent.",
     "placeholder": "Your message to the author…"
+  },
+  "ChordFinder": {
+    "title": "Identify a chord",
+    "barre": "Barre",
+    "startFret": "From fret",
+    "play": "▶ Play",
+    "clear": "Clear",
+    "noMatch": "No chord matches — try other positions",
+    "start": "Click the fretboard to begin…",
+    "listen": "Click to hear it",
+    "insert": "Insert “{chord}”"
+  },
+  "LiveFollow": {
+    "listening": "Listening",
+    "muted": "Following is off: restart it so the sound played doesn't feed back into the mic.",
+    "stop": "Stop following",
+    "start": "Follow with the mic — highlights the chord played and scrolls along"
+  },
+  "CreatorLevels": {
+    "Découvreur": "Explorer",
+    "Contributeur": "Contributor",
+    "Référence": "Reference",
+    "Maître": "Master"
+  },
+  "Pending": {
+    "title": "To review",
+    "empty": "Nothing to review.",
+    "edit": "Edit",
+    "loadError": "Loading failed"
+  },
+  "JoinGroup": {
+    "invited": "You have been invited to join this band.",
+    "join": "Join the band",
+    "invalidTitle": "Invalid or expired link",
+    "invalidBody": "This invitation link is no longer valid. Ask your band for a new one.",
+    "retry": "Try again"
+  },
+  "NewSheet": {
+    "how": "How do you want to build your chart?",
+    "fromScratch": "Start from scratch",
+    "importText": "Import text",
+    "importTextHint": "Paste from a tab site",
+    "readScore": "Read a score",
+    "readScoreHint": "Photo or image analysed by AI",
+    "fromAudio": "From audio",
+    "fromAudioHint": "YouTube link or file — chords detected (draft)",
+    "createError": "The chart could not be created"
+  },
+  "EditSheet": {
+    "notFound": "Chart not found",
+    "forbidden": "You are not allowed to edit this chart",
+    "loadError": "The chart could not be loaded",
+    "saveError": "Saving failed",
+    "backToDashboard": "Back to my book"
+  },
+  "ChordEditor": {
+    "namePlaceholder": "A minor 7",
+    "barre": "Barre",
+    "fromString": "From string",
+    "toString": "To string",
+    "startFret": "Starting fret",
+    "addChord": "Add a chord",
+    "augmented": "Augmented",
+    "diminished": "Diminished",
+    "startFretShort": "From fret:",
+    "tapFrets": "Tap the frets to place your fingers",
+    "chordName": "Chord name (e.g. C#m7)",
+    "listen": "▶ Listen",
+    "editTitle": "Edit the chord: {chord}"
+  },
+  "ChordEditorCategories": {
+    "major": "Major",
+    "minor": "Minor",
+    "dom7": "7 (Dominant)",
+    "maj7": "Maj 7",
+    "min7": "Min 7",
+    "dim": "Diminished",
+    "aug": "Augmented",
+    "sus": "Sus / Add",
+    "other": "Other"
+  },
+  "AudioImport": {
+    "title": "From audio",
+    "subtitle": "YouTube link or file: the chords are extracted from the audio.",
+    "chooseFile": "Choose an audio file (MP3, WAV…)",
+    "noticeStart": "Detection is automatic (track separation, then recognition): it produces a",
+    "noticeStrong": "draft in major/minor chords",
+    "noticeEnd": ", to be corrected in the editor. Analysis can take 1 to 3 minutes.",
+    "running": "The analysis runs on the server (~3-4 min). You can leave this window open.",
+    "quotaTitle": "Analysis limit reached this month",
+    "goPro": "Go Pro",
+    "analyse": "Analyse",
+    "analysing": "Analysing…",
+    "reanalyse": "Analyse again",
+    "create": "Create the chart",
+    "creating": "Creating…",
+    "stepStructuring": "Building the chart…",
+    "stepUploading": "Uploading the audio…",
+    "stepPreparing": "Preparing…",
+    "errStructuring": "Structuring failed.",
+    "errConnection": "Lost connection to the analysis.",
+    "errCreate": "The chart could not be created."
+  },
+  "Notifications": {
+    "empty": "No notification.",
+    "wroteComment": "wrote a comment"
+  },
+  "Concert": {
+    "end": "End the concert"
+  },
+  "ChordCard": {
+    "listen": "Click to hear it"
   }
 }
