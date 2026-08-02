@@ -237,8 +237,10 @@ export default function Home() {
             {t('hero.eyebrow')}
           </p>
           <div className="mb-5 flex justify-center">
-            {/* Le logo est décoratif : la promesse du site est portée par le h1
-                ci-dessous, seul titre de niveau 1 de la page (il n'y en avait aucun). */}
+            {/* Le logo est décoratif. Le h1 ci-dessous porte **le nom et la
+                promesse en toutes lettres** : le nom n'existait plus que sous forme
+                de tracé vectoriel depuis le passage au vrai logo, et la validation
+                OAuth de Google, qui lit le texte de la page, ne le trouvait pas. */}
             <BrandLogo size="lg" className="text-[var(--nav-text)]" />
           </div>
           <h1 className="text-[var(--nav-text)]/70 text-xl sm:text-2xl mb-3 font-light leading-snug">
