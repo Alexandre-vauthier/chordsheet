@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
   // Pourquoi une grille n'entre pas dans la comparaison : sans ce detail, un total
   // plus petit que le catalogue passe pour une anomalie.
   let exclues = 0;
+  let privees = 0;
   let sansTonalite = 0;
   let tropPeuDAccords = 0;
   let compared = 0;
@@ -101,6 +102,10 @@ export async function POST(req: NextRequest) {
     // partiels ou faux. Les compter reviendrait a juger le calcul sur une matiere
     // que son auteur sait lui-meme incorrecte.
     if (brut.pendingValidation === true) { exclues++; continue; }
+
+    // Les grilles privees sont souvent des brouillons personnels, au meme titre que
+    // celles en attente de validation.
+    if (brut.isPublic !== true) { privees++; continue; }
 
     const sheet = fromFirestore(doc.id, brut) as Sheet;
 
@@ -137,9 +142,27 @@ export async function POST(req: NextRequest) {
      * sonner deux demi-tons plus haut : les deux valeurs sont justes et diffèrent
      * d'autant. Sans cette correction, on compte comme erreurs des accords parfaits.
      */
+    /**
+     * Deux lectures possibles, et les deux se rencontrent dans les donnees.
+     *
+     * La tonalite enregistree vaut tantot celle de l'enregistrement — GetSongBPM
+     * l'a remplie, il faut alors ajouter le capo pour comparer —, tantot celle des
+     * positions, saisie par un musicien qui lit sa grille : la comparaison est
+     * alors directe. Beggin' capo 5, Le Sud capo 4 et Yellow capo 4 tombaient juste
+     * et ma correction les declarait faux.
+     *
+     * Rien dans les donnees ne dit laquelle des deux a ete saisie. On accepte donc
+     * l'une ou l'autre : c'est la seule mesure honnete de ce que vaut le calcul.
+     */
+    const ecrit = detected.tonic === stored.tonic && detected.minor === stored.minor;
     const sonnant = (detected.tonic + capo) % 12;
-    const justeApresCapo = sonnant === stored.tonic && detected.minor === stored.minor;
-    const relatifCorrige = !justeApresCapo && sontRelatives({ tonic: sonnant, minor: detected.minor }, stored);
+    const sonnantJuste = sonnant === stored.tonic && detected.minor === stored.minor;
+
+    const justeApresCapo = ecrit || sonnantJuste;
+    const relatifCorrige =
+      !justeApresCapo &&
+      (sontRelatives(detected, stored) || sontRelatives({ tonic: sonnant, minor: detected.minor }, stored));
+
     if (justeApresCapo) exactApresCapo++;
     else if (relatifCorrige) relatifApresCapo++;
 
@@ -173,7 +196,7 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     total: snap.size,
-    ecartees: { enAttenteDeValidation: exclues, sansTonalite, tropPeuDAccords },
+    ecartees: { enAttenteDeValidation: exclues, privees, sansTonalite, tropPeuDAccords },
     compared,
     exact,
     relative,
