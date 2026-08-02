@@ -367,7 +367,8 @@
     "countIn": "Décompte au démarrage",
     "capoOn": "Capo posé : accords piano transposés et suivi micro adaptés (cliquer si tu joues sans le capo)",
     "capoOff": "Capo retiré : accords à leur hauteur réelle (cliquer pour le remettre)",
-    "viaItunes": "via iTunes"
+    "viaItunes": "via iTunes",
+    "appleMusic": "Apple Music"
   },
   "Groups": {
     "title": "Mes groupes",
@@ -892,7 +893,13 @@
     "visitFilter_inactive": "Inactifs (+ de 90 jours)",
     "visitFilter_never": "Jamais revenus",
     "chordIndex": "Index des accords",
-    "chordIndexDesc": "Recopie les accords de chaque grille dans un champ interrogeable. Nécessaire pour les pages d'accord et la recherche par accord. Sans danger à relancer."
+    "chordIndexDesc": "Recopie les accords de chaque grille dans un champ interrogeable. Nécessaire pour les pages d'accord et la recherche par accord. Sans danger à relancer.",
+    "lyricsPurge": "Paroles stockées",
+    "lyricsPurgeDesc": "Supprime le champ de paroles de toutes les grilles. L'affichage passe désormais par une récupération à la volée, sans stockage. Irréversible : le nombre est annoncé avant.",
+    "lyricsPurgeAction": "Supprimer",
+    "lyricsPurgeNone": "Aucune grille ne stocke de paroles.",
+    "lyricsPurgeConfirm": "{count} grilles stockent des paroles. Les supprimer définitivement ?",
+    "lyricsPurgeDone": "{count} grilles nettoyées."
   },
   "LegalMentions": {
     "pageTitle": "Mentions légales",

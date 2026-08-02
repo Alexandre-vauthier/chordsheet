@@ -37,6 +37,8 @@ export default function AdminPage() {
   const [proResult, setProResult] = useState('');
   const [backfillingSearch, setBackfillingSearch] = useState(false);
   const [backfillResult, setBackfillResult] = useState('');
+  const [purgingLyrics, setPurgingLyrics] = useState(false);
+  const [lyricsResult, setLyricsResult] = useState('');
   const [backfillingChords, setBackfillingChords] = useState(false);
   const [chordResult, setChordResult] = useState('');
   const [backfillingYears, setBackfillingYears] = useState(false);
@@ -228,6 +230,47 @@ export default function AdminPage() {
     }
   };
 
+  /**
+   * Efface les paroles stockées. En deux temps, à dessein : on compte d'abord, on
+   * annonce le nombre, et la suppression n'a lieu qu'après confirmation. C'est
+   * irréversible, ça mérite un arrêt.
+   */
+  const handlePurgeLyrics = async () => {
+    setPurgingLyrics(true);
+    setLyricsResult('');
+    try {
+      const idToken = await getAuth().currentUser?.getIdToken();
+      if (!idToken) throw new Error(t('notConnected'));
+      const headers = { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' };
+
+      const compte = await fetch('/api/admin/purge-lyrics', {
+        method: 'POST', headers, body: JSON.stringify({ dryRun: true }),
+      });
+      const apercu = await compte.json().catch(() => ({}));
+      if (!compte.ok) throw new Error(apercu.error || t('backfillError'));
+
+      if (apercu.withLyrics === 0) {
+        setLyricsResult(t('lyricsPurgeNone'));
+        return;
+      }
+      if (!confirm(t('lyricsPurgeConfirm', { count: apercu.withLyrics }))) {
+        setLyricsResult('');
+        return;
+      }
+
+      const res = await fetch('/api/admin/purge-lyrics', {
+        method: 'POST', headers, body: JSON.stringify({ dryRun: false }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || t('backfillError'));
+      setLyricsResult(t('lyricsPurgeDone', { count: data.purged }));
+    } catch (e) {
+      setLyricsResult(t('errorPrefix', { message: e instanceof Error ? e.message : t('unknownError') }));
+    } finally {
+      setPurgingLyrics(false);
+    }
+  };
+
   // Dépose le champ `chords` (accords à plat) sur les grilles antérieures à son
   // introduction. C'est lui qui rend une grille visible depuis une page d'accord.
   // Idempotent : une grille déjà à jour n'est pas réécrite.
@@ -357,6 +400,24 @@ export default function AdminPage() {
             className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
           >
             {backfillingSearch ? t('inProgress') : t('updateIndex')}
+          </button>
+        </div>
+      </div>
+
+      {/* Purge des paroles stockées */}
+      <div className="mb-8 p-4 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <p className="text-sm font-medium text-[var(--ink)]">{t('lyricsPurge')}</p>
+          <p className="text-xs text-[var(--ink-faint)]">{t('lyricsPurgeDesc')}</p>
+        </div>
+        <div className="flex items-center gap-3">
+          {lyricsResult && <span className="text-xs text-[var(--ink-light)]">{lyricsResult}</span>}
+          <button
+            onClick={handlePurgeLyrics}
+            disabled={purgingLyrics}
+            className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+          >
+            {purgingLyrics ? t('inProgress') : t('lyricsPurgeAction')}
           </button>
         </div>
       </div>

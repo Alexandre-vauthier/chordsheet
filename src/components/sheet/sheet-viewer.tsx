@@ -494,12 +494,13 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   href={trackUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block text-[8px] text-[var(--ink-faint)] hover:text-[var(--accent)] mt-0.5 text-center transition-colors"
+                  className="block text-[10px] leading-tight text-[var(--ink-light)] underline decoration-dotted underline-offset-2
+                    hover:text-[var(--accent)] mt-1 text-center transition-colors"
                 >
-                  {t('viaItunes')}
+                  {t('appleMusic')} ↗
                 </a>
               ) : (
-                <p className="text-[8px] text-[var(--ink-faint)] mt-0.5 text-center">{t('viaItunes')}</p>
+                <p className="text-[9px] text-[var(--ink-faint)] mt-1 text-center">{t('viaItunes')}</p>
               )}
             </div>
           )}

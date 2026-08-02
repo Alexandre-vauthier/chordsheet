@@ -367,7 +367,8 @@
     "countIn": "Count-in before playing",
     "capoOn": "Capo on: piano chords transposed and mic following adjusted (click if you play without the capo)",
     "capoOff": "Capo off: chords at their real pitch (click to put it back)",
-    "viaItunes": "via iTunes"
+    "viaItunes": "via iTunes",
+    "appleMusic": "Apple Music"
   },
   "Groups": {
     "title": "My bands",
@@ -892,7 +893,13 @@
     "visitFilter_inactive": "Inactive (90+ days)",
     "visitFilter_never": "Never returned",
     "chordIndex": "Chord index",
-    "chordIndexDesc": "Copies each chart's chords into a queryable field. Required by the chord pages and chord search. Safe to re-run."
+    "chordIndexDesc": "Copies each chart's chords into a queryable field. Required by the chord pages and chord search. Safe to re-run.",
+    "lyricsPurge": "Stored lyrics",
+    "lyricsPurgeDesc": "Removes the lyrics field from every chart. Display now goes through an on-the-fly lookup, with no storage. Irreversible: the count is shown first.",
+    "lyricsPurgeAction": "Delete",
+    "lyricsPurgeNone": "No chart stores lyrics.",
+    "lyricsPurgeConfirm": "{count} charts store lyrics. Delete them permanently?",
+    "lyricsPurgeDone": "{count} charts cleaned."
   },
   "LegalMentions": {
     "pageTitle": "Legal notice",
