@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { GoogleSignIn } from '@/components/auth/google-sign-in';
 import { SITE_NAME } from '@/lib/seo';
 import { useTranslations } from 'next-intl';
 
@@ -82,7 +83,19 @@ function RegisterForm() {
           <p className="text-[var(--ink-light)] mt-2">{t('registerTitle')}</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-[var(--cell-bg)] rounded-xl p-8 shadow-sm border border-[var(--line)]">
+        <div className="bg-[var(--cell-bg)] rounded-xl p-8 shadow-sm border border-[var(--line)]">
+        <GoogleSignIn
+          onSuccess={() => router.push('/explore')}
+          note={
+            <>
+              {t('googleTermsPrefix')}{' '}
+              <Link href="/legal/cgu" target="_blank" className="text-[var(--accent)] hover:underline">CGU</Link>
+              {' '}{t('googleTermsAnd')}{' '}
+              <Link href="/legal/cgv" target="_blank" className="text-[var(--accent)] hover:underline">CGV</Link>.
+            </>
+          }
+        />
+        <form onSubmit={handleSubmit}>
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
               {error}
@@ -170,6 +183,7 @@ function RegisterForm() {
             </Link>
           </p>
         </form>
+        </div>
       </div>
     </main>
   );

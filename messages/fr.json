@@ -558,7 +558,15 @@
       "invalidTitle": "Ce lien n'est plus valable",
       "invalidBody": "Il a peut-être expiré, ou déjà servi. Connecte-toi pour en redemander un.",
       "backToLogin": "Aller à la connexion"
-    }
+    },
+    "googleContinue": "Continuer avec Google",
+    "googleInProgress": "Connexion en cours…",
+    "or": "ou",
+    "errorGooglePopupBlocked": "La fenêtre a été bloquée par ton navigateur. Autorise les fenêtres surgissantes pour ce site, puis réessaie.",
+    "errorGoogleAccountExists": "Un compte existe déjà avec cette adresse. Connecte-toi avec ton mot de passe.",
+    "errorGoogleGeneric": "La connexion avec Google a échoué. Réessaie.",
+    "googleTermsPrefix": "En continuant avec Google, tu acceptes les",
+    "googleTermsAnd": "et les"
   },
   "Sets": {
     "errorSave": "Erreur lors de la sauvegarde",

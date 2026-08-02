@@ -5,6 +5,8 @@ import {
   User as FirebaseUser,
   onAuthStateChanged,
   signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   deleteUser as firebaseDeleteUser,
@@ -23,6 +25,7 @@ interface AuthContextType {
   isAdmin: boolean;
   emailVerified: boolean;
   signIn: (email: string, password: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
@@ -181,6 +184,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     const auth = getAuth();
     await signInWithEmailAndPassword(auth, email, password);
+  };
+
+  /**
+   * Connexion par compte Google.
+   *
+   * Rien à créer côté données : l'écouteur d'état ci-dessus dépose déjà un document
+   * utilisateur pour tout compte qui n'en a pas, en reprenant le nom et la photo du
+   * fournisseur. Un compte Google arrive par ailleurs avec son adresse déjà vérifiée,
+   * il ne rencontre donc pas la porte de confirmation.
+   */
+  const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    // Force le choix du compte : sans ça, quelqu'un connecté à un compte Google sur
+    // sa machine est enrôlé avec celui-là sans qu'on lui demande, ce qui surprend
+    // ceux qui en ont plusieurs.
+    provider.setCustomParameters({ prompt: 'select_account' });
+    await signInWithPopup(getAuth(), provider);
   };
 
   // Inscription
@@ -348,7 +368,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = user?.role === 'admin';
 
   return (
-    <AuthContext.Provider value={{ user, firebaseUser, loading, isAdmin, emailVerified, signIn, signUp, signOut, deleteAccount, updateUser, resendVerificationEmail, refreshEmailVerification }}>
+    <AuthContext.Provider value={{ user, firebaseUser, loading, isAdmin, emailVerified, signIn, signInWithGoogle, signUp, signOut, deleteAccount, updateUser, resendVerificationEmail, refreshEmailVerification }}>
       {children}
     </AuthContext.Provider>
   );

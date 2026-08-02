@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RedirectIfAuthenticated } from '@/components/auth/redirect-if-authenticated';
+import { GoogleSignIn } from '@/components/auth/google-sign-in';
 import { Link, useRouter } from '@/i18n/navigation';
 
 export default function LoginPage() {
@@ -34,6 +35,16 @@ function LoginForm() {
   const [resetSent, setResetSent] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
 
+  /**
+   * Où atterrir une fois identifié. Seuls les chemins internes sont acceptés : un
+   * `next` absolu ferait de cette page un tremplin de redirection vers n'importe
+   * quel site, au nom du nôtre.
+   */
+  const goToDestination = () => {
+    const next = searchParams.get('next');
+    router.push(next && next.startsWith('/') && !next.startsWith('//') ? next : '/explore');
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -41,11 +52,7 @@ function LoginForm() {
 
     try {
       await signIn(email, password);
-      // Retour là où la personne voulait aller. Seuls les chemins internes sont
-      // acceptés : un `next` absolu ferait de cette page un tremplin de redirection
-      // vers n'importe quel site, au nom du nôtre.
-      const next = searchParams.get('next');
-      router.push(next && next.startsWith('/') && !next.startsWith('//') ? next : '/explore');
+      goToDestination();
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : t('errorGenericLogin');
       if (errorMessage.includes('user-not-found') || errorMessage.includes('wrong-password') || errorMessage.includes('invalid-credential')) {
@@ -94,7 +101,9 @@ function LoginForm() {
           <p className="text-[var(--ink-light)] mt-2">{t('loginTitle')}</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-[var(--cell-bg)] rounded-xl p-8 shadow-sm border border-[var(--line)]">
+        <div className="bg-[var(--cell-bg)] rounded-xl p-8 shadow-sm border border-[var(--line)]">
+        <GoogleSignIn onSuccess={goToDestination} />
+        <form onSubmit={handleSubmit}>
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
               {error}
@@ -157,6 +166,7 @@ function LoginForm() {
             </Link>
           </p>
         </form>
+        </div>
       </div>
     </main>
   );

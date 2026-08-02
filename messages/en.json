@@ -558,7 +558,15 @@
       "invalidTitle": "This link is no longer valid",
       "invalidBody": "It may have expired, or already been used. Sign in to request another.",
       "backToLogin": "Go to sign in"
-    }
+    },
+    "googleContinue": "Continue with Google",
+    "googleInProgress": "Signing in…",
+    "or": "or",
+    "errorGooglePopupBlocked": "Your browser blocked the window. Allow pop-ups for this site, then try again.",
+    "errorGoogleAccountExists": "An account already exists with this address. Sign in with your password.",
+    "errorGoogleGeneric": "Google sign-in failed. Please try again.",
+    "googleTermsPrefix": "By continuing with Google, you accept the",
+    "googleTermsAnd": "and the"
   },
   "Sets": {
     "errorSave": "Error saving",
