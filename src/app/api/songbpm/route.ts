@@ -55,7 +55,19 @@ export async function GET(req: NextRequest) {
     // simple absence du morceau. `?diag=1` rend le code et un extrait de la réponse
     // amont — **clé retirée**, elle figure dans l'URL interrogée.
     if (req.nextUrl.searchParams.get('diag') === '1') {
+      // Appel SANS proxy : si Cloudflare laisse passer les IP de Vercel, la
+      // dépendance à ScrapingBee — et son quota — n'a plus lieu d'être.
+      let direct: { status: number; bodyStart: string } | null = null;
+      try {
+        const d = await fetch(searchUrl);
+        const dt = await d.text().catch(() => '');
+        direct = { status: d.status, bodyStart: dt.slice(0, 200).replace(/api_key=[^&"\s]+/g, 'api_key=***') };
+      } catch (err) {
+        direct = { status: 0, bodyStart: String(err).slice(0, 120) };
+      }
+
       return NextResponse.json({
+        direct,
         upstreamStatus: search.status,
         bodyStart: search.text.slice(0, 300).replace(/api_key=[^&"\s]+/g, 'api_key=***'),
         parsed: search.json ? Object.keys(search.json as Record<string, unknown>) : null,
