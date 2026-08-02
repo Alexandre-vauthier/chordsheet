@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-type ArtworkData = { artworkUrl: string | null; previewUrl: string | null; year: number | null; genre: string | null };
+type ArtworkData = { artworkUrl: string | null; previewUrl: string | null; trackUrl: string | null; year: number | null; genre: string | null };
 
 // Cache mémoire (déduplique les requêtes dans la même session)
 const MEM_CACHE = new Map<string, ArtworkData>();
@@ -28,7 +28,7 @@ function lsGet(key: string): ArtworkData | undefined {
 
 function lsSet(key: string, data: ArtworkData) {
   // Ne persiste que les vrais résultats
-  if (!data.artworkUrl && !data.previewUrl && data.year == null && !data.genre) return;
+  if (!data.artworkUrl && !data.previewUrl && !data.trackUrl && data.year == null && !data.genre) return;
   try {
     localStorage.setItem(LS_PREFIX + key, JSON.stringify({ data, expires: Date.now() + TTL_MS }));
   } catch { /* quota dépassé */ }
@@ -37,16 +37,17 @@ function lsSet(key: string, data: ArtworkData) {
 async function fetchArtwork(query: string): Promise<ArtworkData> {
   try {
     const res = await fetch(`/api/artwork?q=${encodeURIComponent(query)}`);
-    if (!res.ok) return { artworkUrl: null, previewUrl: null, year: null, genre: null };
+    if (!res.ok) return { artworkUrl: null, previewUrl: null, trackUrl: null, year: null, genre: null };
     return await res.json();
   } catch {
-    return { artworkUrl: null, previewUrl: null, year: null, genre: null };
+    return { artworkUrl: null, previewUrl: null, trackUrl: null, year: null, genre: null };
   }
 }
 
 export function useArtwork(artist: string | undefined, title: string | undefined) {
   const [artworkUrl, setArtworkUrl] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [trackUrl, setTrackUrl] = useState<string | null>(null);
   const [year, setYear] = useState<number | null>(null);
   const [genre, setGenre] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -57,7 +58,7 @@ export function useArtwork(artist: string | undefined, title: string | undefined
     const query = [title, artist].filter(Boolean).join(' ').trim();
     if (!query) { setArtworkUrl(null); setPreviewUrl(null); setYear(null); setGenre(null); return; }
 
-    const apply = (d: ArtworkData) => { setArtworkUrl(d.artworkUrl); setPreviewUrl(d.previewUrl); setYear(d.year ?? null); setGenre(d.genre ?? null); };
+    const apply = (d: ArtworkData) => { setArtworkUrl(d.artworkUrl); setPreviewUrl(d.previewUrl); setTrackUrl(d.trackUrl ?? null); setYear(d.year ?? null); setGenre(d.genre ?? null); };
 
     // 1. Cache mémoire
     if (MEM_CACHE.has(query)) {
@@ -104,5 +105,5 @@ export function useArtwork(artist: string | undefined, title: string | undefined
     return () => { cancelled = true; };
   }, [artist, title]);
 
-  return { artworkUrl, previewUrl, year, genre, loading };
+  return { artworkUrl, previewUrl, trackUrl, year, genre, loading };
 }

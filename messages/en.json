@@ -366,7 +366,8 @@
     "metronomeClick": "Metronome click",
     "countIn": "Count-in before playing",
     "capoOn": "Capo on: piano chords transposed and mic following adjusted (click if you play without the capo)",
-    "capoOff": "Capo off: chords at their real pitch (click to put it back)"
+    "capoOff": "Capo off: chords at their real pitch (click to put it back)",
+    "viaItunes": "via iTunes"
   },
   "Groups": {
     "title": "My bands",

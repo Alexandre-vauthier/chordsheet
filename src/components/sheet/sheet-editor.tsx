@@ -46,7 +46,6 @@ interface SheetEditorProps {
   // Persistance immédiate des paroles récupérées automatiquement (lyrics.ovh),
   // sans attendre un Enregistrer manuel. Fournie en mode édition (grille déjà
   // créée avec un id) pour que la consultation propose la Voix.
-  onLyricsFetched?: (lyrics: string) => void;
 }
 
 // ─── Composant paroles ────────────────────────────────────────────────────────
@@ -56,13 +55,11 @@ function LyricsEditor({
   artist,
   title,
   onChange,
-  onFetched,
 }: {
   lyrics: string;
   artist: string;
   title: string;
   onChange: (v: string) => void;
-  onFetched?: (v: string) => void;
 }) {
   const t = useTranslations('Editor');
   const [fetching, setFetching] = useState(false);
@@ -76,15 +73,16 @@ function LyricsEditor({
     setFetching(true);
     setFetchError(null);
     try {
-      const url = `https://api.lyrics.ovh/v1/${encodeURIComponent(a.trim())}/${encodeURIComponent(songTitle.trim())}`;
-      const res = await fetch(url);
+      const res = await fetch(
+        `/api/lyrics?artist=${encodeURIComponent(a.trim())}&title=${encodeURIComponent(songTitle.trim())}`,
+      );
       const data = await res.json();
       if (data.lyrics) {
-        const clean = data.lyrics.trim();
-        onChange(clean);
-        // Persister tout de suite (les paroles récupérées ne doivent pas se
-        // perdre si l'utilisateur ne clique pas Enregistrer).
-        onFetched?.(clean);
+        // On remplit le champ, rien de plus : l'écriture en base n'a lieu que si
+        // l'auteur enregistre. Auparavant les paroles étaient persistées d'office,
+        // ce qui faisait de l'application — et non de l'utilisateur — celle qui
+        // publiait un texte sous droits.
+        onChange(data.lyrics.trim());
       } else {
         setFetchError(t('lyricsNotFound'));
       }
@@ -95,13 +93,8 @@ function LyricsEditor({
     }
   };
 
-  // Auto-fetch au montage si les paroles sont vides et artiste+titre connus
-  useEffect(() => {
-    if (!lyrics && artist.trim() && title.trim()) {
-      fetchLyrics(artist, title);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Pas de récupération automatique au montage : elle remplissait la grille sans
+  // que personne ne l'ait demandé. Le bouton ci-dessous reste, à la main de l'auteur.
 
   return (
     <div className="mt-8">
@@ -131,7 +124,7 @@ function LyricsEditor({
   );
 }
 
-export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFetched }: SheetEditorProps) {
+export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEditorProps) {
   const t = useTranslations('Editor');
   const tSection = useTranslations('SectionLabels');
   const genreLabel = useGenreLabel();
@@ -1249,7 +1242,6 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false, onLyricsFe
         artist={sheet.artist}
         title={sheet.title}
         onChange={(lyrics) => updateSheet({ lyrics })}
-        onFetched={onLyricsFetched}
       />
 
       {/* Modal d'édition d'accord */}

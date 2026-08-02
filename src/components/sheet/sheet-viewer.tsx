@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useLyrics } from '@/lib/use-lyrics';
 import { playPreviewAudio, stopPreviewAudio } from '@/lib/preview-audio';
 import type { Sheet, CellSpan, InstrumentId } from '@/types';
 import { INSTRUMENTS } from '@/types';
@@ -419,7 +420,13 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
     groovePattern: previewPattern ?? livePattern,
   });
 
-  const { artworkUrl, previewUrl } = useArtwork(sheet.artist, sheet.title);
+  const { artworkUrl, previewUrl, trackUrl } = useArtwork(sheet.artist, sheet.title);
+
+  // Paroles : celles que l'auteur a saisies font foi ; à défaut on interroge le
+  // service externe **à l'affichage**, sans jamais conserver le résultat. Le hook
+  // travaille côté client, donc rien ne part dans le HTML servi et rien ne
+  // s'indexe — c'était déjà la règle, elle ne bouge pas.
+  const { lyrics } = useLyrics(sheet.artist, sheet.title, sheet.lyrics);
   const [previewPlaying, setPreviewPlaying] = useState(false);
 
   // Changer d'onglet coupe l'extrait : personne ne cherche à écouter une page qu'il
@@ -478,7 +485,22 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   </div>
                 )}
               </div>
-              <p className="text-[8px] text-[var(--ink-faint)] mt-0.5 text-center">via iTunes</p>
+              {/* La mention devient un lien vers la fiche Apple Music : les conditions
+                  de l'API autorisent pochette et extrait pour **promouvoir** le
+                  catalogue, ce qui suppose d'y renvoyer. Le clic sur la vignette reste
+                  réservé à l'extrait. */}
+              {trackUrl ? (
+                <a
+                  href={trackUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-[8px] text-[var(--ink-faint)] hover:text-[var(--accent)] mt-0.5 text-center transition-colors"
+                >
+                  {t('viaItunes')}
+                </a>
+              ) : (
+                <p className="text-[8px] text-[var(--ink-faint)] mt-0.5 text-center">{t('viaItunes')}</p>
+              )}
             </div>
           )}
 
@@ -712,7 +734,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               <InstrumentSelector
                 value={instrumentId}
                 onChange={handleInstrumentChange}
-                exclude={sheet.lyrics ? [] : ['voice']}
+                exclude={lyrics ? [] : ['voice']}
               />
 
               {/* Lecture des accords — menu des instruments d'accompagnement */}
@@ -1025,7 +1047,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
       )}
 
       {/* Sections — masquées pour Voix */}
-      <div className={`space-y-8 print:space-y-6 ${instrumentId === 'voice' && sheet.lyrics ? 'hidden' : ''}`}>
+      <div className={`space-y-8 print:space-y-6 ${instrumentId === 'voice' && lyrics ? 'hidden' : ''}`}>
         {(() => {
           const seenSignatures = new Map<string, string>(); // signature → label de la première occurrence
           return displaySections.map((section) => {
@@ -1182,14 +1204,14 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
       )}
 
       {/* Paroles — visibles uniquement en mode Voix */}
-      {sheet.lyrics && instrumentId === 'voice' && (
+      {lyrics && instrumentId === 'voice' && (
         <div className="mt-10 print:mt-8">
           <div className="flex items-center gap-3 mb-4">
             <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">{t('lyrics')}</h2>
             <div className="flex-1 h-px bg-[var(--line)]" />
           </div>
           <pre className="whitespace-pre-wrap font-sans text-[0.95rem] text-[var(--ink)] leading-loose bg-[var(--cell-bg)] rounded-lg border border-[var(--line)] p-6">
-            {sheet.lyrics}
+            {lyrics}
           </pre>
         </div>
       )}

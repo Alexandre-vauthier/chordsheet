@@ -111,21 +111,6 @@ export default function EditSheetPage({ params }: EditSheetPageProps) {
     );
   }
 
-  // Persistance immédiate des paroles récupérées automatiquement (lyrics.ovh) :
-  // la grille venait d'être créée sans paroles (chemin "en une fois"), on écrit
-  // le champ dès son arrivée pour que la consultation propose la Voix, sans
-  // exiger un Enregistrer manuel.
-  const persistFetchedLyrics = async (lyrics: string) => {
-    if (!lyrics) return;
-    try {
-      const db = getDb();
-      await updateDoc(doc(db, 'sheets', id), { lyrics, updatedAt: serverTimestamp() });
-      setSheet((prev) => (prev ? { ...prev, lyrics } : prev));
-    } catch (err) {
-      console.error('Error persisting fetched lyrics:', err);
-    }
-  };
-
   if (!sheet) {
     return null;
   }
@@ -135,7 +120,6 @@ export default function EditSheetPage({ params }: EditSheetPageProps) {
       initialSheet={sheet}
       onSave={handleSave}
       isSaving={isSaving}
-      onLyricsFetched={persistFetchedLyrics}
     />
   );
 }

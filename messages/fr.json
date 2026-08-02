@@ -366,7 +366,8 @@
     "metronomeClick": "Clic du métronome",
     "countIn": "Décompte au démarrage",
     "capoOn": "Capo posé : accords piano transposés et suivi micro adaptés (cliquer si tu joues sans le capo)",
-    "capoOff": "Capo retiré : accords à leur hauteur réelle (cliquer pour le remettre)"
+    "capoOff": "Capo retiré : accords à leur hauteur réelle (cliquer pour le remettre)",
+    "viaItunes": "via iTunes"
   },
   "Groups": {
     "title": "Mes groupes",
