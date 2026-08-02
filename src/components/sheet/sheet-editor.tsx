@@ -124,6 +124,27 @@ function LyricsEditor({
   );
 }
 
+/**
+ * Témoin d'attente d'un champ.
+ *
+ * La recherche du tempo et de la tonalité passe par un service externe et demande
+ * plusieurs secondes : sans rien à l'écran, on croit que rien ne se passe et on
+ * remplit à la main. Un texte explicite avait été essayé, il déformait la ligne
+ * d'outils — d'où ce cercle de douze pixels, qui ne déplace rien et disparaît de
+ * lui-même, que la recherche aboutisse ou non.
+ */
+function FieldSpinner({ label }: { label: string }) {
+  return (
+    <span
+      role="status"
+      aria-label={label}
+      title={label}
+      className="inline-block w-3 h-3 shrink-0 rounded-full border-[1.5px] border-[var(--line)]
+        border-t-[var(--accent)] animate-spin"
+    />
+  );
+}
+
 export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEditorProps) {
   const t = useTranslations('Editor');
   const tSection = useTranslations('SectionLabels');
@@ -921,6 +942,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
               className="font-sans text-sm text-[var(--ink-light)] bg-transparent border-none outline-none
                 placeholder:text-[var(--ink-faint)] w-24"
             />
+            {bpmSearching && !sheet.key.trim() && <FieldSpinner label={t('bpmSearching')} />}
             {keyTooltip && (
               <CoachMark text={t('keyTooltip')} position="bottom" onDismiss={() => setKeyTooltip(false)} />
             )}
@@ -954,16 +976,9 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 placeholder:text-[var(--ink-faint)] w-12
                 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
+            {bpmSearching && !sheet.tempo.trim() && <FieldSpinner label={t('bpmSearching')} />}
           </span>
 
-          {/* La recherche du tempo et de la tonalité passe par un service externe et
-              demande plusieurs secondes. Sans ce témoin, on croit que rien ne se
-              passe et on remplit les champs à la main. */}
-          {(bpmSearching || (bpmNotFound && !sheet.tempo.trim() && !sheet.key.trim())) && (
-            <span className="text-[11px] text-[var(--ink-faint)] whitespace-nowrap">
-              {bpmSearching ? t('bpmSearching') : t('bpmNotFound')}
-            </span>
-          )}
           <span className="flex items-center gap-1 text-[var(--ink-faint)]" title={t('yearTooltip')}>
             <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
               <rect x="3" y="4.5" width="18" height="16" rx="2" />
@@ -986,14 +1001,6 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             />
           </span>
 
-          {/* La recherche du tempo et de la tonalité passe par un service externe et
-              demande plusieurs secondes. Sans ce témoin, on croit que rien ne se
-              passe et on remplit les champs à la main. */}
-          {(bpmSearching || (bpmNotFound && !sheet.tempo.trim() && !sheet.key.trim())) && (
-            <span className="text-[11px] text-[var(--ink-faint)] whitespace-nowrap">
-              {bpmSearching ? t('bpmSearching') : t('bpmNotFound')}
-            </span>
-          )}
           <div className="relative flex items-center gap-1 text-[var(--ink-faint)]" onMouseEnter={isFirstSheet ? handleRefHover : undefined}>
             <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 15l6-6M10.5 6.5l1-1a3.5 3.5 0 015 5l-2 2M13.5 17.5l-1 1a3.5 3.5 0 01-5-5l2-2" />

@@ -50,6 +50,18 @@ export async function GET(req: NextRequest) {
     const searchUrl = `${API}/search/?api_key=${encodeURIComponent(apiKey)}&type=both&lookup=${encodeURIComponent(lookup)}`;
     const search = await fetchJson(searchUrl);
 
+    // Diagnostic : quand rien ne remonte, on ne sait pas si le blocage vient du
+    // proxy (crédits épuisés), du service (clé refusée, débit dépassé) ou d'une
+    // simple absence du morceau. `?diag=1` rend le code et un extrait de la réponse
+    // amont — **clé retirée**, elle figure dans l'URL interrogée.
+    if (req.nextUrl.searchParams.get('diag') === '1') {
+      return NextResponse.json({
+        upstreamStatus: search.status,
+        bodyStart: search.text.slice(0, 300).replace(/api_key=[^&"\s]+/g, 'api_key=***'),
+        parsed: search.json ? Object.keys(search.json as Record<string, unknown>) : null,
+      });
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const first = Array.isArray((search.json as any)?.search) ? (search.json as any).search[0] : null;
     const id = pick(first, 'id', 'song_id');
