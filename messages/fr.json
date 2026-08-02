@@ -128,7 +128,7 @@
       "subtitle": "De la création à la scène, sans friction.",
       "editor": {
         "title": "Éditeur visuel",
-        "text": "Crée ta grille en quelques minutes. Import depuis Ultimate Guitar ou saisie case par case."
+        "text": "Crée ta grille en quelques minutes. Import depuis un site de tablatures ou saisie case par case."
       },
       "concert": {
         "title": "Mode concert",
@@ -164,7 +164,7 @@
       "subtitle": "Trois étapes pour passer de zéro à la scène.",
       "step1": {
         "title": "Crée ou importe",
-        "text": "Saisis visuellement, colle des accords depuis Ultimate Guitar, ou prends en photo une partition — l'IA s'occupe du reste."
+        "text": "Saisis visuellement, colle des accords copiés sur un site de tablatures, ou prends en photo une partition — l'IA s'occupe du reste."
       },
       "step2": {
         "title": "Organise et partage",

@@ -81,7 +81,7 @@ src/
 │   ├── chord-data.ts            # Bibliothèque accords (7 instruments)
 │   ├── chord-audio.ts           # Synthèse audio Web Audio API
 │   ├── chord-finder.ts          # Logique recherche accords
-│   ├── chord-sheet-parser.ts    # Parser import texte (Ultimate Guitar)
+│   ├── chord-sheet-parser.ts    # Parser import texte (format tablature)
 │   ├── transpose.ts             # Transposition des accords
 │   ├── compute-difficulty.ts    # Calcul automatique difficulté
 │   ├── use-playback.ts          # Hook lecture audio grille complète
@@ -329,4 +329,4 @@ silence : Firebase Admin, analyse audio, analyse de grille, Sentry.
 ## Documentation Détaillée
 
 - `docs/ARCHITECTURE.md` : hiérarchie composants, flux données, règles Firestore, audio
-- `docs/IMPORT.md` : parser d'import texte (Ultimate Guitar), logique d'inférence des durées
+- `docs/IMPORT.md` : parser d'import texte (format tablature), logique d'inférence des durées

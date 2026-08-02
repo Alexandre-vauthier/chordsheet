@@ -71,7 +71,7 @@ Exemples valides : `Am`, `G7`, `C#m7`, `Bb`, `Fmaj7`, `Gsus4`, `D/F#`, `G7b5`, `
 
 ## Inférence de la durée (span) depuis la position
 
-La durée de chaque accord dans une mesure est **inférée depuis la position des caractères** sur la ligne (espacement typographique Ultimate Guitar).
+La durée de chaque accord dans une mesure est **inférée depuis la position des caractères** sur la ligne (espacement typographique des sites de tablatures).
 
 ### Algorithme
 

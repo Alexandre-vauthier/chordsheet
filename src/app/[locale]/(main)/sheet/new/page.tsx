@@ -128,7 +128,7 @@ export default function NewSheetPage() {
                 Importer du texte
               </div>
               <div className="text-xs text-[var(--ink-faint)] mt-1">
-                Coller depuis Ultimate Guitar ou autre
+                Coller depuis un site de tablatures
               </div>
             </div>
           </button>

@@ -128,7 +128,7 @@
       "subtitle": "From creation to the stage, without friction.",
       "editor": {
         "title": "Visual editor",
-        "text": "Build your sheet in minutes. Import from Ultimate Guitar or enter it cell by cell."
+        "text": "Build your sheet in minutes. Import from a tab site or enter it cell by cell."
       },
       "concert": {
         "title": "Concert mode",
@@ -164,7 +164,7 @@
       "subtitle": "Three steps from zero to the stage.",
       "step1": {
         "title": "Create or import",
-        "text": "Enter it visually, paste chords from Ultimate Guitar, or snap a photo of sheet music — AI handles the rest."
+        "text": "Enter it visually, paste chords copied from a tab site, or snap a photo of sheet music — AI handles the rest."
       },
       "step2": {
         "title": "Organize and share",

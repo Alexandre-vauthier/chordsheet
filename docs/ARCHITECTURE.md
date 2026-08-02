@@ -69,7 +69,7 @@
 SheetEditor
 ├── InstrumentSelector        # Choix instrument pour diagrammes
 ├── Metadata inputs           # Titre, artiste, tonalité, tempo, capo...
-├── ImportSheetModal          # Import depuis texte (Ultimate Guitar)
+├── ImportSheetModal          # Import depuis texte (format tablature)
 ├── SectionBlock[]            # Pour chaque section
 │   ├── Header                # Label, repeat, 3/4 ou 4/4
 │   ├── GridRow[]             # Pour chaque mesure
@@ -256,7 +256,7 @@ La fonction `isAdmin()` fait un `get()` sur `users/{uid}` et vérifie `role == '
 ```
 1. User clique "Importer"
 2. ImportSheetModal s'ouvre
-3. User colle le texte (format Ultimate Guitar ou libre)
+3. User colle le texte (format tablature ou libre)
 4. parseChordSheetText() extrait : titre, artiste, capo, tonalité, URL YouTube, sections
 5. Prévisualisation affichée dans la modal
 6. User confirme → SheetEditor reçoit les sections importées

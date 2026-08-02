@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { playPreviewAudio, stopPreviewAudio } from '@/lib/preview-audio';
 import type { Sheet, CellSpan, InstrumentId } from '@/types';
 import { INSTRUMENTS } from '@/types';
 import { ChordSummary, InstrumentSelector, ChordDiagram, PianoKeyboard } from '@/components/chord';
@@ -419,14 +420,14 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   });
 
   const { artworkUrl, previewUrl } = useArtwork(sheet.artist, sheet.title);
-  const previewRef = useRef<HTMLAudioElement | null>(null);
   const [previewPlaying, setPreviewPlaying] = useState(false);
 
-  // Stopper l'extrait si l'utilisateur change d'onglet
+  // Changer d'onglet coupe l'extrait : personne ne cherche à écouter une page qu'il
+  // ne regarde plus, et le son venu d'un onglet caché est déroutant.
   useEffect(() => {
     const handleVisibility = () => {
-      if (document.hidden && previewRef.current) {
-        previewRef.current.pause();
+      if (document.hidden) {
+        stopPreviewAudio();
         setPreviewPlaying(false);
       }
     };
@@ -437,17 +438,17 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   const togglePreview = () => {
     if (!previewUrl) return;
     if (previewPlaying) {
-      previewRef.current?.pause();
+      stopPreviewAudio();
       setPreviewPlaying(false);
     } else {
-      if (!previewRef.current) {
-        previewRef.current = new Audio(previewUrl);
-        previewRef.current.onended = () => setPreviewPlaying(false);
-      }
-      previewRef.current.play();
       setPreviewPlaying(true);
+      playPreviewAudio(previewUrl, () => setPreviewPlaying(false));
     }
   };
+
+  // Quitter la grille coupe l'extrait. Sans ça il poursuivait sa lecture sur la page
+  // suivante, sans plus aucun bouton pour l'arrêter.
+  useEffect(() => stopPreviewAudio, []);
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 print:p-0 print:max-w-none">

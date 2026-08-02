@@ -9,23 +9,11 @@ import { useDifficultyLabel } from '@/lib/use-genre-labels';
 import { useAuth } from '@/lib/auth-context';
 import { useAddToCollection } from '@/lib/add-to-collection-context';
 import { Link } from '@/i18n/navigation';
+import { playPreviewAudio, stopPreviewAudio } from '@/lib/preview-audio';
 
-// Singleton audio global
-let _audio: HTMLAudioElement | null = null;
-let _stopCb: (() => void) | null = null;
-
-function playPreviewAudio(url: string, onStop: () => void) {
-  if (_audio) { _audio.pause(); _audio = null; if (_stopCb) { _stopCb(); _stopCb = null; } }
-  const audio = new Audio(url);
-  _audio = audio; _stopCb = onStop;
-  audio.play().catch(() => { _audio = null; _stopCb = null; onStop(); });
-  audio.onended = () => { _audio = null; _stopCb = null; onStop(); };
-}
-
-export function stopPreviewAudio() {
-  if (_audio) { _audio.pause(); _audio = null; }
-  if (_stopCb) { _stopCb(); _stopCb = null; }
-}
+// Réexporté : plusieurs écrans l'importaient d'ici avant que la lecture ait son
+// propre module.
+export { stopPreviewAudio };
 
 interface SheetCardProps {
   sheet: Sheet;
