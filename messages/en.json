@@ -905,7 +905,11 @@
     "bpmBackfill": "Tempo and key",
     "bpmBackfillDesc": "Queries GetSongBPM for charts with no tempo or key. In small batches: each call takes several seconds. Re-run while charts remain.",
     "fillBpm": "Fill in",
-    "bpmBackfillResult": "{updated} filled, {notFound} not found, {remaining} left"
+    "bpmBackfillResult": "{updated} filled, {notFound} not found, {remaining} left",
+    "keyCheck": "Detected key (measure)",
+    "keyCheckDesc": "Compares the key detected from the chords with the one already set, on charts that have both. Read-only, nothing is changed. Mismatches are logged to the console.",
+    "keyCheckAction": "Measure",
+    "keyCheckResult": "{compared} compared · {exact} exact · {relative} relative · {different} different"
   },
   "LegalMentions": {
     "pageTitle": "Legal notice",

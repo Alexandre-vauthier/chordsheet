@@ -38,6 +38,8 @@ export default function AdminPage() {
   const [proResult, setProResult] = useState('');
   const [backfillingSearch, setBackfillingSearch] = useState(false);
   const [backfillResult, setBackfillResult] = useState('');
+  const [checkingKeys, setCheckingKeys] = useState(false);
+  const [keyResult, setKeyResult] = useState('');
   const [backfillingBpm, setBackfillingBpm] = useState(false);
   const [bpmResult, setBpmResult] = useState('');
   const [purgingLyrics, setPurgingLyrics] = useState(false);
@@ -230,6 +232,34 @@ export default function AdminPage() {
       setBackfillResult(t('errorPrefix', { message: e instanceof Error ? e.message : t('unknownError') }));
     } finally {
       setBackfillingSearch(false);
+    }
+  };
+
+  /**
+   * Mesure l'accord entre la tonalité déduite des accords et celle déjà renseignée.
+   * Lecture seule : rien n'est écrit, il s'agit de décider si la déduction vaut d'être
+   * proposée, sur des données réelles.
+   */
+  const handleKeyCheck = async () => {
+    setCheckingKeys(true);
+    setKeyResult('');
+    try {
+      const idToken = await getAuth().currentUser?.getIdToken();
+      if (!idToken) throw new Error(t('notConnected'));
+      const res = await fetch('/api/admin/key-check', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || t('backfillError'));
+      setKeyResult(t('keyCheckResult', {
+        compared: data.compared, exact: data.exact, relative: data.relative, different: data.different,
+      }));
+      console.info('[key-check] écarts :', data.ecarts);
+    } catch (e) {
+      setKeyResult(t('errorPrefix', { message: e instanceof Error ? e.message : t('unknownError') }));
+    } finally {
+      setCheckingKeys(false);
     }
   };
 
@@ -453,6 +483,15 @@ export default function AdminPage() {
           runningLabel={t('inProgress')}
           result={bpmResult}
           onRun={handleBackfillBpm}
+        />
+        <AdminTile
+          title={t('keyCheck')}
+          description={t('keyCheckDesc')}
+          action={t('keyCheckAction')}
+          running={checkingKeys}
+          runningLabel={t('inProgress')}
+          result={keyResult}
+          onRun={handleKeyCheck}
         />
         <AdminTile
           title={t('lyricsPurge')}
