@@ -959,10 +959,13 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
               type="text"
               value={sheet.key}
               onChange={(e) => {
-                keyTouchedRef.current = true;
                 const raw = e.target.value;
                 // Bloquer les chiffres
                 if (/\d/.test(raw)) return;
+                // Vider le champ, c'est redemander une proposition — pas imposer le
+                // vide. Sans ça, effacer une tonalité la laissait absente pour de bon,
+                // sans moyen de la retrouver autrement qu'en la retapant.
+                keyTouchedRef.current = raw.trim().length > 0;
                 // 1ère lettre : majuscule ; caractères suivants : m, #, b autorisés tels quels
                 const normalized = raw.length > 0
                   ? raw.charAt(0).toUpperCase() + raw.slice(1)
