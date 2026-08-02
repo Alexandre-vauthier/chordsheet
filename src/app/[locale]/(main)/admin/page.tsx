@@ -253,8 +253,12 @@ export default function AdminPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || t('backfillError'));
       setKeyResult(t('keyCheckResult', {
-        compared: data.compared, exact: data.exact, relative: data.relative, different: data.different,
+        compared: data.compared,
+        exact: data.apresCapo?.exact ?? data.exact,
+        relative: data.apresCapo?.relatif ?? data.relative,
+        different: data.compared - (data.apresCapo?.exact ?? data.exact) - (data.apresCapo?.relatif ?? data.relative) - data.sansReponse,
       }));
+      console.info('[tonalité] brut :', { exact: data.exact, relatif: data.relative }, '· capo corrigé :', data.apresCapo);
       // Le détail va dans la console : il sert au diagnostic, pas à l'écran.
       console.info('[tonalité] sans capo :', data.sansCapo, '· avec capo :', data.avecCapo, '· expliqués par le capo :', data.capoExplique);
       console.info('[tonalité] intervalles d\'écart (demi-tons) :', data.intervalles);

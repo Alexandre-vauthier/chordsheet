@@ -84,6 +84,8 @@ export async function POST(req: NextRequest) {
   let avecCapo = 0;
   let exactSansCapo = 0;
   let compareSansCapo = 0;
+  let exactApresCapo = 0;
+  let relatifApresCapo = 0;
 
   const ecarts: { title: string; stored: string; detected: string; capo: number; demiTons: number; confidence: number }[] = [];
 
@@ -113,6 +115,18 @@ export async function POST(req: NextRequest) {
 
     const detected = parseKey(guess.key);
     if (!detected) { sansReponse++; continue; }
+
+    /**
+     * Comparaison à capo corrigé.
+     *
+     * Le calcul lit les accords écrits : il donne la tonalité des **positions**.
+     * GetSongBPM donne celle de l'**enregistrement**. Un capo de deux cases fait
+     * sonner deux demi-tons plus haut : les deux valeurs sont justes et diffèrent
+     * d'autant. Sans cette correction, on compte comme erreurs des accords parfaits.
+     */
+    const sonnant = (detected.tonic + capo) % 12;
+    if (sonnant === stored.tonic && detected.minor === stored.minor) exactApresCapo++;
+    else if (sontRelatives({ tonic: sonnant, minor: detected.minor }, stored)) relatifApresCapo++;
 
     const juste = detected.tonic === stored.tonic && detected.minor === stored.minor;
     if (juste) {
@@ -149,6 +163,8 @@ export async function POST(req: NextRequest) {
     avecCapo,
     capoExplique,
     sansCapo: { compare: compareSansCapo, exact: exactSansCapo },
+    // Le vrai taux : ce que vaut le calcul une fois le capo pris en compte.
+    apresCapo: { exact: exactApresCapo, relatif: relatifApresCapo },
     // Intervalles les plus fréquents, du plus courant au moins courant.
     intervalles: [...intervalles.entries()].sort((a, b) => b[1] - a[1]).map(([demiTons, n]) => ({ demiTons, n })),
     ecarts,
