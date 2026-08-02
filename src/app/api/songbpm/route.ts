@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { normalizeKey } from '@/lib/songbpm-key';
 import { readCachedBpm, writeCachedBpm } from '@/lib/songbpm-cache';
+import { fetchDeezerTempo } from '@/lib/deezer-bpm';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
@@ -57,9 +58,17 @@ export async function GET(req: NextRequest) {
     });
   }
 
+  // Deezer d'abord : gratuit, sans quota, joignable en direct. Il ne donne que le
+  // tempo, mais c'est la moitié de la réponse — et sur l'échantillon testé il couvrait
+  // les titres que GetSongBPM ignorait.
+  const deezerTempo = await fetchDeezerTempo(title, artist);
+
   try {
     const lookup = `song:${title} artist:${artist}`;
     const searchUrl = `${API}/search/?api_key=${encodeURIComponent(apiKey)}&type=both&lookup=${encodeURIComponent(lookup)}`;
+    // GetSongBPM n'est sollicité que s'il reste quelque chose à trouver : il coûte un
+    // appel de proxy, décompté d'un quota mensuel. Quand Deezer a donné le tempo, on
+    // ne le dérange que pour la tonalité — et pas du tout si le quota est épuisé.
     const search = await fetchJson(searchUrl);
 
     // Diagnostic : quand rien ne remonte, on ne sait pas si le blocage vient du
@@ -102,7 +111,9 @@ export async function GET(req: NextRequest) {
     }
 
     const tempoNum = Number(tempoRaw);
-    const tempo = Number.isFinite(tempoNum) && tempoNum >= 30 && tempoNum <= 320 ? Math.round(tempoNum) : null;
+    const tempoGetSong = Number.isFinite(tempoNum) && tempoNum >= 30 && tempoNum <= 320 ? Math.round(tempoNum) : null;
+    // Deezer prime : il a été interrogé en premier et n'a rien coûté.
+    const tempo = deezerTempo ?? tempoGetSong;
     const key = normalizeKey(keyRaw);
 
     // Les deux issues sont mémorisées : un succès définitivement, un échec pour un
@@ -116,6 +127,15 @@ export async function GET(req: NextRequest) {
       { headers: { 'Cache-Control': found ? 'public, max-age=86400, s-maxage=86400' : 'no-store' } }
     );
   } catch {
+    // GetSongBPM indisponible (quota du proxy épuisé, panne) : le tempo de Deezer
+    // reste bon à prendre, et on le mémorise pour ne pas y revenir.
+    if (deezerTempo != null) {
+      await writeCachedBpm(title, artist, { tempo: deezerTempo, key: null }, now);
+      return NextResponse.json(
+        { tempo: deezerTempo, key: null },
+        { headers: { 'Cache-Control': 'public, max-age=86400, s-maxage=86400' } },
+      );
+    }
     return NextResponse.json({ tempo: null, key: null }, { headers: { 'Cache-Control': 'no-store' } });
   }
 }

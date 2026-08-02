@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb, getAdminAuth } from '@/lib/firebase-admin';
 import { normalizeKey } from '@/lib/songbpm-key';
 import { readCachedBpm, writeCachedBpm } from '@/lib/songbpm-cache';
+import { fetchDeezerTempo } from '@/lib/deezer-bpm';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -29,9 +30,16 @@ async function fetchTempoAndKey(title: string, artist: string): Promise<{ tempo:
   const connu = await readCachedBpm(title, artist, now);
   if (connu) return connu;
 
+  // Deezer d'abord : gratuit et sans quota. Il ne rend que le tempo.
+  const deezerTempo = await fetchDeezerTempo(title, artist);
+
   const apiKey = process.env.GETSONGBPM_API_KEY;
   const scraperKey = process.env.SCRAPER_API_KEY;
-  if (!apiKey) return { tempo: null, key: null };
+  if (!apiKey) {
+    const r = { tempo: deezerTempo, key: null };
+    if (deezerTempo != null) await writeCachedBpm(title, artist, r, now);
+    return r;
+  }
 
   const target = `${API}/search/?api_key=${encodeURIComponent(apiKey)}&type=both&lookup=${encodeURIComponent(`song:${title} artist:${artist}`)}`;
   const url = scraperKey
@@ -45,19 +53,23 @@ async function fetchTempoAndKey(title: string, artist: string): Promise<{ tempo:
     const data = match ? JSON.parse(match[0]) : null;
     const first = Array.isArray(data?.search) ? data.search[0] : null;
     if (!first) {
-      await writeCachedBpm(title, artist, { tempo: null, key: null }, now);
-      return { tempo: null, key: null };
+      const r = { tempo: deezerTempo, key: null };
+      await writeCachedBpm(title, artist, r, now);
+      return r;
     }
 
     const tempo = Number(first.tempo);
+    const tempoGetSong = Number.isFinite(tempo) && tempo > 0 ? Math.round(tempo) : null;
     const resultat = {
-      tempo: Number.isFinite(tempo) && tempo > 0 ? Math.round(tempo) : null,
+      tempo: deezerTempo ?? tempoGetSong,
       key: normalizeKey(first.key_of ?? null),
     };
     await writeCachedBpm(title, artist, resultat, now);
     return resultat;
   } catch {
-    return { tempo: null, key: null };
+    const r = { tempo: deezerTempo, key: null };
+    if (deezerTempo != null) await writeCachedBpm(title, artist, r, now);
+    return r;
   }
 }
 
