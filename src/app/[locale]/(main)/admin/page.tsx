@@ -255,7 +255,10 @@ export default function AdminPage() {
       setKeyResult(t('keyCheckResult', {
         compared: data.compared, exact: data.exact, relative: data.relative, different: data.different,
       }));
-      console.info('[key-check] écarts :', data.ecarts);
+      // Le détail va dans la console : il sert au diagnostic, pas à l'écran.
+      console.info('[tonalité] sans capo :', data.sansCapo, '· avec capo :', data.avecCapo, '· expliqués par le capo :', data.capoExplique);
+      console.info('[tonalité] intervalles d\'écart (demi-tons) :', data.intervalles);
+      console.table(data.ecarts);
     } catch (e) {
       setKeyResult(t('errorPrefix', { message: e instanceof Error ? e.message : t('unknownError') }));
     } finally {

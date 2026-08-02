@@ -68,8 +68,24 @@ export async function POST(req: NextRequest) {
   let compared = 0;
   let exact = 0;
   let relative = 0;
-  const ecarts: { title: string; stored: string; detected: string; confidence: number }[] = [];
   let sansReponse = 0;
+
+  /**
+   * Écart constant en demi-tons entre la tonalité déduite et celle enregistrée.
+   *
+   * GetSongBPM donne la tonalité de l'enregistrement ; la grille, elle, est souvent
+   * écrite avec un capo ou transposée pour être jouable. Les deux peuvent alors être
+   * justes tout en différant d'un intervalle fixe. Si les écarts se concentrent sur
+   * un ou deux intervalles — et surtout s'ils correspondent au capo — ce ne sont pas
+   * des erreurs de calcul.
+   */
+  const intervalles = new Map<number, number>();
+  let capoExplique = 0;
+  let avecCapo = 0;
+  let exactSansCapo = 0;
+  let compareSansCapo = 0;
+
+  const ecarts: { title: string; stored: string; detected: string; capo: number; demiTons: number; confidence: number }[] = [];
 
   for (const doc of snap.docs) {
     const sheet = fromFirestore(doc.id, doc.data()) as Sheet;
@@ -90,14 +106,36 @@ export async function POST(req: NextRequest) {
     if (collectSheetChords(sheet).size < 2) continue;
 
     const guess = detectKey(suite);
+    const capo = sheet.capo ?? 0;
     compared++;
+    if (capo > 0) avecCapo++; else compareSansCapo++;
     if (!guess) { sansReponse++; continue; }
 
     const detected = parseKey(guess.key);
-    if (detected && detected.tonic === stored.tonic && detected.minor === stored.minor) exact++;
-    else if (detected && sontRelatives(detected, stored)) relative++;
-    else if (ecarts.length < 12) {
-      ecarts.push({ title: sheet.title, stored: sheet.key, detected: guess.key, confidence: Number(guess.confidence.toFixed(2)) });
+    if (!detected) { sansReponse++; continue; }
+
+    const juste = detected.tonic === stored.tonic && detected.minor === stored.minor;
+    if (juste) {
+      exact++;
+      if (capo === 0) exactSansCapo++;
+      continue;
+    }
+    if (sontRelatives(detected, stored)) { relative++; continue; }
+
+    // Même mode, fondamentale décalée : on note de combien.
+    if (detected.minor === stored.minor) {
+      const demiTons = ((stored.tonic - detected.tonic) % 12 + 12) % 12;
+      intervalles.set(demiTons, (intervalles.get(demiTons) ?? 0) + 1);
+      // Le capo monte la hauteur réelle d'autant de demi-tons que de cases.
+      if (capo > 0 && demiTons === capo % 12) capoExplique++;
+    }
+
+    if (ecarts.length < 15) {
+      ecarts.push({
+        title: sheet.title, stored: sheet.key, detected: guess.key, capo,
+        demiTons: detected.minor === stored.minor ? ((stored.tonic - detected.tonic) % 12 + 12) % 12 : -1,
+        confidence: Number(guess.confidence.toFixed(2)),
+      });
     }
   }
 
@@ -108,6 +146,11 @@ export async function POST(req: NextRequest) {
     relative,
     different: compared - exact - relative - sansReponse,
     sansReponse,
+    avecCapo,
+    capoExplique,
+    sansCapo: { compare: compareSansCapo, exact: exactSansCapo },
+    // Intervalles les plus fréquents, du plus courant au moins courant.
+    intervalles: [...intervalles.entries()].sort((a, b) => b[1] - a[1]).map(([demiTons, n]) => ({ demiTons, n })),
     ecarts,
   });
 }
