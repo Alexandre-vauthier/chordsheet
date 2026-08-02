@@ -364,7 +364,12 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
 
   // BPM + tonalité (GetSongBPM), même déclencheur (lookupKey au blur). Remplis
   // automatiquement si le champ est vide et non modifié ; éditables ensuite.
-  const { tempo: suggestedTempo, songKey: suggestedKey } = useSongBpm(lookupKey?.artist, lookupKey?.title);
+  const {
+    tempo: suggestedTempo,
+    songKey: suggestedKey,
+    searching: bpmSearching,
+    notFound: bpmNotFound,
+  } = useSongBpm(lookupKey?.artist, lookupKey?.title);
   const tempoTouchedRef = useRef(false);
   const keyTouchedRef = useRef(false);
   useEffect(() => { tempoTouchedRef.current = false; keyTouchedRef.current = false; }, [sheet.title, sheet.artist]);
@@ -950,6 +955,15 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
           </span>
+
+          {/* La recherche du tempo et de la tonalité passe par un service externe et
+              demande plusieurs secondes. Sans ce témoin, on croit que rien ne se
+              passe et on remplit les champs à la main. */}
+          {(bpmSearching || (bpmNotFound && !sheet.tempo.trim() && !sheet.key.trim())) && (
+            <span className="text-[11px] text-[var(--ink-faint)] whitespace-nowrap">
+              {bpmSearching ? t('bpmSearching') : t('bpmNotFound')}
+            </span>
+          )}
           <span className="flex items-center gap-1 text-[var(--ink-faint)]" title={t('yearTooltip')}>
             <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
               <rect x="3" y="4.5" width="18" height="16" rx="2" />
@@ -971,6 +985,15 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
             />
           </span>
+
+          {/* La recherche du tempo et de la tonalité passe par un service externe et
+              demande plusieurs secondes. Sans ce témoin, on croit que rien ne se
+              passe et on remplit les champs à la main. */}
+          {(bpmSearching || (bpmNotFound && !sheet.tempo.trim() && !sheet.key.trim())) && (
+            <span className="text-[11px] text-[var(--ink-faint)] whitespace-nowrap">
+              {bpmSearching ? t('bpmSearching') : t('bpmNotFound')}
+            </span>
+          )}
           <div className="relative flex items-center gap-1 text-[var(--ink-faint)]" onMouseEnter={isFirstSheet ? handleRefHover : undefined}>
             <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M9 15l6-6M10.5 6.5l1-1a3.5 3.5 0 015 5l-2 2M13.5 17.5l-1 1a3.5 3.5 0 01-5-5l2-2" />

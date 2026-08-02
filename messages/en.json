@@ -831,7 +831,9 @@
       "hint": "Play the chord, then mute the strings: it gets written and the next cell takes over.",
       "undo": "Fix",
       "stopButton": "Stop"
-    }
+    },
+    "bpmSearching": "Looking up tempo and key…",
+    "bpmNotFound": "Tempo and key not found, enter them"
   },
   "Admin": {
     "title": "Administration",
@@ -899,7 +901,11 @@
     "lyricsPurgeAction": "Delete",
     "lyricsPurgeNone": "No chart stores lyrics.",
     "lyricsPurgeConfirm": "{count} charts store lyrics. Delete them permanently?",
-    "lyricsPurgeDone": "{count} charts cleaned."
+    "lyricsPurgeDone": "{count} charts cleaned.",
+    "bpmBackfill": "Tempo and key",
+    "bpmBackfillDesc": "Queries GetSongBPM for charts with no tempo or key. In small batches: each call takes several seconds. Re-run while charts remain.",
+    "fillBpm": "Fill in",
+    "bpmBackfillResult": "{updated} filled, {notFound} not found, {remaining} left"
   },
   "LegalMentions": {
     "pageTitle": "Legal notice",

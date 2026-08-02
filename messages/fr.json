@@ -831,7 +831,9 @@
       "hint": "Joue l'accord, puis étouffe les cordes : il s'écrit et la case suivante s'active.",
       "undo": "Corriger",
       "stopButton": "Arrêter"
-    }
+    },
+    "bpmSearching": "Recherche du tempo et de la tonalité…",
+    "bpmNotFound": "Tempo et tonalité introuvables, à saisir"
   },
   "Admin": {
     "title": "Administration",
@@ -899,7 +901,11 @@
     "lyricsPurgeAction": "Supprimer",
     "lyricsPurgeNone": "Aucune grille ne stocke de paroles.",
     "lyricsPurgeConfirm": "{count} grilles stockent des paroles. Les supprimer définitivement ?",
-    "lyricsPurgeDone": "{count} grilles nettoyées."
+    "lyricsPurgeDone": "{count} grilles nettoyées.",
+    "bpmBackfill": "Tempo et tonalité",
+    "bpmBackfillDesc": "Interroge GetSongBPM pour les grilles sans tempo ni tonalité. Par petits lots : chaque appel prend plusieurs secondes. Relancer tant qu'il reste des grilles.",
+    "fillBpm": "Compléter",
+    "bpmBackfillResult": "{updated} complétées, {notFound} introuvables, {remaining} restantes"
   },
   "LegalMentions": {
     "pageTitle": "Mentions légales",

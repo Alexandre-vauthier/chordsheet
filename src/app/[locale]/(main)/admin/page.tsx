@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { AdminTile } from '@/components/admin/admin-tile';
 
 import { getAuth } from 'firebase/auth';
 import { useTranslations, useLocale } from 'next-intl';
@@ -37,6 +38,8 @@ export default function AdminPage() {
   const [proResult, setProResult] = useState('');
   const [backfillingSearch, setBackfillingSearch] = useState(false);
   const [backfillResult, setBackfillResult] = useState('');
+  const [backfillingBpm, setBackfillingBpm] = useState(false);
+  const [bpmResult, setBpmResult] = useState('');
   const [purgingLyrics, setPurgingLyrics] = useState(false);
   const [lyricsResult, setLyricsResult] = useState('');
   const [backfillingChords, setBackfillingChords] = useState(false);
@@ -231,6 +234,32 @@ export default function AdminPage() {
   };
 
   /**
+   * Renseigne tempo et tonalité des grilles qui n'en ont pas.
+   *
+   * Par petits lots : chaque interrogation du service prend plusieurs secondes, elle
+   * transite par un proxy. On relance tant qu'il reste des grilles à traiter.
+   */
+  const handleBackfillBpm = async () => {
+    setBackfillingBpm(true);
+    setBpmResult('');
+    try {
+      const idToken = await getAuth().currentUser?.getIdToken();
+      if (!idToken) throw new Error(t('notConnected'));
+      const res = await fetch('/api/admin/backfill-bpm', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${idToken}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || t('backfillError'));
+      setBpmResult(t('bpmBackfillResult', { updated: data.updated, notFound: data.notFound, remaining: data.remaining }));
+    } catch (e) {
+      setBpmResult(t('errorPrefix', { message: e instanceof Error ? e.message : t('unknownError') }));
+    } finally {
+      setBackfillingBpm(false);
+    }
+  };
+
+  /**
    * Efface les paroles stockées. En deux temps, à dessein : on compte d'abord, on
    * annonce le nombre, et la suppression n'a lieu qu'après confirmation. C'est
    * irréversible, ça mérite un arrêt.
@@ -368,112 +397,73 @@ export default function AdminPage() {
         </span>
       </div>
 
-      {/* Comptes fondateurs Pro */}
-      <div className="mb-8 p-4 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <p className="text-sm font-medium text-[var(--ink)]">{t('foundersAccounts')}</p>
-          <p className="text-xs text-[var(--ink-faint)]">alex.vauthier@gmail.com · jerome_busato@hotmail.fr · vauthier.julien@gmail.com</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {proResult && <span className="text-xs text-[var(--ink-light)]">{proResult}</span>}
-          <button
-            onClick={handleSetFoundersPro}
-            disabled={settingPro}
-            className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
-          >
-            {settingPro ? t('inProgress') : t('setToPro')}
-          </button>
-        </div>
-      </div>
-
-      {/* Index de recherche (titleLower/artistLower) */}
-      <div className="mb-8 p-4 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <p className="text-sm font-medium text-[var(--ink)]">{t('searchIndex')}</p>
-          <p className="text-xs text-[var(--ink-faint)]">{t('searchIndexDesc')}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {backfillResult && <span className="text-xs text-[var(--ink-light)]">{backfillResult}</span>}
-          <button
-            onClick={handleBackfillSearchFields}
-            disabled={backfillingSearch}
-            className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
-          >
-            {backfillingSearch ? t('inProgress') : t('updateIndex')}
-          </button>
-        </div>
-      </div>
-
-      {/* Purge des paroles stockées */}
-      <div className="mb-8 p-4 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <p className="text-sm font-medium text-[var(--ink)]">{t('lyricsPurge')}</p>
-          <p className="text-xs text-[var(--ink-faint)]">{t('lyricsPurgeDesc')}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {lyricsResult && <span className="text-xs text-[var(--ink-light)]">{lyricsResult}</span>}
-          <button
-            onClick={handlePurgeLyrics}
-            disabled={purgingLyrics}
-            className="px-4 py-2 text-sm bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
-          >
-            {purgingLyrics ? t('inProgress') : t('lyricsPurgeAction')}
-          </button>
-        </div>
-      </div>
-
-      {/* Index des accords (champ chords) */}
-      <div className="mb-8 p-4 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <p className="text-sm font-medium text-[var(--ink)]">{t('chordIndex')}</p>
-          <p className="text-xs text-[var(--ink-faint)]">{t('chordIndexDesc')}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {chordResult && <span className="text-xs text-[var(--ink-light)]">{chordResult}</span>}
-          <button
-            onClick={handleBackfillChords}
-            disabled={backfillingChords}
-            className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
-          >
-            {backfillingChords ? t('inProgress') : t('updateIndex')}
-          </button>
-        </div>
-      </div>
-
-      {/* Année de sortie (backfill iTunes) */}
-      <div className="mb-8 p-4 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <p className="text-sm font-medium text-[var(--ink)]">{t('yearBackfill')}</p>
-          <p className="text-xs text-[var(--ink-faint)]">{t('yearBackfillDesc')}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {yearResult && <span className="text-xs text-[var(--ink-light)]">{yearResult}</span>}
-          <button
-            onClick={handleBackfillYears}
-            disabled={backfillingYears}
-            className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
-          >
-            {backfillingYears ? t('inProgress') : t('fillYears')}
-          </button>
-        </div>
-      </div>
-
-      {/* Genre (backfill iTunes) */}
-      <div className="mb-8 p-4 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl flex items-center justify-between flex-wrap gap-3">
-        <div>
-          <p className="text-sm font-medium text-[var(--ink)]">{t('genreBackfill')}</p>
-          <p className="text-xs text-[var(--ink-faint)]">{t('genreBackfillDesc')}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {genreResult && <span className="text-xs text-[var(--ink-light)]">{genreResult}</span>}
-          <button
-            onClick={handleBackfillGenres}
-            disabled={backfillingGenres}
-            className="px-4 py-2 text-sm bg-[var(--accent)] hover:bg-[#a83d25] text-white rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
-          >
-            {backfillingGenres ? t('inProgress') : t('fillGenres')}
-          </button>
-        </div>
+      {/* Opérations d'administration, en grille : empilées en pleine largeur, il
+          fallait dérouler pour savoir ce qui existe. */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <AdminTile
+          title={t('foundersAccounts')}
+          description="alex.vauthier@gmail.com · jerome_busato@hotmail.fr · vauthier.julien@gmail.com"
+          action={t('setToPro')}
+          running={settingPro}
+          runningLabel={t('inProgress')}
+          result={proResult}
+          onRun={handleSetFoundersPro}
+        />
+        <AdminTile
+          title={t('searchIndex')}
+          description={t('searchIndexDesc')}
+          action={t('updateIndex')}
+          running={backfillingSearch}
+          runningLabel={t('inProgress')}
+          result={backfillResult}
+          onRun={handleBackfillSearchFields}
+        />
+        <AdminTile
+          title={t('chordIndex')}
+          description={t('chordIndexDesc')}
+          action={t('updateIndex')}
+          running={backfillingChords}
+          runningLabel={t('inProgress')}
+          result={chordResult}
+          onRun={handleBackfillChords}
+        />
+        <AdminTile
+          title={t('yearBackfill')}
+          description={t('yearBackfillDesc')}
+          action={t('fillYears')}
+          running={backfillingYears}
+          runningLabel={t('inProgress')}
+          result={yearResult}
+          onRun={handleBackfillYears}
+        />
+        <AdminTile
+          title={t('genreBackfill')}
+          description={t('genreBackfillDesc')}
+          action={t('fillGenres')}
+          running={backfillingGenres}
+          runningLabel={t('inProgress')}
+          result={genreResult}
+          onRun={handleBackfillGenres}
+        />
+        <AdminTile
+          title={t('bpmBackfill')}
+          description={t('bpmBackfillDesc')}
+          action={t('fillBpm')}
+          running={backfillingBpm}
+          runningLabel={t('inProgress')}
+          result={bpmResult}
+          onRun={handleBackfillBpm}
+        />
+        <AdminTile
+          title={t('lyricsPurge')}
+          description={t('lyricsPurgeDesc')}
+          action={t('lyricsPurgeAction')}
+          running={purgingLyrics}
+          runningLabel={t('inProgress')}
+          result={lyricsResult}
+          onRun={handlePurgeLyrics}
+          danger
+        />
       </div>
 
       {/* Statistiques globales */}
