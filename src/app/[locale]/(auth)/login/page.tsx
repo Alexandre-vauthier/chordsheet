@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { SITE_NAME } from '@/lib/seo';
+import { BrandLogo } from '@/components/layout/brand-logo';
 import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 
@@ -96,7 +96,7 @@ function LoginForm() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <h1 className="font-playfair text-3xl font-bold">{SITE_NAME}</h1>
+            <BrandLogo size="lg" className="mx-auto text-[var(--ink)]" />
           </Link>
           <p className="text-[var(--ink-light)] mt-2">{t('loginTitle')}</p>
         </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
+import { BrandLogo } from '@/components/layout/brand-logo';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { confirmPasswordReset, verifyPasswordResetCode } from 'firebase/auth';
@@ -8,7 +9,6 @@ import { getAuth } from '@/lib/firebase';
 import { Link, useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { SITE_NAME } from '@/lib/seo';
 
 /**
  * Choix d'un nouveau mot de passe, sur notre domaine.
@@ -64,7 +64,7 @@ function ResetPasswordForm() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <h1 className="font-playfair text-3xl font-bold">{SITE_NAME}</h1>
+            <BrandLogo size="lg" className="mx-auto text-[var(--ink)]" />
           </Link>
         </div>
 

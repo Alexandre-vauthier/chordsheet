@@ -148,6 +148,9 @@ export default async function Image({ params }: { params: Promise<{ id: string }
             paddingTop: 24,
           }}
         >
+          {/* Le nom en toutes lettres plutôt que le logo : `next/og` ne rend pas
+              les tracés SVG complexes, et un nom lisible vaut mieux qu'un tracé
+              approximatif. */}
           <div style={{ display: 'flex', color: ACCENT, fontWeight: 700 }}>{SITE_NAME}</div>
           {sheet?.musicalKey && <div style={{ display: 'flex' }}>Tonalité {sheet.musicalKey}</div>}
         </div>

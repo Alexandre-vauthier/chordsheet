@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { BrandLogo } from '@/components/layout/brand-logo';
 import { GoogleSignIn } from '@/components/auth/google-sign-in';
-import { SITE_NAME } from '@/lib/seo';
 import { useTranslations } from 'next-intl';
 
 import { useAuth } from '@/lib/auth-context';
@@ -78,7 +78,7 @@ function RegisterForm() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
-            <h1 className="font-playfair text-3xl font-bold">{SITE_NAME}</h1>
+            <BrandLogo size="lg" className="mx-auto text-[var(--ink)]" />
           </Link>
           <p className="text-[var(--ink-light)] mt-2">{t('registerTitle')}</p>
         </div>
