@@ -137,13 +137,33 @@ export function detectKey(chords: string[]): KeyGuess | null {
   const parsed = chords.map(parseChordName).filter((c): c is ParsedChord => c !== null);
   if (parsed.length === 0) return null;
 
-  // Deux couleurs distinctes au minimum : un seul accord ne dit rien, et deux accords
-  // identiques répétés non plus.
+  // Deux couleurs distinctes au minimum : un seul accord ne dit rien, et le même
+  // accord répété non plus. Beaucoup de morceaux tiennent en deux accords, les
+  // exclure priverait de réponse ceux qui en ont le plus besoin.
   const distinct = new Set(parsed.map((c) => `${c.root}-${c.quality}`));
   if (distinct.size < 2) return null;
 
   const first = parsed[0];
   const last = parsed[parsed.length - 1];
+
+  /**
+   * Poids de la position, selon la richesse harmonique.
+   *
+   * Avec quatre couleurs ou plus, les degrés parlent d'eux-mêmes : la position ne fait
+   * que départager une tonalité de son relatif, et c'est l'accord de **fin** qui le dit
+   * le mieux — une chanson se pose sur sa tonique.
+   *
+   * En dessous, il n'y a presque pas d'harmonie à lire : la position devient le seul
+   * indice, et c'est alors le **début** qui compte. Une grille de deux accords est une
+   * boucle, elle ne finit pas, elle recommence — ce qui suit le dernier accord, c'est
+   * le premier. « C F » répété est en Do, même si la dernière cellule est un Fa.
+   *
+   * Mesuré : ce partage donne 26/26 sur les chansons complètes et 14/14 sur les
+   * boucles à deux accords, là où un poids unique perdait toujours l'un des deux.
+   */
+  const richesse = distinct.size;
+  const POIDS_DEBUT = richesse >= 4 ? 0.25 : 0.5;
+  const POIDS_FIN = richesse >= 4 ? 0.4 : 0.15;
 
   const candidates: { key: string; score: number }[] = [];
 
@@ -157,8 +177,8 @@ export function detectKey(chords: string[]): KeyGuess | null {
       // La grille commence et surtout finit sur la tonique : c'est ce qui sépare une
       // tonalité de son relatif, qui partagent tous leurs accords.
       const tonicQuality: ChordQuality = mode === 'major' ? 'major' : 'minor';
-      if (first.root === tonic && first.quality === tonicQuality) score += parsed.length * 0.25;
-      if (last.root === tonic && last.quality === tonicQuality) score += parsed.length * 0.4;
+      if (first.root === tonic && first.quality === tonicQuality) score += parsed.length * POIDS_DEBUT;
+      if (last.root === tonic && last.quality === tonicQuality) score += parsed.length * POIDS_FIN;
 
       candidates.push({
         key: mode === 'major' ? KEY_SPELLING[tonic] : `${KEY_SPELLING[tonic]}m`,

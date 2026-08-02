@@ -422,9 +422,10 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
         for (const cell of row) if (cell.chord?.trim()) suite.push(cell.chord.trim());
       }
     }
-    // Trois couleurs distinctes au minimum : en dessous, la grille est trop jeune pour
-    // qu'une réponse veuille dire quelque chose, et elle changerait à chaque saisie.
-    if (new Set(suite.map((c) => c.toLowerCase())).size < 3) return null;
+    // Deux couleurs distinctes suffisent : beaucoup de morceaux tiennent en deux
+    // accords, et la déduction sait les traiter — elle pondère alors la position du
+    // premier accord plus fort, faute d'harmonie à lire.
+    if (new Set(suite.map((c) => c.toLowerCase())).size < 2) return null;
     return detectKey(suite)?.key ?? null;
   }, [sheet.sections]);
 

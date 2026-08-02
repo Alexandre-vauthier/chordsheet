@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
     }
 
     const distinctes = new Set(suite.map((c) => c.toLowerCase())).size;
-    const nouvelle = distinctes >= 3 ? detectKey(suite)?.key ?? null : null;
+    const nouvelle = distinctes >= 2 ? detectKey(suite)?.key ?? null : null;
     const ancienne = (sheet.key ?? '').trim();
 
     if ((nouvelle ?? '') === ancienne) { inchangees++; continue; }
