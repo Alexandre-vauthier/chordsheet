@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { SITE_NAME } from '@/lib/seo';
+import { useSearchParams } from 'next/navigation';
 import { useLocale, useTranslations } from 'next-intl';
 
 import { useAuth } from '@/lib/auth-context';
@@ -21,6 +22,7 @@ export default function LoginPage() {
 function LoginForm() {
   const t = useTranslations('Auth');
   const locale = useLocale();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { signIn } = useAuth();
 
@@ -39,7 +41,11 @@ function LoginForm() {
 
     try {
       await signIn(email, password);
-      router.push('/explore');
+      // Retour là où la personne voulait aller. Seuls les chemins internes sont
+      // acceptés : un `next` absolu ferait de cette page un tremplin de redirection
+      // vers n'importe quel site, au nom du nôtre.
+      const next = searchParams.get('next');
+      router.push(next && next.startsWith('/') && !next.startsWith('//') ? next : '/explore');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : t('errorGenericLogin');
       if (errorMessage.includes('user-not-found') || errorMessage.includes('wrong-password') || errorMessage.includes('invalid-credential')) {

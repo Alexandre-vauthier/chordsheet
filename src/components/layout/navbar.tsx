@@ -111,14 +111,26 @@ export function Navbar() {
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
+  /**
+   * Les mêmes rubriques pour tout le monde.
+   *
+   * Un visiteur sans compte ne voyait que « Connexion » : rien ne lui disait ce que
+   * le site contient. Les rubriques publiques mènent directement au contenu ; les
+   * deux qui exigent un compte passent par la connexion, en retenant la destination
+   * pour y revenir une fois identifié — sinon on demande de se connecter puis on
+   * dépose ailleurs, ce qui est doublement décourageant.
+   */
   const navLinks = [
-    { href: '/dashboard', label: t('book') },
-    { href: '/groups', label: t('bands') },
-    { href: '/explore', label: t('explore') },
-    { href: '/artists', label: t('artists') },
-    { href: '/chords', label: t('chords') },
-    { href: '/tuner', label: t('tuner') },
-  ];
+    { href: '/dashboard', label: t('book'), private: true },
+    { href: '/groups', label: t('bands'), private: true },
+    { href: '/explore', label: t('explore'), private: false },
+    { href: '/artists', label: t('artists'), private: false },
+    { href: '/chords', label: t('chords'), private: false },
+    { href: '/tuner', label: t('tuner'), private: false },
+  ].map((link) => ({
+    ...link,
+    href: !user && link.private ? `/login?next=${encodeURIComponent(link.href)}` : link.href,
+  }));
 
   return (
     <nav className="bg-[var(--nav-bg)] text-[var(--nav-text)] sticky top-0 z-[60]">
@@ -130,7 +142,7 @@ export function Navbar() {
             <Link href={user ? '/explore' : '/'} className="flex items-center shrink-0" onClick={closeMobileMenu}>
               <BrandLogo />
             </Link>
-            {!loading && user && (
+            {!loading && (
               <div className="hidden sm:flex items-center gap-4">
                 {navLinks.map(({ href, label }) => (
                   <Link
@@ -357,7 +369,7 @@ export function Navbar() {
           {/* Mobile: Burger + Actions */}
           <div className="flex sm:hidden items-center gap-2">
             {!loading && user && <NotificationBell />}
-            {!loading && user && (
+            {!loading && (
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="cursor-pointer p-2 text-[var(--nav-text)] hover:bg-white/10 rounded-lg transition-colors"
@@ -389,7 +401,7 @@ export function Navbar() {
       </div>
 
       {/* Mobile Menu */}
-      {mobileMenuOpen && user && (
+      {mobileMenuOpen && (
         <div className="sm:hidden bg-[var(--nav-bg)] border-t border-white/10">
           <div className="px-4 py-3 space-y-1">
             {/* Recherche mobile */}
@@ -449,66 +461,94 @@ export function Navbar() {
                 {label}
               </Link>
             ))}
-            <Link
-              href="/sheet/new"
-              onClick={closeMobileMenu}
-              className="flex items-center gap-1 px-3 py-2 bg-[var(--accent)] text-white rounded-lg font-medium text-sm transition-colors hover:bg-[#a83d25]"
-            >
-              {t('newSheetMobile')}
-            </Link>
-            <div className="border-t border-white/10 my-2" />
-            {/* Profil : un seul lien (le profil donne accès aux grilles et sets) */}
-            <Link
-              href={`/user/${user.id}`}
-              onClick={closeMobileMenu}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              {user.photoURL ? (
-                <img src={user.photoURL} alt="" className="w-7 h-7 rounded-full object-cover" />
-              ) : (
-                <div className="w-7 h-7 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-xs font-bold">
-                  {user.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
-                </div>
-              )}
-              <span className="text-sm font-medium text-[var(--nav-text)]">{user.displayName || user.email}</span>
-              <svg className="w-4 h-4 ml-auto text-[var(--nav-text)]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-            <Link
-              href="/session"
-              onClick={closeMobileMenu}
-              className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--nav-text)]/70 hover:text-[var(--nav-text)] hover:bg-white/10 rounded-lg transition-colors"
-            >
-              <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
-              {t('liveSession')}
-            </Link>
-            <Link
-              href="/profile"
-              onClick={closeMobileMenu}
-              className="block px-3 py-2 text-sm text-[var(--nav-text)]/70 hover:text-[var(--nav-text)] hover:bg-white/10 rounded-lg transition-colors"
-            >
-              {t('settings')}
-            </Link>
-            {isAdmin && (
+            {/* Le reste du menu n'a de sens qu'avec un compte : créer une grille,
+                son profil, ses réglages. Sans compte, on propose d'en ouvrir un. */}
+            {user ? (
+              <>
               <Link
-                href="/admin"
+                href="/sheet/new"
                 onClick={closeMobileMenu}
-                className="block px-3 py-2 text-sm text-red-300 hover:bg-red-500/20 rounded-lg transition-colors"
+                className="flex items-center gap-1 px-3 py-2 bg-[var(--accent)] text-white rounded-lg font-medium text-sm transition-colors hover:bg-[#a83d25]"
               >
-                {t('administration')}
+                {t('newSheetMobile')}
               </Link>
+              <div className="border-t border-white/10 my-2" />
+              {/* Profil : un seul lien (le profil donne accès aux grilles et sets) */}
+              <Link
+                href={`/user/${user.id}`}
+                onClick={closeMobileMenu}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors"
+              >
+                {user.photoURL ? (
+                  <img src={user.photoURL} alt="" className="w-7 h-7 rounded-full object-cover" />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-[var(--accent)] flex items-center justify-center text-white text-xs font-bold">
+                    {user.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="text-sm font-medium text-[var(--nav-text)]">{user.displayName || user.email}</span>
+                <svg className="w-4 h-4 ml-auto text-[var(--nav-text)]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+              <Link
+                href="/session"
+                onClick={closeMobileMenu}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--nav-text)]/70 hover:text-[var(--nav-text)] hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+                {t('liveSession')}
+              </Link>
+              <Link
+                href="/profile"
+                onClick={closeMobileMenu}
+                className="block px-3 py-2 text-sm text-[var(--nav-text)]/70 hover:text-[var(--nav-text)] hover:bg-white/10 rounded-lg transition-colors"
+              >
+                {t('settings')}
+              </Link>
+              {isAdmin && (
+                <Link
+                  href="/admin"
+                  onClick={closeMobileMenu}
+                  className="block px-3 py-2 text-sm text-red-300 hover:bg-red-500/20 rounded-lg transition-colors"
+                >
+                  {t('administration')}
+                </Link>
+              )}
+              <div className="flex items-center justify-between px-3 py-2">
+                <span className="text-sm text-[var(--nav-text)]/50">{t('language')}</span>
+                <LanguageSwitcher />
+              </div>
+              <button
+                onClick={handleSignOut}
+                className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
+              >
+                {t('signOut')}
+              </button>
+              </>
+            ) : (
+              <>
+                <div className="border-t border-white/10 my-2" />
+                <Link
+                  href="/login"
+                  onClick={closeMobileMenu}
+                  className="block px-3 py-2 rounded-lg text-sm text-[var(--nav-text)]/70 hover:text-[var(--nav-text)] hover:bg-white/10 transition-colors"
+                >
+                  {t('login')}
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={closeMobileMenu}
+                  className="block px-3 py-2 bg-[var(--accent)] text-white rounded-lg font-medium text-sm text-center transition-colors hover:bg-[#a83d25]"
+                >
+                  {t('register')}
+                </Link>
+                <div className="flex items-center justify-between px-3 py-2">
+                  <span className="text-sm text-[var(--nav-text)]/50">{t('language')}</span>
+                  <LanguageSwitcher />
+                </div>
+              </>
             )}
-            <div className="flex items-center justify-between px-3 py-2">
-              <span className="text-sm text-[var(--nav-text)]/50">{t('language')}</span>
-              <LanguageSwitcher />
-            </div>
-            <button
-              onClick={handleSignOut}
-              className="w-full text-left px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
-            >
-              {t('signOut')}
-            </button>
           </div>
         </div>
       )}

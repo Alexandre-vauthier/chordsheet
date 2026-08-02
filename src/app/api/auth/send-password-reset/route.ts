@@ -4,6 +4,7 @@ import { sendTransactionalEmail } from '@/lib/send-email';
 import { passwordResetEmail, normalizeEmailLocale } from '@/lib/auth-email-copy';
 import { consumeEmailQuota, clientIp } from '@/lib/email-rate-limit';
 import { SITE_URL } from '@/lib/seo';
+import { toOwnDomainLink } from '@/lib/auth-action-link';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,10 +44,11 @@ export async function POST(req: NextRequest) {
   const locale = normalizeEmailLocale(localeParam);
 
   try {
-    const link = await getAdminAuth().generatePasswordResetLink(email, {
+    const firebaseLink = await getAdminAuth().generatePasswordResetLink(email, {
       url: `${SITE_URL}/${locale}/login`,
       handleCodeInApp: false,
     });
+    const link = toOwnDomainLink(firebaseLink, '/reset-password', locale);
     await sendTransactionalEmail(email, passwordResetEmail(locale, link));
   } catch {
     // Adresse inconnue, quota Firebase, panne de l'envoi : rien ne filtre vers le

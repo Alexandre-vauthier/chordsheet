@@ -4,6 +4,7 @@ import { sendTransactionalEmail } from '@/lib/send-email';
 import { verificationEmail, normalizeEmailLocale } from '@/lib/auth-email-copy';
 import { consumeEmailQuota } from '@/lib/email-rate-limit';
 import { SITE_URL } from '@/lib/seo';
+import { toOwnDomainLink } from '@/lib/auth-action-link';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,10 +46,11 @@ export async function POST(req: NextRequest) {
   const locale = normalizeEmailLocale(searchParams.get('locale') ?? undefined);
 
   try {
-    const link = await getAdminAuth().generateEmailVerificationLink(email, {
+    const firebaseLink = await getAdminAuth().generateEmailVerificationLink(email, {
       url: `${SITE_URL}/${locale}`,
       handleCodeInApp: false,
     });
+    const link = toOwnDomainLink(firebaseLink, '/verify-email', locale);
 
     const sent = await sendTransactionalEmail(email, verificationEmail(locale, link));
     if (!sent) return NextResponse.json({ error: 'Envoi impossible pour le moment.' }, { status: 502 });

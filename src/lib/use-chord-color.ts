@@ -41,7 +41,10 @@ export function getChordColor(chord: string): { border: string; bg: string } | n
 
 export function useChordColor() {
   const { user } = useAuth();
-  const enabled = user?.chordColorCoding ?? false;
+  // Activée par défaut, y compris sans compte : c'est déjà le réglage d'un compte
+  // neuf, et un visiteur qui découvre une grille doit voir le site sous son meilleur
+  // jour. Un refus explicite est stocké en `false` et reste donc respecté.
+  const enabled = user?.chordColorCoding ?? true;
 
   return (chord: string) => {
     if (!enabled) return null;

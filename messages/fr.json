@@ -534,7 +534,31 @@
     "errorEmailInUse": "Cette adresse email est déjà utilisée",
     "errorWeakPassword": "Le mot de passe est trop faible",
     "errorRegisterRetry": "Erreur lors de la création du compte. Veuillez réessayer.",
-    "redirecting": "Redirection en cours"
+    "redirecting": "Redirection en cours",
+    "resetPassword": {
+      "title": "Choisis un nouveau mot de passe",
+      "forAccount": "Pour le compte {email}.",
+      "newPassword": "Nouveau mot de passe",
+      "hint": "Six caractères minimum.",
+      "submit": "Enregistrer",
+      "checking": "Vérification du lien…",
+      "invalidTitle": "Ce lien n'est plus valable",
+      "invalidBody": "Il a peut-être expiré, ou déjà servi. Demande un nouvel envoi depuis la page de connexion.",
+      "doneTitle": "Mot de passe modifié",
+      "doneBody": "Tu peux maintenant te connecter avec ton nouveau mot de passe.",
+      "backToLogin": "Retour à la connexion",
+      "errorTooShort": "Six caractères minimum.",
+      "errorFailed": "La modification a échoué. Redemande un lien."
+    },
+    "verifyEmail": {
+      "checking": "Confirmation en cours…",
+      "doneTitle": "Adresse confirmée",
+      "doneBody": "Ton compte est actif. Bonne musique.",
+      "start": "Explorer les grilles",
+      "invalidTitle": "Ce lien n'est plus valable",
+      "invalidBody": "Il a peut-être expiré, ou déjà servi. Connecte-toi pour en redemander un.",
+      "backToLogin": "Aller à la connexion"
+    }
   },
   "Sets": {
     "errorSave": "Erreur lors de la sauvegarde",

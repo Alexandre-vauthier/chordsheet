@@ -13,6 +13,9 @@ const intl = createMiddleware(routing);
 const PRIVATE = [
   'dashboard', 'book', 'sets', 'groups', 'profile', 'admin', 'pending',
   'session', 'join', 'login', 'register',
+  // Pages d'action des mails : leur URL porte un jeton, elles n'ont rien à faire
+  // dans un index.
+  'reset-password', 'verify-email',
 ];
 
 function isPrivate(pathname: string): boolean {

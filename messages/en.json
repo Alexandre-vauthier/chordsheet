@@ -534,7 +534,31 @@
     "errorEmailInUse": "This email address is already in use",
     "errorWeakPassword": "The password is too weak",
     "errorRegisterRetry": "Error creating the account. Please try again.",
-    "redirecting": "Redirecting"
+    "redirecting": "Redirecting",
+    "resetPassword": {
+      "title": "Choose a new password",
+      "forAccount": "For the account {email}.",
+      "newPassword": "New password",
+      "hint": "Six characters minimum.",
+      "submit": "Save",
+      "checking": "Checking the link…",
+      "invalidTitle": "This link is no longer valid",
+      "invalidBody": "It may have expired, or already been used. Ask for a new one from the sign-in page.",
+      "doneTitle": "Password changed",
+      "doneBody": "You can now sign in with your new password.",
+      "backToLogin": "Back to sign in",
+      "errorTooShort": "Six characters minimum.",
+      "errorFailed": "The change failed. Ask for a new link."
+    },
+    "verifyEmail": {
+      "checking": "Confirming…",
+      "doneTitle": "Address confirmed",
+      "doneBody": "Your account is active. Enjoy.",
+      "start": "Browse chord charts",
+      "invalidTitle": "This link is no longer valid",
+      "invalidBody": "It may have expired, or already been used. Sign in to request another.",
+      "backToLogin": "Go to sign in"
+    }
   },
   "Sets": {
     "errorSave": "Error saving",
