@@ -119,7 +119,9 @@ export async function GET(req: NextRequest) {
     // Les deux issues sont mémorisées : un succès définitivement, un échec pour un
     // temps. Ne garder que les succès revenait à réinterroger sans fin les morceaux
     // absents de leur base — la moitié de l'échantillon testé.
-    await writeCachedBpm(title, artist, { tempo, key }, now);
+    // `search.status === 200` : les sources ont répondu, un vide est alors une vraie
+    // absence. Sinon c'est une panne, et on ne la grave pas dans le marbre.
+    await writeCachedBpm(title, artist, { tempo, key }, now, search.status === 200);
 
     const found = tempo != null || key != null;
     return NextResponse.json(
@@ -130,7 +132,7 @@ export async function GET(req: NextRequest) {
     // GetSongBPM indisponible (quota du proxy épuisé, panne) : le tempo de Deezer
     // reste bon à prendre, et on le mémorise pour ne pas y revenir.
     if (deezerTempo != null) {
-      await writeCachedBpm(title, artist, { tempo: deezerTempo, key: null }, now);
+      await writeCachedBpm(title, artist, { tempo: deezerTempo, key: null }, now, true);
       return NextResponse.json(
         { tempo: deezerTempo, key: null },
         { headers: { 'Cache-Control': 'public, max-age=86400, s-maxage=86400' } },

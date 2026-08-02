@@ -24,6 +24,21 @@ export interface BpmResult {
   key: string | null;
 }
 
+/**
+ * Marqueur de version des entrées vides.
+ *
+ * Un échec n'a pas toujours le même sens : « le morceau est absent de leur base » se
+ * mémorise, « le proxy a rendu 401, quota atteint » ne se mémorise pas — c'est
+ * passager. Les premières entrées vides ont été écrites pendant une panne de quota,
+ * avant que Deezer soit consulté : elles bloquaient une source qui, elle, avait la
+ * réponse.
+ *
+ * Plutôt qu'une purge, le marqueur les périme d'elles-mêmes : une entrée vide qui ne
+ * le porte pas est reconsultée. Les nouvelles, écrites après un vrai échec de
+ * recherche, le portent et tiennent.
+ */
+const MISS_SCHEMA = 2;
+
 function docId(title: string, artist: string): string {
   return `${title.trim().toLowerCase()}|${artist.trim().toLowerCase()}`
     .replace(/[^a-z0-9|_-]/g, '_')
@@ -42,8 +57,10 @@ export async function readCachedBpm(title: string, artist: string, now: number):
     const tempo = typeof data.tempo === 'number' ? data.tempo : null;
     const key = typeof data.key === 'string' ? data.key : null;
 
-    // Échec mémorisé : on le respecte tant qu'il n'a pas expiré.
+    // Échec mémorisé : on ne le respecte que s'il vient d'une vraie recherche, et
+    // tant qu'il n'a pas expiré.
     if (tempo == null && key == null) {
+      if (data.missSchema !== MISS_SCHEMA) return null;
       const checkedAt = typeof data.checkedAt === 'number' ? data.checkedAt : 0;
       if (now - checkedAt > MISS_TTL_MS) return null;
     }
@@ -55,7 +72,22 @@ export async function readCachedBpm(title: string, artist: string, now: number):
   }
 }
 
-export async function writeCachedBpm(title: string, artist: string, result: BpmResult, now: number): Promise<void> {
+/**
+ * Mémorise un résultat.
+ *
+ * `searched` dit si les sources ont réellement répondu. À faux, un résultat vide
+ * n'est pas écrit du tout : mémoriser une panne reviendrait à la rendre durable.
+ */
+export async function writeCachedBpm(
+  title: string,
+  artist: string,
+  result: BpmResult,
+  now: number,
+  searched = true,
+): Promise<void> {
+  const vide = result.tempo == null && result.key == null;
+  if (vide && !searched) return;
+
   try {
     await getAdminDb().collection(COLLECTION).doc(docId(title, artist)).set({
       title: title.trim(),
@@ -63,6 +95,7 @@ export async function writeCachedBpm(title: string, artist: string, result: BpmR
       tempo: result.tempo,
       key: result.key,
       checkedAt: now,
+      ...(vide ? { missSchema: MISS_SCHEMA } : {}),
     });
   } catch {
     // Écriture ratée : sans conséquence, on réinterrogera.

@@ -54,7 +54,7 @@ async function fetchTempoAndKey(title: string, artist: string): Promise<{ tempo:
     const first = Array.isArray(data?.search) ? data.search[0] : null;
     if (!first) {
       const r = { tempo: deezerTempo, key: null };
-      await writeCachedBpm(title, artist, r, now);
+      await writeCachedBpm(title, artist, r, now, res.ok);
       return r;
     }
 
