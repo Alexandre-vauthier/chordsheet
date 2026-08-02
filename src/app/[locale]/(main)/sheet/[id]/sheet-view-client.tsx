@@ -33,6 +33,71 @@ interface SheetViewClientProps {
   initialSheet?: Sheet | null;
 }
 
+/** Picto de menu : même gabarit partout, seul le tracé change. */
+function Icon({ d }: { d: string }) {
+  return (
+    <svg className="w-4 h-4 shrink-0 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={d} />
+    </svg>
+  );
+}
+
+/**
+ * Une entrée du menu d'actions.
+ *
+ * Sans compte, l'entrée reste **visible** mais mène à la connexion, et le cadenas le
+ * dit avant le clic. C'est la différence entre montrer ce que le site sait faire et
+ * piéger : découvrir l'obstacle après avoir cliqué agace, le voir avant donne une
+ * raison de s'inscrire.
+ */
+function MenuEntry({
+  icon,
+  label,
+  locked,
+  lockedHref,
+  onClick,
+  tone = 'normal',
+  disabled,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  locked?: boolean;
+  lockedHref?: string;
+  onClick?: () => void;
+  tone?: 'normal' | 'active';
+  disabled?: boolean;
+}) {
+  const base =
+    'w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-sm transition-colors hover:bg-[var(--accent-soft)] hover:text-[var(--accent)]';
+  const colour = tone === 'active' ? 'text-amber-500' : 'text-[var(--ink)]';
+
+  const body = (
+    <>
+      {icon}
+      <span className="flex-1">{label}</span>
+      {locked && (
+        <svg className="w-3.5 h-3.5 shrink-0 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      )}
+    </>
+  );
+
+  if (locked && lockedHref) {
+    return (
+      <Link href={lockedHref} className={`${base} ${colour}`}>
+        {body}
+      </Link>
+    );
+  }
+
+  return (
+    <button onClick={onClick} disabled={disabled} className={`${base} ${colour}`}>
+      {body}
+    </button>
+  );
+}
+
 export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
   const router = useRouter();
   const { user, isAdmin } = useAuth();
@@ -235,6 +300,11 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
   const isActualOwner = user?.id === sheet.ownerId;
   const canRate = user && !isActualOwner && sheet.isPublic;
 
+  // Destination des entrées verrouillées : la connexion, en retenant la grille pour
+  // y revenir ensuite. Sans ça on renvoie la personne à l'accueil après l'effort de
+  // s'inscrire, et elle doit retrouver seule la grille qui l'avait amenée.
+  const loginHref = `/login?next=${encodeURIComponent(`/sheet/${id}`)}`;
+
   return (
     <>
       {/* Barre unique : avis + notation + menu "..." */}
@@ -282,61 +352,54 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
                 {/* Pictos : SVG inline uniformes (w-4 h-4, stroke currentColor), comme
                     partout ailleurs — les emojis rendaient des tailles et des styles
                     différents d'une ligne à l'autre selon la police système. */}
-                <button
+                <MenuEntry
+                  icon={<Icon d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />}
+                  label="Imprimer / PDF"
+                  locked={!user}
+                  lockedHref={loginHref}
                   onClick={() => { handlePrint(); setMenuOpen(false); }}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors"
-                >
-                  <svg className="w-4 h-4 shrink-0 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                  </svg>
-                  Imprimer / PDF
-                </button>
-                {user && (
-                  <button
-                    onClick={() => { handleToggleBookmark(); setMenuOpen(false); }}
-                    disabled={isTogglingBookmark}
-                    className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-sm hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors ${sheetIsBookmarked ? 'text-amber-500' : 'text-[var(--ink)]'}`}
-                  >
+                />
+                <MenuEntry
+                  icon={
                     <svg className="w-4 h-4 shrink-0" fill={sheetIsBookmarked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.783-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                     </svg>
-                    {sheetIsBookmarked ? 'Dans mes favoris' : 'Ajouter aux favoris'}
-                  </button>
-                )}
-                {user && sheet && (
+                  }
+                  label={sheetIsBookmarked ? 'Dans mes favoris' : 'Ajouter aux favoris'}
+                  tone={sheetIsBookmarked ? 'active' : 'normal'}
+                  locked={!user}
+                  lockedHref={loginHref}
+                  disabled={isTogglingBookmark}
+                  onClick={() => { handleToggleBookmark(); setMenuOpen(false); }}
+                />
+                {sheet && (
                   <>
                     {/* Même modale que les cartes d'Explore et la page groupe :
                         elle gère la création de set à la volée et le rattachement. */}
-                    <button
+                    <MenuEntry
+                      icon={<Icon d="M4 6h16M4 10h16M4 14h10M4 18h10M18 14v6m3-3h-6" />}
+                      label="Ajouter à un set"
+                      locked={!user}
+                      lockedHref={loginHref}
                       onClick={() => { setMenuOpen(false); openAddTo(sheet, 'set'); }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors"
-                    >
-                      <svg className="w-4 h-4 shrink-0 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h10M4 18h10M18 14v6m3-3h-6" />
-                      </svg>
-                      Ajouter à un set
-                    </button>
-                    <button
+                    />
+                    <MenuEntry
+                      icon={<Icon d="M17 20h5v-1a4 4 0 00-3-3.87M9 20H4v-1a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-4a3 3 0 11-3-3M7 11a3 3 0 11-3-3" />}
+                      label="Ajouter à un groupe"
+                      locked={!user}
+                      lockedHref={loginHref}
                       onClick={() => { setMenuOpen(false); openAddTo(sheet, 'group'); }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors"
-                    >
-                      <svg className="w-4 h-4 shrink-0 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-1a4 4 0 00-3-3.87M9 20H4v-1a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4zm6-4a3 3 0 11-3-3M7 11a3 3 0 11-3-3" />
-                      </svg>
-                      Ajouter à un groupe
-                    </button>
+                    />
                   </>
                 )}
-                {user && !isActualOwner && (
-                  <button
+                {!isActualOwner && (
+                  <MenuEntry
+                    icon={<Icon d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />}
+                    label="Dupliquer"
+                    locked={!user}
+                    lockedHref={loginHref}
                     onClick={() => { handleFork(); setMenuOpen(false); }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-sm text-[var(--ink)] hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] transition-colors"
-                  >
-                    <svg className="w-4 h-4 shrink-0 text-[var(--ink-faint)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                    Dupliquer
-                  </button>
+                  />
                 )}
                 {isOwner && (
                   <Link
