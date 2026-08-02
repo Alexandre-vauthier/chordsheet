@@ -571,7 +571,7 @@
       "title": "Confirme ton adresse email",
       "intro": "Pour continuer, confirme l'adresse",
       "sending": "Envoi du message en cours…",
-      "sent": "Message envoyé à {email}. Clique sur le lien reçu, puis reviens ici.",
+      "sent": "Message envoyé à {email}. Clique sur le lien reçu : cette page se débloquera toute seule, même si tu ouvres le lien sur un autre appareil.",
       "notVerified": "Toujours pas confirmée. Regarde dans tes indésirables, ou renvoie le message.",
       "tooMany": "Trop de demandes d'affilée. Attends quelques minutes avant de réessayer.",
       "failed": "L'envoi a échoué. Réessaie dans un instant.",

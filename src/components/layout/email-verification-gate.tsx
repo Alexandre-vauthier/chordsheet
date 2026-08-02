@@ -10,14 +10,25 @@ type Status = 'sending' | 'sent' | 'checking' | 'not-verified' | 'too-many' | 'f
 /**
  * Écran d'attente de confirmation d'adresse.
  *
- * L'envoi est déclenché **ici**, à l'affichage. Auparavant il n'avait lieu qu'à
- * l'inscription : un compte créé avant l'existence de cette vérification arrivait
- * donc sur un écran affirmant qu'un mail avait été envoyé, alors que rien n'était
- * parti. Le message était faux, et l'attente sans issue.
+ * Deux pièges, tous deux rencontrés en conditions réelles :
  *
- * La limitation d'usage de la route (trois envois par quart d'heure) borne les
- * dégâts d'un éventuel remontage en boucle du composant.
+ * 1. L'envoi n'avait lieu qu'à l'inscription. Un compte antérieur à cette
+ *    vérification arrivait donc sur un écran affirmant qu'un mail était parti, alors
+ *    que rien n'avait été envoyé. L'envoi se fait maintenant à l'affichage.
+ *
+ * 2. Après un clic sur le lien reçu, cet onglet garde un jeton qui dit encore
+ *    « non vérifiée » : la porte restait affichée, et l'envoi automatique produisait
+ *    un nouveau mail à chaque retour. D'où deux garde-fous — on interroge Firebase
+ *    régulièrement pour que la porte s'ouvre d'elle-même, et on ne renvoie pas de
+ *    message si un précédent est parti il y a peu.
  */
+
+/** Délai avant qu'un nouvel affichage de l'écran redéclenche un envoi. */
+const RESEND_COOLDOWN_MS = 10 * 60 * 1000;
+
+/** Cadence d'interrogation, et durée au-delà de laquelle on cesse d'interroger. */
+const POLL_MS = 5000;
+const POLL_LIMIT_MS = 10 * 60 * 1000;
 export function EmailVerificationGate() {
   const t = useTranslations('Auth.gate');
   const { user, signOut, resendVerificationEmail, refreshEmailVerification } = useAuth();
@@ -33,14 +44,47 @@ export function EmailVerificationGate() {
     }
   }, [resendVerificationEmail]);
 
-  // Un seul envoi automatique par affichage. La ref survit au double appel des
-  // effets en mode strict, qui produirait sinon deux mails.
+  // Envoi automatique, mais pas à chaque passage : quelqu'un qui a déjà cliqué le
+  // lien sur son téléphone et revient ici ne doit pas déclencher un second message.
+  // L'horodatage est conservé par compte, et survit à un rechargement de page.
   const sentOnce = useRef(false);
   useEffect(() => {
-    if (sentOnce.current) return;
+    if (sentOnce.current || !user?.id) return;
     sentOnce.current = true;
+
+    const key = `verify_sent_${user.id}`;
+    const last = Number(window.localStorage.getItem(key) ?? 0);
+    if (Date.now() - last < RESEND_COOLDOWN_MS) {
+      setStatus('sent');
+      return;
+    }
+
+    window.localStorage.setItem(key, String(Date.now()));
     send();
-  }, [send]);
+  }, [send, user?.id]);
+
+  /**
+   * Interrogation régulière : le lien est souvent ouvert sur un autre appareil, et
+   * rien ne préviendrait cet onglet. Sans ça, il faut deviner qu'il faut rafraîchir
+   * ou cliquer un bouton — c'est exactement là qu'on tourne en rond.
+   */
+  // La fonction change d'identité à chaque rendu du fournisseur : s'y fier
+  // recréerait l'intervalle sans cesse et repousserait indéfiniment sa limite.
+  const refreshRef = useRef(refreshEmailVerification);
+  useEffect(() => { refreshRef.current = refreshEmailVerification; }, [refreshEmailVerification]);
+
+  useEffect(() => {
+    const startedAt = Date.now();
+    const id = setInterval(() => {
+      if (Date.now() - startedAt > POLL_LIMIT_MS) {
+        clearInterval(id);
+        return;
+      }
+      refreshRef.current().catch(() => {});
+    }, POLL_MS);
+
+    return () => clearInterval(id);
+  }, []);
 
   const handleCheck = async () => {
     setStatus('checking');

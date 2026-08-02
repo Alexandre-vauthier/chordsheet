@@ -571,7 +571,7 @@
       "title": "Confirm your email address",
       "intro": "To continue, confirm the address",
       "sending": "Sending the message…",
-      "sent": "Message sent to {email}. Click the link, then come back here.",
+      "sent": "Message sent to {email}. Click the link: this page will unlock on its own, even if you open the link on another device.",
       "notVerified": "Still not confirmed. Check your spam folder, or send the message again.",
       "tooMany": "Too many requests in a row. Wait a few minutes before trying again.",
       "failed": "Sending failed. Please try again shortly.",
