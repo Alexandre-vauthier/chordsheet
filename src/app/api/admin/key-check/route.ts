@@ -65,7 +65,11 @@ export async function POST(req: NextRequest) {
 
   const snap = await db.collection('sheets').get();
 
+  // Pourquoi une grille n'entre pas dans la comparaison : sans ce detail, un total
+  // plus petit que le catalogue passe pour une anomalie.
   let exclues = 0;
+  let sansTonalite = 0;
+  let tropPeuDAccords = 0;
   let compared = 0;
   let exact = 0;
   let relative = 0;
@@ -100,8 +104,9 @@ export async function POST(req: NextRequest) {
 
     const sheet = fromFirestore(doc.id, brut) as Sheet;
 
+    // Rien a comparer : ces grilles sont justement celles que la deduction servirait.
     const stored = parseKey(sheet.key ?? '');
-    if (!stored) continue;
+    if (!stored) { sansTonalite++; continue; }
 
     // Les accords dans l'ordre de la grille : le premier et le dernier départagent une
     // tonalité de son relatif, un ensemble dédoublonné perdrait cette information.
@@ -113,7 +118,7 @@ export async function POST(req: NextRequest) {
         }
       }
     }
-    if (collectSheetChords(sheet).size < 2) continue;
+    if (collectSheetChords(sheet).size < 2) { tropPeuDAccords++; continue; }
 
     const guess = detectKey(suite);
     const capo = sheet.capo ?? 0;
@@ -133,8 +138,20 @@ export async function POST(req: NextRequest) {
      * d'autant. Sans cette correction, on compte comme erreurs des accords parfaits.
      */
     const sonnant = (detected.tonic + capo) % 12;
-    if (sonnant === stored.tonic && detected.minor === stored.minor) exactApresCapo++;
-    else if (sontRelatives({ tonic: sonnant, minor: detected.minor }, stored)) relatifApresCapo++;
+    const justeApresCapo = sonnant === stored.tonic && detected.minor === stored.minor;
+    const relatifCorrige = !justeApresCapo && sontRelatives({ tonic: sonnant, minor: detected.minor }, stored);
+    if (justeApresCapo) exactApresCapo++;
+    else if (relatifCorrige) relatifApresCapo++;
+
+    // La liste ne retient que les desaccords reels : une grille dont l'ecart est
+    // exactement le capo est juste, la lister donnait a croire le contraire.
+    if (!justeApresCapo && !relatifCorrige && ecarts.length < 20) {
+      ecarts.push({
+        title: sheet.title, stored: sheet.key, detected: guess.key, capo,
+        demiTons: detected.minor === stored.minor ? ((stored.tonic - detected.tonic) % 12 + 12) % 12 : -1,
+        confidence: Number(guess.confidence.toFixed(2)),
+      });
+    }
 
     const juste = detected.tonic === stored.tonic && detected.minor === stored.minor;
     if (juste) {
@@ -152,18 +169,11 @@ export async function POST(req: NextRequest) {
       if (capo > 0 && demiTons === capo % 12) capoExplique++;
     }
 
-    if (ecarts.length < 15) {
-      ecarts.push({
-        title: sheet.title, stored: sheet.key, detected: guess.key, capo,
-        demiTons: detected.minor === stored.minor ? ((stored.tonic - detected.tonic) % 12 + 12) % 12 : -1,
-        confidence: Number(guess.confidence.toFixed(2)),
-      });
-    }
   }
 
   return NextResponse.json({
     total: snap.size,
-    exclues,
+    ecartees: { enAttenteDeValidation: exclues, sansTonalite, tropPeuDAccords },
     compared,
     exact,
     relative,
