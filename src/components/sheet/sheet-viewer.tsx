@@ -757,7 +757,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                     <circle cx="18" cy="16" r="3"/>
                   </svg>
                   {accompCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-[var(--ink)] text-white text-[10px] font-bold">
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-[var(--ink)] text-[var(--cream)] text-[10px] font-bold">
                       {accompCount}
                     </span>
                   )}
