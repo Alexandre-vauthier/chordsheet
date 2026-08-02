@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb, getAdminAuth } from '@/lib/firebase-admin';
 import { normalizeKey } from '@/lib/songbpm-key';
+import { readCachedBpm, writeCachedBpm } from '@/lib/songbpm-cache';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -22,6 +23,12 @@ const BATCH_LIMIT = 6;
 const API = 'https://api.getsongbpm.com';
 
 async function fetchTempoAndKey(title: string, artist: string): Promise<{ tempo: number | null; key: string | null }> {
+  // Même mémoire que la route publique : une reprise ne redemande pas ce qu'une
+  // consultation a déjà cherché, et inversement.
+  const now = Date.now();
+  const connu = await readCachedBpm(title, artist, now);
+  if (connu) return connu;
+
   const apiKey = process.env.GETSONGBPM_API_KEY;
   const scraperKey = process.env.SCRAPER_API_KEY;
   if (!apiKey) return { tempo: null, key: null };
@@ -37,13 +44,18 @@ async function fetchTempoAndKey(title: string, artist: string): Promise<{ tempo:
     const match = text.match(/\{[\s\S]*\}/);
     const data = match ? JSON.parse(match[0]) : null;
     const first = Array.isArray(data?.search) ? data.search[0] : null;
-    if (!first) return { tempo: null, key: null };
+    if (!first) {
+      await writeCachedBpm(title, artist, { tempo: null, key: null }, now);
+      return { tempo: null, key: null };
+    }
 
     const tempo = Number(first.tempo);
-    return {
+    const resultat = {
       tempo: Number.isFinite(tempo) && tempo > 0 ? Math.round(tempo) : null,
       key: normalizeKey(first.key_of ?? null),
     };
+    await writeCachedBpm(title, artist, resultat, now);
+    return resultat;
   } catch {
     return { tempo: null, key: null };
   }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { normalizeKey } from '@/lib/songbpm-key';
+import { readCachedBpm, writeCachedBpm } from '@/lib/songbpm-cache';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
@@ -43,6 +44,17 @@ export async function GET(req: NextRequest) {
 
   if (!apiKey || !title || !artist) {
     return NextResponse.json({ tempo: null, key: null });
+  }
+
+  const now = Date.now();
+
+  // Déjà cherché ? On ne redemande pas. Chaque appel au proxy est décompté d'un
+  // quota mensuel, et c'est la répétition des recherches infructueuses qui l'épuisait.
+  const connu = await readCachedBpm(title, artist, now);
+  if (connu && req.nextUrl.searchParams.get('diag') !== '1') {
+    return NextResponse.json(connu, {
+      headers: { 'Cache-Control': 'public, max-age=86400, s-maxage=86400' },
+    });
   }
 
   try {
@@ -93,8 +105,11 @@ export async function GET(req: NextRequest) {
     const tempo = Number.isFinite(tempoNum) && tempoNum >= 30 && tempoNum <= 320 ? Math.round(tempoNum) : null;
     const key = normalizeKey(keyRaw);
 
-    // On ne met en cache QUE les vrais résultats : cacher un échec (null) le figerait
-    // 24h (résultat vide resservi même après correction).
+    // Les deux issues sont mémorisées : un succès définitivement, un échec pour un
+    // temps. Ne garder que les succès revenait à réinterroger sans fin les morceaux
+    // absents de leur base — la moitié de l'échantillon testé.
+    await writeCachedBpm(title, artist, { tempo, key }, now);
+
     const found = tempo != null || key != null;
     return NextResponse.json(
       { tempo, key },
