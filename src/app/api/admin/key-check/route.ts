@@ -65,6 +65,7 @@ export async function POST(req: NextRequest) {
 
   const snap = await db.collection('sheets').get();
 
+  let exclues = 0;
   let compared = 0;
   let exact = 0;
   let relative = 0;
@@ -90,7 +91,14 @@ export async function POST(req: NextRequest) {
   const ecarts: { title: string; stored: string; detected: string; capo: number; demiTons: number; confidence: number }[] = [];
 
   for (const doc of snap.docs) {
-    const sheet = fromFirestore(doc.id, doc.data()) as Sheet;
+    const brut = doc.data();
+
+    // Les grilles en attente de validation sont inachevees : leurs accords sont
+    // partiels ou faux. Les compter reviendrait a juger le calcul sur une matiere
+    // que son auteur sait lui-meme incorrecte.
+    if (brut.pendingValidation === true) { exclues++; continue; }
+
+    const sheet = fromFirestore(doc.id, brut) as Sheet;
 
     const stored = parseKey(sheet.key ?? '');
     if (!stored) continue;
@@ -155,6 +163,7 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     total: snap.size,
+    exclues,
     compared,
     exact,
     relative,
