@@ -1,3 +1,6 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
 import type { BadgeId } from '@/types';
 import { BADGE_DEFINITIONS } from '@/lib/creator-reputation';
 
@@ -13,6 +16,9 @@ const ALL_BADGE_IDS: BadgeId[] = [
 ];
 
 export function BadgesDisplay({ earned, showAll = false }: BadgesDisplayProps) {
+  // Les libellés vivent dans les traductions ; la définition ne garde que
+  // l'identifiant, l'icône et le seuil.
+  const t = useTranslations('Badges');
   const toShow = showAll ? ALL_BADGE_IDS : earned;
   if (toShow.length === 0) return null;
 
@@ -24,7 +30,7 @@ export function BadgesDisplay({ earned, showAll = false }: BadgesDisplayProps) {
         return (
           <span
             key={id}
-            title={`${def.label} — ${def.description}`}
+            title={`${t(`${id}.label`)} — ${t(`${id}.description`)}`}
             className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-opacity
               ${isEarned
                 ? 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink)]'
@@ -32,7 +38,7 @@ export function BadgesDisplay({ earned, showAll = false }: BadgesDisplayProps) {
               }`}
           >
             <span>{def.icon}</span>
-            <span>{def.label}</span>
+            <span>{t(`${id}.label`)}</span>
           </span>
         );
       })}

@@ -9,7 +9,7 @@ export const LEVEL_THRESHOLDS: Record<CreatorLevel, number> = {
   'Maître':      600,
 };
 
-const LEVEL_ORDER: CreatorLevel[] = ['Découvreur', 'Contributeur', 'Référence', 'Maître'];
+export const LEVEL_ORDER: CreatorLevel[] = ['Découvreur', 'Contributeur', 'Référence', 'Maître'];
 
 export const BADGE_DEFINITIONS: Record<BadgeId, BadgeDefinition> = {
   first_bookmark:  { id: 'first_bookmark',  icon: '🔖', label: 'Premier favori',     description: 'Une de vos grilles a été mise en favori pour la première fois' },
@@ -22,6 +22,26 @@ export const BADGE_DEFINITIONS: Record<BadgeId, BadgeDefinition> = {
   prolific:        { id: 'prolific',        icon: '📚', label: 'Auteur prolifique',   description: '5 grilles publiques ou plus' },
   top_rated_sheet: { id: 'top_rated_sheet', icon: '🎸', label: 'Grille d\'exception', description: 'Une grille avec une note ≥ 4.8 sur au moins 3 évaluations' },
 };
+
+/**
+ * Poids du score, exportés pour que l'écran qui les explique les lise ici.
+ *
+ * Les recopier dans une traduction reviendrait à publier un barème qui dérive
+ * silencieusement du calcul réel dès qu'on touche à l'un des deux.
+ */
+export const SCORE_WEIGHTS = {
+  /** Points par favori reçu sur une grille publique. */
+  bookmark: 10,
+  /** Points par évaluation reçue. */
+  rating: 5,
+  /** Moyenne minimale pour déclencher le bonus de qualité. */
+  averageMin: 4.0,
+  /** Multiplicateur appliqué à la moyenne quand le seuil est atteint. */
+  averageFactor: 5,
+} as const;
+
+/** Favoris nécessaires pour gagner un crédit d'analyse. */
+export const BOOKMARKS_PER_OCR_CREDIT = 10;
 
 export const MAX_EARNED_OCR_CREDITS = 20;
 
@@ -47,9 +67,9 @@ export function computeScore(sheets: SheetStats[]): number {
   const totalRatingWeighted = pub.reduce((acc, s) => acc + s.ratingCount * (s.averageRating ?? 0), 0);
   const globalAvg = totalRatings > 0 ? totalRatingWeighted / totalRatings : 0;
   return (
-    totalBookmarks * 10 +
-    totalRatings   *  5 +
-    (globalAvg >= 4.0 ? globalAvg * 5 : 0)
+    totalBookmarks * SCORE_WEIGHTS.bookmark +
+    totalRatings   * SCORE_WEIGHTS.rating +
+    (globalAvg >= SCORE_WEIGHTS.averageMin ? globalAvg * SCORE_WEIGHTS.averageFactor : 0)
   );
 }
 
@@ -83,7 +103,7 @@ export function computeBadges(sheets: SheetStats[]): BadgeId[] {
 
 export function computeEarnedOcrCredits(sheets: SheetStats[]): number {
   const totalBookmarks = getPublicSheets(sheets).reduce((acc, s) => acc + (s.bookmarkCount || 0), 0);
-  return Math.min(Math.floor(totalBookmarks / 10), MAX_EARNED_OCR_CREDITS);
+  return Math.min(Math.floor(totalBookmarks / BOOKMARKS_PER_OCR_CREDIT), MAX_EARNED_OCR_CREDITS);
 }
 
 export function getLevelProgress(score: number): {

@@ -1627,5 +1627,61 @@
   },
   "ChordCard": {
     "listen": "Cliquer pour écouter"
+  },
+  "Badges": {
+    "first_bookmark": {
+      "label": "Premier favori",
+      "description": "Une de tes grilles a été mise en favori pour la première fois"
+    },
+    "bookmark_10": {
+      "label": "10 favoris",
+      "description": "10 favoris reçus au total sur tes grilles publiques"
+    },
+    "bookmark_50": {
+      "label": "50 favoris",
+      "description": "50 favoris reçus au total"
+    },
+    "bookmark_200": {
+      "label": "200 favoris",
+      "description": "200 favoris reçus au total"
+    },
+    "first_rating": {
+      "label": "Première note",
+      "description": "Une de tes grilles a été notée pour la première fois"
+    },
+    "rating_10": {
+      "label": "10 évaluations",
+      "description": "10 évaluations reçues au total sur tes grilles publiques"
+    },
+    "high_quality": {
+      "label": "Haute qualité",
+      "description": "Note moyenne ≥ 4,5 sur au moins 5 évaluations"
+    },
+    "prolific": {
+      "label": "Auteur prolifique",
+      "description": "5 grilles publiques ou plus"
+    },
+    "top_rated_sheet": {
+      "label": "Grille d'exception",
+      "description": "Une grille notée ≥ 4,8 sur au moins 3 évaluations"
+    }
+  },
+  "Reputation": {
+    "title": "Comment fonctionnent les niveaux et les badges",
+    "scoreIntro": "Ton niveau vient d'un score, calculé uniquement sur tes grilles publiques :",
+    "scoreBookmark": "{points} points par favori reçu",
+    "scoreRating": "{points} points par évaluation reçue",
+    "scoreAverage": "un bonus si la moyenne générale atteint {min} : la moyenne × {factor}",
+    "currentScore": "Score actuel : {score} points",
+    "levelsTitle": "Les quatre niveaux",
+    "levelCurrent": "niveau actuel",
+    "toNext": "Il manque {points} points pour atteindre {level}.",
+    "maxLevel": "Dernier niveau atteint.",
+    "howToProgress": "Le score ne monte que si d'autres musiciens utilisent tes grilles : publie-les, et soigne celles qui sont déjà notées. Un favori vaut deux évaluations.",
+    "badgesEarned": "Badges obtenus",
+    "badgesToGo": "Badges à décrocher",
+    "badgesAllDone": "Tous les badges sont obtenus.",
+    "bonusTitle": "Un bénéfice concret",
+    "bonus": "Chaque tranche de {per} favoris reçus donne un crédit d'analyse de partition, jusqu'à {max}."
   }
 }

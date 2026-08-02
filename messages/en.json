@@ -1627,5 +1627,61 @@
   },
   "ChordCard": {
     "listen": "Click to hear it"
+  },
+  "Badges": {
+    "first_bookmark": {
+      "label": "First favourite",
+      "description": "One of your charts was favourited for the first time"
+    },
+    "bookmark_10": {
+      "label": "10 favourites",
+      "description": "10 favourites received in total on your public charts"
+    },
+    "bookmark_50": {
+      "label": "50 favourites",
+      "description": "50 favourites received in total"
+    },
+    "bookmark_200": {
+      "label": "200 favourites",
+      "description": "200 favourites received in total"
+    },
+    "first_rating": {
+      "label": "First rating",
+      "description": "One of your charts was rated for the first time"
+    },
+    "rating_10": {
+      "label": "10 ratings",
+      "description": "10 ratings received in total on your public charts"
+    },
+    "high_quality": {
+      "label": "High quality",
+      "description": "Average rating ≥ 4.5 over at least 5 ratings"
+    },
+    "prolific": {
+      "label": "Prolific author",
+      "description": "5 public charts or more"
+    },
+    "top_rated_sheet": {
+      "label": "Outstanding chart",
+      "description": "A chart rated ≥ 4.8 over at least 3 ratings"
+    }
+  },
+  "Reputation": {
+    "title": "How levels and badges work",
+    "scoreIntro": "Your level comes from a score, computed only on your public charts:",
+    "scoreBookmark": "{points} points per favourite received",
+    "scoreRating": "{points} points per rating received",
+    "scoreAverage": "a bonus if the overall average reaches {min}: the average × {factor}",
+    "currentScore": "Current score: {score} points",
+    "levelsTitle": "The four levels",
+    "levelCurrent": "current level",
+    "toNext": "{points} points to go to reach {level}.",
+    "maxLevel": "Highest level reached.",
+    "howToProgress": "The score only rises when other musicians use your charts: publish them, and look after those already rated. One favourite is worth two ratings.",
+    "badgesEarned": "Badges earned",
+    "badgesToGo": "Badges to unlock",
+    "badgesAllDone": "Every badge earned.",
+    "bonusTitle": "A concrete benefit",
+    "bonus": "Every {per} favourites received grants one score-analysis credit, up to {max}."
   }
 }

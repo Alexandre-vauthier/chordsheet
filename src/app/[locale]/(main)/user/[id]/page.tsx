@@ -8,6 +8,7 @@ import { fromFirestore } from '@/lib/firestore-helpers';
 import { SheetCard } from '@/components/explore/sheet-card';
 import { LevelBadge } from '@/components/reputation/level-badge';
 import { BadgesDisplay } from '@/components/reputation/badges-display';
+import { ReputationExplainer } from '@/components/reputation/reputation-explainer';
 import { useBookmarks } from '@/lib/use-bookmarks';
 import { useAuth } from '@/lib/auth-context';
 import type { Sheet } from '@/types';
@@ -212,6 +213,17 @@ export default function UserPage({ params }: UserPageProps) {
           )}
         </div>
       </div>
+
+      {/* Le dispositif de reconnaissance n'était expliqué nulle part. On ne le
+          montre qu'aux profils qui ont au moins une grille publique : avant ça,
+          niveaux et badges ne veulent encore rien dire. */}
+      {sheets.length > 0 && (
+        <ReputationExplainer
+          score={reputation.score}
+          level={reputation.level}
+          earned={reputation.badges}
+        />
+      )}
 
       {/* Accès rapides du propriétaire : le profil sert de hub vers grilles et sets */}
       {user?.id === id && (
