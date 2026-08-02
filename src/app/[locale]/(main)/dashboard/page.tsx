@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { groupSheetsBySong } from '@/lib/sheet-groups';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { collection, query, where, orderBy, getDocs, deleteDoc, doc } from 'firebase/firestore';
@@ -136,6 +137,11 @@ export default function DashboardPage() {
   const displayedSheets = useMemo(() => filterAndSort(sheets), [sheets, filterAndSort]);
   const displayedBookmarks = useMemo(() => filterAndSort(bookmarkedSheets), [bookmarkedSheets, filterAndSort]);
   const displayedAll = useMemo(() => filterAndSort(allSheets), [allSheets, filterAndSort]);
+
+  // Une entrée par morceau : la copie qu'on a faite d'une grille et l'originale mise
+  // en favori sont deux versions d'une même chanson, pas deux résultats. Quand il y
+  // en a plusieurs, la carte mène à la page de choix plutôt qu'à l'une d'elles.
+  const groupedAll = useMemo(() => groupSheetsBySong(displayedAll), [displayedAll]);
 
   const hasActiveFilters = !!(searchQuery || selectedGenre || selectedDifficulty || sortBy !== 'recent');
   const clearFilters = () => { setSearchQuery(''); setSelectedGenre(''); setSelectedDifficulty(null); setSortBy('recent'); };
@@ -311,16 +317,21 @@ export default function DashboardPage() {
           <EmptyState icon="music" title={t('noResultsTitle')} description={t('noResultsDesc')} actions={[<button key="r" onClick={clearFilters} className="text-sm text-[var(--accent)] hover:underline">{t('reset')}</button>]} />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {displayedAll.map(sheet => {
+            {groupedAll.map(({ sheet, count, href }) => {
               const isOwned = ownedIds.has(sheet.id);
+              const single = count === 1;
               return (
                 <SheetCard
                   key={sheet.id}
                   sheet={sheet}
+                  href={href}
+                  variantCount={count}
                   showOwner
-                  onDelete={isOwned ? () => handleDelete(sheet.id!) : undefined}
-                  isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
-                  onToggleBookmark={sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
+                  // Supprimer ou retirer des favoris ne vaut que pour une grille
+                  // précise : sur un groupe, on ne saurait pas laquelle viser.
+                  onDelete={isOwned && single ? () => handleDelete(sheet.id!) : undefined}
+                  isBookmarked={single && sheet.id ? isBookmarked(sheet.id) : false}
+                  onToggleBookmark={single && sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
                 />
               );
             })}

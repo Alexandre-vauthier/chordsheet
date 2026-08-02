@@ -87,6 +87,20 @@
           "arrayConfig": "CONTAINS"
         }
       ]
+    },
+    {
+      "collectionGroup": "sheets",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "ownerId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "artist",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []

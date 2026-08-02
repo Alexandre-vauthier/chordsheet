@@ -126,20 +126,38 @@ export function SongVersionsClient({ title, artist, initialSheets }: SongVersion
 
   useEffect(() => {
     if (authLoading) return;
-    // Liste déjà servie et lecteur non administrateur : rien de plus à voir.
-    if (initialSheets && !isAdmin) return;
+    // Liste déjà servie, lecteur sans compte : rien de plus à voir. Connecté, on
+    // recharge malgré tout, pour y ajouter ses propres versions.
+    if (initialSheets && !isAdmin && !user) return;
 
     async function load() {
       try {
         const db = getDb();
-        const q = isAdmin
-          ? query(collection(db, 'sheets'), where('artist', '==', artist))
-          : query(collection(db, 'sheets'), where('isPublic', '==', true), where('artist', '==', artist));
-        const snapshot = await getDocs(q);
+
+        // Le rendu serveur ne connaît que les grilles publiques. Or on arrive
+        // souvent ici depuis son book, après avoir dupliqué une grille : cette copie
+        // est privée par défaut. Sans cette seconde lecture, la page de choix
+        // n'afficherait pas la version qu'on vient précisément chercher.
+        const queries = isAdmin
+          ? [query(collection(db, 'sheets'), where('artist', '==', artist))]
+          : [
+              query(collection(db, 'sheets'), where('isPublic', '==', true), where('artist', '==', artist)),
+              ...(user ? [query(collection(db, 'sheets'), where('ownerId', '==', user.id), where('artist', '==', artist))] : []),
+            ];
+
+        const snapshots = await Promise.all(queries.map((q) => getDocs(q)));
         const titleNorm = title.trim().toLowerCase();
-        const loaded: Sheet[] = snapshot.docs
-          .map((d) => fromFirestore(d.id, d.data()))
-          .filter((s) => s.title.trim().toLowerCase() === titleNorm);
+
+        // Une grille publique dont on est l'auteur ressort des deux requêtes.
+        const byId = new Map<string, Sheet>();
+        for (const snapshot of snapshots) {
+          for (const d of snapshot.docs) {
+            const sheet = fromFirestore(d.id, d.data());
+            if (sheet.title.trim().toLowerCase() === titleNorm) byId.set(sheet.id!, sheet);
+          }
+        }
+
+        const loaded: Sheet[] = [...byId.values()];
         loaded.sort((a, b) => {
           const ra = a.averageRating ?? 0;
           const rb = b.averageRating ?? 0;
@@ -154,7 +172,7 @@ export function SongVersionsClient({ title, artist, initialSheets }: SongVersion
       }
     }
     load();
-  }, [title, artist, isAdmin, authLoading, initialSheets]);
+  }, [title, artist, isAdmin, authLoading, initialSheets, user]);
 
   return (
     <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8">

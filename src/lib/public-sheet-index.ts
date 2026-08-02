@@ -1,5 +1,8 @@
 import { cache } from 'react';
 import { getAdminDb } from '@/lib/firebase-admin';
+// Réexport pour les appelants serveur, qui l'importaient d'ici avant que la clé
+// serve aussi côté navigateur.
+export { songKey } from '@/lib/sheet-groups';
 
 /**
  * Index des grilles publiques, lu côté serveur.
@@ -57,10 +60,6 @@ export const getPublicSheetIndex = cache(async (): Promise<PublicSheetRef[]> => 
   }
 });
 
-/** Clé de regroupement d'un même morceau, insensible à la casse et aux espaces. */
-export function songKey(title: string, artist: string): string {
-  return `${title.trim().toLowerCase()}|${artist.trim().toLowerCase()}`;
-}
 
 /**
  * Les grilles publiques d'un artiste, en version allégée.
