@@ -566,7 +566,19 @@
     "errorGoogleAccountExists": "Un compte existe déjà avec cette adresse. Connecte-toi avec ton mot de passe.",
     "errorGoogleGeneric": "La connexion avec Google a échoué. Réessaie.",
     "googleTermsPrefix": "En continuant avec Google, tu acceptes les",
-    "googleTermsAnd": "et les"
+    "googleTermsAnd": "et les",
+    "gate": {
+      "title": "Confirme ton adresse email",
+      "intro": "Pour continuer, confirme l'adresse",
+      "sending": "Envoi du message en cours…",
+      "sent": "Message envoyé à {email}. Clique sur le lien reçu, puis reviens ici.",
+      "notVerified": "Toujours pas confirmée. Regarde dans tes indésirables, ou renvoie le message.",
+      "tooMany": "Trop de demandes d'affilée. Attends quelques minutes avant de réessayer.",
+      "failed": "L'envoi a échoué. Réessaie dans un instant.",
+      "check": "J'ai confirmé, continuer",
+      "resend": "Renvoyer le message",
+      "signOut": "Se déconnecter"
+    }
   },
   "Sets": {
     "errorSave": "Erreur lors de la sauvegarde",

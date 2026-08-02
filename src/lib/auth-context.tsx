@@ -52,7 +52,9 @@ async function requestVerificationEmail(user: FirebaseUser): Promise<void> {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error('verification-email-failed');
+  // Le code HTTP est porté par le message : l'écran d'attente distingue « trop de
+  // demandes » d'une panne d'envoi, qui n'appellent pas la même conduite.
+  if (!res.ok) throw new Error(String(res.status));
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

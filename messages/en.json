@@ -566,7 +566,19 @@
     "errorGoogleAccountExists": "An account already exists with this address. Sign in with your password.",
     "errorGoogleGeneric": "Google sign-in failed. Please try again.",
     "googleTermsPrefix": "By continuing with Google, you accept the",
-    "googleTermsAnd": "and the"
+    "googleTermsAnd": "and the",
+    "gate": {
+      "title": "Confirm your email address",
+      "intro": "To continue, confirm the address",
+      "sending": "Sending the message…",
+      "sent": "Message sent to {email}. Click the link, then come back here.",
+      "notVerified": "Still not confirmed. Check your spam folder, or send the message again.",
+      "tooMany": "Too many requests in a row. Wait a few minutes before trying again.",
+      "failed": "Sending failed. Please try again shortly.",
+      "check": "I have confirmed, continue",
+      "resend": "Send again",
+      "signOut": "Sign out"
+    }
   },
   "Sets": {
     "errorSave": "Error saving",
