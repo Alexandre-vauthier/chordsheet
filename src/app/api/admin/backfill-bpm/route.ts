@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminDb, getAdminAuth } from '@/lib/firebase-admin';
-import { normalizeKey } from '@/lib/songbpm-key';
 import { readCachedBpm, writeCachedBpm } from '@/lib/songbpm-cache';
 import { fetchDeezerTempo } from '@/lib/deezer-bpm';
 
@@ -30,8 +29,14 @@ async function fetchTempoAndKey(title: string, artist: string): Promise<{ tempo:
   const connu = await readCachedBpm(title, artist, now);
   if (connu) return connu;
 
-  // Deezer d'abord : gratuit et sans quota. Il ne rend que le tempo.
+  // Deezer d'abord : gratuit et sans quota. S'il répond, on s'arrête là — la
+  // tonalité ne vient plus d'ici, elle se déduit des accords écrits.
   const deezerTempo = await fetchDeezerTempo(title, artist);
+  if (deezerTempo != null) {
+    const r = { tempo: deezerTempo, key: null };
+    await writeCachedBpm(title, artist, r, now, true);
+    return r;
+  }
 
   const apiKey = process.env.GETSONGBPM_API_KEY;
   const scraperKey = process.env.SCRAPER_API_KEY;
@@ -59,10 +64,9 @@ async function fetchTempoAndKey(title: string, artist: string): Promise<{ tempo:
     }
 
     const tempo = Number(first.tempo);
-    const tempoGetSong = Number.isFinite(tempo) && tempo > 0 ? Math.round(tempo) : null;
     const resultat = {
-      tempo: deezerTempo ?? tempoGetSong,
-      key: normalizeKey(first.key_of ?? null),
+      tempo: Number.isFinite(tempo) && tempo > 0 ? Math.round(tempo) : null,
+      key: null,
     };
     await writeCachedBpm(title, artist, resultat, now);
     return resultat;
@@ -110,11 +114,12 @@ export async function POST(req: NextRequest) {
 
   for (const doc of lot) {
     const s = doc.data();
-    const { tempo, key } = await fetchTempoAndKey(String(s.title), String(s.artist));
+    const { tempo } = await fetchTempoAndKey(String(s.title), String(s.artist));
 
+    // Seul le tempo est repris : la tonalité se déduit des accords, une tuile dédiée
+    // s'en charge.
     const patch: Record<string, unknown> = { bpmChecked: true };
     if (tempo != null && !String(s.tempo ?? '').trim()) patch.tempo = String(tempo);
-    if (key && !String(s.key ?? '').trim()) patch.key = key;
 
     if (Object.keys(patch).length > 1) updated++;
     else notFound++;

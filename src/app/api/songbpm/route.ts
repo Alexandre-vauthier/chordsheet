@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { normalizeKey } from '@/lib/songbpm-key';
 import { readCachedBpm, writeCachedBpm } from '@/lib/songbpm-cache';
 import { fetchDeezerTempo } from '@/lib/deezer-bpm';
 
@@ -63,6 +62,22 @@ export async function GET(req: NextRequest) {
   // les titres que GetSongBPM ignorait.
   const deezerTempo = await fetchDeezerTempo(title, artist);
 
+  /**
+   * Deezer a suffi : on ne dérange pas le proxy.
+   *
+   * La tonalité ne vient plus d'ici — elle se déduit des accords écrits, seul domaine
+   * cohérent avec ce que la grille affiche. GetSongBPM ne sert donc plus qu'au tempo,
+   * et uniquement quand Deezer n'en a pas. C'est ce qui fait passer la consommation du
+   * quota d'un appel par recherche à un appel par recherche infructueuse.
+   */
+  if (deezerTempo != null) {
+    await writeCachedBpm(title, artist, { tempo: deezerTempo, key: null }, now, true);
+    return NextResponse.json(
+      { tempo: deezerTempo, key: null },
+      { headers: { 'Cache-Control': 'public, max-age=86400, s-maxage=86400' } },
+    );
+  }
+
   try {
     const lookup = `song:${title} artist:${artist}`;
     const searchUrl = `${API}/search/?api_key=${encodeURIComponent(apiKey)}&type=both&lookup=${encodeURIComponent(lookup)}`;
@@ -99,22 +114,19 @@ export async function GET(req: NextRequest) {
     const first = Array.isArray((search.json as any)?.search) ? (search.json as any).search[0] : null;
     const id = pick(first, 'id', 'song_id');
     let tempoRaw = pick(first, 'tempo', 'song_tempo');
-    let keyRaw = pick(first, 'key_of', 'key', 'song_key');
 
-    // La recherche porte déjà tempo/key_of en général ; détail par id sinon.
-    if (id && (tempoRaw == null || keyRaw == null)) {
+    // Second appel seulement si le tempo manque : il en coûtait un de plus, jadis pour
+    // aller chercher une tonalité qu'on ne demande plus.
+    if (id && tempoRaw == null) {
       const detail = await fetchJson(`${API}/song/?api_key=${encodeURIComponent(apiKey)}&id=${encodeURIComponent(String(id))}`);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const song = pick(detail.json as any, 'song') ?? detail.json;
-      if (tempoRaw == null) tempoRaw = pick(song, 'tempo', 'song_tempo');
-      if (keyRaw == null) keyRaw = pick(song, 'key_of', 'key', 'song_key');
+      tempoRaw = pick(song, 'tempo', 'song_tempo');
     }
 
     const tempoNum = Number(tempoRaw);
-    const tempoGetSong = Number.isFinite(tempoNum) && tempoNum >= 30 && tempoNum <= 320 ? Math.round(tempoNum) : null;
-    // Deezer prime : il a été interrogé en premier et n'a rien coûté.
-    const tempo = deezerTempo ?? tempoGetSong;
-    const key = normalizeKey(keyRaw);
+    const tempo = Number.isFinite(tempoNum) && tempoNum >= 30 && tempoNum <= 320 ? Math.round(tempoNum) : null;
+    const key = null;
 
     // Les deux issues sont mémorisées : un succès définitivement, un échec pour un
     // temps. Ne garder que les succès revenait à réinterroger sans fin les morceaux
@@ -129,15 +141,8 @@ export async function GET(req: NextRequest) {
       { headers: { 'Cache-Control': found ? 'public, max-age=86400, s-maxage=86400' : 'no-store' } }
     );
   } catch {
-    // GetSongBPM indisponible (quota du proxy épuisé, panne) : le tempo de Deezer
-    // reste bon à prendre, et on le mémorise pour ne pas y revenir.
-    if (deezerTempo != null) {
-      await writeCachedBpm(title, artist, { tempo: deezerTempo, key: null }, now, true);
-      return NextResponse.json(
-        { tempo: deezerTempo, key: null },
-        { headers: { 'Cache-Control': 'public, max-age=86400, s-maxage=86400' } },
-      );
-    }
+    // On n'arrive ici que si Deezer n'avait rien : il n'y a plus de repli, et on ne
+    // mémorise pas — une panne du proxy n'est pas une absence du morceau.
     return NextResponse.json({ tempo: null, key: null }, { headers: { 'Cache-Control': 'no-store' } });
   }
 }
