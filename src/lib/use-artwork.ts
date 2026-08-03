@@ -44,6 +44,16 @@ async function fetchArtwork(query: string): Promise<ArtworkData> {
   }
 }
 
+/**
+ * La clé d'une recherche, telle que le hook la construit.
+ *
+ * Exportée pour que l'appelant puisse comparer ce qu'il attend à ce que le hook
+ * décrit, sans avoir à deviner la règle de composition.
+ */
+export function artworkKey(artist: string | undefined, title: string | undefined): string {
+  return [title, artist].filter(Boolean).join(' ').trim();
+}
+
 export function useArtwork(artist: string | undefined, title: string | undefined) {
   const [artworkUrl, setArtworkUrl] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -51,6 +61,17 @@ export function useArtwork(artist: string | undefined, title: string | undefined
   const [year, setYear] = useState<number | null>(null);
   const [genre, setGenre] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  /**
+   * Recherche à laquelle correspondent les valeurs rendues, `null` tant qu'elles ne
+   * décrivent rien.
+   *
+   * Vider l'état au changement de morceau ne suffisait pas : l'appelant lit ses
+   * valeurs dans le rendu **où le changement est demandé**, avant que le moindre
+   * effet n'ait tourné. Il voyait donc encore l'extrait précédent, sans aucun moyen
+   * de le savoir. En rendant la clé à côté des valeurs, il peut vérifier qu'elles
+   * parlent bien du morceau qu'il affiche — les deux viennent du même rendu.
+   */
+  const [key, setKey] = useState<string | null>(null);
   /**
    * Morceau auquel se rapportent les valeurs affichées.
    *
@@ -64,11 +85,12 @@ export function useArtwork(artist: string | undefined, title: string | undefined
   useEffect(() => {
     const vider = () => {
       setArtworkUrl(null); setPreviewUrl(null); setTrackUrl(null); setYear(null); setGenre(null);
+      setKey(null);
     };
 
     if (!artist && !title) { requeteAppliquee.current = null; vider(); setLoading(false); return; }
 
-    const query = [title, artist].filter(Boolean).join(' ').trim();
+    const query = artworkKey(artist, title);
     if (!query) { requeteAppliquee.current = null; vider(); setLoading(false); return; }
 
     // Nouveau morceau : on efface avant de chercher, et on se déclare en attente.
@@ -82,7 +104,7 @@ export function useArtwork(artist: string | undefined, title: string | undefined
 
     const apply = (d: ArtworkData) => {
       setArtworkUrl(d.artworkUrl); setPreviewUrl(d.previewUrl); setTrackUrl(d.trackUrl ?? null);
-      setYear(d.year ?? null); setGenre(d.genre ?? null); setLoading(false);
+      setYear(d.year ?? null); setGenre(d.genre ?? null); setLoading(false); setKey(query);
     };
 
     // 1. Cache mémoire
@@ -130,5 +152,5 @@ export function useArtwork(artist: string | undefined, title: string | undefined
     return () => { cancelled = true; };
   }, [artist, title]);
 
-  return { artworkUrl, previewUrl, trackUrl, year, genre, loading };
+  return { artworkUrl, previewUrl, trackUrl, year, genre, loading, key };
 }

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useArtwork } from '@/lib/use-artwork';
+import { artworkKey, useArtwork } from '@/lib/use-artwork';
 import { playPreviewAudio, stopPreviewAudio } from '@/lib/preview-audio';
 import { Link } from '@/i18n/navigation';
 
@@ -72,13 +72,25 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
   const [continu, setContinu] = useState(false);
   const debutRef = useRef(0);
   const sautsRef = useRef(0);
+  const lectureRef = useRef(0);
 
   const courant = file[index] ?? null;
   const suivant = file[index + 1] ?? null;
 
-  const { artworkUrl, previewUrl, trackUrl, year, loading } = useArtwork(courant?.artist, courant?.title);
+  const { artworkUrl, previewUrl, trackUrl, year, key } = useArtwork(courant?.artist, courant?.title);
+
+  /**
+   * Les valeurs décrivent-elles bien le morceau affiché ?
+   *
+   * Le hook met un rendu à se mettre à jour : dans le rendu qui suit un changement
+   * de morceau, il rend encore l'extrait du précédent. Comparer sa clé à celle qu'on
+   * attend est la seule façon fiable de le savoir, les deux venant du même rendu.
+   */
+  const attendue = courant ? artworkKey(courant.artist, courant.title) : '';
+  const pret = !!attendue && key === attendue;
 
   const arreter = useCallback(() => {
+    lectureRef.current += 1;
     stopPreviewAudio();
     setEnLecture(false);
     setContinu(false);
@@ -87,6 +99,9 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
   useEffect(() => arreter, [arreter]);
 
   const aller = useCallback((delta: number) => {
+    // On invalide la lecture en cours avant de couper : son rappel ne doit pas être
+    // pris pour une fin de morceau et faire avancer une seconde fois.
+    lectureRef.current += 1;
     stopPreviewAudio();
     setEnLecture(false);
     setIndex((i) => {
@@ -98,12 +113,24 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
   }, [file.length]);
 
   const lire = useCallback(() => {
-    if (!previewUrl) return;
+    if (!previewUrl || !pret) return;
     setContinu(true);
     setEnLecture(true);
     sautsRef.current = 0;
     debutRef.current = Date.now();
+
+    /**
+     * Jeton de lecture.
+     *
+     * Le lecteur partagé coupe l'extrait en cours avant d'en lancer un autre, et
+     * prévient alors son appelant précédent. Sans ce jeton, ce rappel se croyait à
+     * la fin d'un morceau et avançait d'un cran de plus : on sautait un titre sur
+     * deux et la lecture s'arrêtait de temps en temps.
+     */
+    const jeton = ++lectureRef.current;
+
     playPreviewAudio(previewUrl, () => {
+      if (lectureRef.current !== jeton) return;
       setEnLecture(false);
       if (Date.now() - debutRef.current > DUREE_MINIMALE_MS) {
         // Fin normale : au suivant, et l'effet ci-dessous le lance.
@@ -114,7 +141,7 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
         setContinu(false);
       }
     });
-  }, [previewUrl, aller]);
+  }, [previewUrl, pret, aller]);
 
   /**
    * L'enchaînement.
@@ -123,25 +150,16 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
    * d'extrait, on passe au suivant — c'est fréquent, tous les titres ne sont pas
    * chez iTunes, et s'arrêter là casserait l'enchaînement.
    */
-  const dernierLanceRef = useRef<string | null>(null);
-
   useEffect(() => {
     if (!continu || enLecture) return;
-    // Le hook se vide le temps de chercher : « pas d'extrait » ne veut dire
-    // « aucun » qu'une fois la recherche finie.
-    if (loading) return;
-    if (previewUrl) {
-      // Ceinture et bretelles : on ne relance pas deux fois le même morceau, même
-      // si un rendu supplémentaire repasse par ici.
-      if (dernierLanceRef.current === courant?.id) return;
-      dernierLanceRef.current = courant?.id ?? null;
-      lire();
-      return;
-    }
+    // Tant que les valeurs ne décrivent pas ce morceau-ci, il n'y a rien à décider.
+    if (!pret) return;
+    if (previewUrl) { lire(); return; }
+    // Recherche terminée sans extrait : ce morceau n'en a pas, on passe.
     sautsRef.current += 1;
     if (sautsRef.current >= MAX_SAUTS) setContinu(false);
     else aller(1);
-  }, [continu, enLecture, previewUrl, loading, lire, aller, courant?.id]);
+  }, [continu, enLecture, pret, previewUrl, lire, aller]);
 
   // Flèches pour passer d'un morceau à l'autre, barre d'espace pour écouter : on
   // enchaîne vite, et c'est tout l'intérêt de la page.
@@ -180,7 +198,7 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
       <button
         type="button"
         onClick={() => (enLecture ? arreter() : lire())}
-        disabled={!previewUrl}
+        disabled={!previewUrl || !pret}
         aria-label={enLecture ? t('stop') : t('play')}
         className="group relative block mx-auto mt-8 w-64 h-64 sm:w-72 sm:h-72 rounded-2xl overflow-hidden
           bg-[var(--cell-bg)] border border-[var(--line)] shadow-xl enabled:cursor-pointer disabled:cursor-default"
@@ -220,7 +238,7 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
         <p className="text-[var(--ink-light)] mt-1">{courant.artist}{year ? ` · ${year}` : ''}</p>
 
         {/* Dire pourquoi il ne se passe rien, plutôt que laisser un bouton inerte. */}
-        {!loading && !previewUrl && (
+        {pret && !previewUrl && (
           <p className="mt-2 text-xs text-[var(--ink-faint)]">{t('noPreview')}</p>
         )}
         {!continu && previewUrl && (
