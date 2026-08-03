@@ -254,6 +254,22 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
         {!continu && previewUrl && (
           <p className="mt-2 text-xs text-[var(--ink-faint)]">{t('tapToStart')}</p>
         )}
+
+        {/* Sous la pochette, comme sur la page d'une grille : les conditions de
+            l'API iTunes autorisent pochette et extrait pour **promouvoir** le
+            catalogue, ce qui suppose d'y renvoyer. Un crédit se lit près de ce
+            qu'il crédite, pas relégué en bas de page. */}
+        {trackUrl && (
+          <a
+            href={trackUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block mt-3 text-xs text-[var(--ink-light)] underline decoration-dotted
+              underline-offset-2 hover:text-[var(--accent)] transition-colors"
+          >
+            {t('listenOnApple')} ↗
+          </a>
+        )}
       </div>
 
       <div className="mt-6 flex items-center justify-center gap-3">
@@ -293,20 +309,6 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
       >
         {t('openSheet')}
       </Link>
-
-      {/* Les conditions de l'API iTunes demandent de renvoyer vers la boutique dès
-          qu'on diffuse ses extraits. On récupérait déjà ce lien sans jamais s'en
-          servir ; ici c'est le minimum. */}
-      {trackUrl && (
-        <a
-          href={trackUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-3 block text-center text-xs text-[var(--ink-faint)] hover:text-[var(--accent)] transition-colors"
-        >
-          {t('listenOnApple')}
-        </a>
-      )}
 
       {/* Le conseil qui donne envie d'ouvrir la grille.
           Le picto est celui, au trait près, du bouton d'accompagnement du lecteur
