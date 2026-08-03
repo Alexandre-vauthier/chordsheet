@@ -428,9 +428,12 @@ export default function Home() {
           </WhenNear>
 
           {/* Dire ce que le bac à sable n'est pas, et où va le reste : sans cette
-              phrase, ces deux lignes passent pour tout ce que l'éditeur sait faire. */}
-          <p className="mt-4 text-center text-xs text-[var(--nav-text)]/40 leading-relaxed">
-            {tTry.rich('note', {
+              phrase, ces deux lignes passent pour tout ce que l'éditeur sait faire.
+              Deux paragraphes plutôt qu'une phrase filée : l'un cadre l'essai, l'autre
+              ouvre sur la suite, et ils ne se lisent pas d'un trait. */}
+          <p className="mt-5 text-center text-xs text-[var(--nav-text)]/40">{tTry('noteSandbox')}</p>
+          <p className="mt-2 text-center text-xs text-[var(--nav-text)]/40 leading-relaxed">
+            {tTry.rich('noteMore', {
               lien: (chunks) => (
                 <Link href="/editor" className="underline underline-offset-2 hover:text-[var(--accent)] transition-colors">
                   {chunks}

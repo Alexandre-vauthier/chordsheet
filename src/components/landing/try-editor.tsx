@@ -284,8 +284,13 @@ export function TryEditor({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: st
                         key={ci}
                         style={{
                           gridColumn: `span ${colonnes(cell.span)}`,
-                          ...(couleur ? { borderColor: couleur.border, borderLeftWidth: '5px' } : {}),
+                          // Largeur réservée en permanence : la couleur va et vient
+                          // (saisie, case vide), la géométrie ne doit pas suivre.
+                          borderLeftWidth: '5px',
+                          ...(couleur ? { borderColor: couleur.border } : {}),
                           ...(actif && !couleur ? { borderColor: 'var(--accent)' } : {}),
+                          // Après la couleur d'ensemble, sinon elle l'écraserait.
+                          borderLeftColor: couleur ? couleur.border : 'var(--line)',
                         }}
                         className="relative rounded-lg border-2 border-[var(--line)] bg-[var(--cell-bg)] transition-colors"
                       >
@@ -324,8 +329,8 @@ export function TryEditor({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: st
                             title={t('split')}
                             aria-label={t('split')}
                             className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-10 w-6 h-6 flex items-center
-                              justify-center rounded-full bg-[var(--paper)] border-2 border-[var(--accent)]
-                              text-xs font-semibold leading-none text-[var(--accent)] shadow-sm cursor-pointer
+                              justify-center rounded-full bg-[var(--paper)] border border-[var(--accent)]
+                              text-xs leading-none text-[var(--accent)] cursor-pointer
                               transition-colors hover:bg-[var(--accent)] hover:text-white"
                           >
                             /
@@ -352,10 +357,12 @@ export function TryEditor({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: st
                         title={t('merge')}
                         aria-label={t('merge')}
                         className="w-6 h-6 flex items-center justify-center rounded-full bg-[var(--paper)]
-                          border-2 border-[var(--accent)] text-xs leading-none text-[var(--accent)]
-                          shadow-sm cursor-pointer transition-colors hover:bg-[var(--accent)] hover:text-white"
+                          border border-[var(--accent)] text-[var(--accent)] cursor-pointer
+                          transition-colors hover:bg-[var(--accent)] hover:text-white"
                       >
-                        ⟷
+                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 8l-4 4 4 4M16 8l4 4-4 4M4 12h16" />
+                        </svg>
                       </button>
                     </div>
                   );
