@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 type ArtworkData = { artworkUrl: string | null; previewUrl: string | null; trackUrl: string | null; year: number | null; genre: string | null };
 
@@ -51,14 +51,39 @@ export function useArtwork(artist: string | undefined, title: string | undefined
   const [year, setYear] = useState<number | null>(null);
   const [genre, setGenre] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  /**
+   * Morceau auquel se rapportent les valeurs affichées.
+   *
+   * Sans cette trace, changer de morceau laissait les anciennes valeurs en place
+   * jusqu'à l'arrivée des nouvelles : le temps d'un rendu, la pochette et surtout
+   * **l'extrait** appartenaient encore au morceau précédent. Un écran qui enchaîne
+   * les morceaux relançait donc celui qu'il venait de quitter.
+   */
+  const requeteAppliquee = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!artist && !title) { setArtworkUrl(null); setPreviewUrl(null); setYear(null); setGenre(null); return; }
+    const vider = () => {
+      setArtworkUrl(null); setPreviewUrl(null); setTrackUrl(null); setYear(null); setGenre(null);
+    };
+
+    if (!artist && !title) { requeteAppliquee.current = null; vider(); setLoading(false); return; }
 
     const query = [title, artist].filter(Boolean).join(' ').trim();
-    if (!query) { setArtworkUrl(null); setPreviewUrl(null); setYear(null); setGenre(null); return; }
+    if (!query) { requeteAppliquee.current = null; vider(); setLoading(false); return; }
 
-    const apply = (d: ArtworkData) => { setArtworkUrl(d.artworkUrl); setPreviewUrl(d.previewUrl); setTrackUrl(d.trackUrl ?? null); setYear(d.year ?? null); setGenre(d.genre ?? null); };
+    // Nouveau morceau : on efface avant de chercher, et on se déclare en attente.
+    // L'appelant sait ainsi que « pas d'extrait » veut dire « pas encore » et non
+    // « aucun », ce qui n'appelle pas la même conduite.
+    if (requeteAppliquee.current !== query) {
+      requeteAppliquee.current = query;
+      vider();
+      setLoading(true);
+    }
+
+    const apply = (d: ArtworkData) => {
+      setArtworkUrl(d.artworkUrl); setPreviewUrl(d.previewUrl); setTrackUrl(d.trackUrl ?? null);
+      setYear(d.year ?? null); setGenre(d.genre ?? null); setLoading(false);
+    };
 
     // 1. Cache mémoire
     if (MEM_CACHE.has(query)) {

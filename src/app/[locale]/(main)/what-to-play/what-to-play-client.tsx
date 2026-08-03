@@ -123,14 +123,25 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
    * d'extrait, on passe au suivant — c'est fréquent, tous les titres ne sont pas
    * chez iTunes, et s'arrêter là casserait l'enchaînement.
    */
+  const dernierLanceRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!continu || enLecture) return;
-    if (previewUrl) { lire(); return; }
+    // Le hook se vide le temps de chercher : « pas d'extrait » ne veut dire
+    // « aucun » qu'une fois la recherche finie.
     if (loading) return;
+    if (previewUrl) {
+      // Ceinture et bretelles : on ne relance pas deux fois le même morceau, même
+      // si un rendu supplémentaire repasse par ici.
+      if (dernierLanceRef.current === courant?.id) return;
+      dernierLanceRef.current = courant?.id ?? null;
+      lire();
+      return;
+    }
     sautsRef.current += 1;
     if (sautsRef.current >= MAX_SAUTS) setContinu(false);
     else aller(1);
-  }, [continu, enLecture, previewUrl, loading, lire, aller]);
+  }, [continu, enLecture, previewUrl, loading, lire, aller, courant?.id]);
 
   // Flèches pour passer d'un morceau à l'autre, barre d'espace pour écouter : on
   // enchaîne vite, et c'est tout l'intérêt de la page.
