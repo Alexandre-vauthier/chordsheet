@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { reportUnknownChords } from '@/lib/report-unknown-chords';
 import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore';
@@ -64,6 +65,7 @@ export default function NewSheetPage() {
         updatedAt: serverTimestamp(),
         viewCount: 0,
       });
+      reportUnknownChords(docRef.id);
       router.push(`/sheet/${docRef.id}/edit`);
     } catch (error) {
       console.error('Error creating sheet:', error);

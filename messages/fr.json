@@ -955,7 +955,10 @@
     "rebuildKeysAction": "Recalculer",
     "rebuildKeysNone": "Aucune tonalité à modifier.",
     "rebuildKeysConfirm": "{recalculees} tonalités recalculées et {videes} vidées. Confirmer ?",
-    "rebuildKeysDone": "{recalculees} recalculées, {videes} vidées."
+    "rebuildKeysDone": "{recalculees} recalculées, {videes} vidées.",
+    "unknownChords": "Accords non reconnus",
+    "unknownChordsDesc": "Les accords écrits dans les grilles que la bibliothèque ne sait pas dessiner, avec la grille et son auteur.",
+    "openTable": "Ouvrir le tableau"
   },
   "LegalMentions": {
     "pageTitle": "Mentions légales",
@@ -1812,5 +1815,26 @@
     "cta": "Créer ma grille",
     "noteSandbox": "Rien n'est enregistré ici : c'est un bac à sable.",
     "noteMore": "<lien>L'éditeur complet</lien> va plus loin : sections répétées, transposition, diagrammes d'accords, sept instruments, boîte à rythmes et impression."
+  },
+  "AdminUnknownChords": {
+    "title": "Accords non reconnus",
+    "intro": "Les accords écrits dans les grilles que la bibliothèque ne sait pas dessiner. La liste est recalculée à chaque passage : un accord ajouté à la bibliothèque en disparaît aussitôt. Les plus employés remontent en tête, ce sont ceux qui valent d'être ajoutés.",
+    "backToAdmin": "Retour à l'administration",
+    "rescan": "Relancer l'analyse",
+    "scanning": "Analyse en cours…",
+    "summary": "{scanned} grilles analysées · {distinct} accords distincts · {rows} occurrences",
+    "withoutIndex": "{count} grilles sans index d'accords, non contrôlées",
+    "empty": "Aucun accord manquant : tout ce qui est écrit dans les grilles se dessine.",
+    "loadError": "L'analyse a échoué. Réessaie.",
+    "forbidden": "Réservé aux administrateurs.",
+    "colChord": "Accord",
+    "colInstrument": "Instrument",
+    "colSheet": "Grille",
+    "colAuthor": "Auteur",
+    "colVisibility": "Visibilité",
+    "untitled": "Sans titre",
+    "unknownAuthor": "Auteur inconnu",
+    "public": "Publique",
+    "private": "Privée"
   }
 }

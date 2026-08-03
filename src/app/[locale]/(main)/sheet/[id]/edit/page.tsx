@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
+import { reportUnknownChords } from '@/lib/report-unknown-chords';
 import { useTranslations } from 'next-intl';
 
 import { doc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
@@ -81,6 +82,10 @@ export default function EditSheetPage({ params }: EditSheetPageProps) {
 
       // Mettre à jour l'état local (on sait que c'est un Sheet car on est en mode edit)
       setSheet(updatedSheet as Sheet);
+
+      // Le serveur relit la grille et prévient l'équipe si elle emploie un accord que
+      // la bibliothèque ne sait pas dessiner. Sans attente : l'enregistrement est fait.
+      reportUnknownChords(id);
     } catch (error) {
       console.error('Error saving sheet:', error);
       alert(t('saveError'));

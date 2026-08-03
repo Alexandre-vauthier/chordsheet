@@ -955,7 +955,10 @@
     "rebuildKeysAction": "Rebuild",
     "rebuildKeysNone": "No key to change.",
     "rebuildKeysConfirm": "{recalculees} keys rebuilt and {videes} cleared. Confirm?",
-    "rebuildKeysDone": "{recalculees} rebuilt, {videes} cleared."
+    "rebuildKeysDone": "{recalculees} rebuilt, {videes} cleared.",
+    "unknownChords": "Unrecognised chords",
+    "unknownChordsDesc": "Chords written in sheets that the library cannot draw, with the sheet and its author.",
+    "openTable": "Open the table"
   },
   "LegalMentions": {
     "pageTitle": "Legal notice",
@@ -1812,5 +1815,26 @@
     "cta": "Create my chart",
     "noteSandbox": "Nothing is saved here: this is a sandbox.",
     "noteMore": "<lien>The full editor</lien> goes further: repeated sections, transposition, chord diagrams, seven instruments, a drum machine and printing."
+  },
+  "AdminUnknownChords": {
+    "title": "Unrecognised chords",
+    "intro": "Chords written in sheets that the library cannot draw. The list is recomputed on every visit: a chord added to the library disappears from it straight away. The most used come first, those are the ones worth adding.",
+    "backToAdmin": "Back to admin",
+    "rescan": "Run the scan again",
+    "scanning": "Scanning…",
+    "summary": "{scanned} sheets scanned · {distinct} distinct chords · {rows} occurrences",
+    "withoutIndex": "{count} sheets without a chord index, not checked",
+    "empty": "No missing chord: everything written in the sheets can be drawn.",
+    "loadError": "The scan failed. Please try again.",
+    "forbidden": "Administrators only.",
+    "colChord": "Chord",
+    "colInstrument": "Instrument",
+    "colSheet": "Sheet",
+    "colAuthor": "Author",
+    "colVisibility": "Visibility",
+    "untitled": "Untitled",
+    "unknownAuthor": "Unknown author",
+    "public": "Public",
+    "private": "Private"
   }
 }

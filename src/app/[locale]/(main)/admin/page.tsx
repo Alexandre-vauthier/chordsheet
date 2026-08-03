@@ -497,6 +497,14 @@ export default function AdminPage() {
           result={backfillResult}
           onRun={handleBackfillSearchFields}
         />
+        {/* Consultation, pas traitement : la tuile mene a l'ecran plutot que de
+            lancer quelque chose. */}
+        <AdminTile
+          title={t('unknownChords')}
+          description={t('unknownChordsDesc')}
+          action={t('openTable')}
+          href="/admin/unknown-chords"
+        />
         <AdminTile
           title={t('chordIndex')}
           description={t('chordIndexDesc')}

@@ -34,6 +34,18 @@ service cloud.firestore {
       }
     }
 
+    /**
+     * Accords absents de la bibliothèque, mémoire des annonces déjà faites.
+     *
+     * Écriture réservée au serveur : l'Admin SDK ne passe pas par ces règles, et
+     * personne d'autre n'a de raison de toucher cette table. Sans ce verrou, un
+     * compte pourrait effacer la mémoire et faire ré-annoncer les mêmes accords.
+     */
+    match /unknown_chords/{chordId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
     // Grilles d'accords
     match /sheets/{sheetId} {
       // Lecture : publique, propriétaire, membre du groupe, ou admin
