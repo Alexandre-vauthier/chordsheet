@@ -64,7 +64,8 @@
     "linkEditor": "The chart editor",
     "linkPrint": "Printing a chart",
     "creditBpm": "Tempo: GetSongBPM",
-    "creditArtwork": "Artwork & previews: Apple Music"
+    "creditArtwork": "Artwork & previews: Apple Music",
+    "linkWhatToPlay": "I don't know what to play"
   },
   "Landing": {
     "nav": {
@@ -1463,6 +1464,10 @@
       "print": {
         "title": "Printing a chord chart",
         "description": "A4 layout, optional diagrams, folded repeated sections, PDF export and a whole set in one file. How to print a chart on Alviena."
+      },
+      "whatToPlay": {
+        "title": "I don't know what to play: find a song by ear",
+        "description": "Skip through thirty-second previews and open the chord chart of the song that catches you. Guitar, piano, ukulele."
       }
     },
     "artist": {
@@ -1870,5 +1875,20 @@
     "ctaBody": "A free account lets you bookmark them, transpose them into your key and create your own.",
     "cta": "Create a free account",
     "ctaLoggedIn": "Go to my sheets"
+  },
+  "WhatToPlay": {
+    "title": "I don't know what to play",
+    "subtitle": "Listen, skip, start again. As soon as a song speaks to you, its chart is one click away.",
+    "play": "Play the preview",
+    "stop": "Stop",
+    "previous": "Previous song",
+    "next": "Next song",
+    "openSheet": "See the chart",
+    "listenOnApple": "Listen on Apple Music",
+    "noPreview": "No preview available for this song.",
+    "tapToStart": "Tap the artwork to start the preview.",
+    "shortcuts": "Left and right arrows to change song, space bar to listen.",
+    "empty": "No public chart yet. Come back once the catalogue has filled up.",
+    "browse": "Browse the charts"
   }
 }

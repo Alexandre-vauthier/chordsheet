@@ -1,0 +1,234 @@
+'use client';
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
+import { useArtwork } from '@/lib/use-artwork';
+import { playPreviewAudio, stopPreviewAudio } from '@/lib/preview-audio';
+import { Link } from '@/i18n/navigation';
+
+export interface Candidate {
+  id: string;
+  title: string;
+  artist: string;
+}
+
+/** Mélange de Fisher-Yates : chaque ordre est également probable. */
+function melanger<T>(items: T[]): T[] {
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+/**
+ * Un extrait est demandé d'avance pour le morceau suivant.
+ *
+ * Le hook met en cache ce qu'il rapporte (mémoire puis `localStorage`) : le
+ * demander ici, sans rien afficher, rend le clic sur « suivant » instantané au lieu
+ * d'attendre un aller-retour vers iTunes.
+ */
+function Prechargement({ candidate }: { candidate: Candidate | null }) {
+  useArtwork(candidate?.artist, candidate?.title);
+  return null;
+}
+
+/**
+ * Le lecteur de découverte.
+ *
+ * Rien ne démarre tout seul : les navigateurs refusent le son tant qu'on n'a pas
+ * cliqué, et un bouton qui ne fait rien serait pire que pas de bouton. Le premier
+ * clic lance la file, les suivants sont eux-mêmes des clics.
+ *
+ * L'enchaînement automatique à la fin d'un extrait a un garde-fou : si la lecture
+ * s'est arrêtée en moins d'une seconde et demie, c'est qu'elle a échoué et non
+ * qu'elle est allée au bout. Sans ce contrôle, un refus du navigateur ferait défiler
+ * le catalogue entier en silence.
+ */
+const DUREE_MINIMALE_MS = 1500;
+
+export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
+  const t = useTranslations('WhatToPlay');
+
+  const file = useMemo(() => melanger(candidates), [candidates]);
+  const [index, setIndex] = useState(0);
+  const [enLecture, setEnLecture] = useState(false);
+  const [demarre, setDemarre] = useState(false);
+  const debutRef = useRef(0);
+
+  const courant = file[index] ?? null;
+  const suivant = file[index + 1] ?? null;
+
+  const { artworkUrl, previewUrl, trackUrl, year, loading } = useArtwork(courant?.artist, courant?.title);
+
+  const arreter = useCallback(() => {
+    stopPreviewAudio();
+    setEnLecture(false);
+  }, []);
+
+  useEffect(() => arreter, [arreter]);
+
+  const aller = useCallback((delta: number) => {
+    stopPreviewAudio();
+    setEnLecture(false);
+    setIndex((i) => {
+      const n = i + delta;
+      if (n < 0) return file.length - 1;
+      if (n >= file.length) return 0;
+      return n;
+    });
+  }, [file.length]);
+
+  const lire = useCallback(() => {
+    if (!previewUrl) return;
+    setDemarre(true);
+    setEnLecture(true);
+    debutRef.current = Date.now();
+    playPreviewAudio(previewUrl, () => {
+      setEnLecture(false);
+      // Fin normale : on enchaîne, comme une radio. Arrêt immédiat : le navigateur
+      // a refusé, on reste sur place plutôt que de traverser le catalogue.
+      if (Date.now() - debutRef.current > DUREE_MINIMALE_MS) aller(1);
+    });
+  }, [previewUrl, aller]);
+
+  // Flèches pour passer d'un morceau à l'autre, barre d'espace pour écouter : on
+  // enchaîne vite, et c'est tout l'intérêt de la page.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === 'ArrowRight') { e.preventDefault(); aller(1); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); aller(-1); }
+      if (e.key === ' ') { e.preventDefault(); enLecture ? arreter() : lire(); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [aller, lire, arreter, enLecture]);
+
+  if (!courant) {
+    return (
+      <div className="max-w-xl mx-auto px-4 py-20 text-center">
+        <h1 className="font-playfair text-3xl font-bold text-[var(--ink)]">{t('title')}</h1>
+        <p className="mt-3 text-sm text-[var(--ink-light)]">{t('empty')}</p>
+        <Link href="/explore" className="inline-block mt-6 px-5 py-2.5 rounded-lg bg-[var(--accent)] text-white text-sm font-medium">
+          {t('browse')}
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-xl mx-auto px-4 sm:px-6 py-10">
+      <div className="text-center">
+        <h1 className="font-playfair text-3xl sm:text-4xl font-bold text-[var(--ink)]">{t('title')}</h1>
+        <p className="mt-2 text-sm text-[var(--ink-light)] leading-relaxed">{t('subtitle')}</p>
+      </div>
+
+      {/* La pochette reste le repère visuel : on reconnaît souvent un disque avant
+          d'en reconnaître les premières notes. */}
+      <button
+        type="button"
+        onClick={() => (enLecture ? arreter() : lire())}
+        disabled={!previewUrl}
+        aria-label={enLecture ? t('stop') : t('play')}
+        className="group relative block mx-auto mt-8 w-64 h-64 sm:w-72 sm:h-72 rounded-2xl overflow-hidden
+          bg-[var(--cell-bg)] border border-[var(--line)] shadow-xl enabled:cursor-pointer disabled:cursor-default"
+      >
+        {artworkUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={artworkUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        ) : (
+          <span className="absolute inset-0 flex items-center justify-center text-5xl text-[var(--ink-faint)]">♪</span>
+        )}
+
+        {previewUrl && (
+          <span className={`absolute inset-0 flex items-center justify-center transition-opacity ${
+            enLecture ? 'bg-black/40 opacity-100' : 'bg-black/45 opacity-0 group-hover:opacity-100'
+          }`}>
+            <span className="w-16 h-16 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
+              {enLecture ? (
+                <svg className="w-7 h-7 text-[var(--nav-bg)]" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                  <rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" />
+                </svg>
+              ) : (
+                <svg className="w-7 h-7 ml-1 text-[var(--nav-bg)]" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+                  <path d="M8 5.14v13.72a1 1 0 001.5.86l11-6.86a1 1 0 000-1.72l-11-6.86A1 1 0 008 5.14z" />
+                </svg>
+              )}
+            </span>
+          </span>
+        )}
+      </button>
+
+      <div className="mt-6 text-center">
+        <p className="font-playfair text-2xl font-bold text-[var(--ink)] leading-tight">{courant.title}</p>
+        <p className="text-[var(--ink-light)] mt-1">{courant.artist}{year ? ` · ${year}` : ''}</p>
+
+        {/* Dire pourquoi il ne se passe rien, plutôt que laisser un bouton inerte. */}
+        {!loading && !previewUrl && (
+          <p className="mt-2 text-xs text-[var(--ink-faint)]">{t('noPreview')}</p>
+        )}
+        {!demarre && previewUrl && (
+          <p className="mt-2 text-xs text-[var(--ink-faint)]">{t('tapToStart')}</p>
+        )}
+      </div>
+
+      <div className="mt-6 flex items-center justify-center gap-3">
+        <button
+          type="button"
+          onClick={() => aller(-1)}
+          aria-label={t('previous')}
+          className="w-11 h-11 rounded-full border border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink)]
+            flex items-center justify-center hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors cursor-pointer"
+        >
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path d="M6 6h2v12H6zm3 6l9 6V6z" />
+          </svg>
+        </button>
+
+        <span className="text-xs text-[var(--ink-faint)] tabular-nums w-20 text-center">
+          {index + 1} / {file.length}
+        </span>
+
+        <button
+          type="button"
+          onClick={() => aller(1)}
+          aria-label={t('next')}
+          className="w-11 h-11 rounded-full border border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink)]
+            flex items-center justify-center hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors cursor-pointer"
+        >
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path d="M16 6h2v12h-2zM6 18l9-6-9-6z" />
+          </svg>
+        </button>
+      </div>
+
+      <Link
+        href={`/sheet/${courant.id}`}
+        className="mt-8 block w-full text-center px-6 py-3 rounded-lg bg-[var(--accent)] hover:bg-[#a83d25]
+          text-white font-medium transition-colors"
+      >
+        {t('openSheet')}
+      </Link>
+
+      {/* Les conditions de l'API iTunes demandent de renvoyer vers la boutique dès
+          qu'on diffuse ses extraits. On récupérait déjà ce lien sans jamais s'en
+          servir ; ici c'est le minimum. */}
+      {trackUrl && (
+        <a
+          href={trackUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 block text-center text-xs text-[var(--ink-faint)] hover:text-[var(--accent)] transition-colors"
+        >
+          {t('listenOnApple')}
+        </a>
+      )}
+
+      <p className="mt-8 text-center text-[11px] text-[var(--ink-faint)]">{t('shortcuts')}</p>
+
+      <Prechargement candidate={suivant} />
+    </div>
+  );
+}

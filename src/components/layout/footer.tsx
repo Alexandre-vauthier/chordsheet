@@ -40,6 +40,7 @@ export function Footer() {
     {
       heading: t('colTools'),
       links: [
+        { href: '/what-to-play', label: t('linkWhatToPlay') },
         { href: '/tuner', label: t('linkTuner') },
         // Le chercheur par notes vit dans une fenêtre de /chords, d'où le paramètre.
         { href: '/chords?finder=1', label: t('linkChordByNotes') },

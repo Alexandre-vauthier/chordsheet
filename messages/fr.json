@@ -64,7 +64,8 @@
     "linkEditor": "L'éditeur de grilles",
     "linkPrint": "Imprimer une grille",
     "creditBpm": "Tempo : GetSongBPM",
-    "creditArtwork": "Pochettes & extraits : Apple Music"
+    "creditArtwork": "Pochettes & extraits : Apple Music",
+    "linkWhatToPlay": "Je ne sais pas quoi jouer"
   },
   "Landing": {
     "nav": {
@@ -1463,6 +1464,10 @@
       "print": {
         "title": "Imprimer une grille d'accords",
         "description": "Mise en page A4, diagrammes en option, sections répétées repliées, export PDF et set complet en un fichier. Comment imprimer une grille sur Alviena."
+      },
+      "whatToPlay": {
+        "title": "Je ne sais pas quoi jouer : trouvez un morceau à l'oreille",
+        "description": "Faites défiler des extraits de trente secondes et ouvrez la grille d'accords du morceau qui vous accroche. Guitare, piano, ukulélé."
       }
     },
     "artist": {
@@ -1870,5 +1875,20 @@
     "ctaBody": "Un compte gratuit te permet de les mettre en favori, de les transposer dans ta tonalité et de créer les tiennes.",
     "cta": "Créer un compte gratuit",
     "ctaLoggedIn": "Aller à mes grilles"
+  },
+  "WhatToPlay": {
+    "title": "Je ne sais pas quoi jouer",
+    "subtitle": "Écoutez, passez, recommencez. Dès qu'un morceau vous parle, sa grille est à un clic.",
+    "play": "Écouter l'extrait",
+    "stop": "Arrêter",
+    "previous": "Morceau précédent",
+    "next": "Morceau suivant",
+    "openSheet": "Voir la grille",
+    "listenOnApple": "Écouter sur Apple Music",
+    "noPreview": "Pas d'extrait disponible pour ce morceau.",
+    "tapToStart": "Touchez la pochette pour lancer l'extrait.",
+    "shortcuts": "Flèches gauche et droite pour changer de morceau, barre d'espace pour écouter.",
+    "empty": "Aucune grille publique pour l'instant. Revenez quand le catalogue se sera rempli.",
+    "browse": "Parcourir les grilles"
   }
 }
