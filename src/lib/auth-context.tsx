@@ -57,6 +57,29 @@ async function requestVerificationEmail(user: FirebaseUser): Promise<void> {
   if (!res.ok) throw new Error(String(res.status));
 }
 
+/**
+ * Signale aux administrateurs qu'un compte vient d'être créé.
+ *
+ * Appelé aux deux endroits où un document utilisateur naît : l'inscription par mot
+ * de passe, et la première connexion Google. Le serveur pose un drapeau une seule
+ * fois par compte, un doublon d'appel est donc sans effet — c'est ce qui permet de
+ * couvrir les deux chemins sans se demander lequel a gagné la course.
+ *
+ * Silencieux par construction : personne, ni l'inscrit ni nous, ne doit voir une
+ * inscription échouer parce qu'un mail interne n'est pas parti.
+ */
+async function notifyAdminsOfSignup(user: FirebaseUser): Promise<void> {
+  try {
+    const token = await user.getIdToken();
+    await fetch('/api/auth/notify-signup', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  } catch {
+    /* sans effet sur l'inscription */
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [user, setUser] = useState<User | null>(null);
@@ -173,6 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             updatedAt: serverTimestamp(),
           });
           setUser({ id: fbUser.uid, ...newUser });
+          notifyAdminsOfSignup(fbUser);
         }
       } else {
         setUser(null);
@@ -233,6 +257,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // partait de firebaseapp.com et finissait en indésirable. Un échec ne doit pas
     // faire capoter l'inscription, le compte existe déjà à ce stade.
     await requestVerificationEmail(credential.user).catch(() => {});
+    notifyAdminsOfSignup(credential.user);
   };
 
   // Renvoyer l'email de vérification

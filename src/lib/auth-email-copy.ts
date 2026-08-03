@@ -55,3 +55,28 @@ export function passwordResetEmail(locale: EmailLocale, url: string): EmailConte
         footer: 'Si tu n\'es pas à l\'origine de cette demande, ignore ce message : ton mot de passe reste inchangé.',
       };
 }
+
+/**
+ * Avertit les administrateurs qu'un compte vient d'être créé.
+ *
+ * Adressé à l'équipe, pas à l'inscrit : d'où le vouvoiement absent, le ton factuel,
+ * et le lien vers la page d'administration plutôt que vers le site. Rédigé en
+ * français seulement — c'est la langue de ceux qui le reçoivent, et une traduction
+ * anglaise qui ne sera jamais lue est une clé de plus à maintenir.
+ */
+export function newAccountEmail(params: {
+  displayName: string;
+  email: string;
+  provider: string;
+  url: string;
+}): EmailContent {
+  const nom = params.displayName.trim() || 'sans nom';
+  return {
+    subject: `Nouveau compte : ${nom} — ${SITE_NAME}`,
+    heading: 'Un compte vient d\'être créé',
+    body: `${nom} (${params.email}) s'est inscrit via ${params.provider}.`,
+    action: 'Voir les comptes',
+    url: params.url,
+    footer: 'Message automatique envoyé aux administrateurs à chaque inscription.',
+  };
+}
