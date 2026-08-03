@@ -136,8 +136,22 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
 
         const data = docSnap.data();
 
-        // Vérifier les droits d'accès
-        if (!data.isPublic && !data.isUnlisted && data.ownerId !== user?.id && !isAdmin) {
+        /**
+         * Droits d'accès : propriétaire, admin, ou **membre du groupe** quand la
+         * grille appartient à un groupe.
+         *
+         * Ce dernier cas manquait, alors que les règles Firestore l'autorisent
+         * depuis toujours et que l'écran d'édition le vérifiait déjà. La lecture
+         * réussissait donc, et c'est l'application elle-même qui refusait ensuite
+         * d'afficher la grille : un membre voyait « grille privée » sur une
+         * composition de son propre groupe, qu'il pouvait pourtant modifier.
+         */
+        let autorise = !!data.isPublic || !!data.isUnlisted || data.ownerId === user?.id || isAdmin;
+        if (!autorise && data.groupId && user) {
+          const groupSnap = await getDoc(doc(db, 'groups', data.groupId as string));
+          autorise = ((groupSnap.data()?.memberIds as string[]) || []).includes(user.id);
+        }
+        if (!autorise) {
           setError(t('private'));
           return;
         }

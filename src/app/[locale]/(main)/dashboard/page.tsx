@@ -19,7 +19,7 @@ import type { Sheet } from '@/types';
 import { createEmptySet, GENRES, DIFFICULTY_OPTIONS, type Difficulty } from '@/types';
 import { Link, useRouter } from '@/i18n/navigation';
 
-type Tab = 'all' | 'mine' | 'book' | 'sets';
+type Tab = 'all' | 'mine' | 'bands' | 'book' | 'sets';
 type SortOption = 'recent' | 'rated' | 'viewed';
 
 export default function DashboardPage() {
@@ -134,7 +134,19 @@ export default function DashboardPage() {
     return result;
   }, [searchQuery, selectedGenre, selectedDifficulty, sortBy]);
 
-  const displayedSheets = useMemo(() => filterAndSort(sheets), [sheets, filterAndSort]);
+  /**
+   * « Mes grilles » ne montre plus les copies de groupe.
+   *
+   * Rattacher une grille à un groupe en crée une copie indépendante, qui
+   * m'appartient : mon book affichait donc côte à côte mon original et ma version de
+   * groupe, sans rien pour les distinguer. Elles ont maintenant leur propre onglet,
+   * où l'on sait de quel groupe elles viennent.
+   */
+  const ownSheets = useMemo(() => sheets.filter(s => !s.groupId), [sheets]);
+  const bandSheets = useMemo(() => sheets.filter(s => !!s.groupId), [sheets]);
+
+  const displayedSheets = useMemo(() => filterAndSort(ownSheets), [ownSheets, filterAndSort]);
+  const displayedBandSheets = useMemo(() => filterAndSort(bandSheets), [bandSheets, filterAndSort]);
   const displayedBookmarks = useMemo(() => filterAndSort(bookmarkedSheets), [bookmarkedSheets, filterAndSort]);
   const displayedAll = useMemo(() => filterAndSort(allSheets), [allSheets, filterAndSort]);
 
@@ -147,21 +159,26 @@ export default function DashboardPage() {
   const clearFilters = () => { setSearchQuery(''); setSelectedGenre(''); setSelectedDifficulty(null); setSortBy('recent'); };
 
   const handleRandom = useCallback(() => {
-    const pool = tab === 'mine' ? displayedSheets : tab === 'book' ? displayedBookmarks : displayedAll;
+    const pool = tab === 'mine' ? displayedSheets
+      : tab === 'bands' ? displayedBandSheets
+      : tab === 'book' ? displayedBookmarks
+      : displayedAll;
     if (!pool.length) return;
     const pick = pool[Math.floor(Math.random() * pool.length)];
     router.push(`/sheet/${pick.id}`);
-  }, [tab, displayedSheets, displayedBookmarks, displayedAll, router]);
+  }, [tab, displayedSheets, displayedBandSheets, displayedBookmarks, displayedAll, router]);
 
   const isCurrentlyLoading =
     tab === 'mine' ? loading :
+    tab === 'bands' ? loading :
     tab === 'book' ? bookLoading :
     tab === 'sets' ? setsLoading :
     loading || bookLoading;
 
   const tabs: { id: Tab; label: string; count?: number }[] = [
     { id: 'all', label: t('tabAll') },
-    { id: 'mine', label: t('tabMine'), count: sheets.length || undefined },
+    { id: 'mine', label: t('tabMine'), count: ownSheets.length || undefined },
+    { id: 'bands', label: t('tabBands'), count: bandSheets.length || undefined },
     { id: 'book', label: t('tabBook'), count: bookmarkedSheets.length || undefined },
     { id: 'sets', label: t('tabSets'), count: sets.length || undefined },
   ];
@@ -174,7 +191,8 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold text-[var(--ink)]">{t('title')}</h1>
           <p className="text-[var(--ink-light)] mt-1">
             {tab === 'all' && (allSheets.length > 0 ? t('subtitleAllCount', { count: allSheets.length }) : t('subtitleAllEmpty'))}
-            {tab === 'mine' && (sheets.length > 0 ? t('subtitleMineCount', { count: sheets.length }) : t('subtitleMineEmpty'))}
+            {tab === 'mine' && (ownSheets.length > 0 ? t('subtitleMineCount', { count: ownSheets.length }) : t('subtitleMineEmpty'))}
+            {tab === 'bands' && (bandSheets.length > 0 ? t('subtitleBandsCount', { count: bandSheets.length }) : t('subtitleBandsEmpty'))}
             {tab === 'book' && (bookmarkedSheets.length > 0 ? t('subtitleBookCount', { count: bookmarkedSheets.length }) : t('subtitleBookEmpty'))}
             {tab === 'sets' && (sets.length > 0 ? t('subtitleSetsCount', { count: sets.length }) : t('subtitleSetsEmpty'))}
           </p>
@@ -338,7 +356,7 @@ export default function DashboardPage() {
           </div>
         )
       ) : tab === 'mine' ? (
-        sheets.length === 0 ? (
+        ownSheets.length === 0 ? (
           <EmptyState
             icon="music"
             title={t('emptyMineTitle')}
@@ -350,6 +368,32 @@ export default function DashboardPage() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {displayedSheets.map(sheet => (
+              <SheetCard
+                key={sheet.id}
+                sheet={sheet}
+                showOwner
+                showPublicBadge
+                onDelete={() => handleDelete(sheet.id!)}
+                isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
+                onToggleBookmark={sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
+              />
+            ))}
+          </div>
+        )
+      ) : tab === 'bands' ? (
+        /* Grilles de groupe : mes copies rattachées à un groupe. */
+        bandSheets.length === 0 ? (
+          <EmptyState
+            icon="music"
+            title={t('emptyBandsTitle')}
+            description={t('emptyBandsDesc')}
+            actions={[<Link key="groups" href="/groups"><Button variant="primary">{t('goToGroups')}</Button></Link>]}
+          />
+        ) : displayedBandSheets.length === 0 ? (
+          <EmptyState icon="music" title={t('noResultsTitle')} description={t('noResultsDesc')} actions={[<button key="r" onClick={clearFilters} className="text-sm text-[var(--accent)] hover:underline">{t('reset')}</button>]} />
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {displayedBandSheets.map(sheet => (
               <SheetCard
                 key={sheet.id}
                 sheet={sheet}

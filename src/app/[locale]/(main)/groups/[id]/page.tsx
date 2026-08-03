@@ -313,8 +313,15 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
     loadAttachPool();
   };
 
-  // Crée une COPIE de la grille appartenant au groupe (éditable par tous les membres,
-  // indépendante de l'originale). Renvoie l'id de la copie.
+  /**
+   * Copie la grille dans le groupe : indépendante de l'originale, éditable par tous
+   * les membres.
+   *
+   * **Sa visibilité suit celle du groupe.** Dans un groupe privé elle reste privée,
+   * ce qui est le cas des compositions qu'on ne veut pas publier. Dans un groupe
+   * public elle naît publique, sans quoi rattacher une grille à sa vitrine ne
+   * produisait rien de visible — c'est la contradiction qu'on corrige ici.
+   */
   const forkToGroup = async (sheet: Sheet): Promise<{ id: string; sheet: Sheet }> => {
     const db = getDb();
     const { id: _id, viewCount: _v, averageRating: _a, ratingCount: _r, createdAt: _c, updatedAt: _u, ...rest } = sheet;
@@ -323,7 +330,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
       ...rest,
       ownerId: user!.id,
       ownerName: user!.displayName,
-      isPublic: false,
+      isPublic: !!group?.isPublic,
       groupId,
       forkedFrom: sheet.id,
     };
