@@ -186,6 +186,18 @@ body {
   opacity: calc(var(--active, 0) * 0.6);
 }
 
+/* Une inclinaison 3D purement decorative n'a pas a s'imposer a qui demande moins
+   de mouvement. Le reflet et le foil restent : ils ne bougent pas la carte. */
+@media (prefers-reduced-motion: reduce) {
+  .sheet-card-inner {
+    transform: none;
+    transition: box-shadow 0.12s ease-out;
+  }
+  .sheet-card-wrap:hover .sheet-card-inner {
+    --scale: 1;
+  }
+}
+
 /* ── Landing page — colonnes défilantes ──────────────────────────────────── */
 @keyframes scrollUp {
   0%   { transform: translateY(0); }

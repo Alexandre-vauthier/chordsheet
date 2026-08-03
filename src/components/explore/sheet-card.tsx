@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Sheet, Difficulty } from '@/types';
 import { DIFFICULTY_LABELS } from '@/types';
@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useAddToCollection } from '@/lib/add-to-collection-context';
 import { Link } from '@/i18n/navigation';
 import { playPreviewAudio, stopPreviewAudio } from '@/lib/preview-audio';
+import { useCardTilt } from '@/lib/use-card-tilt';
 
 // Réexporté : plusieurs écrans l'importaient d'ici avant que la lecture ait son
 // propre module.
@@ -69,37 +70,14 @@ export function SheetCard({
   );
   const [isPlaying, setIsPlaying] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const rafRef = useRef<number | null>(null);
+  // Inclinaison partagée avec les tuiles de l'accueil : la mécanique vit dans le
+  // hook, la carte ne lui ajoute que ce qui lui est propre — refermer son menu quand
+  // le curseur s'en va.
+  const fermerMenu = useCallback(() => setMenuOpen(false), []);
+  const tilt = useCardTilt<HTMLDivElement>(18, fermerMenu);
 
   const destination = href ?? `/sheet/${sheet.id}`;
   const gradient = hashGradient((sheet.title ?? '') + (sheet.artist ?? ''));
-
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    rafRef.current = requestAnimationFrame(() => {
-      const card = cardRef.current;
-      if (!card) return;
-      const r = card.getBoundingClientRect();
-      const x = e.clientX - r.left;
-      const y = e.clientY - r.top;
-      card.style.setProperty('--rx', `${((y / r.height) - 0.5) * -18}deg`);
-      card.style.setProperty('--ry', `${((x / r.width) - 0.5) * 18}deg`);
-      card.style.setProperty('--sx', `${(x / r.width) * 100}%`);
-      card.style.setProperty('--sy', `${(y / r.height) * 100}%`);
-      card.style.setProperty('--active', '1');
-    });
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    const card = cardRef.current;
-    if (!card) return;
-    card.style.removeProperty('--rx');
-    card.style.removeProperty('--ry');
-    card.style.setProperty('--active', '0');
-    setMenuOpen(false);
-  }, []);
 
   const handlePreview = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -111,10 +89,8 @@ export function SheetCard({
 
   return (
     <div
-      ref={cardRef}
+      {...tilt}
       className="sheet-card-wrap group"
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
     >
       <div className="sheet-card-inner aspect-square relative rounded-2xl overflow-hidden bg-[var(--cell-bg)] border border-[var(--line)]">
 

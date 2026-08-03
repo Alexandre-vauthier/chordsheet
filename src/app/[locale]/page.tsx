@@ -9,6 +9,7 @@ import { collection, query, where, orderBy, limit, getDocs } from 'firebase/fire
 import { getDb } from '@/lib/firebase';
 import { useArtwork } from '@/lib/use-artwork';
 import { playPreviewAudio, stopPreviewAudio } from '@/lib/preview-audio';
+import { useCardTilt } from '@/lib/use-card-tilt';
 import { useAuth } from '@/lib/auth-context';
 import { Link } from '@/i18n/navigation';
 import { Footer } from '@/components/layout/footer';
@@ -87,6 +88,60 @@ function LandingCard({ sheet }: { sheet: MiniSheet }) {
         </div>
       </div>
     </Link>
+  );
+}
+
+/* ── Tuile de fonctionnalité ──────────────────────────────────────── */
+
+/**
+ * Une fonctionnalité de l'accueil, avec l'inclinaison des cartes d'Explore.
+ *
+ * L'amplitude descend de 18 à 9 degrés : le réglage d'Explore est fait pour une
+ * carte carrée, et sur une tuile large le même angle bascule beaucoup trop. Le
+ * reflet et le foil, eux, sont exactement ceux des cartes.
+ *
+ * Les deux calques décoratifs sont en `pointer-events-none`, sans quoi ils
+ * mangeraient le clic sur la tuile entière.
+ */
+function FeatureTile({ href, icon, title, text, learnMore }: {
+  href?: string;
+  icon: React.ReactNode;
+  title: string;
+  text: string;
+  learnMore: string;
+}) {
+  const tilt = useCardTilt<HTMLDivElement>(9);
+
+  const contenu = (
+    <>
+      <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/15 flex items-center justify-center text-[var(--accent)]">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">{icon}</svg>
+      </div>
+      <div>
+        <h3 className="text-[var(--nav-text)] font-semibold text-sm mb-1">{title}</h3>
+        <p className="text-[var(--nav-text)]/50 text-sm leading-relaxed">{text}</p>
+        {href && (
+          <span className="inline-block mt-2 text-xs text-[var(--accent)]/0 group-hover/feat:text-[var(--accent)] transition-colors">
+            {learnMore} →
+          </span>
+        )}
+      </div>
+      <div className="card-shine absolute inset-0 rounded-2xl pointer-events-none" />
+      <div className="card-foil absolute inset-0 rounded-2xl pointer-events-none" />
+    </>
+  );
+
+  const classes = `sheet-card-inner relative overflow-hidden h-full rounded-2xl border border-white/8 bg-white/4
+    px-5 py-5 flex flex-col gap-3 group/feat ${href ? 'hover:border-[var(--accent)]/40' : ''}`;
+
+  return (
+    <div className="sheet-card-wrap h-full" {...tilt}>
+      {/* Deux variantes plutôt qu'un composant variable : `Link` exige un `href`, le
+          rendre optionnel par un spread ne satisfait pas son type. */}
+      {href
+        ? <Link href={href} className={classes}>{contenu}</Link>
+        : <div className={classes}>{contenu}</div>}
+    </div>
   );
 }
 
@@ -597,31 +652,16 @@ export default function Home() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Chaque fonctionnalité mène à sa page explicative. L'accueil reçoit les
               liens venus de l'extérieur : c'est de là qu'il doit redistribuer. */}
-          {FEATURES.map((f) => {
-            const classes = `rounded-2xl border border-white/8 bg-white/4 px-5 py-5 flex flex-col gap-3 transition-colors group/feat
-              ${f.href ? 'hover:bg-white/6 hover:border-[var(--accent)]/40' : ''}`;
-            // Deux variantes plutôt qu'un composant variable : `Link` exige un `href`,
-            // le rendre optionnel par un spread ne satisfait pas son type.
-            const contenu = (
-              <>
-              <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/15 flex items-center justify-center text-[var(--accent)]">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">{f.icon}</svg>
-              </div>
-              <div>
-                <h3 className="text-[var(--nav-text)] font-semibold text-sm mb-1">{t(`features.${f.id}.title`)}</h3>
-                <p className="text-[var(--nav-text)]/50 text-sm leading-relaxed">{t(`features.${f.id}.text`)}</p>
-                {f.href && (
-                  <span className="inline-block mt-2 text-xs text-[var(--accent)]/0 group-hover/feat:text-[var(--accent)] transition-colors">
-                    {t('features.learnMore')} →
-                  </span>
-                )}
-              </div>
-            </>
-            );
-            return f.href
-              ? <Link key={f.id} href={f.href} className={classes}>{contenu}</Link>
-              : <div key={f.id} className={classes}>{contenu}</div>;
-          })}
+          {FEATURES.map((f) => (
+            <FeatureTile
+              key={f.id}
+              href={f.href}
+              icon={f.icon}
+              title={t(`features.${f.id}.title`)}
+              text={t(`features.${f.id}.text`)}
+              learnMore={t('features.learnMore')}
+            />
+          ))}
         </div>
       </section>
 
