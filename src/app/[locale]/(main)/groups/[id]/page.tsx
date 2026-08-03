@@ -14,6 +14,7 @@ import { getDb } from '@/lib/firebase';
 import { fromFirestore, toFirestore } from '@/lib/firestore-helpers';
 import { useAuth } from '@/lib/auth-context';
 import { useGroups } from '@/lib/use-groups';
+import { forkSheetToGroup } from '@/lib/fork-to-group';
 import { useArtwork } from '@/lib/use-artwork';
 import { PhotoPicker } from '@/components/ui/photo-picker';
 import { groupPhotoPath } from '@/lib/upload-image';
@@ -313,46 +314,13 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
     loadAttachPool();
   };
 
-  /**
-   * Copie la grille dans le groupe : elle appartient au groupe, elle est indépendante
-   * de l'originale, et tous les membres peuvent la consulter et la modifier.
-   *
-   * **Sa visibilité suit celle du groupe.** Dans un groupe privé elle reste privée,
-   * ce qui est le cas des compositions qu'on ne veut pas publier. Dans un groupe
-   * public elle naît publique, sans quoi rattacher une grille à sa vitrine ne
-   * produisait rien de visible — c'est la contradiction qu'on corrige ici.
-   */
-  const forkToGroup = async (sheet: Sheet): Promise<{ id: string; sheet: Sheet }> => {
-    const db = getDb();
-    const { id: _id, viewCount: _v, averageRating: _a, ratingCount: _r, createdAt: _c, updatedAt: _u, ...rest } = sheet;
-    void _id; void _v; void _a; void _r; void _c; void _u;
-    const copy: NewSheet = {
-      ...rest,
-      // La copie appartient au **groupe**, pas à qui l'y a mise. Sans quoi elle
-      // atterrissait dans le book personnel à côté de l'original, et se voyait
-      // comptée dans la réputation de cette personne alors qu'elle est collective.
-      ownerId: groupId,
-      ownerName: group?.name ?? '',
-      isPublic: !!group?.isPublic,
-      groupId,
-      forkedFrom: sheet.id,
-      forkedBy: user!.id,
-    };
-    const ref = await addDoc(collection(db, 'sheets'), {
-      ...toFirestore(copy),
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      viewCount: 0,
-    });
-    return { id: ref.id, sheet: { ...(copy as Sheet), id: ref.id, viewCount: 0 } };
-  };
-
-  // Rattacher = TOUJOURS une copie du groupe (aucune ambiguïté : indépendante et éditable).
+  // Rattacher = TOUJOURS une copie appartenant au groupe. La règle vit dans
+  // `fork-to-group`, partagée avec la fenêtre « ajouter à ».
   const handleAttach = async (sheet: Sheet) => {
     if (!sheet.id || !user) return;
     setAttachLoading(sheet.id);
     try {
-      const { sheet: copy } = await forkToGroup(sheet);
+      const { sheet: copy } = await forkSheetToGroup(sheet, group!, user.id);
       setOwnedSheets(prev => [copy, ...prev]);
       setAttachPool(prev => prev.filter(s => s.id !== sheet.id));
     } catch {
@@ -366,7 +334,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
   const handleAdapt = async (sheet: Sheet) => {
     if (!sheet.id || !user) return;
     try {
-      const { id: newId } = await forkToGroup(sheet);
+      const { id: newId } = await forkSheetToGroup(sheet, group!, user.id);
       await unlinkSheet(groupId, sheet.id);
       setLinkedSheets(prev => prev.filter(s => s.id !== sheet.id));
       setGroup(prev => prev ? { ...prev, linkedSheetIds: prev.linkedSheetIds.filter(sid => sid !== sheet.id) } : prev);

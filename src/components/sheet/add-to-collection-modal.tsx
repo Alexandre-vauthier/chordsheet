@@ -1,14 +1,15 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { forkSheetToGroup } from '@/lib/fork-to-group';
 import { useTranslations } from 'next-intl';
-import { doc, updateDoc, deleteField, serverTimestamp, addDoc, collection, deleteDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, deleteField, serverTimestamp, deleteDoc, getDoc } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
-import { toFirestore, fromFirestore } from '@/lib/firestore-helpers';
+import { fromFirestore } from '@/lib/firestore-helpers';
 import { useAuth } from '@/lib/auth-context';
 import { useSets } from '@/lib/use-sets';
 import { useGroups } from '@/lib/use-groups';
-import type { Sheet, NewSheet } from '@/types';
+import type { Sheet } from '@/types';
 
 type Tab = 'set' | 'group';
 
@@ -117,24 +118,21 @@ export function AddToCollectionModal({ sheet, initialTab = 'set', onClose }: Pro
     }
   };
 
-  // Rattacher au groupe = TOUJOURS une COPIE indépendante (comme la page groupe) :
-  // éditer la grille de groupe ne doit jamais toucher l'originale.
-  const forkToGroup = async (groupId: string): Promise<string> => {
+  /**
+   * Copie la grille dans le groupe, par la règle partagée.
+   *
+   * Cette fenêtre avait sa propre version : la copie y naissait au nom de la
+   * personne et toujours privée, y compris dans un groupe public. Rattacher depuis
+   * ici et depuis la page du groupe ne produisait donc pas la même chose.
+   */
+  const forkToGroup = async (group: { id?: string; name: string; isPublic?: boolean }): Promise<string> => {
     const db = getDb();
     // On repart du document source complet (le prop `sheet` peut être allégé).
     const snap = await getDoc(doc(db, 'sheets', sheetId));
     if (!snap.exists()) throw new Error('source introuvable');
     const full = fromFirestore(snap.id, snap.data());
-    const { id: _id, viewCount: _v, averageRating: _a, ratingCount: _r, createdAt: _c, updatedAt: _u, ...rest } = full;
-    void _id; void _v; void _a; void _r; void _c; void _u;
-    const copy: NewSheet = { ...rest, ownerId: user!.id, ownerName: user!.displayName, isPublic: false, groupId, forkedFrom: sheetId };
-    const ref = await addDoc(collection(db, 'sheets'), {
-      ...toFirestore(copy),
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      viewCount: 0,
-    });
-    return ref.id;
+    const { id } = await forkSheetToGroup(full, group as Parameters<typeof forkSheetToGroup>[1], user!.id);
+    return id;
   };
 
   const toggleGroup = async (groupId: string, member: boolean) => {
@@ -156,7 +154,9 @@ export function AddToCollectionModal({ sheet, initialTab = 'set', onClose }: Pro
         }
       } else {
         // Ajouter = créer une copie du groupe (indépendante).
-        const copyId = await forkToGroup(groupId);
+        const groupe = groups.find(g => g.id === groupId);
+        if (!groupe) throw new Error('groupe introuvable');
+        const copyId = await forkToGroup(groupe);
         forkedCopiesRef.current[groupId] = copyId;
       }
       setGroupOverrides(prev => ({ ...prev, [groupId]: !member }));
