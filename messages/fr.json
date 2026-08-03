@@ -73,7 +73,8 @@
       "login": "Se connecter",
       "register": "Créer un compte",
       "myBook": "Mon Book",
-      "explore": "Explorer"
+      "explore": "Explorer",
+      "try": "Essayer"
     },
     "hero": {
       "eyebrow": "La librairie de grilles d'accords",
@@ -1785,5 +1786,21 @@
     "x": "X",
     "twitch": "Twitch",
     "website": "Site personnel"
+  },
+  "TryEditor": {
+    "eyebrow": "Essayer",
+    "title": "Une grille, tout de suite",
+    "desc": "Tapez un accord dans une case, découpez une mesure en deux, ajoutez-en une autre. Puis écoutez : la boucle se joue à la guitare, au piano et à la basse, en accords plaqués.",
+    "addMeasure": "+ mesure",
+    "addSection": "+ section",
+    "split": "Diviser en deux",
+    "merge": "Fusionner avec la case précédente",
+    "cellLabel": "Accord, mesure {measure}, case {beat}",
+    "play": "Écouter la boucle",
+    "stop": "Arrêter",
+    "voices": "Guitare, piano et basse · {bpm} BPM",
+    "reset": "Réinitialiser",
+    "cta": "Créer ma grille",
+    "note": "Rien n'est enregistré ici : c'est un bac à sable."
   }
 }

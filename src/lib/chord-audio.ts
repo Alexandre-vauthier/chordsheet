@@ -195,6 +195,17 @@ function stopActiveChord(instrumentId?: InstrumentId) {
   }
 }
 
+/**
+ * Coupe le son de tous les instruments (fondu rapide).
+ *
+ * La lecture d'une grille, elle, ne coupe rien : le dernier accord finit de sonner,
+ * ce qui est musicalement juste. C'est un bouton d'arrêt explicite qui a besoin de
+ * faire taire l'instant même.
+ */
+export function stopAllChords(): void {
+  stopActiveChord();
+}
+
 // Jouer un tick de métronome (click court et sec)
 // atTime : horloge Web Audio (ctx.currentTime) pour scheduling précis, sinon "maintenant"
 export function playMetronomeTick(accent = false, atTime?: number): void {

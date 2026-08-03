@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { BrandLogo } from '@/components/layout/brand-logo';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
@@ -11,6 +12,41 @@ import { useAuth } from '@/lib/auth-context';
 import { Link } from '@/i18n/navigation';
 import { Footer } from '@/components/layout/footer';
 import { HomeJsonLd } from './home-json-ld';
+
+/**
+ * Le bac à sable tire la bibliothèque d'accords et le moteur audio : de loin le plus
+ * gros morceau de code de cette page, pour une section que beaucoup ne feront que
+ * survoler. On ne le charge qu'une fois la section approchée.
+ */
+const TryEditor = dynamic(
+  () => import('@/components/landing/try-editor').then(m => m.TryEditor),
+  { ssr: false, loading: () => <div className="h-[420px] rounded-2xl bg-white/[0.03] border border-white/5 animate-pulse" /> },
+);
+
+/**
+ * Rend ses enfants une fois la zone approchée, et le reste ensuite définitivement.
+ *
+ * L'observateur est branché par une ref-fonction plutôt que par un effet : il n'y a
+ * rien à synchroniser avec un rendu, juste un nœud à observer dès qu'il existe.
+ */
+function WhenNear({ children }: { children: React.ReactNode }) {
+  const [proche, setProche] = useState(false);
+
+  const observer = useCallback((el: HTMLDivElement | null) => {
+    if (!el || proche) return;
+    // Sans IntersectionObserver (navigateur ancien), on charge tout de suite plutôt
+    // que de ne jamais rien afficher.
+    if (typeof IntersectionObserver === 'undefined') { setProche(true); return; }
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setProche(true); },
+      { rootMargin: '300px' },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [proche]);
+
+  return <div ref={observer}>{proche ? children : null}</div>;
+}
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 
@@ -99,6 +135,7 @@ function LandingNav({ scrolled }: { scrolled: boolean }) {
         <BrandLogo size="sm" className="text-[var(--nav-text)]" />
         <div className="hidden sm:flex items-center gap-7 text-[var(--nav-text)]/65 text-sm">
           <a href="#book" className="hover:text-[var(--nav-text)] transition-colors">{t('book')}</a>
+          <a href="#essayer" className="hover:text-[var(--nav-text)] transition-colors">{t('try')}</a>
           <a href="#groupes" className="flex items-center gap-1.5 hover:text-[var(--nav-text)] transition-colors">
             <svg className="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
@@ -187,6 +224,7 @@ const PLACEHOLDERS: MiniSheet[] = [
 
 export default function Home() {
   const t = useTranslations('Landing');
+  const tTry = useTranslations('TryEditor');
   const { user, loading: authLoading } = useAuth();
   const [sheets, setSheets] = useState<MiniSheet[]>(PLACEHOLDERS);
   const [sheetCount, setSheetCount] = useState<number | null>(null);
@@ -373,6 +411,23 @@ export default function Home() {
             </div>
 
           </div>
+        </div>
+      </section>
+
+      {/* ── Essayer ─────────────────────────────────────────────── */}
+      <section id="essayer" className="px-6 py-24 border-t border-white/5">
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-10">
+            <p className="text-[var(--accent)] text-xs font-semibold tracking-widest uppercase mb-4">{tTry('eyebrow')}</p>
+            <h2 className="font-playfair text-3xl sm:text-4xl font-bold text-[var(--nav-text)] mb-4">{tTry('title')}</h2>
+            <p className="text-[var(--nav-text)]/50 leading-relaxed">{tTry('desc')}</p>
+          </div>
+
+          <WhenNear>
+            <TryEditor ctaHref={user ? '/sheet/new' : '/register'} ctaLabel={tTry('cta')} />
+          </WhenNear>
+
+          <p className="mt-4 text-center text-xs text-[var(--nav-text)]/30">{tTry('note')}</p>
         </div>
       </section>
 

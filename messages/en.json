@@ -73,7 +73,8 @@
       "login": "Log in",
       "register": "Sign up",
       "myBook": "My Book",
-      "explore": "Explore"
+      "explore": "Explore",
+      "try": "Try it"
     },
     "hero": {
       "eyebrow": "The chord sheet library",
@@ -1785,5 +1786,21 @@
     "x": "X",
     "twitch": "Twitch",
     "website": "Website"
+  },
+  "TryEditor": {
+    "eyebrow": "Try it",
+    "title": "A chord chart, right now",
+    "desc": "Type a chord into a cell, split a bar in two, add another one. Then listen: the loop plays on guitar, piano and bass, as block chords.",
+    "addMeasure": "+ bar",
+    "addSection": "+ section",
+    "split": "Split in two",
+    "merge": "Merge with the previous cell",
+    "cellLabel": "Chord, bar {measure}, cell {beat}",
+    "play": "Play the loop",
+    "stop": "Stop",
+    "voices": "Guitar, piano and bass · {bpm} BPM",
+    "reset": "Reset",
+    "cta": "Create my chart",
+    "note": "Nothing is saved here: it is a sandbox."
   }
 }
