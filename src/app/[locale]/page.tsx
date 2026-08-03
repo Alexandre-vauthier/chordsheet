@@ -427,7 +427,17 @@ export default function Home() {
             <TryEditor ctaHref={user ? '/sheet/new' : '/register'} ctaLabel={tTry('cta')} />
           </WhenNear>
 
-          <p className="mt-4 text-center text-xs text-[var(--nav-text)]/30">{tTry('note')}</p>
+          {/* Dire ce que le bac à sable n'est pas, et où va le reste : sans cette
+              phrase, ces deux lignes passent pour tout ce que l'éditeur sait faire. */}
+          <p className="mt-4 text-center text-xs text-[var(--nav-text)]/40 leading-relaxed">
+            {tTry.rich('note', {
+              lien: (chunks) => (
+                <Link href="/editor" className="underline underline-offset-2 hover:text-[var(--accent)] transition-colors">
+                  {chunks}
+                </Link>
+              ),
+            })}
+          </p>
         </div>
       </section>
 

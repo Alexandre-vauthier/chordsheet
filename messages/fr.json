@@ -1801,6 +1801,6 @@
     "voices": "Guitare, piano et basse · {bpm} BPM",
     "reset": "Réinitialiser",
     "cta": "Créer ma grille",
-    "note": "Rien n'est enregistré ici : c'est un bac à sable."
+    "note": "Rien n'est enregistré ici : c'est un bac à sable. <lien>L'éditeur complet</lien> va plus loin : sections répétées, transposition, diagrammes d'accords, sept instruments, boîte à rythmes et impression."
   }
 }

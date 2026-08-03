@@ -32,7 +32,9 @@ const BEATS_PER_MEASURE = 4;
 const TOTAL_COLONNES = 16;
 const colonnes = (span: CellSpan) => Math.round(span / 0.25);
 
-const LABELS_SECTION = ['Couplet', 'Refrain', 'Pont'] as const;
+// Repris tels quels du dictionnaire de l'éditeur : une valeur inventée ne s'y
+// traduit pas, next-intl affiche alors la clé (« SectionLabels.Pont »).
+const LABELS_SECTION = ['Couplet', 'Refrain', 'Bridge'] as const;
 
 interface DemoSection {
   id: string;
@@ -105,6 +107,9 @@ export function TryEditor({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: st
   // Compteur de pas : sert de clé au balayage, pour que l'animation reparte à zéro
   // à chaque passage — sans quoi une boucle d'une seule case ne balaierait qu'une fois.
   const [tour, setTour] = useState(0);
+  // Case en cours de saisie : sa couleur d'accord s'efface, sinon l'ancienne bordure
+  // reste visible sous l'anneau de focus et les deux se disputent la case.
+  const [saisie, setSaisie] = useState<string | null>(null);
 
   // La boucle lit la grille par une référence, pas par la fermeture : on peut ainsi
   // changer un accord pendant qu'elle tourne et l'entendre au tour suivant.
@@ -239,11 +244,6 @@ export function TryEditor({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: st
 
   const reinitialiser = () => { arreter(); setSections(DEPART); };
 
-  const labelSection = (label: string) => {
-    // Les libellés du dictionnaire sont ceux de l'éditeur ; « Pont » n'y figure pas.
-    try { return tSection(label); } catch { return label; }
-  };
-
   /* ── Rendu ───────────────────────────────────────────────────────── */
 
   return (
@@ -253,7 +253,7 @@ export function TryEditor({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: st
         <div key={section.id} className={si > 0 ? 'mt-6 pt-5 border-t border-[var(--line)]' : ''}>
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-semibold uppercase tracking-widest text-[var(--accent)]">
-              {labelSection(section.label)}
+              {tSection(section.label)}
             </span>
             <button
               type="button"
@@ -276,7 +276,8 @@ export function TryEditor({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: st
                     const actif = pasActif?.sectionIndex === si && pasActif?.rowIndex === ri && pasActif?.cellIndex === ci;
                     // Même code couleur que l'éditeur : une teinte par fondamentale,
                     // portée par la bordure, épaissie à gauche.
-                    const couleur = getChordColor(cell.chord);
+                    const enSaisie = saisie === `${si}-${ri}-${ci}`;
+                    const couleur = enSaisie ? null : getChordColor(cell.chord);
 
                     return (
                       <div
@@ -305,7 +306,8 @@ export function TryEditor({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: st
                         <input
                           value={cell.chord}
                           onChange={(e) => majCellule(si, ri, ci, e.target.value)}
-                          onFocus={amorcer}
+                          onFocus={() => { amorcer(); setSaisie(`${si}-${ri}-${ci}`); }}
+                          onBlur={() => setSaisie(cur => (cur === `${si}-${ri}-${ci}` ? null : cur))}
                           aria-label={t('cellLabel', { measure: ri + 1, beat: ci + 1 })}
                           className="relative w-full h-11 sm:h-12 bg-transparent text-center font-mono font-medium
                             text-sm sm:text-base text-[var(--ink)] outline-none focus:ring-2
@@ -321,10 +323,10 @@ export function TryEditor({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: st
                             onClick={() => decouper(si, ri, ci)}
                             title={t('split')}
                             aria-label={t('split')}
-                            className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10 w-5 h-5 flex items-center
-                              justify-center rounded-full bg-[var(--cell-bg)] border border-[var(--line)]
-                              text-[10px] leading-none text-[var(--ink-faint)] cursor-pointer transition-all
-                              hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] hover:border-[var(--accent)]"
+                            className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-10 w-6 h-6 flex items-center
+                              justify-center rounded-full bg-[var(--paper)] border-2 border-[var(--accent)]
+                              text-xs font-semibold leading-none text-[var(--accent)] shadow-sm cursor-pointer
+                              transition-colors hover:bg-[var(--accent)] hover:text-white"
                           >
                             /
                           </button>
@@ -349,10 +351,9 @@ export function TryEditor({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: st
                         onClick={() => fusionner(si, ri, ci)}
                         title={t('merge')}
                         aria-label={t('merge')}
-                        className="w-5 h-5 flex items-center justify-center rounded-full bg-[var(--paper)]
-                          border border-[var(--line)] text-[10px] leading-none text-[var(--ink-faint)]
-                          hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all cursor-pointer
-                          shadow-sm opacity-40 group-hover/row:opacity-100 focus:opacity-100"
+                        className="w-6 h-6 flex items-center justify-center rounded-full bg-[var(--paper)]
+                          border-2 border-[var(--accent)] text-xs leading-none text-[var(--accent)]
+                          shadow-sm cursor-pointer transition-colors hover:bg-[var(--accent)] hover:text-white"
                       >
                         ⟷
                       </button>

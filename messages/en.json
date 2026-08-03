@@ -1801,6 +1801,6 @@
     "voices": "Guitar, piano and bass · {bpm} BPM",
     "reset": "Reset",
     "cta": "Create my chart",
-    "note": "Nothing is saved here: it is a sandbox."
+    "note": "Nothing is saved here: this is a sandbox. <lien>The full editor</lien> goes further: repeated sections, transposition, chord diagrams, seven instruments, a drum machine and printing."
   }
 }
