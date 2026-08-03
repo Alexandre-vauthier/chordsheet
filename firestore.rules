@@ -57,9 +57,21 @@ service cloud.firestore {
       // Listing (pour les requêtes sans filtre côté admin)
       allow list: if isAdmin();
 
-      // Création : utilisateur authentifié
-      allow create: if request.auth != null &&
-                       request.resource.data.ownerId == request.auth.uid;
+      /**
+       * Création : à son propre nom, ou **au nom d'un groupe dont on est membre**.
+       *
+       * Une grille rattachée à un groupe appartient au groupe, pas à celui qui l'y a
+       * mise : `ownerId` porte alors l'identifiant du groupe. Sans cette branche, la
+       * copie devait être créée au nom d'une personne, et se retrouvait dans son book
+       * à côté de son original. L'appartenance est vérifiée ici, un compte ne peut
+       * donc pas se déclarer d'un groupe où il n'est pas.
+       */
+      allow create: if request.auth != null && (
+        request.resource.data.ownerId == request.auth.uid ||
+        (request.resource.data.groupId != null &&
+         request.resource.data.ownerId == request.resource.data.groupId &&
+         isGroupMember(request.resource.data.groupId))
+      );
 
       // Mise à jour : propriétaire, membre du groupe (si groupId défini), admin, OU mise à jour viewCount/rating uniquement
       allow update: if request.auth != null && (

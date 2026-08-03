@@ -135,15 +135,45 @@ export default function DashboardPage() {
   }, [searchQuery, selectedGenre, selectedDifficulty, sortBy]);
 
   /**
-   * « Mes grilles » ne montre plus les copies de groupe.
+   * Les grilles des groupes dont je fais partie.
    *
-   * Rattacher une grille à un groupe en crée une copie indépendante, qui
-   * m'appartient : mon book affichait donc côte à côte mon original et ma version de
-   * groupe, sans rien pour les distinguer. Elles ont maintenant leur propre onglet,
-   * où l'on sait de quel groupe elles viennent.
+   * Elles ne peuvent plus être tirées de mes propres grilles : une grille rattachée
+   * à un groupe appartient au groupe, son `ownerId` est l'identifiant du groupe. On
+   * interroge donc par appartenance — ce qui a un avantage, on voit désormais aussi
+   * les grilles ajoutées par les autres membres, ce que le filtre par propriétaire
+   * n'aurait jamais montré.
    */
+  const [bandSheets, setBandSheets] = useState<Sheet[]>([]);
+  const groupIds = useMemo(() => groups.map(g => g.id!).filter(Boolean), [groups]);
+
+  useEffect(() => {
+    if (groupIds.length === 0) { setBandSheets([]); return; }
+    let annule = false;
+    (async () => {
+      const db = getDb();
+      // `in` accepte trente valeurs : on interroge par paquets, personne n'a
+      // trente groupes mais la requête ne doit pas se casser si ça arrive.
+      const lots: string[][] = [];
+      for (let i = 0; i < groupIds.length; i += 30) lots.push(groupIds.slice(i, i + 30));
+
+      const resultats = await Promise.all(
+        lots.map(lot =>
+          getDocs(query(collection(db, 'sheets'), where('groupId', 'in', lot))).catch(() => null),
+        ),
+      );
+      if (annule) return;
+      const vues = new Map<string, Sheet>();
+      for (const snap of resultats) {
+        if (!snap) continue;
+        for (const d of snap.docs) vues.set(d.id, fromFirestore(d.id, d.data()));
+      }
+      setBandSheets([...vues.values()].sort((a, b) => (b.updatedAt?.getTime() ?? 0) - (a.updatedAt?.getTime() ?? 0)));
+    })();
+    return () => { annule = true; };
+  }, [groupIds]);
+
+  // Mon book ne montre que ce qui est à moi : la copie de groupe n'y est plus.
   const ownSheets = useMemo(() => sheets.filter(s => !s.groupId), [sheets]);
-  const bandSheets = useMemo(() => sheets.filter(s => !!s.groupId), [sheets]);
 
   const displayedSheets = useMemo(() => filterAndSort(ownSheets), [ownSheets, filterAndSort]);
   const displayedBandSheets = useMemo(() => filterAndSort(bandSheets), [bandSheets, filterAndSort]);

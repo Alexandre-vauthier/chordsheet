@@ -168,6 +168,9 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
   if (sheet.tempoUnit) {
     (base as unknown as Record<string, unknown>).tempoUnit = sheet.tempoUnit;
   }
+  if (sheet.forkedBy) {
+    (base as unknown as Record<string, unknown>).forkedBy = sheet.forkedBy;
+  }
   if (sheet.forkedFrom) {
     (base as unknown as Record<string, unknown>).forkedFrom = sheet.forkedFrom;
   }
@@ -237,6 +240,7 @@ export function fromFirestore(
     tempoUnit: (data.tempoUnit as 'quarter' | 'eighth') || undefined,
     // V7 - Fork
     forkedFrom: (data.forkedFrom as string) || undefined,
+    forkedBy: (data.forkedBy as string) || undefined,
     // V8 - Non répertorié
     isUnlisted: (data.isUnlisted as boolean) || undefined,
     unlistedBySetIds: (data.unlistedBySetIds as string[]) || undefined,

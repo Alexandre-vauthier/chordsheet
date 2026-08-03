@@ -181,7 +181,16 @@ export interface Sheet {
   // V6 - Unité de tempo (♩ noire, ♪ croche)
   tempoUnit?: 'quarter' | 'eighth';
   // V7 - Fork
-  forkedFrom?: string; // id de la grille source
+  forkedFrom?: string;
+  /**
+   * Qui a mis cette grille dans le groupe.
+   *
+   * Une grille de groupe appartient au groupe (`ownerId` porte l'identifiant du
+   * groupe), mais quelqu'un l'y a bien déposée : garder la trace permet de savoir à
+   * qui s'adresser, et de revenir en arrière si la grille doit redevenir
+   * personnelle.
+   */
+  forkedBy?: string; // id de la grille source
   // V8 - Non répertorié (accessible via lien, non listé dans l'Explore)
   isUnlisted?: boolean;
   unlistedBySetIds?: string[]; // IDs des sets publics qui ont rendu cette grille non répertoriée

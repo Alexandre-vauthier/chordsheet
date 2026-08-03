@@ -292,10 +292,10 @@
     "errorCreateSet": "Erreur lors de la création du set",
     "confirmDeleteSet": "Supprimer le set \"{name}\" ?",
     "tabBands": "Grilles de groupe",
-    "subtitleBandsCount": "{count, plural, one {# grille rattachée à un groupe} other {# grilles rattachées à un groupe}}",
-    "subtitleBandsEmpty": "Les grilles que tu as rattachées à un groupe apparaîtront ici.",
+    "subtitleBandsCount": "{count, plural, one {# grille dans tes groupes} other {# grilles dans tes groupes}}",
+    "subtitleBandsEmpty": "Les grilles de tes groupes apparaîtront ici.",
     "emptyBandsTitle": "Aucune grille de groupe",
-    "emptyBandsDesc": "Rattacher une grille à un groupe en crée une copie, éditable par tous ses membres. Elle vit ici, pas dans tes grilles personnelles.",
+    "emptyBandsDesc": "Les grilles des groupes dont tu fais partie apparaissent ici, y compris celles ajoutées par les autres membres. Elles appartiennent au groupe, pas à toi.",
     "goToGroups": "Voir mes groupes"
   },
   "WelcomeBanner": {

@@ -22,6 +22,12 @@ export interface PublicSheetRef {
   updatedAt: Date | null;
   /** Auteur de la grille : sert à déclarer les profils publics au sitemap. */
   ownerId: string;
+  /**
+   * Groupe propriétaire, le cas échéant. Une grille de groupe a pour `ownerId`
+   * l'identifiant de son groupe : le sitemap doit pouvoir l'écarter des profils.
+   * Absent des lectures ciblées (par artiste, par accord), qui n'en ont pas besoin.
+   */
+  groupId?: string;
 }
 
 /**
@@ -36,7 +42,7 @@ export const getPublicSheetIndex = cache(async (): Promise<PublicSheetRef[]> => 
     const snap = await getAdminDb()
       .collection('sheets')
       .where('isPublic', '==', true)
-      .select('title', 'artist', 'updatedAt', 'ownerId')
+      .select('title', 'artist', 'updatedAt', 'ownerId', 'groupId')
       .limit(MAX_SHEETS)
       .get();
 
@@ -53,6 +59,7 @@ export const getPublicSheetIndex = cache(async (): Promise<PublicSheetRef[]> => 
         artist: typeof data.artist === 'string' ? data.artist : '',
         updatedAt: updatedAt?.toDate ? updatedAt.toDate() : null,
         ownerId: typeof data.ownerId === 'string' ? data.ownerId : '',
+        groupId: typeof data.groupId === 'string' ? data.groupId : '',
       };
     });
   } catch {

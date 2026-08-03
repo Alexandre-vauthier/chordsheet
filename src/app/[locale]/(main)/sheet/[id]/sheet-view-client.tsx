@@ -117,6 +117,9 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
   const { openAddTo } = useAddToCollection();
   const comments = useSheetComments(sheet?.id, sheet?.ownerId, sheet?.title);
 
+  /** Appartenance au groupe de la grille, quand elle en a un. */
+  const [estMembreDuGroupe, setEstMembreDuGroupe] = useState(false);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
@@ -147,9 +150,11 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
          * composition de son propre groupe, qu'il pouvait pourtant modifier.
          */
         let autorise = !!data.isPublic || !!data.isUnlisted || data.ownerId === user?.id || isAdmin;
-        if (!autorise && data.groupId && user) {
+        if (data.groupId && user) {
           const groupSnap = await getDoc(doc(db, 'groups', data.groupId as string));
-          autorise = ((groupSnap.data()?.memberIds as string[]) || []).includes(user.id);
+          const membre = ((groupSnap.data()?.memberIds as string[]) || []).includes(user.id);
+          setEstMembreDuGroupe(membre);
+          autorise = autorise || membre;
         }
         if (!autorise) {
           setError(t('private'));
@@ -312,7 +317,14 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
 
   if (!sheet) return null;
 
-  const isOwner = user?.id === sheet.ownerId || isAdmin;
+  /**
+   * Qui a la main sur cette grille.
+   *
+   * Une grille de groupe n'appartient à personne en particulier : son `ownerId` est
+   * l'identifiant du groupe. Sans la seconde branche, aucun membre ne verrait plus
+   * le bouton de modification d'une grille qu'il a pourtant le droit de modifier.
+   */
+  const isOwner = user?.id === sheet.ownerId || isAdmin || (!!sheet.groupId && estMembreDuGroupe);
   const isActualOwner = user?.id === sheet.ownerId;
   const canRate = user && !isActualOwner && sheet.isPublic;
 

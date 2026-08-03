@@ -292,10 +292,10 @@
     "errorCreateSet": "Error creating the set",
     "confirmDeleteSet": "Delete the set \"{name}\"?",
     "tabBands": "Band sheets",
-    "subtitleBandsCount": "{count, plural, one {# sheet attached to a band} other {# sheets attached to a band}}",
-    "subtitleBandsEmpty": "Sheets you attach to a band will show up here.",
+    "subtitleBandsCount": "{count, plural, one {# sheet in your bands} other {# sheets in your bands}}",
+    "subtitleBandsEmpty": "Sheets from your bands will show up here.",
     "emptyBandsTitle": "No band sheet",
-    "emptyBandsDesc": "Attaching a sheet to a band creates a copy that every member can edit. It lives here, not among your personal sheets.",
+    "emptyBandsDesc": "Sheets from the bands you belong to show up here, including those added by other members. They belong to the band, not to you.",
     "goToGroups": "See my bands"
   },
   "WelcomeBanner": {

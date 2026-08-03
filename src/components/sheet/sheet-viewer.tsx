@@ -540,7 +540,14 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             {sheet.ownerName && (
               <p className="text-xs text-[var(--ink-faint)] mt-1 print:hidden">
                 {t('by')}{' '}
-                {sheet.ownerId && sheet.ownerId !== 'deleted' ? (
+                {/* Une grille de groupe a pour auteur le groupe lui-même : son
+                    `ownerId` est un identifiant de groupe, qui mènerait à un profil
+                    inexistant. On pointe la vitrine du groupe. */}
+                {sheet.groupId && sheet.ownerId === sheet.groupId ? (
+                  <Link href={`/band/${sheet.groupId}`} className="hover:text-[var(--accent)] transition-colors">
+                    {sheet.ownerName}
+                  </Link>
+                ) : sheet.ownerId && sheet.ownerId !== 'deleted' ? (
                   <Link
                     href={`/user/${sheet.ownerId}`}
                     className="hover:text-[var(--accent)] transition-colors"

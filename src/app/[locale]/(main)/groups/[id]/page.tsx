@@ -314,8 +314,8 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
   };
 
   /**
-   * Copie la grille dans le groupe : indépendante de l'originale, éditable par tous
-   * les membres.
+   * Copie la grille dans le groupe : elle appartient au groupe, elle est indépendante
+   * de l'originale, et tous les membres peuvent la consulter et la modifier.
    *
    * **Sa visibilité suit celle du groupe.** Dans un groupe privé elle reste privée,
    * ce qui est le cas des compositions qu'on ne veut pas publier. Dans un groupe
@@ -328,11 +328,15 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
     void _id; void _v; void _a; void _r; void _c; void _u;
     const copy: NewSheet = {
       ...rest,
-      ownerId: user!.id,
-      ownerName: user!.displayName,
+      // La copie appartient au **groupe**, pas à qui l'y a mise. Sans quoi elle
+      // atterrissait dans le book personnel à côté de l'original, et se voyait
+      // comptée dans la réputation de cette personne alors qu'elle est collective.
+      ownerId: groupId,
+      ownerName: group?.name ?? '',
       isPublic: !!group?.isPublic,
       groupId,
       forkedFrom: sheet.id,
+      forkedBy: user!.id,
     };
     const ref = await addDoc(collection(db, 'sheets'), {
       ...toFirestore(copy),

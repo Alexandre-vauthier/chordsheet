@@ -129,7 +129,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // refuse d'indexer.
   const creatorDates = new Map<string, Date>();
   for (const s of sheets) {
-    if (!s.ownerId) continue;
+    // Une grille de groupe a pour auteur le groupe : son `ownerId` n'est pas un
+    // compte, et déclarer /user/{groupId} produirait une page vide.
+    if (!s.ownerId || s.ownerId === s.groupId) continue;
     const date = s.updatedAt ?? now;
     const known = creatorDates.get(s.ownerId);
     if (!known || date > known) creatorDates.set(s.ownerId, date);
