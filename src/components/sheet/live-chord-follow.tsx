@@ -14,6 +14,7 @@
 // le sheet-viewer) ; le surlignage se fait par le DOM (toggle de classe).
 
 import { useEffect, useRef, useState } from 'react';
+import { suivreMesure } from '@/lib/follow-scroll';
 import { useTranslations } from 'next-intl';
 import { useChordListener } from '@/lib/use-chord-listener';
 import { chordsMatch } from '@/lib/chord-match';
@@ -45,7 +46,6 @@ interface ChordGroup {
 }
 
 const START_WINDOW = 4;    // blocs scrutés au tout début pour se caler
-const NAVBAR_OFFSET = 104; // hauteur du bandeau fixe + marge de confort
 const TICK_MS = 100;       // fréquence du suivi
 
 function clearClass(cls: string) {
@@ -103,6 +103,8 @@ export function LiveChordFollow({
   const groupsRef = useRef<ChordGroup[]>(buildGroups(sequence));
   const latestChordRef = useRef('');
   const posRef = useRef(-1); // index du bloc courant
+  // Dernière section traversée, pour ne recadrer qu'aux changements de section.
+  const derniereSectionRef = useRef<string | null>(null);
 
   // Horloge : tempo estimé du joueur, instant d'entrée dans le bloc courant, et
   // nombre d'avances consécutives décidées sans confirmation du micro.
@@ -169,13 +171,10 @@ export function LiveChordFollow({
       }
       onActiveRowsChange?.(groups[idx].rows);
       onAdvance?.(groups[idx].sound);
-      const row = document.querySelector<HTMLElement>(`[data-row-id="${CSS.escape(groups[idx].rowId)}"]`);
-      if (row) {
-        window.scrollTo({
-          top: window.scrollY + row.getBoundingClientRect().top - NAVBAR_OFFSET,
-          behavior: 'smooth',
-        });
-      }
+      // Même règle que la lecture : on cadre la section, on ne suit la mesure que
+      // lorsqu'elle sort de l'écran. Sans quoi une section répétée fait remonter la
+      // grille sous les yeux du joueur, en plein morceau.
+      suivreMesure(groups[idx].rowId, derniereSectionRef);
     };
 
     const id = setInterval(() => {

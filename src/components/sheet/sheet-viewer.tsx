@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useLyrics } from '@/lib/use-lyrics';
 import { playPreviewAudio, stopPreviewAudio } from '@/lib/preview-audio';
+import { suivreMesure } from '@/lib/follow-scroll';
 import type { Sheet, CellSpan, InstrumentId } from '@/types';
 import { INSTRUMENTS } from '@/types';
 import { ChordSummary, InstrumentSelector, ChordDiagram, PianoKeyboard } from '@/components/chord';
@@ -322,16 +323,20 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   // Cleanup au démontage
   useEffect(() => () => cancelCountIn(), [cancelCountIn]);
 
-  // Auto-scroll : ligne active sous le bandeau fixe, avec marge de confort
-  // (même offset que le suivi micro, cf. NAVBAR_OFFSET dans live-chord-follow).
-  const scrollToRow = useCallback((rowId: string) => {
-    const el = document.querySelector(`[data-row-id="${rowId}"]`) as HTMLElement | null;
-    if (!el) return;
-    window.scrollTo({ top: window.scrollY + el.getBoundingClientRect().top - 104, behavior: 'smooth' });
-  }, []);
+  /**
+   * Défilement automatique, réglé sur la section et non sur la mesure.
+   *
+   * La référence retient la dernière section traversée : c'est elle qui distingue
+   * « on entre ici » de « on y est déjà », donc le cadrage de l'immobilité. Remise à
+   * zéro à l'arrêt, sans quoi une relecture ne recadrerait pas la première section.
+   */
+  const derniereSectionRef = useRef<string | null>(null);
+  const scrollToRow = useCallback((rowId: string) => suivreMesure(rowId, derniereSectionRef), []);
 
   const handlePlay = useCallback(() => {
     if (isPlaying) { stop(); return; }
+    // Nouvelle lecture : la première section doit être cadrée comme les autres.
+    derniereSectionRef.current = null;
     if (countBeat > 0) { cancelCountIn(); return; }
     if (!countInEnabled) { play(); return; }
 
@@ -361,10 +366,11 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   }, [isPlaying, countBeat, countInEnabled, stop, cancelCountIn, play, localTempo, localTempoUnit, displaySections, scrollToRow]);
 
   useEffect(() => {
-    if (!isPlaying || !activeStep) return;
+    if (!isPlaying) { derniereSectionRef.current = null; return; }
+    if (!activeStep) return;
     scrollToRow(`${activeStep.sectionId}-${activeStep.rowIndex}`);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeStep?.sectionId, activeStep?.rowIndex]);
+  }, [isPlaying, activeStep?.sectionId, activeStep?.rowIndex]);
 
   useEffect(() => {
     if (!concertCellPath) return;
