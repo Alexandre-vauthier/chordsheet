@@ -479,7 +479,9 @@
     "publicToggle": "Rendre ce groupe public",
     "publicToggleDesc": "Une page consultable par tout le monde, sans compte : ton répertoire en un lien, à coller dans ta bio ou sous une vidéo. Personne ne peut rejoindre ni modifier quoi que ce soit.",
     "publicOnlyPublicSheets": "Seules tes grilles déjà publiques y apparaissent. Une grille privée reste privée, même dans un set du groupe.",
-    "errorPublicToggle": "Impossible de changer la visibilité. Réessaie."
+    "errorPublicToggle": "Impossible de changer la visibilité. Réessaie.",
+    "publicVisibleCount": "{visible, plural, =0 {Aucune grille visible} one {# grille visible} other {# grilles visibles}} sur la vitrine{hidden, plural, =0 {.} other {, # privée(s).}}",
+    "publicHiddenHint": "Une grille de groupe est privée par défaut : ouvre-la et rends-la publique pour qu'elle apparaisse."
   },
   "Artists": {
     "title": "Artistes",

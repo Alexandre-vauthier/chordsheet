@@ -479,7 +479,9 @@
     "publicToggle": "Make this band public",
     "publicToggleDesc": "A page anyone can open, no account needed: your repertoire in one link, to paste in your bio or under a video. Nobody can join or change anything.",
     "publicOnlyPublicSheets": "Only your already-public sheets appear there. A private sheet stays private, even inside one of the band's sets.",
-    "errorPublicToggle": "Could not change visibility. Please try again."
+    "errorPublicToggle": "Could not change visibility. Please try again.",
+    "publicVisibleCount": "{visible, plural, =0 {No sheet visible} one {# sheet visible} other {# sheets visible}} on the public page{hidden, plural, =0 {.} other {, # private.}}",
+    "publicHiddenHint": "A band sheet is private by default: open it and make it public for it to show up."
   },
   "Artists": {
     "title": "Artists",

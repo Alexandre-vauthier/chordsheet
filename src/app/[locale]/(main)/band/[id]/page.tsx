@@ -75,10 +75,24 @@ const getServerBand = cache(async (id: string): Promise<ServerBand> => {
       createdAt: createdAt?.toDate ? createdAt.toDate() : null,
     };
 
-    const setsSnap = await db.collection('sets').where('groupId', '==', id).get();
+    /**
+     * Un groupe tient ses grilles de trois façons, et il faut les trois.
+     *
+     * - `groupId` posé **sur la grille** : c'est le rattachement principal, celui
+     *   qu'utilise la page du groupe (`where('groupId', '==', …)`). L'oublier
+     *   laissait la vitrine vide alors que le répertoire était bien là.
+     * - `linkedSheetIds` : des grilles publiques d'autres auteurs, référencées.
+     * - les sets du groupe, qui pointent leurs propres grilles.
+     */
+    const [setsSnap, ownSnap] = await Promise.all([
+      db.collection('sets').where('groupId', '==', id).get(),
+      db.collection('sheets').where('groupId', '==', id).where('isPublic', '==', true).get(),
+    ]);
     const setDocs = setsSnap.docs as { id: string; data: () => Record<string, unknown> }[];
+    const ownDocs = ownSnap.docs as { id: string; data: () => Record<string, unknown> }[];
 
     const tousLesIds = [
+      ...ownDocs.map((d) => d.id),
       ...(Array.isArray(data.linkedSheetIds) ? (data.linkedSheetIds as string[]) : []),
       ...setDocs.flatMap((d) => (Array.isArray(d.data().sheetIds) ? (d.data().sheetIds as string[]) : [])),
     ];

@@ -845,7 +845,21 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
                     {publicCopied ? t('copied') : t('copy')}
                   </button>
                 </div>
-                <p className="text-xs text-[var(--ink-faint)] leading-relaxed">{t('publicOnlyPublicSheets')}</p>
+                {/* Dire ce que la vitrine montre vraiment.
+                    Une grille de groupe est privée par défaut : sans ce décompte, le
+                    créateur ouvre son lien, tombe sur une page vide et n'a aucun moyen
+                    de comprendre pourquoi. */}
+                {(() => {
+                  const toutes = [...ownedSheets, ...linkedSheets];
+                  const visibles = toutes.filter(sh => sh.isPublic).length;
+                  const cachees = toutes.length - visibles;
+                  return (
+                    <p className="text-xs text-[var(--ink-faint)] leading-relaxed">
+                      {t('publicVisibleCount', { visible: visibles, hidden: cachees })}
+                      {cachees > 0 && <> {t('publicHiddenHint')}</>}
+                    </p>
+                  );
+                })()}
               </>
             )}
           </div>
