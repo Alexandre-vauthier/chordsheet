@@ -10,6 +10,16 @@
  * défini dans un composant, chacun aurait la sienne.
  */
 
+/**
+ * Niveau des extraits.
+ *
+ * Les fichiers d'iTunes sont masterisés fort, et lus à plein volume ils arrivent
+ * nettement au-dessus du reste : le son de l'accompagnement, celui de la boîte à
+ * rythmes, et le lecteur d'Apple lui-même, qui est plus discret. On les atténue d'un
+ * peu plus de quatre décibels pour rester dans le même registre.
+ */
+const VOLUME = 0.6;
+
 let current: HTMLAudioElement | null = null;
 let onStopped: (() => void) | null = null;
 
@@ -25,6 +35,7 @@ export function playPreviewAudio(url: string, onStop: () => void) {
   stopPreviewAudio();
 
   const audio = new Audio(url);
+  audio.volume = VOLUME;
   current = audio;
   onStopped = onStop;
 
