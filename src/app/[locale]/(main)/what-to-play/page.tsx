@@ -52,7 +52,13 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
   const candidates: Candidate[] = sheets
     .filter((s) => s.title.trim() && s.artist.trim())
     .slice(0, MAX_CANDIDATS)
-    .map((s) => ({ id: s.id, title: s.title, artist: s.artist }));
+    .map((s) => ({
+      id: s.id,
+      title: s.title,
+      artist: s.artist,
+      genres: s.genres ?? [],
+      difficulty: s.difficulty ?? null,
+    }));
 
   return <WhatToPlayClient candidates={candidates} />;
 }

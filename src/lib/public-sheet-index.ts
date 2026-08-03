@@ -28,6 +28,9 @@ export interface PublicSheetRef {
    * Absent des lectures ciblées (par artiste, par accord), qui n'en ont pas besoin.
    */
   groupId?: string;
+  /** Genres et niveau, pour filtrer sans requête supplémentaire. */
+  genres?: string[];
+  difficulty?: number | null;
 }
 
 /**
@@ -42,7 +45,7 @@ export const getPublicSheetIndex = cache(async (): Promise<PublicSheetRef[]> => 
     const snap = await getAdminDb()
       .collection('sheets')
       .where('isPublic', '==', true)
-      .select('title', 'artist', 'updatedAt', 'ownerId', 'groupId')
+      .select('title', 'artist', 'updatedAt', 'ownerId', 'groupId', 'genres', 'difficulty')
       .limit(MAX_SHEETS)
       .get();
 
@@ -64,6 +67,8 @@ export const getPublicSheetIndex = cache(async (): Promise<PublicSheetRef[]> => 
           updatedAt: updatedAt?.toDate ? updatedAt.toDate() : null,
           ownerId: typeof data.ownerId === 'string' ? data.ownerId : '',
           groupId: '',
+          genres: Array.isArray(data.genres) ? (data.genres as string[]) : [],
+          difficulty: typeof data.difficulty === 'number' ? data.difficulty : null,
         };
       });
   } catch {

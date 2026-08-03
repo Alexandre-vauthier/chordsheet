@@ -7,10 +7,20 @@ type ArtworkData = { artworkUrl: string | null; previewUrl: string | null; track
 // Cache mémoire (déduplique les requêtes dans la même session)
 const MEM_CACHE = new Map<string, ArtworkData>();
 
-// Cache localStorage (persiste entre sessions, TTL 7 jours)
-// v10 : table de correspondance des genres élargie (Alternative, Indie…). Bump pour
-// re-fetch et re-mapper les entrées en cache (sinon genre null conservé).
-const LS_PREFIX = 'artwork10_';
+/**
+ * Cache `localStorage`, sept jours, versionné par son préfixe.
+ *
+ * Changer de préfixe périme tout : c'est ce qu'il faut faire dès que la réponse
+ * gagne un champ, sinon les entrées déjà en cache restent servies **sans lui** et le
+ * manque paraît venir de la base.
+ *
+ * - v10 : table de correspondance des genres élargie (Alternative, Indie…).
+ * - v11 : `trackUrl` (fiche Apple Music). Sans ce bump, une pochette déjà consultée
+ *   revenait sans lien, et la page affichait « via iTunes » au lieu du lien —
+ *   d'autant plus visible que ce sont les morceaux les plus vus qui étaient en
+ *   cache. Rien à reprendre côté serveur : nous ne stockons pas ces données.
+ */
+const LS_PREFIX = 'artwork11_';
 const TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 // Requêtes en vol — évite de tirer deux fois la même clé simultanément

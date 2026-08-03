@@ -1890,6 +1890,12 @@
     "shortcuts": "Left and right arrows to change song, space bar to listen.",
     "empty": "No public chart yet. Come back once the catalogue has filled up.",
     "browse": "Browse the charts",
-    "tipAccompaniment": "Inside the chart, this button <b>plays the chords</b> while you follow along: guitar, piano, bass, alone or together. With the drum machine, you are no longer rehearsing on your own."
+    "tipAccompaniment": "Inside the chart, this button <b>plays the chords</b> while you follow along: guitar, piano, bass, alone or together. With the drum machine, you are no longer rehearsing on your own.",
+    "filterGenre": "Genre",
+    "filterLevel": "Level",
+    "allGenres": "All genres",
+    "allLevels": "All levels",
+    "clearFilters": "Show everything",
+    "emptyFiltered": "No song matches these filters."
   }
 }

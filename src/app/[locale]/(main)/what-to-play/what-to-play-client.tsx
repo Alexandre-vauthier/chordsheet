@@ -5,11 +5,15 @@ import { useTranslations } from 'next-intl';
 import { artworkKey, useArtwork } from '@/lib/use-artwork';
 import { playPreviewAudio, stopPreviewAudio } from '@/lib/preview-audio';
 import { Link } from '@/i18n/navigation';
+import { useGenreLabel, useDifficultyLabel } from '@/lib/use-genre-labels';
+import { DIFFICULTY_LABELS } from '@/types';
 
 export interface Candidate {
   id: string;
   title: string;
   artist: string;
+  genres: string[];
+  difficulty: number | null;
 }
 
 /** Mélange de Fisher-Yates : chaque ordre est également probable. */
@@ -58,8 +62,28 @@ const MAX_SAUTS = 10;
 
 export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
   const t = useTranslations('WhatToPlay');
+  const genreLabel = useGenreLabel();
+  const difficultyLabel = useDifficultyLabel();
 
-  const file = useMemo(() => melanger(candidates), [candidates]);
+  /**
+   * Deux filtres, pas plus.
+   *
+   * « Je ne sais pas quoi jouer » s'accommode mal d'un formulaire : chaque champ
+   * ramène la question à laquelle la page est censée répondre. Le genre et le niveau
+   * sont les deux seuls qui écartent vraiment ce qu'on ne jouera pas — on ne va pas
+   * proposer un morceau avancé à quelqu'un qui débute.
+   */
+  const [genre, setGenre] = useState('');
+  const [niveau, setNiveau] = useState<number | null>(null);
+
+  const retenus = useMemo(() => candidates.filter((c) =>
+    (!genre || c.genres.includes(genre)) &&
+    (niveau === null || c.difficulty === niveau),
+  ), [candidates, genre, niveau]);
+
+  // Changer de filtre retire la file : on retire un nouveau tirage plutôt que de
+  // reprendre au même endroit dans une liste qui n'est plus la même.
+  const file = useMemo(() => melanger(retenus), [retenus]);
   const [index, setIndex] = useState(0);
   const [enLecture, setEnLecture] = useState(false);
   /**
@@ -74,6 +98,10 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
   const sautsRef = useRef(0);
   const lectureRef = useRef(0);
 
+  // Le tirage a changé sous les pieds : on repart du début plutôt que de pointer
+  // dans le vide.
+  useEffect(() => { setIndex(0); }, [file]);
+
   const courant = file[index] ?? null;
   const suivant = file[index + 1] ?? null;
 
@@ -86,6 +114,12 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
    * de morceau, il rend encore l'extrait du précédent. Comparer sa clé à celle qu'on
    * attend est la seule façon fiable de le savoir, les deux venant du même rendu.
    */
+  const genresDisponibles = useMemo(() => {
+    const vus = new Map<string, number>();
+    for (const c of candidates) for (const g of c.genres) vus.set(g, (vus.get(g) ?? 0) + 1);
+    return [...vus.entries()].sort((a, b) => b[1] - a[1]).map(([g]) => g);
+  }, [candidates]);
+
   const attendue = courant ? artworkKey(courant.artist, courant.title) : '';
   const pret = !!attendue && key === attendue;
 
@@ -185,10 +219,20 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
   }, [aller, lire, arreter, enLecture]);
 
   if (!courant) {
+    const filtre = !!genre || niveau !== null;
     return (
       <div className="max-w-xl mx-auto px-4 py-20 text-center">
         <h1 className="font-playfair text-3xl font-bold text-[var(--ink)]">{t('title')}</h1>
-        <p className="mt-3 text-sm text-[var(--ink-light)]">{t('empty')}</p>
+        <p className="mt-3 text-sm text-[var(--ink-light)]">{filtre ? t('emptyFiltered') : t('empty')}</p>
+        {filtre && (
+          <button
+            type="button"
+            onClick={() => { setGenre(''); setNiveau(null); }}
+            className="mt-3 text-sm text-[var(--accent)] hover:underline cursor-pointer"
+          >
+            {t('clearFilters')}
+          </button>
+        )}
         <Link href="/explore" className="inline-block mt-6 px-5 py-2.5 rounded-lg bg-[var(--accent)] text-white text-sm font-medium">
           {t('browse')}
         </Link>
@@ -201,6 +245,46 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
       <div className="text-center">
         <h1 className="font-playfair text-3xl sm:text-4xl font-bold text-[var(--ink)]">{t('title')}</h1>
         <p className="mt-2 text-sm text-[var(--ink-light)] leading-relaxed">{t('subtitle')}</p>
+      </div>
+
+      {/* Deux menus discrets plutôt qu'un panneau : ils doivent rester une option,
+          pas la première chose qu'on lise sur une page faite pour ne pas choisir. */}
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+        <select
+          value={genre}
+          onChange={(e) => setGenre(e.target.value)}
+          aria-label={t('filterGenre')}
+          className="px-3 py-1.5 text-xs rounded-lg border border-[var(--line)] bg-[var(--cell-bg)]
+            text-[var(--ink)] outline-none focus:border-[var(--accent)] cursor-pointer"
+        >
+          <option value="">{t('allGenres')}</option>
+          {genresDisponibles.map((g) => (
+            <option key={g} value={g}>{genreLabel(g)}</option>
+          ))}
+        </select>
+
+        <select
+          value={niveau ?? ''}
+          onChange={(e) => setNiveau(e.target.value ? Number(e.target.value) : null)}
+          aria-label={t('filterLevel')}
+          className="px-3 py-1.5 text-xs rounded-lg border border-[var(--line)] bg-[var(--cell-bg)]
+            text-[var(--ink)] outline-none focus:border-[var(--accent)] cursor-pointer"
+        >
+          <option value="">{t('allLevels')}</option>
+          {([1, 2, 3] as const).map((d) => (
+            <option key={d} value={d}>{difficultyLabel(DIFFICULTY_LABELS[d])}</option>
+          ))}
+        </select>
+
+        {(genre || niveau !== null) && (
+          <button
+            type="button"
+            onClick={() => { setGenre(''); setNiveau(null); }}
+            className="text-xs text-[var(--accent)] hover:underline cursor-pointer"
+          >
+            {t('clearFilters')}
+          </button>
+        )}
       </div>
 
       {/* La pochette reste le repère visuel : on reconnaît souvent un disque avant
