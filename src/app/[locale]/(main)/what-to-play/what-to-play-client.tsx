@@ -48,14 +48,30 @@ function Prechargement({ candidate }: { candidate: Candidate | null }) {
  */
 const DUREE_MINIMALE_MS = 1500;
 
+/**
+ * Sauts consécutifs tolérés sans extrait avant d'éteindre la radio.
+ *
+ * Un morceau introuvable chez iTunes est passé automatiquement. Sans plafond, un
+ * catalogue dont aucun titre n'aurait d'extrait défilerait indéfiniment.
+ */
+const MAX_SAUTS = 10;
+
 export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
   const t = useTranslations('WhatToPlay');
 
   const file = useMemo(() => melanger(candidates), [candidates]);
   const [index, setIndex] = useState(0);
   const [enLecture, setEnLecture] = useState(false);
-  const [demarre, setDemarre] = useState(false);
+  /**
+   * La radio tourne : chaque morceau enchaîne sur le suivant.
+   *
+   * Il fallait recliquer à chaque extrait, ce qui vidait la page de son intérêt —
+   * on vient justement pour se laisser porter. Le premier clic reste obligatoire,
+   * les navigateurs refusant le son sans lui ; ensuite le geste initial suffit.
+   */
+  const [continu, setContinu] = useState(false);
   const debutRef = useRef(0);
+  const sautsRef = useRef(0);
 
   const courant = file[index] ?? null;
   const suivant = file[index + 1] ?? null;
@@ -65,6 +81,7 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
   const arreter = useCallback(() => {
     stopPreviewAudio();
     setEnLecture(false);
+    setContinu(false);
   }, []);
 
   useEffect(() => arreter, [arreter]);
@@ -82,16 +99,38 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
 
   const lire = useCallback(() => {
     if (!previewUrl) return;
-    setDemarre(true);
+    setContinu(true);
     setEnLecture(true);
+    sautsRef.current = 0;
     debutRef.current = Date.now();
     playPreviewAudio(previewUrl, () => {
       setEnLecture(false);
-      // Fin normale : on enchaîne, comme une radio. Arrêt immédiat : le navigateur
-      // a refusé, on reste sur place plutôt que de traverser le catalogue.
-      if (Date.now() - debutRef.current > DUREE_MINIMALE_MS) aller(1);
+      if (Date.now() - debutRef.current > DUREE_MINIMALE_MS) {
+        // Fin normale : au suivant, et l'effet ci-dessous le lance.
+        aller(1);
+      } else {
+        // Arrêt immédiat : le navigateur a refusé le son. On éteint la radio plutôt
+        // que de traverser le catalogue en silence.
+        setContinu(false);
+      }
     });
   }, [previewUrl, aller]);
+
+  /**
+   * L'enchaînement.
+   *
+   * Dès qu'un morceau est prêt et que la radio tourne, il part. S'il n'a pas
+   * d'extrait, on passe au suivant — c'est fréquent, tous les titres ne sont pas
+   * chez iTunes, et s'arrêter là casserait l'enchaînement.
+   */
+  useEffect(() => {
+    if (!continu || enLecture) return;
+    if (previewUrl) { lire(); return; }
+    if (loading) return;
+    sautsRef.current += 1;
+    if (sautsRef.current >= MAX_SAUTS) setContinu(false);
+    else aller(1);
+  }, [continu, enLecture, previewUrl, loading, lire, aller]);
 
   // Flèches pour passer d'un morceau à l'autre, barre d'espace pour écouter : on
   // enchaîne vite, et c'est tout l'intérêt de la page.
@@ -100,7 +139,7 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
       if (e.key === 'ArrowRight') { e.preventDefault(); aller(1); }
       if (e.key === 'ArrowLeft') { e.preventDefault(); aller(-1); }
-      if (e.key === ' ') { e.preventDefault(); enLecture ? arreter() : lire(); }
+      if (e.key === ' ') { e.preventDefault(); if (enLecture) arreter(); else lire(); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -142,11 +181,15 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
           <span className="absolute inset-0 flex items-center justify-center text-5xl text-[var(--ink-faint)]">♪</span>
         )}
 
+        {/* La commande reste visible en permanence, lecture comme arrêt : le premier
+            clic est obligatoire, autant qu'on le voie sans avoir à survoler — et au
+            doigt il n'y a pas de survol. Le voile, lui, n'apparaît qu'au survol ou
+            pendant la lecture, pour ne pas ternir la pochette en continu. */}
         {previewUrl && (
-          <span className={`absolute inset-0 flex items-center justify-center transition-opacity ${
-            enLecture ? 'bg-black/40 opacity-100' : 'bg-black/45 opacity-0 group-hover:opacity-100'
+          <span className={`absolute inset-0 flex items-center justify-center transition-colors ${
+            enLecture ? 'bg-black/35' : 'group-hover:bg-black/35'
           }`}>
-            <span className="w-16 h-16 rounded-full bg-white/95 flex items-center justify-center shadow-lg">
+            <span className="w-16 h-16 rounded-full bg-white/95 flex items-center justify-center shadow-lg ring-1 ring-black/10">
               {enLecture ? (
                 <svg className="w-7 h-7 text-[var(--nav-bg)]" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
                   <rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" />
@@ -169,7 +212,7 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
         {!loading && !previewUrl && (
           <p className="mt-2 text-xs text-[var(--ink-faint)]">{t('noPreview')}</p>
         )}
-        {!demarre && previewUrl && (
+        {!continu && previewUrl && (
           <p className="mt-2 text-xs text-[var(--ink-faint)]">{t('tapToStart')}</p>
         )}
       </div>
