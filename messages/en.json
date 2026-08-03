@@ -290,13 +290,7 @@
     "errorDelete": "Error deleting",
     "confirmRemoveBookmark": "Remove this sheet from your book?",
     "errorCreateSet": "Error creating the set",
-    "confirmDeleteSet": "Delete the set \"{name}\"?",
-    "tabBands": "Band sheets",
-    "subtitleBandsCount": "{count, plural, one {# sheet in your bands} other {# sheets in your bands}}",
-    "subtitleBandsEmpty": "Sheets from your bands will show up here.",
-    "emptyBandsTitle": "No band sheet",
-    "emptyBandsDesc": "Sheets from the bands you belong to show up here, including those added by other members. They belong to the band, not to you.",
-    "goToGroups": "See my bands"
+    "confirmDeleteSet": "Delete the set \"{name}\"?"
   },
   "WelcomeBanner": {
     "close": "Close",

@@ -290,13 +290,7 @@
     "errorDelete": "Erreur lors de la suppression",
     "confirmRemoveBookmark": "Retirer cette grille de votre book ?",
     "errorCreateSet": "Erreur lors de la création du set",
-    "confirmDeleteSet": "Supprimer le set \"{name}\" ?",
-    "tabBands": "Grilles de groupe",
-    "subtitleBandsCount": "{count, plural, one {# grille dans tes groupes} other {# grilles dans tes groupes}}",
-    "subtitleBandsEmpty": "Les grilles de tes groupes apparaîtront ici.",
-    "emptyBandsTitle": "Aucune grille de groupe",
-    "emptyBandsDesc": "Les grilles des groupes dont tu fais partie apparaissent ici, y compris celles ajoutées par les autres membres. Elles appartiennent au groupe, pas à toi.",
-    "goToGroups": "Voir mes groupes"
+    "confirmDeleteSet": "Supprimer le set \"{name}\" ?"
   },
   "WelcomeBanner": {
     "close": "Fermer",
