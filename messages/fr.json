@@ -1889,6 +1889,7 @@
     "tapToStart": "Touchez la pochette pour lancer l'extrait.",
     "shortcuts": "Flèches gauche et droite pour changer de morceau, barre d'espace pour écouter.",
     "empty": "Aucune grille publique pour l'instant. Revenez quand le catalogue se sera rempli.",
-    "browse": "Parcourir les grilles"
+    "browse": "Parcourir les grilles",
+    "tipAccompaniment": "Dans la grille, ce bouton fait <b>jouer les accords</b> pendant que vous suivez : guitare, piano, basse, seuls ou ensemble. Avec la boîte à rythmes, vous n'êtes plus tout seul à répéter."
   }
 }

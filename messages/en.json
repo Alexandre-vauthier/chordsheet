@@ -1889,6 +1889,7 @@
     "tapToStart": "Tap the artwork to start the preview.",
     "shortcuts": "Left and right arrows to change song, space bar to listen.",
     "empty": "No public chart yet. Come back once the catalogue has filled up.",
-    "browse": "Browse the charts"
+    "browse": "Browse the charts",
+    "tipAccompaniment": "Inside the chart, this button <b>plays the chords</b> while you follow along: guitar, piano, bass, alone or together. With the drum machine, you are no longer rehearsing on your own."
   }
 }

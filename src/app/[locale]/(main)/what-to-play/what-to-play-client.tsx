@@ -226,7 +226,24 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
         </a>
       )}
 
-      <p className="mt-8 text-center text-[11px] text-[var(--ink-faint)]">{t('shortcuts')}</p>
+      {/* Le conseil qui donne envie d'ouvrir la grille.
+          Le picto est celui, au trait près, du bouton d'accompagnement du lecteur
+          (cf. sheet-viewer) : recopier le glyphe permet de le reconnaître une fois
+          sur place, là où une icône approchante ferait chercher. */}
+      <div className="mt-8 flex items-start gap-3 rounded-xl border border-[var(--line)] bg-[var(--cell-bg)] px-4 py-3">
+        <span className="w-9 h-9 shrink-0 rounded-lg bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5" aria-hidden>
+            <path d="M9 18V5l12-2v13" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="6" cy="18" r="3" />
+            <circle cx="18" cy="16" r="3" />
+          </svg>
+        </span>
+        <p className="text-sm text-[var(--ink-light)] leading-relaxed">
+          {t.rich('tipAccompaniment', { b: (chunks) => <strong className="text-[var(--ink)]">{chunks}</strong> })}
+        </p>
+      </div>
+
+      <p className="mt-4 text-center text-[11px] text-[var(--ink-faint)]">{t('shortcuts')}</p>
 
       <Prechargement candidate={suivant} />
     </div>
