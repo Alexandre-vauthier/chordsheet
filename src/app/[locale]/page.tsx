@@ -114,14 +114,18 @@ function FeatureTile({ href, icon, title, text, learnMore }: {
 
   const contenu = (
     <>
-      <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/15 flex items-center justify-center text-[var(--accent)]">
+      {/* Au-dessus du halo : les deux calques sont peints apres le contenu, et le
+          foil en `color-dodge` delavait la pastille d'accent comme le lien « en
+          savoir plus », les deux elements accentues de la tuile. Le titre et le
+          texte restent dessous — c'est ce passage de lumiere qui fait l'effet. */}
+      <div className="relative z-10 w-10 h-10 rounded-xl bg-[var(--accent)]/15 flex items-center justify-center text-[var(--accent)]">
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">{icon}</svg>
       </div>
       <div>
         <h3 className="text-[var(--nav-text)] font-semibold text-sm mb-1">{title}</h3>
         <p className="text-[var(--nav-text)]/50 text-sm leading-relaxed">{text}</p>
         {href && (
-          <span className="inline-block mt-2 text-xs text-[var(--accent)]/0 group-hover/feat:text-[var(--accent)] transition-colors">
+          <span className="relative z-10 inline-block mt-2 text-xs text-[var(--accent)]/0 group-hover/feat:text-[var(--accent)] transition-colors">
             {learnMore} →
           </span>
         )}
