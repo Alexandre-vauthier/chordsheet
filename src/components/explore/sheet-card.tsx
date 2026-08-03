@@ -25,6 +25,14 @@ interface SheetCardProps {
   onToggleBookmark?: () => void;
   href?: string;
   variantCount?: number;
+  /**
+   * Note à afficher à la place de celle de la grille.
+   *
+   * Sur une carte qui représente plusieurs versions, la note de la grille
+   * représentative ne veut rien dire : elle dépend du tri en cours. On y montre la
+   * meilleure des versions, cf. `groupSheetsBySong`.
+   */
+  ratingOverride?: { average: number; count: number } | null;
   hideArtwork?: boolean;
   hideDifficulty?: boolean;
   showPublicBadge?: boolean;
@@ -56,6 +64,7 @@ export function SheetCard({
   onToggleBookmark,
   href,
   variantCount,
+  ratingOverride,
   hideArtwork = false,
   hideDifficulty = true,
   showPublicBadge = false,
@@ -288,11 +297,19 @@ export function SheetCard({
               ) : (
                 <span className={`text-xs truncate ${artworkUrl ? 'text-white/55' : 'text-[var(--ink-faint)]'}`}>{t('unknownArtist')}</span>
               )}
-              {showRating && sheet.ratingCount > 0 && (
-                <span className={`text-xs font-semibold shrink-0 ${artworkUrl ? 'text-amber-300' : 'text-[var(--ink-light)]'}`}>
-                  ★ {sheet.averageRating?.toFixed(1)}
-                </span>
-              )}
+              {(() => {
+                const note = ratingOverride !== undefined
+                  ? ratingOverride
+                  : (sheet.ratingCount > 0 && sheet.averageRating !== null
+                      ? { average: sheet.averageRating, count: sheet.ratingCount }
+                      : null);
+                if (!showRating || !note) return null;
+                return (
+                  <span className={`text-xs font-semibold shrink-0 ${artworkUrl ? 'text-amber-300' : 'text-[var(--ink-light)]'}`}>
+                    ★ {note.average.toFixed(1)}
+                  </span>
+                );
+              })()}
             </div>
 
             {!hideDifficulty && sheet.difficulty && (

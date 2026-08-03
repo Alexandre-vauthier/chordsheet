@@ -329,7 +329,7 @@ export default function DashboardPage() {
           <EmptyState icon="music" title={t('noResultsTitle')} description={t('noResultsDesc')} actions={[<button key="r" onClick={clearFilters} className="text-sm text-[var(--accent)] hover:underline">{t('reset')}</button>]} />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {groupedAll.map(({ sheet, count, href }) => {
+            {groupedAll.map(({ sheet, count, href, bestRating }) => {
               const isOwned = ownedIds.has(sheet.id);
               const single = count === 1;
               return (
@@ -338,6 +338,7 @@ export default function DashboardPage() {
                   sheet={sheet}
                   href={href}
                   variantCount={count}
+                ratingOverride={bestRating}
                   showOwner
                   // Supprimer ou retirer des favoris ne vaut que pour une grille
                   // précise : sur un groupe, on ne saurait pas laquelle viser.

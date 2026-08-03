@@ -28,6 +28,32 @@ export interface SheetGroup {
   count: number;
   /** Une seule version : la grille. Plusieurs : la page de choix. */
   href: string;
+  /**
+   * La meilleure note parmi les versions, ou `null` si aucune n'est notée.
+   *
+   * La carte affichait la note de la grille représentative, choisie par le tri en
+   * cours et pas par sa qualité : un morceau bien noté dans une de ses versions
+   * pouvait donc se présenter sans aucune note. On montre la meilleure — c'est ce
+   * qu'un visiteur trouvera s'il ouvre le morceau.
+   *
+   * À moyenne égale, celle qui repose sur le plus d'avis : 4,8 sur vingt avis dit
+   * davantage que 4,8 sur un seul.
+   */
+  bestRating: { average: number; count: number } | null;
+}
+
+/** Meilleure note d'un ensemble de versions. */
+function meilleureNote(sheets: Sheet[]): { average: number; count: number } | null {
+  const notees = sheets.filter((s) => s.ratingCount > 0 && s.averageRating !== null);
+  if (notees.length === 0) return null;
+
+  const best = notees.reduce((a, b) => {
+    const ea = a.averageRating ?? 0;
+    const eb = b.averageRating ?? 0;
+    if (eb !== ea) return eb > ea ? b : a;
+    return b.ratingCount > a.ratingCount ? b : a;
+  });
+  return { average: best.averageRating!, count: best.ratingCount };
 }
 
 export function groupSheetsBySong(sheets: Sheet[]): SheetGroup[] {
@@ -47,5 +73,6 @@ export function groupSheetsBySong(sheets: Sheet[]): SheetGroup[] {
       group.length === 1
         ? `/sheet/${group[0].id}`
         : `/song/${encodeURIComponent(group[0].title)}/${encodeURIComponent(group[0].artist || '')}`,
+    bestRating: meilleureNote(group),
   }));
 }

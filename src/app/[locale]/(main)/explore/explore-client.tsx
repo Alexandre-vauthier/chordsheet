@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { groupSheetsBySong } from '@/lib/sheet-groups';
 import { sansCopiesDeGroupe } from '@/lib/sheet-catalogue';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -273,21 +274,9 @@ export function ExploreClient() {
   }, [sheets]);
 
   // Grouper par titre+artiste → une seule entrée par musique
-  const groupedResults = useMemo(() => {
-    const groups = new Map<string, Sheet[]>();
-    for (const sheet of filteredSheets) {
-      const key = `${sheet.title.trim().toLowerCase()}|||${(sheet.artist || '').trim().toLowerCase()}`;
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(sheet);
-    }
-    return Array.from(groups.values()).map((group) => ({
-      sheet: group[0], // représentant du groupe (déjà trié)
-      count: group.length,
-      href: group.length === 1
-        ? `/sheet/${group[0].id}`
-        : `/song/${encodeURIComponent(group[0].title)}/${encodeURIComponent(group[0].artist || '')}`,
-    }));
-  }, [filteredSheets]);
+  // Le regroupement vivait ici en double du module partagé, et les deux avaient
+  // deja diverge : celui-ci ignorait la meilleure note des versions.
+  const groupedResults = useMemo(() => groupSheetsBySong(filteredSheets), [filteredSheets]);
 
   // Réinitialiser les filtres
   const clearFilters = () => {
@@ -519,7 +508,7 @@ export function ExploreClient() {
             </p>
           )}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {groupedResults.map(({ sheet, count, href }) => (
+            {groupedResults.map(({ sheet, count, href, bestRating }) => (
               <SheetCard
                 key={`${sheet.title}-${sheet.artist}`}
                 sheet={sheet}
@@ -527,6 +516,7 @@ export function ExploreClient() {
                 showPublicBadge={isAdmin}
                 href={href}
                 variantCount={count}
+                ratingOverride={bestRating}
                 isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
                 onToggleBookmark={user && sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
                 onDelete={isAdmin && sheet.id ? () => handleAdminDelete(sheet.id!) : undefined}

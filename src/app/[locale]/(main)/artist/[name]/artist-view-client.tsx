@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { groupSheetsBySong } from '@/lib/sheet-groups';
 import { sansCopiesDeGroupe } from '@/lib/sheet-catalogue';
 import { useTranslations } from 'next-intl';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -72,21 +73,14 @@ export function ArtistViewClient({ name, initialSheets }: ArtistViewClientProps)
   }, [artistName, isAdmin, authLoading]);
 
   // Grouper par titre → une seule entrée par musique
-  const grouped = useMemo(() => {
-    const groups = new Map<string, Sheet[]>();
-    for (const sheet of sheets) {
-      const key = sheet.title.trim().toLowerCase();
-      if (!groups.has(key)) groups.set(key, []);
-      groups.get(key)!.push(sheet);
-    }
-    return Array.from(groups.values()).map((group) => ({
-      sheet: group[0],
-      count: group.length,
-      href: group.length === 1
-        ? `/sheet/${group[0].id}`
-        : `/song/${encodeURIComponent(group[0].title)}/${encodeURIComponent(artistName)}`,
-    }));
-  }, [sheets, artistName]);
+  /**
+   * Troisième copie du même regroupement, retirée elle aussi.
+   *
+   * Elle groupait par titre seul, ce qui donne le même résultat ici puisque la
+   * requête filtre déjà sur l'artiste, mais elle ignorait la meilleure note des
+   * versions — comme celle de l'Explorer.
+   */
+  const grouped = useMemo(() => groupSheetsBySong(sheets), [sheets]);
 
   return (
     <div className="max-w-[1270px] mx-auto px-4 sm:px-6 py-8">
@@ -127,13 +121,14 @@ export function ArtistViewClient({ name, initialSheets }: ArtistViewClientProps)
         </div>
       ) : grouped.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {grouped.map(({ sheet, count, href }) => (
+          {grouped.map(({ sheet, count, href, bestRating }) => (
             <SheetCard
               key={`${sheet.title}`}
               sheet={sheet}
               showOwner
               href={href}
               variantCount={count}
+                ratingOverride={bestRating}
               isBookmarked={sheet.id ? isBookmarked(sheet.id) : false}
               onToggleBookmark={user && sheet.id ? () => toggleBookmark(sheet.id!) : undefined}
             />
