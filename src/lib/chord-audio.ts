@@ -42,6 +42,17 @@ export function noteNameToFreq(name: string): number | null {
 // Singleton AudioContext
 let audioContext: AudioContext | null = null;
 
+/**
+ * Le contexte a-t-il ete suspendu par le navigateur ?
+ *
+ * Cela arrive sans prevenir : onglet passe en arriere-plan, fenetre masquee, machine
+ * mise en veille. Pendant ce temps `currentTime` **se fige**, ce qui suffit a
+ * derouter toute planification calee dessus.
+ */
+export function isAudioSuspended(): boolean {
+  return audioContext?.state === 'suspended';
+}
+
 export function getAudioContext(): AudioContext {
   if (!audioContext) {
     audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();

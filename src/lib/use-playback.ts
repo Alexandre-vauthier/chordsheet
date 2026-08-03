@@ -6,6 +6,14 @@ import { ACCOMPANIMENT_INSTRUMENTS, type PlayStyle } from '@/lib/accompaniment';
 export { ACCOMPANIMENT_INSTRUMENTS, type PlayStyle };
 import { findChordVariants, enharmonicEquivalent, parseChordInput } from '@/lib/chord-data';
 import { playChord, playArpeggio, playMetronomeTick, getAudioContext } from '@/lib/chord-audio';
+
+/**
+ * Ecart au-dela duquel on considere que le contexte audio a ete suspendu.
+ *
+ * Une derive ordinaire de `setTimeout` se compte en dizaines de millisecondes ; deux
+ * secondes de retard ne s'expliquent que par une horloge figee.
+ */
+const SUSPENSION_THRESHOLD_S = 2;
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
 
 export interface PlayStep {
@@ -177,10 +185,14 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, playback
       metronomeRef.current = null;
     }
     if (isPlaying) {
-      const ctx = getAudioContext();
       let beat = 1;                                  // beat 0 déjà joué dans advance()
-      let nextBeat = ctx.currentTime + beatMsRef.current / 1000; // premier tick un temps après le départ
+      let nextBeat = getAudioContext().currentTime + beatMsRef.current / 1000;
       const tick = () => {
+        // Contexte redemande a chaque tick, pour la meme raison que la lecture :
+        // suspendu, son horloge se fige et la boucle ne planifierait plus rien.
+        const ctx = getAudioContext();
+        if (nextBeat - ctx.currentTime > SUSPENSION_THRESHOLD_S) nextBeat = ctx.currentTime;
+
         const beatSec = beatMsRef.current / 1000;
         while (nextBeat < ctx.currentTime + 0.1) {
           if (metronomeEnabledRef.current) playMetronomeTick(beat === 0, nextBeat);
@@ -247,11 +259,28 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, playback
     // vise un instant absolu, et le délai du setTimeout est recalculé à partir de
     // ctx.currentTime → la dérive du setTimeout est corrigée à chaque pas, donc
     // les accords ne glissent plus par rapport à la batterie.
-    const ctx = getAudioContext();
-    let nextTime = ctx.currentTime;
+    let nextTime = getAudioContext().currentTime;
     let i = 0;
     const advance = () => {
       if (i >= steps.length) { setIsPlaying(false); setActiveStep(null); return; }
+
+      /**
+       * Le contexte est redemande a chaque pas, et non capture une fois.
+       *
+       * Le navigateur le suspend sans prevenir — onglet en arriere-plan, veille de la
+       * machine — et `currentTime` se fige alors. La ligne de temps, elle, continue
+       * d'avancer : l'ecart grandit, les delais deviennent enormes et la lecture
+       * s'arrete sans un son, sans que rien ne le signale. Redemander le contexte le
+       * reveille (`getAudioContext` appelle `resume`).
+       */
+      const ctx = getAudioContext();
+
+      // Retard trop grand pour etre du a une derive ordinaire : le contexte a ete
+      // suspendu. On rattache la ligne de temps a l'horloge plutot que de rattraper
+      // un retard qui prendrait autant de temps que la pause elle-meme.
+      const retard = nextTime - ctx.currentTime;
+      if (retard > SUSPENSION_THRESHOLD_S) nextTime = ctx.currentTime;
+
       const step = steps[i];
       setActiveStep(step);
       // Premier pas : tick beat 1 synchronisé exactement avec le premier accord
