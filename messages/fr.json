@@ -60,7 +60,9 @@
     "linkBands": "Jouer en groupe",
     "linkStage": "Mode concert",
     "linkChordByNotes": "Trouver un accord par ses notes",
-    "linkInstrumentChords": "Accords {instrumentOf}"
+    "linkInstrumentChords": "Accords {instrumentOf}",
+    "linkEditor": "L'éditeur de grilles",
+    "linkPrint": "Imprimer une grille"
   },
   "Landing": {
     "nav": {
@@ -156,8 +158,8 @@
         "text": "Prends en photo une partition ou une grille papier — l'IA reconnaît les accords et crée ta grille automatiquement."
       },
       "dictionary": {
-        "title": "Dictionnaire d'accords",
-        "text": "Bibliothèque complète pour guitare, piano, ukulélé et plus. Identifie un accord en plaçant tes doigts sur le manche ou le clavier."
+        "title": "Bibliothèque d'accords",
+        "text": "Guitare, piano, ukulélé, mandoline et basse : 563 diagrammes, et une page par accord avec ses notes et ses positions."
       },
       "learnMore": "En savoir plus",
       "import": {
@@ -171,6 +173,10 @@
       "tuner": {
         "title": "Accordeur en ligne",
         "text": "Guitare, basse, ukulélé, mandoline et banjo, au micro. Mode chromatique et écart en cents."
+      },
+      "detect": {
+        "title": "Reconnaissance au micro",
+        "text": "Joue un accord, il est identifié. Et pendant que tu joues, la grille surligne l'accord en cours et défile."
       }
     },
     "how": {
@@ -1410,6 +1416,14 @@
       "song": {
         "title": "{title} — {artist} : {count, plural, one {# grille d'accords} other {# grilles d'accords}}",
         "description": "Toutes les versions de « {title} » par {artist} sur {site} : compare les grilles proposées par la communauté, transpose et joue."
+      },
+      "editor": {
+        "title": "L'éditeur de grilles d'accords",
+        "description": "Sections, mesures en 3/4 ou 4/4, durées au quart de temps, saisie au clavier ou dictée au micro, doigtés personnalisés. Comment construire une grille sur Alviena."
+      },
+      "print": {
+        "title": "Imprimer une grille d'accords",
+        "description": "Mise en page A4, diagrammes en option, sections répétées repliées, export PDF et set complet en un fichier. Comment imprimer une grille sur Alviena."
       }
     },
     "artist": {

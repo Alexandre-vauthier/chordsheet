@@ -469,6 +469,87 @@
       "sameFamilyHeading": "The same colour, on another root",
       "elsewhereHeading": "{chord} on other instruments",
       "elsewhereLink": "{chord} {instrumentAt}"
+    },
+    "editorGuide": {
+      "h1": "The chord chart editor",
+      "lead": "A chart is built section by section, bar after bar. Here is how the editor works, and the shortcuts that save time.",
+      "sections": {
+        "h2": "Sections, not one long list",
+        "body": "A chart is split into named sections: intro, verse, chorus, bridge, pre-chorus, solo, outro. Each carries its own repeat count, shown as “×2” next to its title, which saves copying the same progression eight times. Sections can be reordered by dragging, and duplicated in one click when a chorus returns with a variation."
+      },
+      "measures": {
+        "h2": "Bars in 3/4 or 4/4",
+        "body": "Each section has its own time signature. A 4/4 bar gives four beats, a 3/4 bar gives three. The signature is set per section, so a song whose bridge turns into a waltz needs no starting over."
+      },
+      "durations": {
+        "h2": "A chord can last more or less than a beat",
+        "body": "Every cell takes an adjustable duration, from a quarter of a beat to four full beats, in quarter steps. Three buttons are enough: the left arrow absorbs the previous cell, the right arrow absorbs the next, and the divide symbol splits the cell in two. That is how you write two chords on one beat, or one chord held across a whole bar."
+      },
+      "keyboard": {
+        "h2": "Everything works from the keyboard",
+        "body": "Tab moves from one cell to the next, then down to the following bar. At the end of the last bar it creates a new one and steps into it: a whole chart can be typed without ever leaving the keyboard or clicking “add a bar”."
+      },
+      "notation": {
+        "h2": "American or French notation",
+        "body": "You can type “Am” or “Lam”, “Fa#m7” or “F#m7”: French entry is recognised and converted. Display then follows each reader's preference, set in their profile — two musicians can read the same chart in two different notations."
+      },
+      "mic": {
+        "h2": "Dictating chords through the mic",
+        "body": "Rather than typing, you can play. The mic button listens, recognises the chord, writes it into the target cell and moves to the next. Silence acts as confirmation: play the chord, mute the strings, it is written. That is what makes it possible to write the same chord twice in a row, which a held chord could not distinguish."
+      },
+      "finder": {
+        "h2": "Finding a chord whose name you don't know",
+        "body": "When you know the shape but not the name, the chord finder does the opposite of a dictionary: click the frets on the neck or the piano keys, and matching chords appear, ranked by closeness. One click inserts them into the cell."
+      },
+      "custom": {
+        "h2": "Your own shapes",
+        "body": "A chord whose suggested shape does not suit can be redrawn for the chart: open strings, muted strings, barre, starting fret. The custom shape travels with the chart, including in print and for anyone reading it."
+      },
+      "metadata": {
+        "h2": "Suggested tempo and key",
+        "body": "Entering the title and artist looks up the tempo automatically and brings in the album artwork. The key is derived from the chart's own chords as soon as there are two: it therefore describes what is written, capo included, not the original recording. Both stay editable by hand, and a value you enter is never overwritten."
+      },
+      "links": {
+        "h2": "Read next",
+        "import": "Import a chart from text",
+        "chords": "The chord library",
+        "transpose": "Transposing a chart",
+        "stage": "Stage mode"
+      }
+    },
+    "printGuide": {
+      "h1": "Printing a chord chart",
+      "lead": "A chart is also read on paper, on a music stand, with no battery to run flat. The print layout is built for that.",
+      "layout": {
+        "h2": "A layout made for the page",
+        "body": "In print the interface disappears: no navigation bar, no buttons, no menus. What remains is the title, the artist, the key, the tempo and the chart. The layout targets A4 and avoids splitting a section in the middle when it could fit whole on the next page."
+      },
+      "diagrams": {
+        "h2": "With or without diagrams",
+        "body": "Diagrams for the chords used can be printed at the top of the chart, or left out. The setting lives in your profile: turn it on for a song you are learning, off for a repertoire you know and want to keep to one page."
+      },
+      "repeats": {
+        "h2": "Folding repeated sections",
+        "body": "A second setting replaces identical sections with a short reminder instead of reprinting them. A song with three identical choruses then often fits on a single sheet instead of two. Again it is a choice: some prefer everything laid out on the stand."
+      },
+      "colors": {
+        "h2": "Dark theme does not print",
+        "body": "If you read in dark theme, printing switches to light on its own: black text on white. Nobody wants to empty a cartridge over a charcoal background, and a dark chart on paper is unreadable on a poorly lit stand."
+      },
+      "pdf": {
+        "h2": "Getting a PDF",
+        "body": "There is no separate export button: the browser's print command offers “Save as PDF” as a destination. The resulting file matches what the printer would produce, and can be emailed or loaded onto a tablet."
+      },
+      "sets": {
+        "h2": "A whole set in one file",
+        "body": "For a gig, printing songs one by one is tedious. A whole set exports as a single PDF, in setlist order, ready to bind or load onto a tablet. This bulk export is reserved for Pro accounts; printing a single chart stays open to everyone."
+      },
+      "links": {
+        "h2": "Read next",
+        "stage": "Stage mode, paper-free",
+        "bands": "Playing in a band",
+        "explore": "All the charts"
+      }
     }
   }
 }

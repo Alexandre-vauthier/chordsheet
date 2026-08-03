@@ -60,7 +60,9 @@
     "linkBands": "Playing in a band",
     "linkStage": "Stage mode",
     "linkChordByNotes": "Find a chord by its notes",
-    "linkInstrumentChords": "{instrument} chords"
+    "linkInstrumentChords": "{instrument} chords",
+    "linkEditor": "The chart editor",
+    "linkPrint": "Printing a chart"
   },
   "Landing": {
     "nav": {
@@ -156,8 +158,8 @@
         "text": "Snap a photo of sheet music or a paper chord chart — AI recognizes the chords and builds your sheet automatically."
       },
       "dictionary": {
-        "title": "Chord dictionary",
-        "text": "Full library for guitar, piano, ukulele and more. Identify a chord by placing your fingers on the fretboard or keyboard."
+        "title": "Chord library",
+        "text": "Guitar, piano, ukulele, mandolin and bass: 563 diagrams, and a page per chord with its notes and shapes."
       },
       "learnMore": "Learn more",
       "import": {
@@ -171,6 +173,10 @@
       "tuner": {
         "title": "Online tuner",
         "text": "Guitar, bass, ukulele, mandolin and banjo, through the mic. Chromatic mode and cent readout."
+      },
+      "detect": {
+        "title": "Mic recognition",
+        "text": "Play a chord and it is named. And while you play, the chart highlights the current chord and scrolls along."
       }
     },
     "how": {
@@ -1410,6 +1416,14 @@
       "song": {
         "title": "{title} — {artist}: {count, plural, one {# chord chart} other {# chord charts}}",
         "description": "Every version of “{title}” by {artist} on {site}: compare the charts shared by the community, transpose and play."
+      },
+      "editor": {
+        "title": "The chord chart editor",
+        "description": "Sections, 3/4 or 4/4 bars, quarter-beat durations, keyboard entry or mic dictation, custom shapes. How to build a chart on Alviena."
+      },
+      "print": {
+        "title": "Printing a chord chart",
+        "description": "A4 layout, optional diagrams, folded repeated sections, PDF export and a whole set in one file. How to print a chart on Alviena."
       }
     },
     "artist": {

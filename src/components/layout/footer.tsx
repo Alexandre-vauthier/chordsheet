@@ -50,12 +50,14 @@ export function Footer() {
     {
       heading: t('colGuides'),
       links: [
+        { href: '/editor', label: t('linkEditor') },
         { href: '/import-chords', label: t('linkImport') },
         { href: '/transpose', label: t('linkTranspose') },
         { href: '/sheet-photo', label: t('linkSheetPhoto') },
         { href: '/audio-to-chords', label: t('linkAudio') },
         { href: '/bands', label: t('linkBands') },
         { href: '/stage-mode', label: t('linkStage') },
+        { href: '/print', label: t('linkPrint') },
       ],
     },
     {

@@ -20,7 +20,7 @@ const PUBLIC_EXACT = [
   '/about', '/faq', '/credits', '/artists',
   // Guides éditoriaux : pages publiques sans aucune donnée utilisateur.
   '/import-chords', '/transpose', '/sheet-photo',
-  '/bands', '/stage-mode', '/audio-to-chords',
+  '/bands', '/stage-mode', '/audio-to-chords', '/editor', '/print',
 ];
 const PUBLIC_PREFIXES = ['/legal', '/chords/'];
 // /sheet/:id (mais pas /sheet/new ni /sheet/:id/edit), /artist/:name, /user/:id,

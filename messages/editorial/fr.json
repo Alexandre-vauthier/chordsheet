@@ -469,6 +469,87 @@
       "sameFamilyHeading": "La même couleur, sur une autre fondamentale",
       "elsewhereHeading": "{chord} sur les autres instruments",
       "elsewhereLink": "{chord} {instrumentAt}"
+    },
+    "editorGuide": {
+      "h1": "L'éditeur de grilles d'accords",
+      "lead": "Une grille se construit par sections, mesure après mesure. Voici comment l'éditeur fonctionne, et les raccourcis qui font gagner du temps.",
+      "sections": {
+        "h2": "Des sections, pas une longue liste",
+        "body": "Une grille se découpe en sections nommées : intro, couplet, refrain, pont, pré-refrain, solo, outro. Chacune porte son nombre de répétitions, affiché en « ×2 » à côté de son titre, ce qui évite de recopier huit fois le même enchaînement. Les sections se réordonnent par glisser-déposer, et se dupliquent d'un clic quand un refrain revient avec une variante."
+      },
+      "measures": {
+        "h2": "Mesures en 3/4 ou en 4/4",
+        "body": "Chaque section a sa propre métrique. Une mesure en 4/4 offre quatre temps, une mesure en 3/4 en offre trois. La métrique se change section par section, ce qui permet de traiter un morceau dont le pont passe en valse sans repartir de zéro."
+      },
+      "durations": {
+        "h2": "Un accord peut durer plus ou moins qu'un temps",
+        "body": "Chaque cellule occupe une durée réglable, du quart de temps à quatre temps entiers, par pas de quart. Trois boutons suffisent : la flèche gauche absorbe la cellule précédente, la flèche droite absorbe la suivante, et le symbole de division coupe la cellule en deux. C'est ce qui permet d'écrire deux accords sur un temps, ou un accord tenu sur toute la mesure."
+      },
+      "keyboard": {
+        "h2": "Tout se fait au clavier",
+        "body": "La touche Tab passe d'une cellule à la suivante, puis à la mesure du dessous. Arrivé au bout de la dernière mesure, elle en crée une nouvelle et y entre : on saisit une grille entière sans jamais quitter le clavier ni cliquer sur « ajouter une mesure »."
+      },
+      "notation": {
+        "h2": "Notation américaine ou française",
+        "body": "On saisit indifféremment « Am » ou « Lam », « Fa#m7 » ou « F#m7 » : la saisie française est reconnue et convertie. L'affichage suit ensuite la préférence du lecteur, réglable dans son profil — deux musiciens peuvent lire la même grille dans deux notations différentes."
+      },
+      "mic": {
+        "h2": "Dicter les accords au micro",
+        "body": "Plutôt que de taper, on peut jouer. Le bouton micro écoute, reconnaît l'accord et l'écrit dans la cellule visée, puis passe à la suivante. Le silence sert de validation : on joue l'accord, on étouffe les cordes, il s'inscrit. C'est ce qui permet d'écrire deux fois le même accord d'affilée, qu'un accord tenu ne saurait distinguer."
+      },
+      "finder": {
+        "h2": "Trouver un accord dont on ignore le nom",
+        "body": "Quand on connaît la position mais pas le nom, le chercheur d'accords fait l'inverse du dictionnaire : on clique les cases sur le manche ou les touches du piano, et les accords correspondants s'affichent, classés par ressemblance. Un clic les insère dans la cellule."
+      },
+      "custom": {
+        "h2": "Vos propres doigtés",
+        "body": "Un accord dont la position proposée ne convient pas peut être redessiné pour la grille : cordes à vide, cordes étouffées, barré, case de départ. Le doigté personnalisé accompagne la grille, y compris à l'impression et pour ceux qui la consultent."
+      },
+      "metadata": {
+        "h2": "Tempo et tonalité suggérés",
+        "body": "En saisissant le titre et l'artiste, le tempo est cherché automatiquement et la pochette de l'album apparaît. La tonalité, elle, se déduit des accords de la grille dès qu'il y en a deux : elle décrit donc ce qui est écrit, capo compris, et non l'enregistrement d'origine. Les deux restent modifiables à la main, et une valeur saisie n'est jamais écrasée."
+      },
+      "links": {
+        "h2": "À lire ensuite",
+        "import": "Importer une grille depuis un texte",
+        "chords": "La bibliothèque d'accords",
+        "transpose": "Transposer une grille",
+        "stage": "Le mode concert"
+      }
+    },
+    "printGuide": {
+      "h1": "Imprimer une grille d'accords",
+      "lead": "Une grille se lit aussi sur papier, sur un pupitre, sans batterie qui s'épuise. La mise en page d'impression est pensée pour ça.",
+      "layout": {
+        "h2": "Une mise en page faite pour la feuille",
+        "body": "À l'impression, l'écran disparaît : plus de barre de navigation, plus de boutons, plus de menus. Reste le titre, l'artiste, la tonalité, le tempo, et la grille. La mise en page vise le A4 et évite de couper une section au milieu quand elle peut tenir entière sur la page suivante."
+      },
+      "diagrams": {
+        "h2": "Avec ou sans diagrammes",
+        "body": "Les diagrammes des accords utilisés peuvent être imprimés en tête de grille, ou omis. Le réglage est dans votre profil : on l'active pour un morceau qu'on découvre, on le coupe pour un répertoire qu'on connaît et qu'on veut tenir sur une page."
+      },
+      "repeats": {
+        "h2": "Replier les sections répétées",
+        "body": "Un second réglage remplace les sections identiques par un simple rappel plutôt que de les réimprimer. Un morceau à trois refrains identiques tient alors souvent sur une seule feuille au lieu de deux. Là encore, c'est un choix : certains préfèrent tout voir déroulé sur le pupitre."
+      },
+      "colors": {
+        "h2": "Le thème sombre ne s'imprime pas",
+        "body": "Si vous lisez en thème sombre, l'impression bascule d'elle-même en clair : texte noir sur fond blanc. Personne ne veut vider une cartouche pour un fond anthracite, et une grille sombre imprimée est illisible sur un pupitre mal éclairé."
+      },
+      "pdf": {
+        "h2": "Obtenir un PDF",
+        "body": "Il n'y a pas de bouton d'export séparé : la commande d'impression du navigateur propose « Enregistrer au format PDF » comme destination. Le fichier obtenu est identique à ce qui sortirait de l'imprimante, et se partage par mail ou se charge sur une tablette."
+      },
+      "sets": {
+        "h2": "Tout un set en un seul fichier",
+        "body": "Pour un concert, imprimer les morceaux un par un est fastidieux. Un set entier s'exporte en un seul PDF, dans l'ordre de la setlist, prêt à relier ou à charger sur une tablette. Cette exportation groupée est réservée aux comptes Pro ; l'impression d'une grille seule reste ouverte à tous."
+      },
+      "links": {
+        "h2": "À lire ensuite",
+        "stage": "Le mode concert, sans papier",
+        "bands": "Jouer en groupe",
+        "explore": "Toutes les grilles"
+      }
     }
   }
 }

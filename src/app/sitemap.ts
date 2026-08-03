@@ -32,6 +32,8 @@ const PUBLIC_PATHS: { path: string; priority: number; changeFrequency: MetadataR
   { path: '/audio-to-chords',          priority: 0.7, changeFrequency: 'monthly' },
   { path: '/bands',                    priority: 0.6, changeFrequency: 'monthly' },
   { path: '/stage-mode',               priority: 0.6, changeFrequency: 'monthly' },
+  { path: '/editor',                   priority: 0.7, changeFrequency: 'monthly' },
+  { path: '/print',                    priority: 0.5, changeFrequency: 'monthly' },
   { path: '/contact',                  priority: 0.4, changeFrequency: 'yearly' },
   { path: '/credits',                  priority: 0.3, changeFrequency: 'yearly' },
   { path: '/legal/cgu',                priority: 0.2, changeFrequency: 'yearly' },
