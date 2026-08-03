@@ -98,12 +98,22 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
 
   useEffect(() => arreter, [arreter]);
 
-  const aller = useCallback((delta: number) => {
+  /**
+   * Passer au morceau suivant ou précédent.
+   *
+   * `manuel` distingue le clic de l'enchaînement automatique, et ce n'est pas un
+   * détail : le compteur de sauts protège d'un emballement de la machine, pas d'une
+   * personne qui parcourt la file. En zappant vite on traversait des morceaux sans
+   * extrait, le compteur atteignait son plafond, et la radio s'éteignait toute seule
+   * — d'où l'impression qu'aller trop vite l'arrêtait.
+   */
+  const aller = useCallback((delta: number, manuel = false) => {
     // On invalide la lecture en cours avant de couper : son rappel ne doit pas être
     // pris pour une fin de morceau et faire avancer une seconde fois.
     lectureRef.current += 1;
     stopPreviewAudio();
     setEnLecture(false);
+    if (manuel) sautsRef.current = 0;
     setIndex((i) => {
       const n = i + delta;
       if (n < 0) return file.length - 1;
@@ -166,8 +176,8 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
-      if (e.key === 'ArrowRight') { e.preventDefault(); aller(1); }
-      if (e.key === 'ArrowLeft') { e.preventDefault(); aller(-1); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); aller(1, true); }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); aller(-1, true); }
       if (e.key === ' ') { e.preventDefault(); if (enLecture) arreter(); else lire(); }
     };
     window.addEventListener('keydown', onKey);
@@ -249,7 +259,7 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
       <div className="mt-6 flex items-center justify-center gap-3">
         <button
           type="button"
-          onClick={() => aller(-1)}
+          onClick={() => aller(-1, true)}
           aria-label={t('previous')}
           className="w-11 h-11 rounded-full border border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink)]
             flex items-center justify-center hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors cursor-pointer"
@@ -265,7 +275,7 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
 
         <button
           type="button"
-          onClick={() => aller(1)}
+          onClick={() => aller(1, true)}
           aria-label={t('next')}
           className="w-11 h-11 rounded-full border border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink)]
             flex items-center justify-center hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors cursor-pointer"
