@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminAuth, getAdminDb } from '@/lib/firebase-admin';
-import { INSTRUMENTS_AVEC_BIBLIOTHEQUE, instrumentsMissingChord, unknownChordsIn } from '@/lib/unknown-chords';
+import { INSTRUMENTS_AVEC_BIBLIOTHEQUE, instrumentsMissingChord, isChordKnown } from '@/lib/unknown-chords';
 import { loadAdminChordKeys } from '@/lib/library-chords-server';
 import type { InstrumentId } from '@/types';
 
@@ -9,6 +9,17 @@ export const maxDuration = 60;
 
 /**
  * Les accords écrits dans les grilles que la bibliothèque ne sait pas dessiner.
+ *
+ * **Le contrôle ne dépend pas de l'instrument de la grille.** Chaque accord employé
+ * quelque part est confronté aux six instruments, et il figure au tableau dès qu'il
+ * en manque un seul. Le contrôler pour le seul instrument de la grille faisait
+ * disparaître une ligne entière dès qu'on avait dessiné l'accord pour la guitare,
+ * alors qu'il restait introuvable à l'ukulélé, à la mandoline, au banjo et au piano :
+ * le travail n'était pas fini, mais le tableau ne le disait plus.
+ *
+ * C'est ce qui distingue cet écran de l'alerte par mail : celle-ci ne se déclenche
+ * que si l'auteur voit réellement une case vide, donc pour l'instrument de sa grille.
+ * Ici on inventorie la bibliothèque, pas les gênes du moment.
  *
  * Recalculé à chaque appel plutôt que lu dans une table tenue à jour : la
  * bibliothèque s'enrichit, un accord signalé hier peut être connu aujourd'hui, et une
@@ -30,6 +41,14 @@ interface Usage {
   isPublic: boolean;
   /** Instrument de la grille : c'est pour celui-là que son auteur voit une case vide. */
   instrument: InstrumentId;
+  /**
+   * L'accord manque-t-il pour l'instrument de cette grille ?
+   *
+   * Distingue le manque qui gêne quelqu'un tout de suite du manque qui n'est qu'un
+   * trou dans la bibliothèque. Faux quand l'auteur a dessiné le doigté lui-même, ou
+   * quand un administrateur l'a fait pour cet instrument.
+   */
+  affecte: boolean;
 }
 
 /**
@@ -46,6 +65,12 @@ interface Manquant {
   chord: string;
   missingOn: InstrumentId[];
   usages: Usage[];
+}
+
+/** Un accord écrit dans une grille, et ce que cette grille en sait. */
+interface Emploi {
+  chord: string;
+  usage: Usage;
 }
 
 export async function GET(req: NextRequest) {
@@ -76,7 +101,7 @@ export async function GET(req: NextRequest) {
   ]);
   const docs = snap.docs as { id: string; data: () => Record<string, unknown> }[];
 
-  const parAccord = new Map<string, Manquant>();
+  const emplois: Emploi[] = [];
   let sansIndex = 0;
 
   for (const d of docs) {
@@ -85,30 +110,59 @@ export async function GET(req: NextRequest) {
     if (chords === null) { sansIndex++; continue; }
 
     const instrument = (typeof s.instrumentId === 'string' ? s.instrumentId : 'guitar') as InstrumentId;
-    // Les doigtés dessinés par l'auteur comblent déjà le manque : les signaler
-    // reviendrait à réclamer un accord que la grille sait déjà afficher.
-    const dessines = s.customChords && typeof s.customChords === 'object'
-      ? Object.keys(s.customChords as Record<string, unknown>)
-      : [];
+    // Doigtés dessinés par l'auteur, propres à cette grille : ils épargnent la case
+    // vide à son auteur, mais ne comblent rien dans la bibliothèque.
+    const dessines = new Set(
+      s.customChords && typeof s.customChords === 'object'
+        ? Object.keys(s.customChords as Record<string, unknown>).map((n) => n.trim().toLowerCase())
+        : [],
+    );
 
-    for (const chord of unknownChordsIn(chords, instrument, dessines, ajoutsAdmin)) {
+    const vus = new Set<string>();
+    for (const brut of chords) {
+      const chord = brut.trim();
+      if (!chord) continue;
       const cle = chord.toLowerCase();
-      let entree = parAccord.get(cle);
-      if (!entree) {
-        // Calculé une fois par accord : la liste ne dépend pas de la grille.
-        entree = { chord, missingOn: instrumentsMissingChord(chord, ajoutsAdmin), usages: [] };
-        parAccord.set(cle, entree);
-      }
-      entree.usages.push({
-        sheetId: d.id,
-        title: typeof s.title === 'string' ? s.title : '',
-        artist: typeof s.artist === 'string' ? s.artist : '',
-        ownerId: typeof s.ownerId === 'string' ? s.ownerId : '',
-        ownerName: typeof s.ownerName === 'string' ? s.ownerName : '',
-        isPublic: s.isPublic === true,
-        instrument,
+      if (vus.has(cle)) continue;
+      vus.add(cle);
+
+      emplois.push({
+        chord,
+        usage: {
+          sheetId: d.id,
+          title: typeof s.title === 'string' ? s.title : '',
+          artist: typeof s.artist === 'string' ? s.artist : '',
+          ownerId: typeof s.ownerId === 'string' ? s.ownerId : '',
+          ownerName: typeof s.ownerName === 'string' ? s.ownerName : '',
+          isPublic: s.isPublic === true,
+          instrument,
+          affecte: !dessines.has(cle) && !isChordKnown(chord, instrument, ajoutsAdmin),
+        },
       });
     }
+  }
+
+  // Un accord figure au tableau des qu'il manque a un instrument, quel que soit
+  // celui de la grille ou il a ete repere.
+  const parAccord = new Map<string, Manquant>();
+  const memoire = new Map<string, InstrumentId[]>();
+
+  for (const { chord, usage } of emplois) {
+    const cle = chord.toLowerCase();
+
+    let missingOn = memoire.get(cle);
+    if (!missingOn) {
+      missingOn = instrumentsMissingChord(chord, ajoutsAdmin);
+      memoire.set(cle, missingOn);
+    }
+    if (missingOn.length === 0) continue;
+
+    let entree = parAccord.get(cle);
+    if (!entree) {
+      entree = { chord, missingOn, usages: [] };
+      parAccord.set(cle, entree);
+    }
+    entree.usages.push(usage);
   }
 
   // Les plus employés d'abord : c'est l'accord qui revient dans dix grilles qui vaut
@@ -128,5 +182,7 @@ export async function GET(req: NextRequest) {
     instrumentsChecked: INSTRUMENTS_AVEC_BIBLIOTHEQUE.length,
     /** Accords dessinés à la main par un administrateur, pris en compte ci-dessus. */
     adminChords: ajoutsAdmin.size,
+    /** Occurrences où l'auteur voit réellement une case vide. */
+    affecting: rows.reduce((n, r) => n + r.usages.filter((u) => u.affecte).length, 0),
   });
 }

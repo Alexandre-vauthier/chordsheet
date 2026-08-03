@@ -1818,7 +1818,7 @@
   },
   "AdminUnknownChords": {
     "title": "Accords non reconnus",
-    "intro": "Les accords écrits dans les grilles que la bibliothèque ne sait pas dessiner. La liste est recalculée à chaque passage : un accord ajouté à la bibliothèque en disparaît aussitôt. Les plus employés remontent en tête, ce sont ceux qui valent d'être ajoutés.",
+    "intro": "Chaque accord employé dans une grille est confronté aux six instruments : il figure ici dès qu'il en manque un seul, même si la grille où il apparaît sait le dessiner. La liste est recalculée à chaque passage, un accord ajouté à la bibliothèque en disparaît aussitôt. Les plus employés remontent en tête.",
     "backToAdmin": "Retour à l'administration",
     "rescan": "Relancer l'analyse",
     "scanning": "Analyse en cours…",
@@ -1836,6 +1836,9 @@
     "colSheets": "Grilles concernées",
     "missingNowhere": "Aucun : la bibliothèque le connaît partout",
     "missingCount": "{count, plural, one {# instrument} other {# instruments}} sur {total}",
-    "adminChords": "{count} accords de la bibliothèque admin pris en compte"
+    "adminChords": "{count} accords de la bibliothèque admin pris en compte",
+    "legend": "Le point marque les grilles dont l'auteur voit réellement une case vide. Les autres ne sont là que parce que l'accord manque à un autre instrument.",
+    "affecting": "{count, plural, one {# case réellement vide} other {# cases réellement vides}}",
+    "affectedSheet": "L'auteur de cette grille voit une case vide"
   }
 }

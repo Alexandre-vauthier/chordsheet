@@ -15,6 +15,8 @@ interface Usage {
   ownerName: string;
   isPublic: boolean;
   instrument: string;
+  /** Vrai quand l'auteur de cette grille voit réellement une case vide. */
+  affecte: boolean;
 }
 
 interface Manquant {
@@ -33,6 +35,8 @@ interface Reponse {
   instrumentsChecked: number;
   /** Accords dessinés à la main par un administrateur, comptés comme connus. */
   adminChords: number;
+  /** Occurrences où l'auteur voit réellement une case vide. */
+  affecting: number;
 }
 
 /**
@@ -86,6 +90,10 @@ export function UnknownChordsClient() {
 
       <h1 className="font-playfair text-2xl font-bold text-[var(--ink)] mt-3">{t('title')}</h1>
       <p className="text-sm text-[var(--ink-light)] mt-1 leading-relaxed max-w-2xl">{t('intro')}</p>
+      <p className="text-xs text-[var(--ink-faint)] mt-2 leading-relaxed max-w-2xl">
+        <span className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--accent)] mr-1.5 align-middle" />
+        {t('legend')}
+      </p>
 
       <div className="flex items-center gap-4 mt-5">
         <button
@@ -103,6 +111,7 @@ export function UnknownChordsClient() {
               distinct: data.distinctChords,
               rows: data.occurrences,
             })}
+            {` · ${t('affecting', { count: data.affecting })}`}
             {/* Une grille sans champ `chords` date d'avant l'index : elle n'a pas pu
                 être contrôlée. Le dire, plutôt que laisser croire à une couverture
                 complète. */}
@@ -162,6 +171,15 @@ export function UnknownChordsClient() {
                             {u.title || t('untitled')}
                           </Link>
                           {u.artist && <span className="text-[var(--ink-faint)]"> · {u.artist}</span>}
+                          {/* Le point distingue la grille dont l'auteur voit vraiment
+                              une case vide de celle qui n'est la que parce que
+                              l'accord manque a un autre instrument. */}
+                          {u.affecte && (
+                            <span
+                              className="inline-block w-1.5 h-1.5 rounded-full bg-[var(--accent)] ml-1.5 align-middle"
+                              title={t('affectedSheet')}
+                            />
+                          )}
                           <span className="text-[var(--ink-faint)] text-xs">
                             {' — '}
                             {u.ownerId ? (

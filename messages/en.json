@@ -1818,7 +1818,7 @@
   },
   "AdminUnknownChords": {
     "title": "Unrecognised chords",
-    "intro": "Chords written in sheets that the library cannot draw. The list is recomputed on every visit: a chord added to the library disappears from it straight away. The most used come first, those are the ones worth adding.",
+    "intro": "Every chord used in a sheet is checked against all six instruments: it appears here as soon as one of them is missing it, even if the sheet where it shows up can draw it. The list is recomputed on every visit, a chord added to the library disappears from it straight away. The most used come first.",
     "backToAdmin": "Back to admin",
     "rescan": "Run the scan again",
     "scanning": "Scanning…",
@@ -1836,6 +1836,9 @@
     "colSheets": "Sheets involved",
     "missingNowhere": "None: the library knows it everywhere",
     "missingCount": "{count, plural, one {# instrument} other {# instruments}} out of {total}",
-    "adminChords": "{count} admin library chords taken into account"
+    "adminChords": "{count} admin library chords taken into account",
+    "legend": "The dot marks the sheets whose author actually sees an empty cell. The others are only here because the chord is missing on another instrument.",
+    "affecting": "{count, plural, one {# genuinely empty cell} other {# genuinely empty cells}}",
+    "affectedSheet": "This sheet's author sees an empty cell"
   }
 }
