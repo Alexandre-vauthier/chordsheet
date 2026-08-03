@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { filtrerCatalogue } from '@/lib/sheet-catalogue';
 import { useTranslations } from 'next-intl';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
@@ -40,7 +41,7 @@ export function ArtistsClient() {
         const db = getDb();
         const q = query(collection(db, 'sheets'), where('isPublic', '==', true), limit(200));
         const snapshot = await getDocs(q);
-        setSheets(snapshot.docs.map(d => fromFirestore(d.id, d.data())));
+        setSheets(filtrerCatalogue(snapshot.docs.map(d => fromFirestore(d.id, d.data()))));
       } catch (e) {
         console.error(e);
       } finally {

@@ -50,18 +50,22 @@ export const getPublicSheetIndex = cache(async (): Promise<PublicSheetRef[]> => 
     // forme réellement utilisée plutôt que de propager le any.
     const docs = snap.docs as { id: string; data: () => Record<string, unknown> }[];
 
-    return docs.map((d) => {
-      const data = d.data();
-      const updatedAt = data.updatedAt as { toDate?: () => Date } | undefined;
-      return {
-        id: d.id,
-        title: typeof data.title === 'string' ? data.title : '',
-        artist: typeof data.artist === 'string' ? data.artist : '',
-        updatedAt: updatedAt?.toDate ? updatedAt.toDate() : null,
-        ownerId: typeof data.ownerId === 'string' ? data.ownerId : '',
-        groupId: typeof data.groupId === 'string' ? data.groupId : '',
-      };
-    });
+    // Les grilles de groupe sont des copies : hors catalogue, donc hors sitemap,
+    // hors pages d'artiste et hors pages d'accord.
+    return docs
+      .filter((d) => !d.data().groupId)
+      .map((d) => {
+        const data = d.data();
+        const updatedAt = data.updatedAt as { toDate?: () => Date } | undefined;
+        return {
+          id: d.id,
+          title: typeof data.title === 'string' ? data.title : '',
+          artist: typeof data.artist === 'string' ? data.artist : '',
+          updatedAt: updatedAt?.toDate ? updatedAt.toDate() : null,
+          ownerId: typeof data.ownerId === 'string' ? data.ownerId : '',
+          groupId: '',
+        };
+      });
   } catch {
     // Firebase Admin indisponible (variable d'environnement manquante, quota…) :
     // le sitemap se limite alors à ses pages fixes. Mieux vaut un sitemap partiel
@@ -93,17 +97,20 @@ export const getArtistSheetRefs = cache(async (artist: string): Promise<PublicSh
 
     const docs = snap.docs as { id: string; data: () => Record<string, unknown> }[];
 
-    return docs.map((d) => {
-      const data = d.data();
-      const updatedAt = data.updatedAt as { toDate?: () => Date } | undefined;
-      return {
-        id: d.id,
-        title: typeof data.title === 'string' ? data.title : '',
-        artist: typeof data.artist === 'string' ? data.artist : '',
-        updatedAt: updatedAt?.toDate ? updatedAt.toDate() : null,
-        ownerId: typeof data.ownerId === 'string' ? data.ownerId : '',
-      };
-    });
+    // Copies de groupe écartées, comme partout dans le catalogue.
+    return docs
+      .filter((d) => !d.data().groupId)
+      .map((d) => {
+        const data = d.data();
+        const updatedAt = data.updatedAt as { toDate?: () => Date } | undefined;
+        return {
+          id: d.id,
+          title: typeof data.title === 'string' ? data.title : '',
+          artist: typeof data.artist === 'string' ? data.artist : '',
+          updatedAt: updatedAt?.toDate ? updatedAt.toDate() : null,
+          ownerId: typeof data.ownerId === 'string' ? data.ownerId : '',
+        };
+      });
   } catch {
     return [];
   }
@@ -130,17 +137,20 @@ export const getSheetsWithChord = cache(async (chord: string, max = 12): Promise
 
     const docs = snap.docs as { id: string; data: () => Record<string, unknown> }[];
 
-    return docs.map((d) => {
-      const data = d.data();
-      const updatedAt = data.updatedAt as { toDate?: () => Date } | undefined;
-      return {
-        id: d.id,
-        title: typeof data.title === 'string' ? data.title : '',
-        artist: typeof data.artist === 'string' ? data.artist : '',
-        updatedAt: updatedAt?.toDate ? updatedAt.toDate() : null,
-        ownerId: typeof data.ownerId === 'string' ? data.ownerId : '',
-      };
-    });
+    // Copies de groupe écartées, comme partout dans le catalogue.
+    return docs
+      .filter((d) => !d.data().groupId)
+      .map((d) => {
+        const data = d.data();
+        const updatedAt = data.updatedAt as { toDate?: () => Date } | undefined;
+        return {
+          id: d.id,
+          title: typeof data.title === 'string' ? data.title : '',
+          artist: typeof data.artist === 'string' ? data.artist : '',
+          updatedAt: updatedAt?.toDate ? updatedAt.toDate() : null,
+          ownerId: typeof data.ownerId === 'string' ? data.ownerId : '',
+        };
+      });
   } catch {
     // Index composite absent ou reprise pas encore lancée : la page se passe de cette
     // section plutôt que d'échouer.

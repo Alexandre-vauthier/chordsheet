@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { filtrerCatalogue } from '@/lib/sheet-catalogue';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { collection, query, where, getDocs, limit, deleteDoc, doc } from 'firebase/firestore';
@@ -165,7 +166,9 @@ export function ExploreClient() {
           fromFirestore(docSnap.id, docSnap.data())
         );
 
-        setSheets(loadedSheets);
+        // Les grilles de groupe sont des copies : elles n'ont pas leur place dans
+        // le catalogue, elles y afficheraient le même morceau plusieurs fois.
+        setSheets(isAdmin ? loadedSheets : filtrerCatalogue(loadedSheets));
       } catch (error) {
         console.error('Error loading sheets:', error);
       } finally {

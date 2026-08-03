@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { filtrerCatalogue } from '@/lib/sheet-catalogue';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { cache } from 'react';
 import { getAdminDb } from '@/lib/firebase-admin';
@@ -37,7 +38,8 @@ const getArtistSheets = cache(async (artistName: string): Promise<Sheet[]> => {
     // getAdminDb() passe par un require, son type est donc `any` : on décrit ici la
     // seule forme dont on se sert, plutôt que de propager le any plus loin.
     const docs = snap.docs as { id: string; data: () => Record<string, unknown> }[];
-    const sheets: Sheet[] = docs.map((d) => fromFirestore(d.id, d.data()));
+    // Hors catalogue : une copie de groupe ferait doublon avec la grille d'origine.
+    const sheets: Sheet[] = filtrerCatalogue(docs.map((d) => fromFirestore(d.id, d.data())));
     return sheets.sort((a, b) => (b.updatedAt?.getTime() ?? 0) - (a.updatedAt?.getTime() ?? 0));
   } catch {
     // Lecture serveur indisponible : le composant client prendra le relais.

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { estAuCatalogue } from '@/lib/sheet-catalogue';
 import { useTranslations } from 'next-intl';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
@@ -156,6 +157,9 @@ export function SongVersionsClient({ title, artist, initialSheets }: SongVersion
         for (const snapshot of snapshots) {
           for (const d of snapshot.docs) {
             const sheet = fromFirestore(d.id, d.data());
+            // Hors catalogue : une copie de groupe n'est pas une version de plus.
+            // L'admin, lui, voit tout — c'est le sens de sa requête élargie.
+            if (!isAdmin && !estAuCatalogue(sheet) && sheet.ownerId !== user?.id) continue;
             if (sheet.title.trim().toLowerCase() === titleNorm) byId.set(sheet.id!, sheet);
           }
         }

@@ -296,6 +296,9 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
       const merged: Sheet[] = [];
       for (const snap of [mineSnap, publicSnap]) {
         for (const d of snap.docs) {
+          // Une grille déjà rattachée à un groupe n'est pas proposée : la copier
+          // reviendrait à copier une copie, et on ne saurait plus d'où elle vient.
+          if ((d.data() as Record<string, unknown>).groupId) continue;
           if (!seen.has(d.id) && !excludeIds.has(d.id)) {
             seen.add(d.id);
             merged.push(fromFirestore(d.id, d.data() as Record<string, unknown>));

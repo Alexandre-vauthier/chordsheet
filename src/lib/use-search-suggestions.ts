@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { filtrerCatalogue } from '@/lib/sheet-catalogue';
 import { collection, query, where, orderBy, limit, getDocs, type QueryConstraint } from 'firebase/firestore';
 import { getDb } from './firebase';
 import { fromFirestore } from './firestore-helpers';
@@ -29,7 +30,10 @@ async function searchByPrefix(
     ? [where(field, '>=', q), where(field, '<=', q + PREFIX_END)]
     : [where('isPublic', '==', true), where(field, '>=', q), where(field, '<=', q + PREFIX_END)];
   const snap = await getDocs(query(collection(db, 'sheets'), ...constraints, orderBy(field), limit(max)));
-  return snap.docs.map((d) => fromFirestore(d.id, d.data()));
+  // Les copies de groupe sont hors catalogue : les proposer mènerait à une grille
+  // que l'on croit être l'originale, alors que c'est la reprise d'un groupe.
+  const trouvees = snap.docs.map((d) => fromFirestore(d.id, d.data()));
+  return isAdmin ? trouvees : filtrerCatalogue(trouvees);
 }
 
 function dedupeNames(sheets: Sheet[], excluding: string | null, max: number): string[] {

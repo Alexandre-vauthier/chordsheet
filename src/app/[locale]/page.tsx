@@ -372,9 +372,12 @@ export default function Home() {
         const snap = await getDocs(
           query(collection(db, 'sheets'), where('isPublic', '==', true), orderBy('viewCount', 'desc'), limit(40))
         );
-        const data = snap.docs.map(d => ({ id: d.id, title: d.data().title || '', artist: d.data().artist || '' }));
+        // Les copies de groupe sont écartées : le défilement montrerait le même
+        // morceau plusieurs fois, une fois par groupe qui l'a repris.
+        const catalogue = snap.docs.filter(d => !d.data().groupId);
+        const data = catalogue.map(d => ({ id: d.id, title: d.data().title || '', artist: d.data().artist || '' }));
         if (data.length >= 12) setSheets(data);
-        setSheetCount(snap.size);
+        setSheetCount(catalogue.length);
       } catch { /* garde les placeholders */ }
     }
     load();

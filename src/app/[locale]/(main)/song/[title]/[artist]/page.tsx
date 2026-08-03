@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { estAuCatalogue } from '@/lib/sheet-catalogue';
 import { cache } from 'react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { getAdminDb } from '@/lib/firebase-admin';
@@ -41,7 +42,9 @@ const getSongVersions = cache(async (title: string, artist: string): Promise<She
         const { lyrics: _lyrics, ...rest } = d.data();
         return fromFirestore(d.id, rest);
       })
-      .filter((s: Sheet) => s.title.trim().toLowerCase() === titleNorm)
+      // Les copies de groupe ne comptent pas comme des versions : ce sont des
+      // reprises du même document, elles feraient passer une grille pour quatre.
+      .filter((s: Sheet) => estAuCatalogue(s) && s.title.trim().toLowerCase() === titleNorm)
       .sort((a: Sheet, b: Sheet) => {
         const ra = a.averageRating ?? 0;
         const rb = b.averageRating ?? 0;
