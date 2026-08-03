@@ -22,6 +22,22 @@ interface CatalogueCandidate {
   groupId?: string | null;
 }
 
+/**
+ * La grille est-elle une copie rattachée à un groupe ?
+ *
+ * Distincte de `estAuCatalogue` : certains écrans décident déjà de la visibilité
+ * autrement (un administrateur voit les grilles privées, un auteur voit les siennes)
+ * et n'ont besoin que d'écarter les copies.
+ */
+export function estCopieDeGroupe(sheet: CatalogueCandidate): boolean {
+  return !!sheet.groupId;
+}
+
+/** Écarte les copies de groupe, sans rien décider de la visibilité. */
+export function sansCopiesDeGroupe<T extends CatalogueCandidate>(sheets: T[]): T[] {
+  return sheets.filter((s) => !estCopieDeGroupe(s));
+}
+
 /** La grille a-t-elle sa place dans le catalogue public ? */
 export function estAuCatalogue(sheet: CatalogueCandidate): boolean {
   return sheet.isPublic === true && !sheet.groupId;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { filtrerCatalogue } from '@/lib/sheet-catalogue';
+import { sansCopiesDeGroupe } from '@/lib/sheet-catalogue';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { collection, query, where, getDocs, limit, deleteDoc, doc } from 'firebase/firestore';
@@ -166,9 +166,15 @@ export function ExploreClient() {
           fromFirestore(docSnap.id, docSnap.data())
         );
 
-        // Les grilles de groupe sont des copies : elles n'ont pas leur place dans
-        // le catalogue, elles y afficheraient le même morceau plusieurs fois.
-        setSheets(isAdmin ? loadedSheets : filtrerCatalogue(loadedSheets));
+        /**
+         * Les copies de groupe sortent du catalogue, **y compris pour un
+         * administrateur**.
+         *
+         * Sa vue élargie sert à moderer les grilles privées, pas à voir des doublons :
+         * les compter fausse le nombre de versions d'un morceau, et l'empêche de
+         * juger sa propre page. Une grille de groupe se modère depuis son groupe.
+         */
+        setSheets(sansCopiesDeGroupe(loadedSheets));
       } catch (error) {
         console.error('Error loading sheets:', error);
       } finally {

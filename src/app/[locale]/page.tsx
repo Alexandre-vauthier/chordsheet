@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { estCopieDeGroupe } from '@/lib/sheet-catalogue';
 import dynamic from 'next/dynamic';
 import { BrandLogo } from '@/components/layout/brand-logo';
 import Image from 'next/image';
@@ -374,7 +375,7 @@ export default function Home() {
         );
         // Les copies de groupe sont écartées : le défilement montrerait le même
         // morceau plusieurs fois, une fois par groupe qui l'a repris.
-        const catalogue = snap.docs.filter(d => !d.data().groupId);
+        const catalogue = snap.docs.filter(d => !estCopieDeGroupe({ groupId: d.data().groupId }));
         const data = catalogue.map(d => ({ id: d.id, title: d.data().title || '', artist: d.data().artist || '' }));
         if (data.length >= 12) setSheets(data);
         setSheetCount(catalogue.length);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { filtrerCatalogue } from '@/lib/sheet-catalogue';
+import { sansCopiesDeGroupe } from '@/lib/sheet-catalogue';
 import { useTranslations } from 'next-intl';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
@@ -55,8 +55,9 @@ export function ArtistViewClient({ name, initialSheets }: ArtistViewClientProps)
         const snapshot = await getDocs(q);
         // Une copie de groupe n'appartient plus au répertoire public de l'artiste :
         // elle y ferait doublon avec la grille d'origine.
-        const tous = snapshot.docs.map(d => fromFirestore(d.id, d.data()));
-        const results = isAdmin ? tous : filtrerCatalogue(tous);
+        // Hors répertoire de l'artiste, pour tout le monde : une copie de groupe
+        // ferait doublon avec la grille d'origine.
+        const results = sansCopiesDeGroupe(snapshot.docs.map(d => fromFirestore(d.id, d.data())));
         results.sort((a, b) => (b.updatedAt?.getTime() ?? 0) - (a.updatedAt?.getTime() ?? 0));
         setSheets(results);
       } catch (error) {
