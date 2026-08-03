@@ -734,7 +734,24 @@
     "loading": "Loading…",
     "manageSubscription": "Manage subscription",
     "upgradeToPro": "Upgrade to Pro",
-    "photo": "Profile photo"
+    "photo": "Profile photo",
+    "publicProfile": {
+      "title": "Your public profile",
+      "desc": "A short introduction and your links appear on your public profile as soon as you have published at least one sheet. This is what people discovering your work will see.",
+      "bioLabel": "Introduction",
+      "bioPlaceholder": "Who you are, what you play, what you share here…",
+      "bioCount": "{used} / {max} characters",
+      "linksLabel": "Your links",
+      "linksHint": "Channel, social accounts, streaming platforms, personal site. {max} links at most. The platform is recognised automatically.",
+      "urlPlaceholder": "https://…",
+      "add": "Add",
+      "remove": "Remove this link",
+      "invalidUrl": "That address is not valid.",
+      "duplicate": "That link is already in the list.",
+      "tooMany": "{max} links at most.",
+      "saved": "Saved",
+      "saveError": "Saving failed, please try again."
+    }
   },
   "SectionLabels": {
     "Intro": "Intro",
@@ -1429,6 +1446,10 @@
     "artist": {
       "title": "Chord charts by {artist}",
       "description": "Every chord chart by {artist} shared on Alviena: read, transpose and play this artist's songs."
+    },
+    "user": {
+      "title": "Chord charts by {name}",
+      "description": "The chord charts {name} has published on Alviena: view them, transpose them and play them."
     }
   },
   "Tuner": {
@@ -1558,7 +1579,14 @@
     "recent": "Recent",
     "bestRated": "Best rated",
     "noBookmarked": "No favourited chart yet.",
-    "noRated": "No rated chart yet."
+    "noRated": "No rated chart yet.",
+    "memberSince": "Member since {date}",
+    "mySheets": "My sheets",
+    "mySets": "My sets",
+    "sheetsCount": "{count, plural, one {sheet} other {sheets}}",
+    "averageRating": "average rating",
+    "genres": "genres",
+    "mostViewed": "Most viewed"
   },
   "ChordSummary": {
     "notFound": "Not found",
@@ -1743,5 +1771,19 @@
     "badgesAllDone": "Every badge earned.",
     "bonusTitle": "A concrete benefit",
     "bonus": "Every {per} favourites received grants one score-analysis credit, up to {max}."
+  },
+  "SocialPlatforms": {
+    "youtube": "YouTube",
+    "instagram": "Instagram",
+    "tiktok": "TikTok",
+    "spotify": "Spotify",
+    "bandcamp": "Bandcamp",
+    "soundcloud": "SoundCloud",
+    "deezer": "Deezer",
+    "appleMusic": "Apple Music",
+    "facebook": "Facebook",
+    "x": "X",
+    "twitch": "Twitch",
+    "website": "Website"
   }
 }

@@ -20,6 +20,8 @@ export interface PublicSheetRef {
   title: string;
   artist: string;
   updatedAt: Date | null;
+  /** Auteur de la grille : sert à déclarer les profils publics au sitemap. */
+  ownerId: string;
 }
 
 /**
@@ -34,7 +36,7 @@ export const getPublicSheetIndex = cache(async (): Promise<PublicSheetRef[]> => 
     const snap = await getAdminDb()
       .collection('sheets')
       .where('isPublic', '==', true)
-      .select('title', 'artist', 'updatedAt')
+      .select('title', 'artist', 'updatedAt', 'ownerId')
       .limit(MAX_SHEETS)
       .get();
 
@@ -50,6 +52,7 @@ export const getPublicSheetIndex = cache(async (): Promise<PublicSheetRef[]> => 
         title: typeof data.title === 'string' ? data.title : '',
         artist: typeof data.artist === 'string' ? data.artist : '',
         updatedAt: updatedAt?.toDate ? updatedAt.toDate() : null,
+        ownerId: typeof data.ownerId === 'string' ? data.ownerId : '',
       };
     });
   } catch {
@@ -77,7 +80,7 @@ export const getArtistSheetRefs = cache(async (artist: string): Promise<PublicSh
       .collection('sheets')
       .where('isPublic', '==', true)
       .where('artist', '==', artist)
-      .select('title', 'artist', 'updatedAt')
+      .select('title', 'artist', 'updatedAt', 'ownerId')
       .limit(50)
       .get();
 
@@ -91,6 +94,7 @@ export const getArtistSheetRefs = cache(async (artist: string): Promise<PublicSh
         title: typeof data.title === 'string' ? data.title : '',
         artist: typeof data.artist === 'string' ? data.artist : '',
         updatedAt: updatedAt?.toDate ? updatedAt.toDate() : null,
+        ownerId: typeof data.ownerId === 'string' ? data.ownerId : '',
       };
     });
   } catch {
@@ -113,7 +117,7 @@ export const getSheetsWithChord = cache(async (chord: string, max = 12): Promise
       .collection('sheets')
       .where('isPublic', '==', true)
       .where('chords', 'array-contains', chord)
-      .select('title', 'artist', 'updatedAt')
+      .select('title', 'artist', 'updatedAt', 'ownerId')
       .limit(max)
       .get();
 
@@ -127,6 +131,7 @@ export const getSheetsWithChord = cache(async (chord: string, max = 12): Promise
         title: typeof data.title === 'string' ? data.title : '',
         artist: typeof data.artist === 'string' ? data.artist : '',
         updatedAt: updatedAt?.toDate ? updatedAt.toDate() : null,
+        ownerId: typeof data.ownerId === 'string' ? data.ownerId : '',
       };
     });
   } catch {

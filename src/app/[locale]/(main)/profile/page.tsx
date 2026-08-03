@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { PublicProfileForm } from '@/components/profile/public-profile-form';
 import { useTranslations, useLocale } from 'next-intl';
 
 import { useAuth } from '@/lib/auth-context';
@@ -279,6 +280,8 @@ export default function ProfilePage() {
           </p>
         </div>
       </div>
+
+      <PublicProfileForm />
 
       {/* ── Général ────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 mt-8 mb-3">

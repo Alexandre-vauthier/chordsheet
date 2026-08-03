@@ -31,7 +31,7 @@ interface AuthContextType {
   deleteAccount: () => Promise<void>;
   resendVerificationEmail: () => Promise<void>;
   refreshEmailVerification: () => Promise<boolean>;
-  updateUser: (updates: { displayName?: string; photoURL?: string | null; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean; printMinimizeRepeatedSections?: boolean; printChordDiagrams?: boolean; showChordSummaryByDefault?: boolean; defaultMetronome?: boolean; defaultGrooveBox?: boolean; defaultChordsAudio?: boolean; defaultCountIn?: boolean; reputation?: import('@/types').CreatorReputation }) => Promise<void>;
+  updateUser: (updates: { displayName?: string; photoURL?: string | null; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean; printMinimizeRepeatedSections?: boolean; printChordDiagrams?: boolean; showChordSummaryByDefault?: boolean; defaultMetronome?: boolean; defaultGrooveBox?: boolean; defaultChordsAudio?: boolean; defaultCountIn?: boolean; bio?: string; links?: { url: string }[]; reputation?: import('@/types').CreatorReputation }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -137,6 +137,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             showInlineDiagram: userData.showInlineDiagram ?? false,
             darkMode: userData.darkMode ?? true,
             preferredInstrument: userData.preferredInstrument,
+            bio: userData.bio,
+            links: Array.isArray(userData.links) ? userData.links : undefined,
             minimizeRepeatedSections: userData.minimizeRepeatedSections ?? false,
             printMinimizeRepeatedSections: userData.printMinimizeRepeatedSections ?? false,
             printChordDiagrams: userData.printChordDiagrams ?? false,
@@ -304,7 +306,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // Mettre à jour le profil utilisateur
-  const updateUser = async (updates: { displayName?: string; photoURL?: string | null; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean; printMinimizeRepeatedSections?: boolean; printChordDiagrams?: boolean; defaultMetronome?: boolean; defaultGrooveBox?: boolean; defaultChordsAudio?: boolean; defaultCountIn?: boolean; reputation?: import('@/types').CreatorReputation }) => {
+  const updateUser = async (updates: { displayName?: string; photoURL?: string | null; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean; printMinimizeRepeatedSections?: boolean; printChordDiagrams?: boolean; defaultMetronome?: boolean; defaultGrooveBox?: boolean; defaultChordsAudio?: boolean; defaultCountIn?: boolean; bio?: string; links?: { url: string }[]; reputation?: import('@/types').CreatorReputation }) => {
     const auth = getAuth();
     const db = getDb();
     const currentUser = auth.currentUser;
@@ -315,7 +317,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Mettre à jour Firebase Auth (ne supporte que displayName et photoURL)
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { notationPreference: _np, chordColorCoding: _cc, showInlineDiagram: _sid, darkMode: _dm, preferredInstrument: _pi, minimizeRepeatedSections: _mrs, printMinimizeRepeatedSections: _pmrs, printChordDiagrams: _pcd, ...authUpdates } = updates;
+    const { notationPreference: _np, chordColorCoding: _cc, showInlineDiagram: _sid, darkMode: _dm, preferredInstrument: _pi, minimizeRepeatedSections: _mrs, printMinimizeRepeatedSections: _pmrs, printChordDiagrams: _pcd, bio: _bio, links: _links, ...authUpdates } = updates;
     // Appliquer le thème immédiatement si changé
     if (updates.darkMode !== undefined) {
       document.documentElement.setAttribute('data-theme', updates.darkMode ? 'dark' : 'light');

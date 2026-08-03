@@ -117,6 +117,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   }
 
+  // Les profils de créateur : une page par auteur ayant au moins une grille
+  // publique. Le garde-fou est le même que sur la page elle-même, qui passe en
+  // noindex sans grille publiée — le sitemap ne doit pas annoncer ce que la page
+  // refuse d'indexer.
+  const creatorDates = new Map<string, Date>();
+  for (const s of sheets) {
+    if (!s.ownerId) continue;
+    const date = s.updatedAt ?? now;
+    const known = creatorDates.get(s.ownerId);
+    if (!known || date > known) creatorDates.set(s.ownerId, date);
+  }
+
+  const creatorEntries = [...creatorDates].flatMap(([ownerId, date]) =>
+    entriesFor(`/user/${ownerId}`, date, 'weekly', 0.4),
+  );
+
   const artistEntries = [...artistDates].flatMap(([artist, date]) =>
     entriesFor(`/artist/${encodeURIComponent(artist)}`, date, 'weekly', 0.5),
   );
@@ -134,5 +150,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ),
     );
 
-  return [...fixed, ...chordEntries, ...sheetEntries, ...artistEntries, ...songEntries];
+  return [...fixed, ...chordEntries, ...sheetEntries, ...artistEntries, ...songEntries, ...creatorEntries];
 }

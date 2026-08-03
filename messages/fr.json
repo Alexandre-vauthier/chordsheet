@@ -734,7 +734,24 @@
     "loading": "Chargement…",
     "manageSubscription": "Gérer l'abonnement",
     "upgradeToPro": "Passer à Pro",
-    "photo": "Photo de profil"
+    "photo": "Photo de profil",
+    "publicProfile": {
+      "title": "Ton profil public",
+      "desc": "Une présentation et tes liens apparaissent sur ton profil public, dès que tu as publié au moins une grille. C'est ce que voient les personnes qui découvrent ton travail.",
+      "bioLabel": "Présentation",
+      "bioPlaceholder": "Qui es-tu, ce que tu joues, ce que tu partages ici…",
+      "bioCount": "{used} / {max} caractères",
+      "linksLabel": "Tes liens",
+      "linksHint": "Chaîne, réseaux, plateformes d'écoute, site personnel. {max} liens au maximum. La plateforme est reconnue automatiquement.",
+      "urlPlaceholder": "https://…",
+      "add": "Ajouter",
+      "remove": "Retirer ce lien",
+      "invalidUrl": "Cette adresse n'est pas valide.",
+      "duplicate": "Ce lien est déjà dans la liste.",
+      "tooMany": "{max} liens au maximum.",
+      "saved": "Enregistré",
+      "saveError": "L'enregistrement a échoué, réessaie."
+    }
   },
   "SectionLabels": {
     "Intro": "Intro",
@@ -1429,6 +1446,10 @@
     "artist": {
       "title": "Grilles d'accords de {artist}",
       "description": "Toutes les grilles d'accords de {artist} partagées sur Alviena : consultez, transposez et jouez les morceaux de cet artiste."
+    },
+    "user": {
+      "title": "Grilles d’accords de {name}",
+      "description": "Les grilles d’accords publiées par {name} sur Alviena : consultez-les, transposez-les et jouez-les."
     }
   },
   "Tuner": {
@@ -1558,7 +1579,14 @@
     "recent": "Récentes",
     "bestRated": "Mieux notées",
     "noBookmarked": "Aucune grille favorisée pour le moment.",
-    "noRated": "Aucune grille notée pour le moment."
+    "noRated": "Aucune grille notée pour le moment.",
+    "memberSince": "Membre depuis {date}",
+    "mySheets": "Mes grilles",
+    "mySets": "Mes sets",
+    "sheetsCount": "{count, plural, one {grille} other {grilles}}",
+    "averageRating": "note moyenne",
+    "genres": "genres",
+    "mostViewed": "Plus vues"
   },
   "ChordSummary": {
     "notFound": "Non trouvé",
@@ -1743,5 +1771,19 @@
     "badgesAllDone": "Tous les badges sont obtenus.",
     "bonusTitle": "Un bénéfice concret",
     "bonus": "Chaque tranche de {per} favoris reçus donne un crédit d'analyse de partition, jusqu'à {max}."
+  },
+  "SocialPlatforms": {
+    "youtube": "YouTube",
+    "instagram": "Instagram",
+    "tiktok": "TikTok",
+    "spotify": "Spotify",
+    "bandcamp": "Bandcamp",
+    "soundcloud": "SoundCloud",
+    "deezer": "Deezer",
+    "appleMusic": "Apple Music",
+    "facebook": "Facebook",
+    "x": "X",
+    "twitch": "Twitch",
+    "website": "Site personnel"
   }
 }

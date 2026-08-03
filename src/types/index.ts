@@ -294,6 +294,11 @@ export interface User {
   defaultGrooveBox?: boolean;
   defaultChordsAudio?: boolean;
   defaultCountIn?: boolean;
+  // Profil public : présentation et liens affichés sur /user/[id]. Visibles
+  // seulement à partir d'une grille publiée, pour que le profil ne serve pas de
+  // dépôt de liens.
+  bio?: string;
+  links?: { url: string }[];
   // Réputation créateur (cache calculé depuis les grilles publiques)
   reputation?: CreatorReputation;
 }
