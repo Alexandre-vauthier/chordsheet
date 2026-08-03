@@ -1,4 +1,5 @@
 import { cache } from 'react';
+import { estCopieDeGroupe } from '@/lib/sheet-catalogue';
 import { getAdminDb } from '@/lib/firebase-admin';
 // Réexport pour les appelants serveur, qui l'importaient d'ici avant que la clé
 // serve aussi côté navigateur.
@@ -45,7 +46,7 @@ export const getPublicSheetIndex = cache(async (): Promise<PublicSheetRef[]> => 
     const snap = await getAdminDb()
       .collection('sheets')
       .where('isPublic', '==', true)
-      .select('title', 'artist', 'updatedAt', 'ownerId', 'groupId', 'genres', 'difficulty')
+      .select('title', 'artist', 'updatedAt', 'ownerId', 'groupId', 'forkedFrom', 'genres', 'difficulty')
       .limit(MAX_SHEETS)
       .get();
 
@@ -56,7 +57,10 @@ export const getPublicSheetIndex = cache(async (): Promise<PublicSheetRef[]> => 
     // Les grilles de groupe sont des copies : hors catalogue, donc hors sitemap,
     // hors pages d'artiste et hors pages d'accord.
     return docs
-      .filter((d) => !d.data().groupId)
+      .filter((d) => !estCopieDeGroupe({
+        groupId: typeof d.data().groupId === 'string' ? (d.data().groupId as string) : null,
+        forkedFrom: typeof d.data().forkedFrom === 'string' ? (d.data().forkedFrom as string) : null,
+      }))
       .map((d) => {
         const data = d.data();
         const updatedAt = data.updatedAt as { toDate?: () => Date } | undefined;
@@ -104,7 +108,10 @@ export const getArtistSheetRefs = cache(async (artist: string): Promise<PublicSh
 
     // Copies de groupe écartées, comme partout dans le catalogue.
     return docs
-      .filter((d) => !d.data().groupId)
+      .filter((d) => !estCopieDeGroupe({
+        groupId: typeof d.data().groupId === 'string' ? (d.data().groupId as string) : null,
+        forkedFrom: typeof d.data().forkedFrom === 'string' ? (d.data().forkedFrom as string) : null,
+      }))
       .map((d) => {
         const data = d.data();
         const updatedAt = data.updatedAt as { toDate?: () => Date } | undefined;
@@ -144,7 +151,10 @@ export const getSheetsWithChord = cache(async (chord: string, max = 12): Promise
 
     // Copies de groupe écartées, comme partout dans le catalogue.
     return docs
-      .filter((d) => !d.data().groupId)
+      .filter((d) => !estCopieDeGroupe({
+        groupId: typeof d.data().groupId === 'string' ? (d.data().groupId as string) : null,
+        forkedFrom: typeof d.data().forkedFrom === 'string' ? (d.data().forkedFrom as string) : null,
+      }))
       .map((d) => {
         const data = d.data();
         const updatedAt = data.updatedAt as { toDate?: () => Date } | undefined;
