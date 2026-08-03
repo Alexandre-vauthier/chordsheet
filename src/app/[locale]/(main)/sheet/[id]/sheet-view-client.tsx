@@ -102,7 +102,7 @@ function MenuEntry({
 export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
   const t = useTranslations('SheetView');
   const router = useRouter();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const { isBookmarked, toggleBookmark } = useBookmarks(user?.id);
   const { userRating, rateSheet, isLoading: ratingLoading } = useRatings(id, user?.id);
   const { setViewedSheet } = useLiveSession();
@@ -125,7 +125,20 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
   }, [id]);
 
   useEffect(() => {
+    /**
+     * Tant que l'authentification n'a pas répondu, on ne juge rien.
+     *
+     * L'effet partait aussitôt, avec `user` encore nul : une grille privée était
+     * alors déclarée inaccessible, y compris à son propre auteur. Il repassait bien
+     * une fois la session connue — mais `error`, lui, n'était jamais efface, et
+     * c'est lui que l'écran affiche. D'où une grille « inconsultable » au hasard des
+     * chargements, sans rapport avec ce qui venait de s'y passer.
+     */
+    if (authLoading) return;
+
     async function loadSheet() {
+      // Nouvelle tentative : le verdict précédent ne doit pas survivre.
+      setError(null);
       try {
         const db = getDb();
         const docRef = doc(db, 'sheets', id);
@@ -181,7 +194,7 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
     }
 
     loadSheet();
-  }, [id, user, isAdmin, initialSheet]);
+  }, [id, user, isAdmin, authLoading, initialSheet]);
 
   // Signale au contexte de session live quelle grille est consultée, pour que la
   // bannière puisse proposer un envoi direct en un clic (seules les grilles
