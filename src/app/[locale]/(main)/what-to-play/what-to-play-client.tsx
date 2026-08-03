@@ -98,9 +98,22 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
   const sautsRef = useRef(0);
   const lectureRef = useRef(0);
 
-  // Le tirage a changé sous les pieds : on repart du début plutôt que de pointer
-  // dans le vide.
-  useEffect(() => { setIndex(0); }, [file]);
+  /**
+   * Le tirage a changé sous les pieds : on repart du début.
+   *
+   * Et surtout **le son suit**. Changer de filtre remplaçait la pochette sans rien
+   * faire de la lecture en cours : on voyait un morceau et on en entendait un autre.
+   * On coupe donc, en invalidant le jeton pour que le rappel du lecteur ne soit pas
+   * pris pour une fin de morceau, et la radio — si elle tournait — repart sur le
+   * premier du nouveau tirage.
+   */
+  useEffect(() => {
+    lectureRef.current += 1;
+    stopPreviewAudio();
+    setEnLecture(false);
+    sautsRef.current = 0;
+    setIndex(0);
+  }, [file]);
 
   const courant = file[index] ?? null;
   const suivant = file[index + 1] ?? null;
