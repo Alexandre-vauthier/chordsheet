@@ -6,6 +6,7 @@ import type { Cell, CellSpan, InstrumentId } from '@/types';
 import { findChordByName } from '@/lib/chord-data';
 import { ensureAudioContext, getAudioContext, playChord, preloadInstrument, stopAllChords } from '@/lib/chord-audio';
 import { Link } from '@/i18n/navigation';
+import { getChordColor } from '@/lib/use-chord-color';
 
 /**
  * Bac à sable de l'accueil : une grille réduite, éditable et jouable sans compte.
@@ -30,9 +31,6 @@ const BEATS_PER_MEASURE = 4;
 /** Une grille de 4/4 se lit sur 16 colonnes : chaque 0,25 de span en occupe une. */
 const TOTAL_COLONNES = 16;
 const colonnes = (span: CellSpan) => Math.round(span / 0.25);
-
-/** Accords proposés au clic, pour ne pas obliger à taper sur mobile. */
-const PALETTE = ['Am', 'C', 'D', 'Dm', 'Em', 'F', 'G', 'A7', 'E7', 'G7'];
 
 const LABELS_SECTION = ['Couplet', 'Refrain', 'Pont'] as const;
 
@@ -104,7 +102,9 @@ export function TryEditor({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: st
   const [sections, setSections] = useState<DemoSection[]>(DEPART);
   const [enLecture, setEnLecture] = useState(false);
   const [pasActif, setPasActif] = useState<Pas | null>(null);
-  const [celluleActive, setCelluleActive] = useState<string | null>(null);
+  // Compteur de pas : sert de clé au balayage, pour que l'animation reparte à zéro
+  // à chaque passage — sans quoi une boucle d'une seule case ne balaierait qu'une fois.
+  const [tour, setTour] = useState(0);
 
   // La boucle lit la grille par une référence, pas par la fermeture : on peut ainsi
   // changer un accord pendant qu'elle tourne et l'entendre au tour suivant.
@@ -162,6 +162,7 @@ export function TryEditor({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: st
 
       const pas = sequence[i];
       setPasActif(pas);
+      setTour(n => n + 1);
 
       const cellule = sectionsRef.current[pas.sectionIndex]?.rows[pas.rowIndex]?.[pas.cellIndex];
       if (cellule?.chord.trim()) {
@@ -238,29 +239,6 @@ export function TryEditor({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: st
 
   const reinitialiser = () => { arreter(); setSections(DEPART); };
 
-  /** Écrit l'accord dans la case sélectionnée, ou dans la première case vide. */
-  const poserAccord = (chord: string) => {
-    // Entendre l'accord au moment où on le pose : c'est le retour le plus immédiat
-    // qu'on puisse donner. Pendant la boucle, on se tait — ce serait couper la voix
-    // guitare en plein milieu.
-    amorcer();
-    if (!enLecture) {
-      const accord = findChordByName(chord, 'guitar');
-      if (accord) { ensureAudioContext().then(() => playChord(accord, 'guitar')); }
-    }
-    if (celluleActive) {
-      const [si, ri, ci] = celluleActive.split('-').map(Number);
-      majCellule(si, ri, ci, chord);
-      return;
-    }
-    for (let si = 0; si < sections.length; si++) {
-      for (let ri = 0; ri < sections[si].rows.length; ri++) {
-        const ci = sections[si].rows[ri].findIndex(cell => !cell.chord.trim());
-        if (ci !== -1) { majCellule(si, ri, ci, chord); return; }
-      }
-    }
-  };
-
   const labelSection = (label: string) => {
     // Les libellés du dictionnaire sont ceux de l'éditeur ; « Pont » n'y figure pas.
     try { return tSection(label); } catch { return label; }
@@ -292,44 +270,63 @@ export function TryEditor({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: st
             const jointures = row.map(cell => (cumul += colonnes(cell.span)));
 
             return (
-              <div key={ri} className="relative mb-1.5 group/row">
+              <div key={ri} className="relative mb-4 group/row">
                 <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${TOTAL_COLONNES}, minmax(0, 1fr))` }}>
                   {row.map((cell, ci) => {
-                    const id = `${si}-${ri}-${ci}`;
                     const actif = pasActif?.sectionIndex === si && pasActif?.rowIndex === ri && pasActif?.cellIndex === ci;
+                    // Même code couleur que l'éditeur : une teinte par fondamentale,
+                    // portée par la bordure, épaissie à gauche.
+                    const couleur = getChordColor(cell.chord);
 
                     return (
                       <div
                         key={ci}
-                        className={`relative rounded-lg border transition-colors ${
-                          actif
-                            ? 'border-[var(--accent)] bg-[var(--accent-soft)]'
-                            : 'border-[var(--line)] bg-[var(--cell-bg)]'
-                        }`}
-                        style={{ gridColumn: `span ${colonnes(cell.span)}` }}
+                        style={{
+                          gridColumn: `span ${colonnes(cell.span)}`,
+                          ...(couleur ? { borderColor: couleur.border, borderLeftWidth: '5px' } : {}),
+                          ...(actif && !couleur ? { borderColor: 'var(--accent)' } : {}),
+                        }}
+                        className="relative rounded-lg border-2 border-[var(--line)] bg-[var(--cell-bg)] transition-colors"
                       >
+                        {/* Balayage de fond sur la durée de la case : on voit passer le
+                            temps plutôt que de deviner où on en est. Remonté à chaque
+                            pas par sa clé, sinon l'animation ne jouerait qu'une fois. */}
+                        {actif && pasActif && (
+                          <div
+                            key={tour}
+                            className="absolute inset-0 origin-left pointer-events-none rounded-[inherit]"
+                            style={{
+                              background: couleur ? couleur.border.substring(0, 7) + '21' : 'rgba(200,75,47,0.13)',
+                              animation: `beatSweep ${pasActif.dureeMs}ms linear forwards`,
+                            }}
+                          />
+                        )}
+
                         <input
                           value={cell.chord}
                           onChange={(e) => majCellule(si, ri, ci, e.target.value)}
-                          onFocus={() => { amorcer(); setCelluleActive(id); }}
-                          onBlur={() => setCelluleActive(cur => (cur === id ? null : cur))}
+                          onFocus={amorcer}
                           aria-label={t('cellLabel', { measure: ri + 1, beat: ci + 1 })}
-                          className="w-full h-11 sm:h-12 bg-transparent text-center font-medium text-sm sm:text-base
-                            text-[var(--ink)] outline-none focus:ring-2 focus:ring-[var(--accent)] rounded-lg"
+                          className="relative w-full h-11 sm:h-12 bg-transparent text-center font-mono font-medium
+                            text-sm sm:text-base text-[var(--ink)] outline-none focus:ring-2
+                            focus:ring-[var(--accent)] rounded-lg"
                         />
 
+                        {/* Découpe : centrée sous la case, à la place qu'elle occupe
+                            dans l'éditeur. Visible en permanence ici — au doigt il n'y
+                            a pas de survol, et c'est justement ce qu'on vient montrer. */}
                         {cell.span > 0.25 && (
                           <button
                             type="button"
                             onClick={() => decouper(si, ri, ci)}
                             title={t('split')}
                             aria-label={t('split')}
-                            className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-[var(--paper)]
-                              border border-[var(--line)] text-[10px] leading-none text-[var(--ink-faint)]
-                              hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all cursor-pointer
-                              opacity-0 group-hover/row:opacity-100 focus:opacity-100"
+                            className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 z-10 w-5 h-5 flex items-center
+                              justify-center rounded-full bg-[var(--cell-bg)] border border-[var(--line)]
+                              text-[10px] leading-none text-[var(--ink-faint)] cursor-pointer transition-all
+                              hover:bg-[var(--accent-soft)] hover:text-[var(--accent)] hover:border-[var(--accent)]"
                           >
-                            ÷
+                            /
                           </button>
                         )}
                       </div>
@@ -355,7 +352,7 @@ export function TryEditor({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: st
                         className="w-5 h-5 flex items-center justify-center rounded-full bg-[var(--paper)]
                           border border-[var(--line)] text-[10px] leading-none text-[var(--ink-faint)]
                           hover:border-[var(--accent)] hover:text-[var(--accent)] transition-all cursor-pointer
-                          shadow-sm opacity-0 group-hover/row:opacity-100 focus:opacity-100"
+                          shadow-sm opacity-40 group-hover/row:opacity-100 focus:opacity-100"
                       >
                         ⟷
                       </button>
@@ -367,23 +364,6 @@ export function TryEditor({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: st
           })}
         </div>
       ))}
-
-      {/* Palette : sur mobile on ne tape pas un accord, on le choisit. */}
-      <div className="mt-4 flex flex-wrap gap-1.5">
-        {PALETTE.map(chord => (
-          <button
-            key={chord}
-            type="button"
-            onMouseDown={(e) => e.preventDefault()}   // garde le focus sur la case visée
-            onClick={() => poserAccord(chord)}
-            className="px-2.5 py-1 rounded-md border border-[var(--line)] bg-[var(--cell-bg)]
-              text-xs font-medium text-[var(--ink-light)] hover:border-[var(--accent)]
-              hover:text-[var(--accent)] transition-colors cursor-pointer"
-          >
-            {chord}
-          </button>
-        ))}
-      </div>
 
       {/* Commandes */}
       <div className="mt-5 pt-4 border-t border-[var(--line)] flex flex-wrap items-center gap-3">
