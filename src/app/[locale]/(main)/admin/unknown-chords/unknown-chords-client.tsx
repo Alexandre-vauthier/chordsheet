@@ -31,6 +31,8 @@ interface Reponse {
   occurrences: number;
   /** Nombre d'instruments contrôlés, rendu par le serveur plutôt que recopié ici. */
   instrumentsChecked: number;
+  /** Accords dessinés à la main par un administrateur, comptés comme connus. */
+  adminChords: number;
 }
 
 /**
@@ -105,6 +107,10 @@ export function UnknownChordsClient() {
                 être contrôlée. Le dire, plutôt que laisser croire à une couverture
                 complète. */}
             {data.withoutIndex > 0 && ` · ${t('withoutIndex', { count: data.withoutIndex })}`}
+            {/* Dire que la bibliothèque enrichie est prise en compte : sans cette
+                mention, on ne peut pas savoir si un accord dessiné à la main est
+                sorti de la liste ou n'y est jamais entré. */}
+            {data.adminChords > 0 && ` · ${t('adminChords', { count: data.adminChords })}`}
           </p>
         )}
       </div>

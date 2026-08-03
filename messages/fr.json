@@ -1835,6 +1835,7 @@
     "colMissingOn": "Manquant sur",
     "colSheets": "Grilles concernées",
     "missingNowhere": "Aucun : la bibliothèque le connaît partout",
-    "missingCount": "{count, plural, one {# instrument} other {# instruments}} sur {total}"
+    "missingCount": "{count, plural, one {# instrument} other {# instruments}} sur {total}",
+    "adminChords": "{count} accords de la bibliothèque admin pris en compte"
   }
 }

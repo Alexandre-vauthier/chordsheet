@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminAuth, getAdminDb } from '@/lib/firebase-admin';
 import { INSTRUMENTS_AVEC_BIBLIOTHEQUE, instrumentsMissingChord, unknownChordsIn } from '@/lib/unknown-chords';
+import { loadAdminChordKeys } from '@/lib/library-chords-server';
 import type { InstrumentId } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -66,7 +67,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Réservé aux administrateurs.' }, { status: 403 });
   }
 
-  const snap = await db.collection('sheets').get();
+  // Les accords dessinés à la main par un administrateur comptent comme connus :
+  // l'application les résout avant la table statique, le contrôle doit suivre le
+  // même chemin sous peine de décrire une bibliothèque qui n'existe pas.
+  const [snap, ajoutsAdmin] = await Promise.all([
+    db.collection('sheets').get(),
+    loadAdminChordKeys(),
+  ]);
   const docs = snap.docs as { id: string; data: () => Record<string, unknown> }[];
 
   const parAccord = new Map<string, Manquant>();
@@ -84,12 +91,12 @@ export async function GET(req: NextRequest) {
       ? Object.keys(s.customChords as Record<string, unknown>)
       : [];
 
-    for (const chord of unknownChordsIn(chords, instrument, dessines)) {
+    for (const chord of unknownChordsIn(chords, instrument, dessines, ajoutsAdmin)) {
       const cle = chord.toLowerCase();
       let entree = parAccord.get(cle);
       if (!entree) {
         // Calculé une fois par accord : la liste ne dépend pas de la grille.
-        entree = { chord, missingOn: instrumentsMissingChord(chord), usages: [] };
+        entree = { chord, missingOn: instrumentsMissingChord(chord, ajoutsAdmin), usages: [] };
         parAccord.set(cle, entree);
       }
       entree.usages.push({
@@ -119,5 +126,7 @@ export async function GET(req: NextRequest) {
     // Rendu plutôt que recopié dans l'écran : « manquant sur 4 instruments sur 6 »
     // deviendrait faux le jour où un instrument s'ajoute.
     instrumentsChecked: INSTRUMENTS_AVEC_BIBLIOTHEQUE.length,
+    /** Accords dessinés à la main par un administrateur, pris en compte ci-dessus. */
+    adminChords: ajoutsAdmin.size,
   });
 }

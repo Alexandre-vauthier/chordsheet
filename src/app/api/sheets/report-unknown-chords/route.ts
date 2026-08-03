@@ -4,6 +4,7 @@ import { sendTransactionalEmail } from '@/lib/send-email';
 import { unknownChordEmail } from '@/lib/auth-email-copy';
 import { instrumentsMissingChord, unknownChordsIn } from '@/lib/unknown-chords';
 import { INSTRUMENT_CONFIG } from '@/lib/chord-data';
+import { loadAdminChordKeys } from '@/lib/library-chords-server';
 import { SITE_URL } from '@/lib/seo';
 import { ADMIN_EMAILS } from '@/types';
 import type { InstrumentId } from '@/types';
@@ -58,7 +59,10 @@ export async function POST(req: NextRequest) {
     ? Object.keys(s.customChords as Record<string, unknown>)
     : [];
 
-  const inconnus = unknownChordsIn(chords, instrument, dessines);
+  // Même bibliothèque que le tableau d'administration : un accord qu'un
+  // administrateur a déjà dessiné ne doit pas déclencher d'alerte.
+  const ajoutsAdmin = await loadAdminChordKeys();
+  const inconnus = unknownChordsIn(chords, instrument, dessines, ajoutsAdmin);
   if (inconnus.length === 0) return NextResponse.json({ ok: true, unknown: 0 });
 
   // Revendication atomique, accord par accord : deux sauvegardes simultanées ne
@@ -95,7 +99,7 @@ export async function POST(req: NextRequest) {
     // à un programme.
     chords: nouveaux.map((name) => ({
       name,
-      missingOn: instrumentsMissingChord(name).map((i) => INSTRUMENT_CONFIG[i]?.label ?? i),
+      missingOn: instrumentsMissingChord(name, ajoutsAdmin).map((i) => INSTRUMENT_CONFIG[i]?.label ?? i),
     })),
     title: typeof s.title === 'string' ? s.title : '',
     artist: typeof s.artist === 'string' ? s.artist : '',

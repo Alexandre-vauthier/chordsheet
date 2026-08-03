@@ -1835,6 +1835,7 @@
     "colMissingOn": "Missing on",
     "colSheets": "Sheets involved",
     "missingNowhere": "None: the library knows it everywhere",
-    "missingCount": "{count, plural, one {# instrument} other {# instruments}} out of {total}"
+    "missingCount": "{count, plural, one {# instrument} other {# instruments}} out of {total}",
+    "adminChords": "{count} admin library chords taken into account"
   }
 }

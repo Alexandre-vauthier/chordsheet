@@ -1,5 +1,6 @@
 import type { InstrumentId } from '@/types';
-import { findChordVariants } from '@/lib/chord-data';
+import { enharmonicEquivalent, findChordVariants } from '@/lib/chord-data';
+import { libraryKey } from '@/lib/library-key';
 
 /**
  * Accords écrits dans une grille que la bibliothèque ne sait pas dessiner.
@@ -9,10 +10,21 @@ import { findChordVariants } from '@/lib/chord-data';
  * case dont aucun diagramme ne sort — l'auteur croit que c'est normal, et le trou
  * dans la bibliothèque reste invisible.
  *
- * Fonctions pures : elles ne lisent que la bibliothèque, aucun accès réseau ni
- * Firestore. C'est ce qui permet de les appeler aussi bien depuis le navigateur que
- * depuis une route serveur.
+ * Fonctions pures : aucun accès réseau ni Firestore. Les accords ajoutés par un
+ * administrateur vivent pourtant en base — ils sont donc passés en argument, sous la
+ * forme de clés `libraryKey`, plutôt que lus ici. C'est ce qui permet d'appeler ces
+ * fonctions aussi bien depuis le navigateur que depuis une route serveur.
  */
+
+/**
+ * Clés `libraryKey` des accords ajoutés à la bibliothèque par un administrateur.
+ *
+ * Sans elles, le contrôle réclamerait un accord déjà dessiné : l'application le
+ * résout depuis `library_chords` avant de consulter la table statique (voir
+ * `resolveChord` dans `use-playback`), et le contrôle doit suivre le même chemin,
+ * sinon il décrit une bibliothèque qui n'est pas celle que voient les utilisateurs.
+ */
+export type AjoutsAdmin = ReadonlySet<string>;
 
 /**
  * Instruments dont la bibliothèque ne dit rien, à écarter du contrôle.
@@ -48,12 +60,32 @@ function capitaliserFondamentales(nom: string): string {
  * accords slash, et génération à la volée des formules enrichies. Un accord qu'elle
  * ne rend pas est donc réellement absent, pas seulement absent de la table.
  */
-export function isChordKnown(name: string, instrumentId: InstrumentId): boolean {
+export function isChordKnown(
+  name: string,
+  instrumentId: InstrumentId,
+  ajouts?: AjoutsAdmin,
+): boolean {
   const propre = name.trim();
   if (!propre) return true;
   if (SANS_BIBLIOTHEQUE.includes(instrumentId)) return true;
 
-  return findChordVariants(capitaliserFondamentales(propre), instrumentId).length > 0;
+  const canonique = capitaliserFondamentales(propre);
+  if (estAjouteParAdmin(canonique, instrumentId, ajouts)) return true;
+
+  return findChordVariants(canonique, instrumentId).length > 0;
+}
+
+/**
+ * L'accord a-t-il été ajouté à la main dans la bibliothèque ?
+ *
+ * L'équivalent enharmonique est testé aussi : un administrateur qui a dessiné « Db »
+ * couvre « C# », et l'application le résout ainsi à la lecture.
+ */
+function estAjouteParAdmin(canonique: string, instrumentId: InstrumentId, ajouts?: AjoutsAdmin): boolean {
+  if (!ajouts?.size) return false;
+  if (ajouts.has(libraryKey(canonique, instrumentId))) return true;
+  const enh = enharmonicEquivalent(canonique);
+  return enh ? ajouts.has(libraryKey(enh, instrumentId)) : false;
 }
 
 /**
@@ -67,6 +99,7 @@ export function unknownChordsIn(
   chords: string[],
   instrumentId: InstrumentId,
   connus: string[] = [],
+  ajouts?: AjoutsAdmin,
 ): string[] {
   const dessines = new Set(connus.map((c) => c.trim().toLowerCase()));
   const vus = new Set<string>();
@@ -78,7 +111,7 @@ export function unknownChordsIn(
     const cle = propre.toLowerCase();
     if (vus.has(cle) || dessines.has(cle)) continue;
     vus.add(cle);
-    if (!isChordKnown(propre, instrumentId)) out.push(propre);
+    if (!isChordKnown(propre, instrumentId, ajouts)) out.push(propre);
   }
 
   return out;
@@ -97,6 +130,6 @@ export const INSTRUMENTS_AVEC_BIBLIOTHEQUE: InstrumentId[] =
  * l'ukulélé, et le savoir d'un coup d'œil dit combien de travail son ajout
  * représente. Rendre la liste vide signifie que tout le monde sait le dessiner.
  */
-export function instrumentsMissingChord(name: string): InstrumentId[] {
-  return INSTRUMENTS_AVEC_BIBLIOTHEQUE.filter((i) => !isChordKnown(name, i));
+export function instrumentsMissingChord(name: string, ajouts?: AjoutsAdmin): InstrumentId[] {
+  return INSTRUMENTS_AVEC_BIBLIOTHEQUE.filter((i) => !isChordKnown(name, i, ajouts));
 }
