@@ -89,22 +89,27 @@ export function newAccountEmail(params: {
  * bibliothèque ou s'il s'agit d'une faute de frappe, la grille le dit.
  */
 export function unknownChordEmail(params: {
-  chords: string[];
-  instrument: string;
+  /** Chaque accord avec les instruments qui ne savent pas le dessiner. */
+  chords: { name: string; missingOn: string[] }[];
   title: string;
   artist: string;
   author: string;
   url: string;
 }): EmailContent {
-  const liste = params.chords.join(', ');
+  const liste = params.chords.map((c) => c.name).join(', ');
   const morceau = [params.title, params.artist].filter(Boolean).join(' - ') || 'grille sans titre';
   const pluriel = params.chords.length > 1;
+
+  // Le détail par accord plutôt qu'un seul instrument : c'est le nombre
+  // d'instruments concernés qui dit le travail que représente l'ajout.
+  const detail = params.chords
+    .map((c) => `${c.name} : manquant sur ${c.missingOn.join(', ') || 'aucun instrument'}`)
+    .join('. ');
 
   return {
     subject: `${pluriel ? 'Accords absents' : 'Accord absent'} de la bibliothèque : ${liste} — ${SITE_NAME}`,
     heading: pluriel ? 'Des accords manquent à la bibliothèque' : 'Un accord manque à la bibliothèque',
-    body: `${liste} ${pluriel ? 'ne sont pas reconnus' : "n'est pas reconnu"} pour ${params.instrument}. `
-      + `Écrit par ${params.author || 'un auteur inconnu'} dans « ${morceau} ».`,
+    body: `${detail}. Écrit par ${params.author || 'un auteur inconnu'} dans « ${morceau} ».`,
     action: 'Voir les accords non reconnus',
     url: params.url,
     footer: "Un accord n'est annoncé qu'à sa première apparition : les grilles suivantes qui l'emploient ne déclencheront pas de message.",

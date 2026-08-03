@@ -83,3 +83,20 @@ export function unknownChordsIn(
 
   return out;
 }
+
+/** Les instruments qui ont une bibliothèque de diagrammes. */
+export const INSTRUMENTS_AVEC_BIBLIOTHEQUE: InstrumentId[] =
+  ['guitar', 'ukulele', 'mandolin', 'banjo', 'bass', 'piano'];
+
+/**
+ * Les instruments qui ne savent pas dessiner cet accord.
+ *
+ * Une grille n'est contrôlée que pour son propre instrument, ce qui suffit à savoir
+ * si son auteur voit une case vide. Mais du point de vue de la bibliothèque, la
+ * question utile est ailleurs : un accord peut manquer à la guitare **et** à
+ * l'ukulélé, et le savoir d'un coup d'œil dit combien de travail son ajout
+ * représente. Rendre la liste vide signifie que tout le monde sait le dessiner.
+ */
+export function instrumentsMissingChord(name: string): InstrumentId[] {
+  return INSTRUMENTS_AVEC_BIBLIOTHEQUE.filter((i) => !isChordKnown(name, i));
+}

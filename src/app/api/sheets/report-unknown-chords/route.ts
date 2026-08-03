@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAdminAuth, getAdminDb } from '@/lib/firebase-admin';
 import { sendTransactionalEmail } from '@/lib/send-email';
 import { unknownChordEmail } from '@/lib/auth-email-copy';
-import { unknownChordsIn } from '@/lib/unknown-chords';
+import { instrumentsMissingChord, unknownChordsIn } from '@/lib/unknown-chords';
+import { INSTRUMENT_CONFIG } from '@/lib/chord-data';
 import { SITE_URL } from '@/lib/seo';
 import { ADMIN_EMAILS } from '@/types';
 import type { InstrumentId } from '@/types';
@@ -90,8 +91,12 @@ export async function POST(req: NextRequest) {
     .split(',').map((a) => a.trim()).filter(Boolean);
 
   const contenu = unknownChordEmail({
-    chords: nouveaux,
-    instrument,
+    // Libellés français plutôt qu'identifiants : le message va à des humains, pas
+    // à un programme.
+    chords: nouveaux.map((name) => ({
+      name,
+      missingOn: instrumentsMissingChord(name).map((i) => INSTRUMENT_CONFIG[i]?.label ?? i),
+    })),
     title: typeof s.title === 'string' ? s.title : '',
     artist: typeof s.artist === 'string' ? s.artist : '',
     author: typeof s.ownerName === 'string' ? s.ownerName : '',

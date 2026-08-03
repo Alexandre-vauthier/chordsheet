@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminAuth, getAdminDb } from '@/lib/firebase-admin';
-import { unknownChordsIn } from '@/lib/unknown-chords';
+import { INSTRUMENTS_AVEC_BIBLIOTHEQUE, instrumentsMissingChord, unknownChordsIn } from '@/lib/unknown-chords';
 import type { InstrumentId } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -11,23 +11,40 @@ export const maxDuration = 60;
  *
  * Recalculé à chaque appel plutôt que lu dans une table tenue à jour : la
  * bibliothèque s'enrichit, un accord signalé hier peut être connu aujourd'hui, et une
- * liste figée continuerait de réclamer un travail déjà fait. Le balayage est
- * abordable, il ne lit que quatre champs par grille.
+ * liste figée continuerait de réclamer un travail déjà fait.
  *
  * Le champ `chords` sert de source : il est déposé à plat par `toFirestore` à chaque
  * sauvegarde. Une grille enregistrée avant son introduction n'a pas ce champ ; elle
  * est comptée à part plutôt qu'ignorée en silence, sans quoi le tableau donnerait
  * l'illusion d'une couverture complète.
  */
-interface Ligne {
-  chord: string;
-  instrument: InstrumentId;
+
+/** Une grille qui emploie l'accord. */
+interface Usage {
   sheetId: string;
   title: string;
   artist: string;
   ownerId: string;
   ownerName: string;
   isPublic: boolean;
+  /** Instrument de la grille : c'est pour celui-là que son auteur voit une case vide. */
+  instrument: InstrumentId;
+}
+
+/**
+ * Un accord manquant, vu depuis la bibliothèque.
+ *
+ * Regroupé par accord et non par grille : c'est l'accord qu'on ajoute, pas la grille
+ * qu'on corrige. Et `missingOn` liste **tous** les instruments qui ne savent pas le
+ * dessiner, pas seulement celui de la grille où il a été repéré — une grille n'est
+ * contrôlée que pour son propre instrument, ce qui suffit à savoir si son auteur voit
+ * une case vide, mais ne dit rien du travail que représente l'ajout. Un accord absent
+ * partout n'est pas un accord absent d'un seul instrument.
+ */
+interface Manquant {
+  chord: string;
+  missingOn: InstrumentId[];
+  usages: Usage[];
 }
 
 export async function GET(req: NextRequest) {
@@ -52,7 +69,7 @@ export async function GET(req: NextRequest) {
   const snap = await db.collection('sheets').get();
   const docs = snap.docs as { id: string; data: () => Record<string, unknown> }[];
 
-  const lignes: Ligne[] = [];
+  const parAccord = new Map<string, Manquant>();
   let sansIndex = 0;
 
   for (const d of docs) {
@@ -68,32 +85,39 @@ export async function GET(req: NextRequest) {
       : [];
 
     for (const chord of unknownChordsIn(chords, instrument, dessines)) {
-      lignes.push({
-        chord,
-        instrument,
+      const cle = chord.toLowerCase();
+      let entree = parAccord.get(cle);
+      if (!entree) {
+        // Calculé une fois par accord : la liste ne dépend pas de la grille.
+        entree = { chord, missingOn: instrumentsMissingChord(chord), usages: [] };
+        parAccord.set(cle, entree);
+      }
+      entree.usages.push({
         sheetId: d.id,
         title: typeof s.title === 'string' ? s.title : '',
         artist: typeof s.artist === 'string' ? s.artist : '',
         ownerId: typeof s.ownerId === 'string' ? s.ownerId : '',
         ownerName: typeof s.ownerName === 'string' ? s.ownerName : '',
         isPublic: s.isPublic === true,
+        instrument,
       });
     }
   }
 
-  // Les plus fréquents d'abord : c'est l'accord qui revient dans dix grilles qui vaut
+  // Les plus employés d'abord : c'est l'accord qui revient dans dix grilles qui vaut
   // qu'on l'ajoute à la bibliothèque, pas la faute de frappe isolée.
-  const parAccord = new Map<string, number>();
-  for (const l of lignes) parAccord.set(l.chord.toLowerCase(), (parAccord.get(l.chord.toLowerCase()) ?? 0) + 1);
-  lignes.sort((a, b) => {
-    const ecart = (parAccord.get(b.chord.toLowerCase()) ?? 0) - (parAccord.get(a.chord.toLowerCase()) ?? 0);
-    return ecart !== 0 ? ecart : a.chord.localeCompare(b.chord);
-  });
+  const rows = [...parAccord.values()].sort(
+    (a, b) => b.usages.length - a.usages.length || a.chord.localeCompare(b.chord),
+  );
 
   return NextResponse.json({
-    rows: lignes,
+    rows,
     scanned: docs.length,
     withoutIndex: sansIndex,
-    distinctChords: parAccord.size,
+    distinctChords: rows.length,
+    occurrences: rows.reduce((n, r) => n + r.usages.length, 0),
+    // Rendu plutôt que recopié dans l'écran : « manquant sur 4 instruments sur 6 »
+    // deviendrait faux le jour où un instrument s'ajoute.
+    instrumentsChecked: INSTRUMENTS_AVEC_BIBLIOTHEQUE.length,
   });
 }

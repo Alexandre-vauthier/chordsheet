@@ -4,24 +4,33 @@ import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { getAuth } from 'firebase/auth';
 import { useAuth } from '@/lib/auth-context';
+import { useInstrumentLabel } from '@/lib/use-genre-labels';
 import { Link } from '@/i18n/navigation';
 
-interface Ligne {
-  chord: string;
-  instrument: string;
+interface Usage {
   sheetId: string;
   title: string;
   artist: string;
   ownerId: string;
   ownerName: string;
   isPublic: boolean;
+  instrument: string;
+}
+
+interface Manquant {
+  chord: string;
+  missingOn: string[];
+  usages: Usage[];
 }
 
 interface Reponse {
-  rows: Ligne[];
+  rows: Manquant[];
   scanned: number;
   withoutIndex: number;
   distinctChords: number;
+  occurrences: number;
+  /** Nombre d'instruments contrôlés, rendu par le serveur plutôt que recopié ici. */
+  instrumentsChecked: number;
 }
 
 /**
@@ -38,6 +47,7 @@ interface Reponse {
 export function UnknownChordsClient() {
   const t = useTranslations('AdminUnknownChords');
   const { isAdmin, loading } = useAuth();
+  const instrumentLabel = useInstrumentLabel();
   const [data, setData] = useState<Reponse | null>(null);
   const [chargement, setChargement] = useState(false);
   const [erreur, setErreur] = useState('');
@@ -89,7 +99,7 @@ export function UnknownChordsClient() {
             {t('summary', {
               scanned: data.scanned,
               distinct: data.distinctChords,
-              rows: data.rows.length,
+              rows: data.occurrences,
             })}
             {/* Une grille sans champ `chords` date d'avant l'index : elle n'a pas pu
                 être contrôlée. Le dire, plutôt que laisser croire à une couverture
@@ -111,36 +121,53 @@ export function UnknownChordsClient() {
             <thead>
               <tr className="bg-[var(--cell-bg)] text-left text-xs uppercase tracking-wider text-[var(--ink-faint)]">
                 <th className="px-4 py-3 font-medium">{t('colChord')}</th>
-                <th className="px-4 py-3 font-medium">{t('colInstrument')}</th>
-                <th className="px-4 py-3 font-medium">{t('colSheet')}</th>
-                <th className="px-4 py-3 font-medium">{t('colAuthor')}</th>
-                <th className="px-4 py-3 font-medium">{t('colVisibility')}</th>
+                <th className="px-4 py-3 font-medium">{t('colMissingOn')}</th>
+                <th className="px-4 py-3 font-medium">{t('colSheets')}</th>
               </tr>
             </thead>
             <tbody>
-              {data.rows.map((l, i) => (
-                <tr key={`${l.sheetId}-${l.chord}-${i}`} className="border-t border-[var(--line)]">
-                  <td className="px-4 py-2.5 font-mono font-medium text-[var(--ink)]">{l.chord}</td>
-                  <td className="px-4 py-2.5 text-[var(--ink-light)]">{l.instrument}</td>
-                  <td className="px-4 py-2.5">
-                    <Link href={`/sheet/${l.sheetId}`} className="text-[var(--accent)] hover:underline">
-                      {l.title || t('untitled')}
-                    </Link>
-                    {l.artist && <span className="text-[var(--ink-faint)]"> · {l.artist}</span>}
+              {data.rows.map((m) => (
+                <tr key={m.chord} className="border-t border-[var(--line)] align-top">
+                  <td className="px-4 py-3 font-mono font-medium text-[var(--ink)] whitespace-nowrap">{m.chord}</td>
+
+                  {/* Tous les instruments qui ne savent pas le dessiner, pas seulement
+                      celui de la grille : c'est ce qui dit le travail que represente
+                      l'ajout. Vide signifie que la bibliotheque le connait partout. */}
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap gap-1">
+                      {m.missingOn.length === 0 ? (
+                        <span className="text-xs text-[var(--ink-faint)]">{t('missingNowhere')}</span>
+                      ) : m.missingOn.map((i) => (
+                        <span key={i} className="px-2 py-0.5 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] text-[11px]">
+                          {instrumentLabel(i)}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="mt-1 text-[11px] text-[var(--ink-faint)]">
+                      {t('missingCount', { count: m.missingOn.length, total: data.instrumentsChecked })}
+                    </p>
                   </td>
-                  <td className="px-4 py-2.5">
-                    {l.ownerId ? (
-                      <Link href={`/user/${l.ownerId}`} className="text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors">
-                        {l.ownerName || t('unknownAuthor')}
-                      </Link>
-                    ) : (
-                      <span className="text-[var(--ink-faint)]">{t('unknownAuthor')}</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2.5 text-xs">
-                    <span className={l.isPublic ? 'text-[var(--ink-light)]' : 'text-[var(--ink-faint)]'}>
-                      {l.isPublic ? t('public') : t('private')}
-                    </span>
+
+                  <td className="px-4 py-3">
+                    <ul className="space-y-1.5">
+                      {m.usages.map((u) => (
+                        <li key={u.sheetId} className="leading-snug">
+                          <Link href={`/sheet/${u.sheetId}`} className="text-[var(--accent)] hover:underline">
+                            {u.title || t('untitled')}
+                          </Link>
+                          {u.artist && <span className="text-[var(--ink-faint)]"> · {u.artist}</span>}
+                          <span className="text-[var(--ink-faint)] text-xs">
+                            {' — '}
+                            {u.ownerId ? (
+                              <Link href={`/user/${u.ownerId}`} className="hover:text-[var(--accent)] transition-colors">
+                                {u.ownerName || t('unknownAuthor')}
+                              </Link>
+                            ) : (u.ownerName || t('unknownAuthor'))}
+                            {` · ${instrumentLabel(u.instrument)} · ${u.isPublic ? t('public') : t('private')}`}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
                   </td>
                 </tr>
               ))}

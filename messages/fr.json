@@ -1828,13 +1828,13 @@
     "loadError": "L'analyse a échoué. Réessaie.",
     "forbidden": "Réservé aux administrateurs.",
     "colChord": "Accord",
-    "colInstrument": "Instrument",
-    "colSheet": "Grille",
-    "colAuthor": "Auteur",
-    "colVisibility": "Visibilité",
     "untitled": "Sans titre",
     "unknownAuthor": "Auteur inconnu",
     "public": "Publique",
-    "private": "Privée"
+    "private": "Privée",
+    "colMissingOn": "Manquant sur",
+    "colSheets": "Grilles concernées",
+    "missingNowhere": "Aucun : la bibliothèque le connaît partout",
+    "missingCount": "{count, plural, one {# instrument} other {# instruments}} sur {total}"
   }
 }

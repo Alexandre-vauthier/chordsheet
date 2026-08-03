@@ -1828,13 +1828,13 @@
     "loadError": "The scan failed. Please try again.",
     "forbidden": "Administrators only.",
     "colChord": "Chord",
-    "colInstrument": "Instrument",
-    "colSheet": "Sheet",
-    "colAuthor": "Author",
-    "colVisibility": "Visibility",
     "untitled": "Untitled",
     "unknownAuthor": "Unknown author",
     "public": "Public",
-    "private": "Private"
+    "private": "Private",
+    "colMissingOn": "Missing on",
+    "colSheets": "Sheets involved",
+    "missingNowhere": "None: the library knows it everywhere",
+    "missingCount": "{count, plural, one {# instrument} other {# instruments}} out of {total}"
   }
 }
