@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { BrandLogo } from '@/components/layout/brand-logo';
 import Image from 'next/image';
@@ -174,8 +174,18 @@ function BookRow({ title, artist, mine, tag }: { title: string; artist: string; 
   const { artworkUrl, previewUrl } = useArtwork(artist, title);
   const [playing, setPlaying] = useState(false);
 
-  // Quitter la page pendant l'extrait laisserait le son tourner sans rien à l'écran.
-  useEffect(() => () => { if (playing) stopPreviewAudio(); }, [playing]);
+  /**
+   * Arrêt à la sortie de page, et **seulement** à la sortie de page.
+   *
+   * L'effet dépendait de `playing`, donc son nettoyage se rejouait à chaque
+   * changement d'état. Lancer un second extrait coupait le premier, ce qui remettait
+   * `playing` à faux sur la ligne d'origine, ce qui déclenchait son nettoyage, qui
+   * coupait l'extrait qu'on venait de lancer : on entendait l'arrêt, jamais le
+   * démarrage. La référence porte l'état, l'effet ne se monte qu'une fois.
+   */
+  const playingRef = useRef(false);
+  useEffect(() => { playingRef.current = playing; }, [playing]);
+  useEffect(() => () => { if (playingRef.current) stopPreviewAudio(); }, []);
 
   const toggle = () => {
     if (!previewUrl) return;

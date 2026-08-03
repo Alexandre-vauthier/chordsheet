@@ -472,7 +472,9 @@
     "errorUpdate": "Could not update the group.",
     "edit": "Edit",
     "adaptForGroup": "Adapt for the group",
-    "confirmDeleteSheet": "Delete \"{title}\"? This group grid will be permanently removed."
+    "confirmDeleteSheet": "Delete \"{title}\"? This group grid will be permanently removed.",
+    "proInvitedTitle": "Create your own band with Pro",
+    "proInvitedSubtitle": "You already play in a band by invitation, and that costs you nothing. Going Pro lets you create your own, invite your musicians and run synchronised live sessions."
   },
   "Artists": {
     "title": "Artists",
@@ -1721,7 +1723,11 @@
   },
   "Notifications": {
     "empty": "No notification.",
-    "wroteComment": "wrote a comment"
+    "wroteComment": "wrote a comment",
+    "title": "Notifications",
+    "markAllRead": "Mark all as read",
+    "ratedSheet": "rated your sheet",
+    "unknownChord": "{count, plural, one {Chord missing from the library} other {Chords missing from the library}}: {chords}"
   },
   "Concert": {
     "end": "End the concert"

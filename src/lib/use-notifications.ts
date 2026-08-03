@@ -10,8 +10,19 @@ export interface AppNotification {
   fromName: string;
   sheetId: string;
   sheetTitle: string;
-  kind: 'comment' | 'rating';
+  kind: 'comment' | 'rating' | 'unknownChord';
   rating?: number;
+  /** Accords concernés, pour `unknownChord`. */
+  chords?: string[];
+  /**
+   * Destination du clic, quand elle ne se déduit pas de `sheetId`.
+   *
+   * Une notification d'administration mène à un écran d'administration, pas à la
+   * grille : c'est le tableau qu'on veut ouvrir, pas le morceau où l'accord a été
+   * repéré. Le chemin est porté par la notification plutôt que déduit de son type,
+   * pour ne pas avoir à toucher la cloche à chaque nouvelle destination.
+   */
+  link?: string;
   createdAt: Date | null;
   read: boolean;
 }
@@ -34,8 +45,10 @@ export function useNotifications() {
           fromName: (data.fromName as string) || 'Quelqu’un',
           sheetId: (data.sheetId as string) || '',
           sheetTitle: (data.sheetTitle as string) || '',
-          kind: (data.kind as 'comment' | 'rating') || 'comment',
+          kind: (data.kind as AppNotification['kind']) || 'comment',
           rating: typeof data.rating === 'number' ? data.rating : undefined,
+          chords: Array.isArray(data.chords) ? (data.chords as string[]) : undefined,
+          link: typeof data.link === 'string' ? data.link : undefined,
           createdAt: (data.createdAt as { toDate?: () => Date })?.toDate?.() ?? null,
           read: !!data.read,
         } as AppNotification;

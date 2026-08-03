@@ -472,7 +472,9 @@
     "errorUpdate": "Impossible de mettre à jour le groupe.",
     "edit": "Modifier",
     "adaptForGroup": "Adapter pour le groupe",
-    "confirmDeleteSheet": "Supprimer « {title} » ? Cette grille du groupe sera définitivement supprimée."
+    "confirmDeleteSheet": "Supprimer « {title} » ? Cette grille du groupe sera définitivement supprimée.",
+    "proInvitedTitle": "Crée ton propre groupe avec Pro",
+    "proInvitedSubtitle": "Tu joues déjà dans un groupe sur invitation, et ça ne te coûte rien. Passer à Pro te permet d'en créer, d'inviter tes musiciens et de lancer les concerts synchronisés."
   },
   "Artists": {
     "title": "Artistes",
@@ -1721,7 +1723,11 @@
   },
   "Notifications": {
     "empty": "Aucune notification.",
-    "wroteComment": "a écrit un commentaire"
+    "wroteComment": "a écrit un commentaire",
+    "title": "Notifications",
+    "markAllRead": "Tout marquer lu",
+    "ratedSheet": "a noté ta grille",
+    "unknownChord": "{count, plural, one {Accord absent de la bibliothèque} other {Accords absents de la bibliothèque}} : {chords}"
   },
   "Concert": {
     "end": "Terminer le concert"

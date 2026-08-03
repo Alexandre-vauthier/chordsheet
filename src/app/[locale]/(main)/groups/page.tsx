@@ -78,9 +78,20 @@ function GroupCard({ group, setsCount }: { group: Group; setsCount: number }) {
   );
 }
 
-// Argumentaire Pro affiché aux utilisateurs sans abonnement : les groupes,
-// l'usage prof et les sessions live sont réservés au plan Pro.
-function ProUpsell() {
+/**
+ * Argumentaire Pro, pour les comptes sans abonnement.
+ *
+ * Deux situations qui n'appellent pas le même discours, ni la même place sur la page.
+ *
+ * Un compte qui n'a aucun groupe voit l'argumentaire **avant** le vide : il tient
+ * lieu d'état vide, et « passe à Pro pour jouer en groupe » est exact.
+ *
+ * Un compte invité dans un groupe, lui, joue déjà en groupe — la phrase serait
+ * fausse, et l'argumentaire placé avant repousserait ses propres groupes vers le bas
+ * comme s'il n'y avait pas droit. Il passe donc **après** la liste, et l'argument
+ * devient celui qui lui manque vraiment : créer et mener son propre groupe.
+ */
+function ProUpsell({ dejaInvite = false }: { dejaInvite?: boolean }) {
   const t = useTranslations('Groups');
   const benefits = [
     { icon: '🎸', title: t('proBenefitGroupsTitle'), desc: t('proBenefitGroupsDesc') },
@@ -88,13 +99,17 @@ function ProUpsell() {
     { icon: '🔴', title: t('proBenefitLiveTitle'), desc: t('proBenefitLiveDesc') },
   ];
   return (
-    <div className="rounded-2xl border border-[var(--accent)]/30 bg-gradient-to-b from-[var(--accent-soft)] to-transparent p-6 sm:p-8 mb-8">
+    <div className={`rounded-2xl border border-[var(--accent)]/30 bg-gradient-to-b from-[var(--accent-soft)] to-transparent p-6 sm:p-8 ${dejaInvite ? 'mt-10' : 'mb-8'}`}>
       <div className="text-center max-w-md mx-auto">
         <span className="inline-block text-xs font-semibold uppercase tracking-wider text-[var(--accent)] bg-[var(--accent-soft)] px-3 py-1 rounded-full">
           Pro
         </span>
-        <h2 className="font-playfair text-xl sm:text-2xl font-bold text-[var(--ink)] mt-3">{t('proUpsellTitle')}</h2>
-        <p className="text-sm text-[var(--ink-light)] mt-2">{t('proUpsellSubtitle')}</p>
+        <h2 className="font-playfair text-xl sm:text-2xl font-bold text-[var(--ink)] mt-3">
+          {t(dejaInvite ? 'proInvitedTitle' : 'proUpsellTitle')}
+        </h2>
+        <p className="text-sm text-[var(--ink-light)] mt-2">
+          {t(dejaInvite ? 'proInvitedSubtitle' : 'proUpsellSubtitle')}
+        </p>
       </div>
 
       <div className="mt-6 space-y-3 max-w-md mx-auto">
@@ -162,7 +177,8 @@ export default function GroupsPage() {
         </div>
       </div>
 
-      {!loading && !userIsPro && <ProUpsell />}
+      {/* Sans groupe : l'argumentaire tient lieu d'état vide, il passe avant. */}
+      {!loading && !userIsPro && groups.length === 0 && <ProUpsell />}
 
       {loading ? (
         <div className="space-y-3">
@@ -205,6 +221,11 @@ export default function GroupsPage() {
           ))}
         </div>
       )}
+
+      {/* Invité dans un groupe sans être Pro : l'argumentaire vient après ses
+          groupes, pas avant. Il joue déjà en groupe, ce qui lui manque c'est de
+          pouvoir créer et mener le sien. */}
+      {!loading && !userIsPro && groups.length > 0 && <ProUpsell dejaInvite />}
     </div>
   );
 }

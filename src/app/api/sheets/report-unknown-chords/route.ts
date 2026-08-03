@@ -1,23 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAdminAuth, getAdminDb } from '@/lib/firebase-admin';
-import { sendTransactionalEmail } from '@/lib/send-email';
-import { unknownChordEmail } from '@/lib/auth-email-copy';
 import { instrumentsMissingChord, unknownChordsIn } from '@/lib/unknown-chords';
 import { INSTRUMENT_CONFIG } from '@/lib/chord-data';
 import { loadAdminChordKeys } from '@/lib/library-chords-server';
-import { SITE_URL } from '@/lib/seo';
-import { ADMIN_EMAILS } from '@/types';
 import type { InstrumentId } from '@/types';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * Signale aux administrateurs un accord que la bibliothèque ne sait pas dessiner.
+ * Prévient les administrateurs qu'un accord manque à la bibliothèque.
  *
  * Appelé après l'enregistrement d'une grille. Le corps de la requête ne porte que
  * l'identifiant : **les accords sont relus dans le document**, jamais pris dans la
  * requête. Un client peut mentir sur ce qu'il a écrit, pas sur ce que Firestore
  * contient.
+ *
+ * L'annonce passe par la cloche de l'application, pas par un mail. Un mail pour un
+ * trou de bibliothèque encombre une boîte de réception avec une information qui n'a
+ * rien d'urgent, et qu'on traite de toute façon depuis le tableau récapitulatif —
+ * vers lequel la notification pointe directement.
  *
  * Le bruit est le vrai risque d'une alerte à la sauvegarde : on enregistre une grille
  * des dizaines de fois pendant qu'on l'écrit. Un accord n'est donc annoncé **qu'une
@@ -91,23 +92,38 @@ export async function POST(req: NextRequest) {
 
   if (nouveaux.length === 0) return NextResponse.json({ ok: true, unknown: inconnus.length, notified: 0 });
 
-  const destinataires = (process.env.SIGNUP_NOTIFY_TO || ADMIN_EMAILS.join(','))
-    .split(',').map((a) => a.trim()).filter(Boolean);
+  // Destinataires lus dans la base plutôt que dans une liste d'adresses : c'est le
+  // champ `role` qui fait foi côté règles Firestore, et un administrateur retiré de
+  // la liste ne doit plus être prévenu.
+  const admins = await db.collection('users').where('role', '==', 'admin').select().get();
+  const adminIds = (admins.docs as { id: string }[]).map((d) => d.id);
 
-  const contenu = unknownChordEmail({
-    // Libellés français plutôt qu'identifiants : le message va à des humains, pas
-    // à un programme.
-    chords: nouveaux.map((name) => ({
-      name,
-      missingOn: instrumentsMissingChord(name, ajoutsAdmin).map((i) => INSTRUMENT_CONFIG[i]?.label ?? i),
-    })),
-    title: typeof s.title === 'string' ? s.title : '',
-    artist: typeof s.artist === 'string' ? s.artist : '',
-    author: typeof s.ownerName === 'string' ? s.ownerName : '',
-    url: `${SITE_URL}/fr/admin/unknown-chords`,
-  });
+  // Libellés français plutôt qu'identifiants : la notification est lue par des
+  // humains, pas par un programme.
+  const manquants = nouveaux.map((name) => ({
+    name,
+    missingOn: instrumentsMissingChord(name, ajoutsAdmin).map((i) => INSTRUMENT_CONFIG[i]?.label ?? i),
+  }));
 
-  await Promise.all(destinataires.map((to) => sendTransactionalEmail(to, contenu)));
+  const lot = db.batch();
+  for (const adminId of adminIds) {
+    lot.set(db.collection('notifications').doc(), {
+      userId: adminId,
+      kind: 'unknownChord',
+      // `fromId` n'est pas lu ici — l'écriture passe par l'Admin SDK, hors des
+      // règles — mais le garder évite un document au format différent des autres.
+      fromId: uid,
+      fromName: typeof s.ownerName === 'string' ? s.ownerName : '',
+      chords: manquants.map((m) => m.name),
+      missingOn: manquants.map((m) => m.missingOn.join(', ')),
+      sheetId,
+      sheetTitle: typeof s.title === 'string' ? s.title : '',
+      link: '/admin/unknown-chords',
+      read: false,
+      createdAt: new Date(),
+    });
+  }
+  await lot.commit().catch((err: unknown) => console.error('[report-unknown-chords] notifications', err));
 
-  return NextResponse.json({ ok: true, unknown: inconnus.length, notified: nouveaux.length });
+  return NextResponse.json({ ok: true, unknown: inconnus.length, notified: nouveaux.length, admins: adminIds.length });
 }
