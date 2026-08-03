@@ -474,7 +474,12 @@
     "adaptForGroup": "Adapter pour le groupe",
     "confirmDeleteSheet": "Supprimer « {title} » ? Cette grille du groupe sera définitivement supprimée.",
     "proInvitedTitle": "Crée ton propre groupe avec Pro",
-    "proInvitedSubtitle": "Tu joues déjà dans un groupe sur invitation, et ça ne te coûte rien. Passer à Pro te permet d'en créer, d'inviter tes musiciens et de lancer les concerts synchronisés."
+    "proInvitedSubtitle": "Tu joues déjà dans un groupe sur invitation, et ça ne te coûte rien. Passer à Pro te permet d'en créer, d'inviter tes musiciens et de lancer les concerts synchronisés.",
+    "publicPageTitle": "Vitrine publique",
+    "publicToggle": "Rendre ce groupe public",
+    "publicToggleDesc": "Une page consultable par tout le monde, sans compte : ton répertoire en un lien, à coller dans ta bio ou sous une vidéo. Personne ne peut rejoindre ni modifier quoi que ce soit.",
+    "publicOnlyPublicSheets": "Seules tes grilles déjà publiques y apparaissent. Une grille privée reste privée, même dans un set du groupe.",
+    "errorPublicToggle": "Impossible de changer la visibilité. Réessaie."
   },
   "Artists": {
     "title": "Artistes",
@@ -1465,6 +1470,10 @@
     "user": {
       "title": "Grilles d’accords de {name}",
       "description": "Les grilles d’accords publiées par {name} sur Alviena : consultez-les, transposez-les et jouez-les."
+    },
+    "band": {
+      "title": "{name} — grilles d'accords",
+      "description": "Le répertoire de {name} sur Alviena : des grilles d'accords à consulter, transposer et jouer, sans compte."
     }
   },
   "Tuner": {
@@ -1601,7 +1610,8 @@
     "sheetsCount": "{count, plural, one {grille} other {grilles}}",
     "averageRating": "note moyenne",
     "genres": "genres",
-    "mostViewed": "Plus vues"
+    "mostViewed": "Plus vues",
+    "bandsTitle": "Ses groupes publics"
   },
   "ChordSummary": {
     "notFound": "Non trouvé",
@@ -1846,5 +1856,17 @@
     "legend": "Le point marque les grilles dont l'auteur voit réellement une case vide. Les autres ne sont là que parce que l'accord manque à un autre instrument.",
     "affecting": "{count, plural, one {# case réellement vide} other {# cases réellement vides}}",
     "affectedSheet": "L'auteur de cette grille voit une case vide"
+  },
+  "PublicBand": {
+    "notFound": "Ce groupe n'existe pas, ou son auteur ne l'a pas rendu public.",
+    "empty": "Ce groupe n'a pas encore de grille publique.",
+    "sheetCount": "{count, plural, =0 {aucune grille} one {# grille} other {# grilles}}",
+    "byAuthor": "Voir le profil de l'auteur",
+    "untitledSet": "Set sans nom",
+    "otherSheets": "Le reste du répertoire",
+    "ctaTitle": "Garde ces grilles chez toi",
+    "ctaBody": "Un compte gratuit te permet de les mettre en favori, de les transposer dans ta tonalité et de créer les tiennes.",
+    "cta": "Créer un compte gratuit",
+    "ctaLoggedIn": "Aller à mes grilles"
   }
 }

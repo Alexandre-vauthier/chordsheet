@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { routing } from '@/i18n/routing';
 import { localeUrl } from '@/lib/seo';
-import { getPublicSheetIndex, songKey } from '@/lib/public-sheet-index';
+import { getPublicBands, getPublicSheetIndex, songKey } from '@/lib/public-sheet-index';
 import { CHORD_PAGE_INSTRUMENTS, chordNamesFor, chordSlug, isCommonChord } from '@/lib/chord-page';
 
 export const revalidate = 86400;
@@ -86,7 +86,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Les grilles publiques : le vrai catalogue du site, et de loin le plus gros
   // volume. Sans elles, un moteur ne découvre une grille que s'il suit un lien
   // depuis /explore, dont la pagination est côté client.
-  const sheets = await getPublicSheetIndex();
+  const [sheets, bands] = await Promise.all([getPublicSheetIndex(), getPublicBands()]);
+
+  // Les vitrines de groupe : peu nombreuses, mais ce sont des pages de destination
+  // que des gens cherchent par le nom du groupe ou du créateur.
+  const bandEntries = bands.flatMap((b) =>
+    entriesFor(`/band/${b.id}`, b.updatedAt ?? now, 'weekly', 0.6),
+  );
 
   const sheetEntries = sheets.flatMap(s =>
     entriesFor(`/sheet/${s.id}`, s.updatedAt ?? now, 'weekly', 0.6),
@@ -150,5 +156,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       ),
     );
 
-  return [...fixed, ...chordEntries, ...sheetEntries, ...artistEntries, ...songEntries, ...creatorEntries];
+  return [...fixed, ...chordEntries, ...sheetEntries, ...artistEntries, ...songEntries, ...creatorEntries, ...bandEntries];
 }

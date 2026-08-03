@@ -140,3 +140,30 @@ export const getSheetsWithChord = cache(async (chord: string, max = 12): Promise
     return [];
   }
 });
+
+
+/**
+ * Les groupes rendus publics par leur leader, pour le sitemap.
+ *
+ * Une vitrine que personne ne peut découvrir ne sert qu'à ceux qui ont déjà le lien.
+ * La déclarer permet à quelqu'un qui cherche le nom d'un créateur de tomber dessus,
+ * ce qui est exactement le canal qu'on essaie d'ouvrir.
+ */
+export const getPublicBands = cache(async (): Promise<{ id: string; updatedAt: Date | null }[]> => {
+  try {
+    const snap = await getAdminDb()
+      .collection('groups')
+      .where('isPublic', '==', true)
+      .select('updatedAt')
+      .limit(500)
+      .get();
+
+    const docs = snap.docs as { id: string; data: () => Record<string, unknown> }[];
+    return docs.map((d) => {
+      const updatedAt = d.data().updatedAt as { toDate?: () => Date } | undefined;
+      return { id: d.id, updatedAt: updatedAt?.toDate ? updatedAt.toDate() : null };
+    });
+  } catch {
+    return [];
+  }
+});

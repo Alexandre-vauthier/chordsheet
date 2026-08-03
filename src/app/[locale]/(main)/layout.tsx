@@ -24,10 +24,12 @@ const PUBLIC_EXACT = [
 ];
 const PUBLIC_PREFIXES = ['/legal', '/chords/'];
 // /sheet/:id (mais pas /sheet/new ni /sheet/:id/edit), /artist/:name, /user/:id,
+// /band/:id (vitrine publique d'un groupe : elle n'a de sens que si elle s'ouvre
+// sans compte, c'est le lien que le créateur donne à sa communauté),
 // /song/:titre/:artiste, /session/:code (rejoindre une session éphémère sans compte
 // — pas /session lui-même, qui reste réservé aux hôtes Pro connectés)
 const PUBLIC_PATTERNS = [
-  /^\/sheet\/[^/]+$/, /^\/artist\/[^/]+$/, /^\/user\/[^/]+$/,
+  /^\/sheet\/[^/]+$/, /^\/artist\/[^/]+$/, /^\/user\/[^/]+$/, /^\/band\/[^/]+$/,
   /^\/song\/[^/]+\/[^/]+$/, /^\/session\/[^/]+$/,
 ];
 

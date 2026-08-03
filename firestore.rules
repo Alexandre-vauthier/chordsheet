@@ -168,8 +168,14 @@ service cloud.firestore {
 
     // Groupes de musique
     match /groups/{groupId} {
-      // Lecture ouverte aux utilisateurs authentifiés (nécessaire pour le flux d'invitation)
-      allow read: if request.auth != null;
+      // Lecture ouverte aux utilisateurs authentifiés (nécessaire pour le flux
+      // d'invitation), et à tous pour un groupe rendu public par son leader.
+      //
+      // La vitrine /band/{id} est servie par l'Admin SDK et ne dépend pas de cette
+      // règle ; on l'ouvre quand même pour que la donnée publique par la page ne
+      // soit pas fermée par les règles, incohérence qui se paierait au premier
+      // composant client (suivi, aperçu).
+      allow read: if resource.data.isPublic == true || request.auth != null;
       allow list: if isAdmin();
       // Création réservée aux comptes Pro (ou admin) - le rejoint d'un groupe existant
       // se fait via /api/groups/join (validation de l'invitation côté serveur)

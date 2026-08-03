@@ -42,9 +42,11 @@ interface UserProfileClientProps {
    * de la présentation et des liens dès le HTML servi.
    */
   hasPublicSheets: boolean;
+  /** Vitrines publiques du créateur, lues côté serveur. */
+  bands: { id: string; name: string; description: string; photoURL: string | null }[];
 }
 
-export function UserProfileClient({ id, initialProfile, hasPublicSheets }: UserProfileClientProps) {
+export function UserProfileClient({ id, initialProfile, hasPublicSheets, bands }: UserProfileClientProps) {
   const t = useTranslations('PublicProfile');
   const locale = useLocale();
   const genreLabel = useGenreLabel();
@@ -238,6 +240,43 @@ export function UserProfileClient({ id, initialProfile, hasPublicSheets }: UserP
           {publicUser.links && publicUser.links.length > 0 && (
             <SocialLinks links={publicUser.links} className="mt-3" />
           )}
+        </div>
+      )}
+
+      {/* Les vitrines publiques du créateur.
+          Placées haut, avant les statistiques et les grilles : c'est le chemin que
+          suit quelqu'un venu de sa communauté, et un répertoire réuni vaut mieux
+          qu'une liste de grilles éparses. */}
+      {bands.length > 0 && (
+        <div className="mb-8">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)] mb-3">
+            {t('bandsTitle')}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {bands.map((b) => (
+              <Link
+                key={b.id}
+                href={`/band/${b.id}`}
+                className="flex items-center gap-3 p-3 rounded-xl border border-[var(--line)] bg-[var(--cell-bg)]
+                  hover:border-[var(--accent)] transition-colors"
+              >
+                <div className="w-11 h-11 rounded-lg overflow-hidden bg-[var(--accent)] flex items-center justify-center text-white font-bold shrink-0">
+                  {b.photoURL ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={b.photoURL} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    b.name.charAt(0).toUpperCase()
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-[var(--ink)] truncate">{b.name}</p>
+                  {b.description && (
+                    <p className="text-xs text-[var(--ink-faint)] truncate">{b.description}</p>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       )}
 

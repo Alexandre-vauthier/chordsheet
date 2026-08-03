@@ -474,7 +474,12 @@
     "adaptForGroup": "Adapt for the group",
     "confirmDeleteSheet": "Delete \"{title}\"? This group grid will be permanently removed.",
     "proInvitedTitle": "Create your own band with Pro",
-    "proInvitedSubtitle": "You already play in a band by invitation, and that costs you nothing. Going Pro lets you create your own, invite your musicians and run synchronised live sessions."
+    "proInvitedSubtitle": "You already play in a band by invitation, and that costs you nothing. Going Pro lets you create your own, invite your musicians and run synchronised live sessions.",
+    "publicPageTitle": "Public page",
+    "publicToggle": "Make this band public",
+    "publicToggleDesc": "A page anyone can open, no account needed: your repertoire in one link, to paste in your bio or under a video. Nobody can join or change anything.",
+    "publicOnlyPublicSheets": "Only your already-public sheets appear there. A private sheet stays private, even inside one of the band's sets.",
+    "errorPublicToggle": "Could not change visibility. Please try again."
   },
   "Artists": {
     "title": "Artists",
@@ -1465,6 +1470,10 @@
     "user": {
       "title": "Chord charts by {name}",
       "description": "The chord charts {name} has published on Alviena: view them, transpose them and play them."
+    },
+    "band": {
+      "title": "{name} — chord charts",
+      "description": "The repertoire of {name} on Alviena: chord charts to view, transpose and play, no account needed."
     }
   },
   "Tuner": {
@@ -1601,7 +1610,8 @@
     "sheetsCount": "{count, plural, one {sheet} other {sheets}}",
     "averageRating": "average rating",
     "genres": "genres",
-    "mostViewed": "Most viewed"
+    "mostViewed": "Most viewed",
+    "bandsTitle": "Their public bands"
   },
   "ChordSummary": {
     "notFound": "Not found",
@@ -1846,5 +1856,17 @@
     "legend": "The dot marks the sheets whose author actually sees an empty cell. The others are only here because the chord is missing on another instrument.",
     "affecting": "{count, plural, one {# genuinely empty cell} other {# genuinely empty cells}}",
     "affectedSheet": "This sheet's author sees an empty cell"
+  },
+  "PublicBand": {
+    "notFound": "This band does not exist, or its owner has not made it public.",
+    "empty": "This band has no public sheet yet.",
+    "sheetCount": "{count, plural, =0 {no sheet} one {# sheet} other {# sheets}}",
+    "byAuthor": "See the owner's profile",
+    "untitledSet": "Untitled set",
+    "otherSheets": "The rest of the repertoire",
+    "ctaTitle": "Keep these sheets for yourself",
+    "ctaBody": "A free account lets you bookmark them, transpose them into your key and create your own.",
+    "cta": "Create a free account",
+    "ctaLoggedIn": "Go to my sheets"
   }
 }

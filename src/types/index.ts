@@ -365,6 +365,15 @@ export interface Group {
   memberIds: string[];
   roles: Record<string, GroupRole>;
   linkedSheetIds: string[];   // grilles publiques référencées (lecture seule)
+  /**
+   * Groupe visible de tous, en lecture seule, à l'adresse `/band/{id}`.
+   *
+   * N'ouvre **aucun** droit : ni adhésion, ni écriture. C'est une vitrine que le
+   * créateur donne à sa communauté, servie côté serveur et lisible sans compte —
+   * un lien qui exigerait une inscription avant d'afficher quoi que ce soit ne
+   * serait pas posté.
+   */
+  isPublic?: boolean;
   activeConcert?: ActiveConcert;
   createdAt: Date;
   updatedAt: Date;

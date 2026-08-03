@@ -16,6 +16,8 @@ interface ServerProfile {
   profile: PublicUser | null;
   /** Nombre de grilles publiques. Décide de l'indexation et de l'affichage des liens. */
   publicSheets: number;
+  /** Vitrines publiques du créateur : c'est par là qu'arrive sa communauté. */
+  bands: { id: string; name: string; description: string; photoURL: string | null }[];
 }
 
 /**
@@ -33,7 +35,9 @@ const getServerProfile = cache(async (id: string): Promise<ServerProfile> => {
   try {
     const db = getAdminDb();
 
-    const [snap, sheetsSnap] = await Promise.all([
+    // Deux filtres d'égalité sur des champs différents se servent des index
+    // à champ unique : aucun index composite à créer.
+    const [snap, sheetsSnap, bandsSnap] = await Promise.all([
       db.collection('users').doc(id).get(),
       db
         .collection('sheets')
@@ -42,10 +46,30 @@ const getServerProfile = cache(async (id: string): Promise<ServerProfile> => {
         .select()
         .limit(50)
         .get(),
+      db
+        .collection('groups')
+        .where('ownerId', '==', id)
+        .where('isPublic', '==', true)
+        .select('name', 'description', 'photoURL')
+        .limit(20)
+        .get(),
     ]);
 
+    const bandDocs = bandsSnap.docs as { id: string; data: () => Record<string, unknown> }[];
+    const bands = bandDocs
+      .map((d) => {
+        const b = d.data();
+        return {
+          id: d.id,
+          name: typeof b.name === 'string' ? b.name : '',
+          description: typeof b.description === 'string' ? b.description : '',
+          photoURL: typeof b.photoURL === 'string' ? b.photoURL : null,
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+
     const publicSheets: number = sheetsSnap.size;
-    if (!snap.exists) return { profile: null, publicSheets };
+    if (!snap.exists) return { profile: null, publicSheets, bands };
 
     const data = (snap.data() ?? {}) as Record<string, unknown>;
     const createdAt = data.createdAt as { toDate?: () => Date } | undefined;
@@ -63,11 +87,12 @@ const getServerProfile = cache(async (id: string): Promise<ServerProfile> => {
         links: Array.isArray(data.links) ? sanitizeLinks(data.links as { url: string }[]) : undefined,
       },
       publicSheets,
+      bands,
     };
   } catch {
     // Admin SDK indisponible : le composant client se rabat sur le nom porté par les
     // grilles. Mieux vaut une page dégradée qu'une page en erreur.
-    return { profile: null, publicSheets: 0 };
+    return { profile: null, publicSheets: 0, bands: [] };
   }
 });
 
@@ -99,11 +124,11 @@ export default async function UserPage({ params }: UserPageProps) {
   const { locale, id } = await params;
   setRequestLocale(locale);
 
-  const { profile, publicSheets } = await getServerProfile(id);
+  const { profile, publicSheets, bands } = await getServerProfile(id);
 
   return (
     <>
-      <UserProfileClient id={id} initialProfile={profile} hasPublicSheets={publicSheets > 0} />
+      <UserProfileClient id={id} initialProfile={profile} hasPublicSheets={publicSheets > 0} bands={bands} />
       {profile && publicSheets > 0 && (
         <JsonLd
           data={breadcrumbSchema(

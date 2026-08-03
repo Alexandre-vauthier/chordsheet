@@ -32,6 +32,7 @@ function groupFromDoc(id: string, data: Record<string, unknown>): Group {
     memberIds: (data.memberIds as string[]) || [],
     roles: (data.roles as Record<string, GroupRole>) || {},
     linkedSheetIds: (data.linkedSheetIds as string[]) || [],
+    isPublic: (data.isPublic as boolean) ?? false,
     activeConcert: ac ? { setId: ac.setId, setName: ac.setName, startedBy: ac.startedBy, startedByName: ac.startedByName } : undefined,
     createdAt: (data.createdAt as { toDate: () => Date })?.toDate?.() || new Date(),
     updatedAt: (data.updatedAt as { toDate: () => Date })?.toDate?.() || new Date(),

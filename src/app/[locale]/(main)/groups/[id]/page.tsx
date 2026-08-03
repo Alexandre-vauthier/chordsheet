@@ -38,6 +38,7 @@ function groupFromDoc(id: string, data: Record<string, unknown>): Group {
     memberIds: (data.memberIds as string[]) || [],
     roles: (data.roles as Record<string, GroupRole>) || {},
     linkedSheetIds: (data.linkedSheetIds as string[]) || [],
+    isPublic: (data.isPublic as boolean) ?? false,
     createdAt: (data.createdAt as { toDate: () => Date })?.toDate?.() || new Date(),
     updatedAt: (data.updatedAt as { toDate: () => Date })?.toDate?.() || new Date(),
   };
@@ -181,6 +182,8 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
   const [inviteLink, setInviteLink] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [publicSaving, setPublicSaving] = useState(false);
+  const [publicCopied, setPublicCopied] = useState(false);
 
   // Panneau de rattachement
   const [showAttach, setShowAttach] = useState(false);
@@ -446,6 +449,36 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
     const db = getDb();
     await updateDoc(doc(db, 'groups', group.id), { photoURL: url, updatedAt: serverTimestamp() });
     setGroup(g => (g ? { ...g, photoURL: url } : g));
+  };
+
+  /**
+   * Rendre le groupe visible de tous, ou le refermer.
+   *
+   * N'ouvre aucun droit : la vitrine est en lecture seule et servie côté serveur.
+   * Réservé au leader, comme le reste de la configuration du groupe.
+   */
+  const handleTogglePublic = async () => {
+    if (!group) return;
+    setPublicSaving(true);
+    try {
+      await updateDoc(doc(getDb(), 'groups', group.id!), {
+        isPublic: !group.isPublic,
+        updatedAt: serverTimestamp(),
+      });
+      setGroup({ ...group, isPublic: !group.isPublic });
+    } catch {
+      setActionError(t('errorPublicToggle'));
+    } finally {
+      setPublicSaving(false);
+    }
+  };
+
+  const publicUrl = typeof window !== 'undefined' && group ? `${window.location.origin}/band/${group.id}` : '';
+
+  const handleCopyPublic = () => {
+    navigator.clipboard.writeText(publicUrl);
+    setPublicCopied(true);
+    setTimeout(() => setPublicCopied(false), 2000);
   };
 
   const handleGenerateInvite = async () => {
@@ -778,6 +811,46 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
           ))}
         </div>
       </section>
+
+      {/* Vitrine publique — réservée au leader.
+          Placée avant l'invitation : l'une s'adresse à des musiciens qu'on connaît,
+          l'autre à une communauté entière, et on ne les confond pas. */}
+      {isLeader && group && (
+        <section>
+          <h2 className="text-sm font-semibold text-[var(--ink-light)] uppercase tracking-wide mb-3">
+            {t('publicPageTitle')}
+          </h2>
+          <div className="p-4 bg-[var(--cell-bg)] border border-[var(--line)] rounded-xl space-y-3">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={!!group.isPublic}
+                onChange={handleTogglePublic}
+                disabled={publicSaving}
+                className="mt-0.5 w-4 h-4 accent-[var(--accent)] cursor-pointer"
+              />
+              <span className="min-w-0">
+                <span className="block text-sm font-medium text-[var(--ink)]">{t('publicToggle')}</span>
+                <span className="block text-xs text-[var(--ink-faint)] mt-0.5 leading-relaxed">{t('publicToggleDesc')}</span>
+              </span>
+            </label>
+
+            {group.isPublic && (
+              <>
+                <div className="flex gap-2">
+                  <input readOnly value={publicUrl}
+                    className="flex-1 px-3 py-2 text-sm border border-[var(--line)] rounded-lg bg-[var(--cell-bg)] text-[var(--ink)] focus:outline-none" />
+                  <button onClick={handleCopyPublic}
+                    className="px-3 py-2 text-sm border border-[var(--line)] rounded-lg bg-[var(--cell-bg)] hover:border-[var(--accent)] transition-colors text-[var(--ink)]">
+                    {publicCopied ? t('copied') : t('copy')}
+                  </button>
+                </div>
+                <p className="text-xs text-[var(--ink-faint)] leading-relaxed">{t('publicOnlyPublicSheets')}</p>
+              </>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Invitation — accessible à tous les membres */}
       {isMember && (
