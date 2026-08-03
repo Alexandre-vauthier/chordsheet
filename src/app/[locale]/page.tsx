@@ -115,21 +115,29 @@ function FeatureTile({ href, icon, title, text, learnMore }: {
   const contenu = (
     <>
       {/* Au-dessus du halo : les deux calques sont peints apres le contenu, et le
-          foil en `color-dodge` delavait la pastille d'accent comme le lien « en
-          savoir plus », les deux elements accentues de la tuile. Le titre et le
-          texte restent dessous — c'est ce passage de lumiere qui fait l'effet. */}
-      <div className="relative z-10 w-10 h-10 rounded-xl bg-[var(--accent)]/15 flex items-center justify-center text-[var(--accent)]">
+          foil en `color-dodge` delavait la pastille comme le lien. Tous deux passent
+          devant, en aplat plein — a 15 % d'opacite la pastille disparaissait sous le
+          reflet. Le titre et le texte restent dessous : c'est ce passage de lumiere
+          sur eux qui fait l'effet. */}
+      <div className="relative z-10 w-10 h-10 rounded-xl bg-[var(--accent)] flex items-center justify-center text-white">
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">{icon}</svg>
       </div>
-      <div>
+
+      {/* `flex-1` pousse le lien en bas de la tuile. Les tuiles d'une meme rangee ont
+          la meme hauteur, le lien se retrouve donc au meme niveau sur toutes. */}
+      <div className="flex-1">
         <h3 className="text-[var(--nav-text)] font-semibold text-sm mb-1">{title}</h3>
         <p className="text-[var(--nav-text)]/50 text-sm leading-relaxed">{text}</p>
-        {href && (
-          <span className="relative z-10 inline-block mt-2 text-xs text-[var(--accent)]/0 group-hover/feat:text-[var(--accent)] transition-colors">
-            {learnMore} →
-          </span>
-        )}
       </div>
+
+      {href && (
+        // Revele par l'opacite et non par l'affichage : la place reste prise, sinon
+        // le survol ferait grandir la tuile et sauter la rangee entiere.
+        <span className="relative z-10 self-start px-3 py-1 rounded-full bg-[var(--accent)] text-white
+          text-xs font-medium opacity-0 group-hover/feat:opacity-100 transition-opacity">
+          {learnMore} →
+        </span>
+      )}
       <div className="card-shine absolute inset-0 rounded-2xl pointer-events-none" />
       <div className="card-foil absolute inset-0 rounded-2xl pointer-events-none" />
     </>
