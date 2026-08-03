@@ -136,15 +136,25 @@ function LandingNav({ scrolled }: { scrolled: boolean }) {
 
 /* ── Données statiques ────────────────────────────────────────────── */
 
-const FEATURES = [
+/**
+ * Fonctionnalites de l'accueil.
+ *
+ * `href` mene a la page qui explique la fonctionnalite. Deux d'entre elles n'en ont
+ * pas encore : elles restent affichees sans lien plutot que d'envoyer ailleurs. Un
+ * lien qui ne tient pas sa promesse coute plus qu'un lien absent.
+ */
+const FEATURES: { id: string; href?: string; icon: React.ReactNode }[] = [
   { id: 'editor', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/> },
-  { id: 'concert', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/> },
-  { id: 'transpose', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/> },
-  { id: 'instruments', icon: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></> },
-  { id: 'sharing', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/> },
+  { id: 'concert', href: '/stage-mode', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 10l4.553-2.069A1 1 0 0121 8.87v6.26a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/> },
+  { id: 'transpose', href: '/transpose', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/> },
+  { id: 'instruments', href: '/chords', icon: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/></> },
+  { id: 'sharing', href: '/bands', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/> },
   { id: 'print', icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/> },
-  { id: 'ai', icon: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></> },
-  { id: 'dictionary', icon: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803a7.5 7.5 0 0010.607 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.5 10.5h-6"/></> },
+  { id: 'ai', href: '/sheet-photo', icon: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"/></> },
+  { id: 'import', href: '/import-chords', icon: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v12m0 0l-4-4m4 4l4-4"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></> },
+  { id: 'audio', href: '/audio-to-chords', icon: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19a3 2 0 11-6 0 3 2 0 016 0zm12-3a3 2 0 11-6 0 3 2 0 016 0z"/></> },
+  { id: 'tuner', href: '/tuner', icon: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 3v18M7 7v10M17 7v10M3 10v4M21 10v4"/></> },
+  { id: 'dictionary', href: '/chord-detect', icon: <><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803a7.5 7.5 0 0010.607 0z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.5 10.5h-6"/></> },
 ];
 
 const STEPS = ['step1', 'step2', 'step3'];
@@ -467,17 +477,33 @@ export default function Home() {
           {t('features.subtitle')}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {FEATURES.map((f) => (
-            <div key={f.id} className="rounded-2xl border border-white/8 bg-white/4 px-5 py-5 flex flex-col gap-3 hover:bg-white/6 transition-colors">
+          {/* Chaque fonctionnalité mène à sa page explicative. L'accueil reçoit les
+              liens venus de l'extérieur : c'est de là qu'il doit redistribuer. */}
+          {FEATURES.map((f) => {
+            const classes = `rounded-2xl border border-white/8 bg-white/4 px-5 py-5 flex flex-col gap-3 transition-colors group/feat
+              ${f.href ? 'hover:bg-white/6 hover:border-[var(--accent)]/40' : ''}`;
+            // Deux variantes plutôt qu'un composant variable : `Link` exige un `href`,
+            // le rendre optionnel par un spread ne satisfait pas son type.
+            const contenu = (
+              <>
               <div className="w-10 h-10 rounded-xl bg-[var(--accent)]/15 flex items-center justify-center text-[var(--accent)]">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">{f.icon}</svg>
               </div>
               <div>
                 <h3 className="text-[var(--nav-text)] font-semibold text-sm mb-1">{t(`features.${f.id}.title`)}</h3>
                 <p className="text-[var(--nav-text)]/50 text-sm leading-relaxed">{t(`features.${f.id}.text`)}</p>
+                {f.href && (
+                  <span className="inline-block mt-2 text-xs text-[var(--accent)]/0 group-hover/feat:text-[var(--accent)] transition-colors">
+                    {t('features.learnMore')} →
+                  </span>
+                )}
               </div>
-            </div>
-          ))}
+            </>
+            );
+            return f.href
+              ? <Link key={f.id} href={f.href} className={classes}>{contenu}</Link>
+              : <div key={f.id} className={classes}>{contenu}</div>;
+          })}
         </div>
       </section>
 

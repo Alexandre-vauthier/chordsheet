@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
-import { buildAlternates, buildOpenGraph } from '@/lib/seo';
+import { buildAlternates, buildOpenGraph, SITE_NAME } from '@/lib/seo';
 import { JsonLd } from '@/components/seo/json-ld';
 import { breadcrumbSchema } from '@/lib/seo-schema';
 import { ChordDiagram } from '@/components/chord/chord-diagram';
@@ -225,7 +225,7 @@ export default async function ChordPage({ params }: PageProps) {
       <JsonLd
         data={breadcrumbSchema(
           [
-            { name: 'ChordSheet', path: '' },
+            { name: SITE_NAME, path: '' },
             { name: t('libraryLink'), path: '/chords' },
             { name: forms.instrument, path: `/chords/${instrument}` },
             { name: name, path: `/chords/${instrument}/${slug}` },

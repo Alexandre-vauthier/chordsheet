@@ -158,6 +158,19 @@
       "dictionary": {
         "title": "Dictionnaire d'accords",
         "text": "Bibliothèque complète pour guitare, piano, ukulélé et plus. Identifie un accord en plaçant tes doigts sur le manche ou le clavier."
+      },
+      "learnMore": "En savoir plus",
+      "import": {
+        "title": "Import de texte",
+        "text": "Colle une grille copiée sur un site de tablatures : l'analyse retrouve les mesures et les durées toute seule."
+      },
+      "audio": {
+        "title": "Accords depuis un audio",
+        "text": "Un lien ou un fichier, et les accords sont extraits du son. Un brouillon à corriger, pas un miracle."
+      },
+      "tuner": {
+        "title": "Accordeur en ligne",
+        "text": "Guitare, basse, ukulélé, mandoline et banjo, au micro. Mode chromatique et écart en cents."
       }
     },
     "how": {
@@ -1389,6 +1402,14 @@
       "chord": {
         "title": "Accord {chord} {instrumentLower} : diagramme, notes et position",
         "description": "Comment jouer l'accord {chord} {instrumentAt} : diagramme, notes ({notes}) et détail de la position. Et les grilles d'accords du site qui l'utilisent."
+      },
+      "sheet": {
+        "title": "{title} — {artist}",
+        "description": "Grille d'accords de « {title} » par {artist}{key}. Consulte, transpose et joue sur {site}."
+      },
+      "song": {
+        "title": "{title} — {artist} : {count, plural, one {# grille d'accords} other {# grilles d'accords}}",
+        "description": "Toutes les versions de « {title} » par {artist} sur {site} : compare les grilles proposées par la communauté, transpose et joue."
       }
     },
     "artist": {

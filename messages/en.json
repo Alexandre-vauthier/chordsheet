@@ -158,6 +158,19 @@
       "dictionary": {
         "title": "Chord dictionary",
         "text": "Full library for guitar, piano, ukulele and more. Identify a chord by placing your fingers on the fretboard or keyboard."
+      },
+      "learnMore": "Learn more",
+      "import": {
+        "title": "Text import",
+        "text": "Paste a chart copied from a tab site: the parser finds the bars and durations on its own."
+      },
+      "audio": {
+        "title": "Chords from audio",
+        "text": "A link or a file, and the chords are pulled from the sound. A draft to correct, not a miracle."
+      },
+      "tuner": {
+        "title": "Online tuner",
+        "text": "Guitar, bass, ukulele, mandolin and banjo, through the mic. Chromatic mode and cent readout."
       }
     },
     "how": {
@@ -1389,6 +1402,14 @@
       "chord": {
         "title": "{chord} chord {instrumentAt}: diagram, notes and shape",
         "description": "How to play the {chord} chord {instrumentAt}: diagram, notes ({notes}) and the shape in detail. Plus the chord charts on the site that use it."
+      },
+      "sheet": {
+        "title": "{title} — {artist}",
+        "description": "Chord chart for “{title}” by {artist}{key}. View it, transpose it and play along on {site}."
+      },
+      "song": {
+        "title": "{title} — {artist}: {count, plural, one {# chord chart} other {# chord charts}}",
+        "description": "Every version of “{title}” by {artist} on {site}: compare the charts shared by the community, transpose and play."
       }
     },
     "artist": {

@@ -7,7 +7,7 @@ import type { Sheet } from '@/types';
 import { JsonLd } from '@/components/seo/json-ld';
 import { musicGroupSchema, breadcrumbSchema } from '@/lib/seo-schema';
 import { decodeParam } from '@/lib/decode-param';
-import { buildAlternates, buildOpenGraph, localeUrl, NO_INDEX } from '@/lib/seo';
+import { buildAlternates, buildOpenGraph, localeUrl, NO_INDEX, SITE_NAME } from '@/lib/seo';
 import { ArtistViewClient } from './artist-view-client';
 
 interface ArtistPageProps {
@@ -96,7 +96,7 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
               items: sheets.map((s) => ({ title: s.title, url: localeUrl(locale, `/sheet/${s.id}`) })),
             }),
             breadcrumbSchema(
-              [{ name: 'ChordSheet', path: '' }, { name: artistName, path: `/artist/${name}` }],
+              [{ name: SITE_NAME, path: '' }, { name: artistName, path: `/artist/${name}` }],
               locale,
             ),
           ]}

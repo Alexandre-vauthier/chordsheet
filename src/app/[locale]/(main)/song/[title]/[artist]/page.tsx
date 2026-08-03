@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import { cache } from 'react';
-import { setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { fromFirestore } from '@/lib/firestore-helpers';
 import type { Sheet } from '@/types';
 import { decodeParam } from '@/lib/decode-param';
-import { buildAlternates, buildOpenGraph, NO_INDEX } from '@/lib/seo';
+import { buildAlternates, buildOpenGraph, NO_INDEX, SITE_NAME } from '@/lib/seo';
 import { JsonLd } from '@/components/seo/json-ld';
 import { musicCompositionSchema, breadcrumbSchema } from '@/lib/seo-schema';
 import { SongVersionsClient } from './song-versions-client';
@@ -67,8 +67,9 @@ export async function generateMetadata({ params }: SongPageProps): Promise<Metad
   // Aucune version publique : la page est vide, elle n'a rien à faire dans l'index.
   if (sheets.length === 0) return { robots: NO_INDEX };
 
-  const pageTitle = `${title} — ${artist} : ${sheets.length} grille${sheets.length > 1 ? 's' : ''} d'accords`;
-  const description = `Toutes les versions de « ${title} » par ${artist} sur ChordSheet : compare les grilles d'accords proposées par la communauté, transpose et joue.`;
+  const t = await getTranslations({ locale, namespace: 'Seo.pages.song' });
+  const pageTitle = t('title', { title, artist, count: sheets.length });
+  const description = t('description', { title, artist, site: SITE_NAME });
 
   return {
     title: pageTitle,
@@ -101,7 +102,7 @@ export default async function SongPage({ params }: SongPageProps) {
             }),
             breadcrumbSchema(
               [
-                { name: 'ChordSheet', path: '' },
+                { name: SITE_NAME, path: '' },
                 { name: artist, path: `/artist/${rawArtist}` },
                 { name: title, path: `/song/${rawTitle}/${rawArtist}` },
               ],

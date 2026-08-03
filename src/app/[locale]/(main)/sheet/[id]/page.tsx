@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import { cache } from 'react';
-import { setRequestLocale } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { fromFirestore } from '@/lib/firestore-helpers';
 import type { Sheet } from '@/types';
-import { buildAlternates, buildOpenGraph, NO_INDEX } from '@/lib/seo';
+import { buildAlternates, buildOpenGraph, NO_INDEX, SITE_NAME } from '@/lib/seo';
 import { JsonLd } from '@/components/seo/json-ld';
 import { musicCompositionSchema, breadcrumbSchema } from '@/lib/seo-schema';
 import { RelatedSheets } from '@/components/seo/related-sheets';
@@ -54,8 +54,18 @@ export async function generateMetadata({ params }: ViewSheetPageProps): Promise<
 
   const { sheet, unlisted } = found;
   const path = `/sheet/${id}`;
-  const title = `${sheet.title} — ${sheet.artist}`;
-  const description = `Grille d'accords de « ${sheet.title} » par ${sheet.artist}${sheet.key ? ` (${sheet.key})` : ''}. Consulte, transpose et joue sur ChordSheet.`;
+
+  // Ces textes etaient ecrits en dur, en francais et sous l'ancien nom : les pages
+  // anglaises servaient donc une description francaise, et Google affichait encore
+  // « ChordSheet » dans ses resultats.
+  const t = await getTranslations({ locale, namespace: 'Seo.pages.sheet' });
+  const title = t('title', { title: sheet.title, artist: sheet.artist });
+  const description = t('description', {
+    title: sheet.title,
+    artist: sheet.artist,
+    key: sheet.key ? ` (${sheet.key})` : '',
+    site: SITE_NAME,
+  });
 
   // Next expose l'image voisine (opengraph-image.tsx) sous une URL versionnée qu'il
   // génère lui-même. Il ne l'injecte que si les métadonnées ne fixent pas d'images :
@@ -98,7 +108,7 @@ export default async function ViewSheetPage({ params }: ViewSheetPageProps) {
             }),
             breadcrumbSchema(
               [
-                { name: 'ChordSheet', path: '' },
+                { name: SITE_NAME, path: '' },
                 { name: sheet.artist, path: `/artist/${encodeURIComponent(sheet.artist)}` },
                 { name: sheet.title, path: `/sheet/${id}` },
               ],
