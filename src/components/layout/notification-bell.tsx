@@ -61,17 +61,37 @@ export function NotificationBell() {
             {items.length === 0 ? (
               <p className="px-4 py-6 text-sm text-[var(--ink-faint)] text-center">{t('empty')}</p>
             ) : (
-              items.map((n) => (
+              items.map((n) => {
+                /**
+                 * Les notifications d'administration passent en bleu.
+                 *
+                 * Elles ne parlent pas de la même chose que les autres : un
+                 * commentaire ou une note concernent la personne, un accord manquant
+                 * concerne l'application. Mêlées dans la même couleur, on lit les
+                 * secondes comme si quelqu'un s'était adressé à nous.
+                 */
+                const interne = n.kind === 'unknownChord';
+                const teinte = interne ? 'bg-blue-500' : 'bg-[var(--accent)]';
+                const fond = interne ? 'bg-blue-500/10' : 'bg-[var(--accent-soft)]';
+
+                return (
                 <button
                   key={n.id}
                   onClick={() => openItem(n)}
-                  className={`w-full text-left px-4 py-2.5 hover:bg-[var(--accent-soft)] transition-colors flex gap-2.5 ${n.read ? '' : 'bg-[var(--accent-soft)]'}`}
+                  className={`w-full text-left px-4 py-2.5 transition-colors flex gap-2.5
+                    ${interne ? 'hover:bg-blue-500/10' : 'hover:bg-[var(--accent-soft)]'} ${n.read ? '' : fond}`}
                 >
-                  <span className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${n.read ? 'bg-transparent' : 'bg-[var(--accent)]'}`} />
+                  <span className={`mt-1.5 w-2 h-2 rounded-full shrink-0 ${n.read ? 'bg-transparent' : teinte}`} />
                   <span className="min-w-0">
                     <span className="block text-sm text-[var(--ink)]">
-                      {n.kind === 'unknownChord'
-                        ? t('unknownChord', { chords: (n.chords ?? []).join(', '), count: n.chords?.length ?? 1 })
+                      {interne
+                        // Une seule teinte, lisible sur les deux thèmes : le projet
+                        // bascule par `[data-theme]`, pas par la variante `dark:` de
+                        // Tailwind, qui suivrait le réglage du système et non celui
+                        // choisi dans l'application.
+                        ? <span className="text-blue-500 font-medium">
+                            {t('unknownChord', { chords: (n.chords ?? []).join(', '), count: n.chords?.length ?? 1 })}
+                          </span>
                         : n.kind === 'rating'
                           ? <><b>{n.fromName}</b> {t('ratedSheet')}{n.rating ? ` ${'★'.repeat(n.rating)}` : ''}</>
                           : <><b>{n.fromName}</b> {t('wroteComment')}</>}
@@ -84,7 +104,8 @@ export function NotificationBell() {
                     </span>
                   </span>
                 </button>
-              ))
+                );
+              })
             )}
           </div>
         </div>
