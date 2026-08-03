@@ -81,7 +81,8 @@
       "login": "Log in",
       "sheetCount": "{count}+ sheets shared by the community",
       "bookLoggedIn": "My Book",
-      "exploreLoggedIn": "Explore"
+      "exploreLoggedIn": "Explore",
+      "scrollToFeatures": "See the features"
     },
     "book": {
       "eyebrow": "The heart of Alviena",

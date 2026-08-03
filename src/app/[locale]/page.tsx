@@ -270,8 +270,15 @@ export default function Home() {
           )}
         </div>
 
-        <a href="#features" className="absolute bottom-8 z-10 animate-bounce text-white/25 pointer-events-auto">
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        {/* Un lien qui ne contient qu'une icône n'a aucun nom : ni un lecteur d'écran
+            ni un agent ne savent où il mène. Le libellé le nomme, l'icône est marquée
+            décorative pour ne pas être annoncée deux fois. */}
+        <a
+          href="#features"
+          aria-label={t('hero.scrollToFeatures')}
+          className="absolute bottom-8 z-10 animate-bounce text-white/25 pointer-events-auto"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden focusable="false">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
           </svg>
         </a>

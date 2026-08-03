@@ -133,9 +133,15 @@ service cloud.firestore {
                        (request.auth.uid == resource.data.userId || isAdmin());
     }
 
-    // Bibliothèque d'accords (overrides et ajouts admin)
+    // Bibliothèque d'accords (corrections et ajouts d'un administrateur).
+    //
+    // Lecture ouverte à tous, y compris sans compte : ce sont des diagrammes affichés
+    // publiquement — la bibliothèque et les pages d'accord sont accessibles sans se
+    // connecter. Exiger une session y provoquait une erreur de permission à chaque
+    // visite anonyme, et privait ces visiteurs des corrections apportées aux doigtés.
+    // L'écriture, elle, reste réservée aux administrateurs.
     match /library_chords/{docId} {
-      allow read: if request.auth != null;
+      allow read: if true;
       allow write, delete: if isAdmin();
     }
 
