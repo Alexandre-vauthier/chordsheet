@@ -117,9 +117,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const email = userData.email || fbUser.email || '';
           const role: UserRole = isAdminEmail(email) ? 'admin' : (userData.role || 'user');
 
-          // Synchroniser le rôle admin dans Firestore si nécessaire
-          if (role === 'admin' && userData.role !== 'admin') {
-            setDoc(doc(db, 'users', fbUser.uid), { role: 'admin' }, { merge: true }).catch(() => {});
+          /**
+           * Aligner le rôle stocké sur la liste, dans les deux sens.
+           *
+           * La synchronisation ne montait que : retirer une adresse d'ADMIN_EMAILS ne
+           * retirait donc rien du tout, puisque `role` retombait sur la valeur écrite
+           * en base lors d'une connexion précédente — et les règles Firestore lisent
+           * ce champ, pas la liste. Un ancien administrateur restait administrateur.
+           *
+           * La liste est la seule source du rôle (rien dans l'application ne promeut
+           * à la main), l'écart peut donc être corrigé sans risque d'écraser une
+           * décision prise ailleurs.
+           */
+          if (role !== userData.role) {
+            setDoc(doc(db, 'users', fbUser.uid), { role }, { merge: true }).catch(() => {});
           }
 
           // Désérialiser la subscription si présente

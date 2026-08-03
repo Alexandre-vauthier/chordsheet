@@ -50,23 +50,6 @@ function WhenNear({ children }: { children: React.ReactNode }) {
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 
-const GRADIENTS = [
-  'from-rose-900 via-red-800 to-orange-900',
-  'from-violet-900 via-purple-800 to-fuchsia-900',
-  'from-cyan-900 via-teal-800 to-emerald-900',
-  'from-amber-900 via-orange-800 to-red-900',
-  'from-indigo-900 via-blue-800 to-sky-900',
-  'from-emerald-900 via-green-800 to-teal-900',
-  'from-pink-900 via-rose-800 to-red-900',
-  'from-sky-900 via-blue-800 to-indigo-900',
-];
-
-function hashGradient(s: string) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = s.charCodeAt(i) + ((h << 5) - h);
-  return GRADIENTS[Math.abs(h) % GRADIENTS.length];
-}
-
 interface MiniSheet { id: string; title: string; artist: string; }
 
 /* ── Carte de fond ────────────────────────────────────────────────── */
@@ -75,7 +58,6 @@ interface MiniSheet { id: string; title: string; artist: string; }
 
 function LandingCard({ sheet }: { sheet: MiniSheet }) {
   const { artworkUrl } = useArtwork(sheet.artist || undefined, sheet.title || undefined);
-  const gradient = hashGradient(sheet.title + sheet.artist);
   const isPlaceholder = sheet.id.startsWith('ph-');
 
   return (
@@ -86,7 +68,7 @@ function LandingCard({ sheet }: { sheet: MiniSheet }) {
       {artworkUrl ? (
         <img src={artworkUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
       ) : (
-        <div className={`absolute inset-0 bg-gradient-to-br ${gradient} flex items-center justify-center`}>
+        <div className="absolute inset-0 bg-white/[0.04] flex items-center justify-center">
           <span className="text-white/10 text-5xl font-serif select-none">♪</span>
         </div>
       )}
