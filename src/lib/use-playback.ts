@@ -22,6 +22,13 @@ export interface PlayStep {
   cellIndex: number;
   durationMs: number;
   rowRepeatIndex: number;
+  /**
+   * Passage en cours dans la répétition de la section (0 pour le premier).
+   *
+   * La mesure avait son compteur, pas la section : rien ne permettait de dire à la
+   * lecture combien de passages restaient sur un « ×3 » de section.
+   */
+  sectionRepeatIndex: number;
 }
 
 export function parseTempo(tempoStr: string | undefined): number {
@@ -33,7 +40,9 @@ export function parseTempo(tempoStr: string | undefined): number {
 
 // Span = nombre de mesures (1 = 1 mesure, 0.5 = demi-mesure, etc.)
 // Durée = span × beatsPerMeasure × beatMs (3 en ternaire, 4 en binaire).
-function buildSequence(sections: Section[], beatMs: number): PlayStep[] {
+// Exportée : c'est elle qui fixe l'ordre de lecture et les compteurs de passage,
+// autant pouvoir la vérifier sans passer par un rendu React.
+export function buildSequence(sections: Section[], beatMs: number): PlayStep[] {
   const steps: PlayStep[] = [];
   for (const section of sections) {
     const bpm = section.beatsPerMeasure || 4;
@@ -54,6 +63,7 @@ function buildSequence(sections: Section[], beatMs: number): PlayStep[] {
               cellIndex: c,
               durationMs: row[c].span * bpm * beatMs,
               rowRepeatIndex: rr,
+              sectionRepeatIndex: rep,
             });
           }
         }
@@ -335,7 +345,9 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, playback
       let lastNonEmpty = row.length - 1;
       while (lastNonEmpty > 0 && !row[lastNonEmpty].chord.trim()) lastNonEmpty--;
       for (let c = 0; c <= lastNonEmpty; c++) {
-        steps.push({ sectionId, rowIndex, cellIndex: c, durationMs: row[c].span * bpmeasure * beatMs, rowRepeatIndex: rr });
+        // Lecture d'une seule mesure : la section n'est pas répétée, on est donc
+        // toujours au premier passage.
+        steps.push({ sectionId, rowIndex, cellIndex: c, durationMs: row[c].span * bpmeasure * beatMs, rowRepeatIndex: rr, sectionRepeatIndex: 0 });
       }
     }
     runSteps(steps, (step) => section.rows[step.rowIndex]?.[step.cellIndex]);

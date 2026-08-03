@@ -1065,16 +1065,31 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             if (!seenSignatures.has(sig)) seenSignatures.set(sig, section.label);
             return { section, isDuplicate, isDuplicateForPrint, firstLabel: firstLabel ?? null };
           });
-        })().map(({ section, isDuplicate, isDuplicateForPrint, firstLabel }, sectionIdx) => (
+        })().map(({ section, isDuplicate, isDuplicateForPrint, firstLabel }, sectionIdx) => {
+          // Passage en cours dans la répétition de la section, pendant la lecture.
+          // Le mode concert et le suivi micro ne comptent pas les passages de
+          // section : leur badge reste fixe, ce qui vaut mieux qu'un décompte faux.
+          const sectionRepeatIdx = isPlaying && activeStep?.sectionId === section.id
+            ? activeStep.sectionRepeatIndex
+            : undefined;
+          const isSectionRepeatActive = sectionRepeatIdx !== undefined;
+          const isLastSectionRepeat = isSectionRepeatActive && sectionRepeatIdx === section.repeat - 1;
+
+          return (
           <div key={section.id} className="print:break-inside-avoid" data-section-id={section.id}>
             {/* Header de section */}
             <div className="flex items-center gap-3 mb-3">
               <span className="text-sm font-semibold uppercase tracking-wider text-[var(--ink)]">
                 {section.label}
               </span>
-              {section.repeat > 1 && (
-                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-[var(--accent)] text-white">
-                  ×{section.repeat}
+              {section.repeat > 1 && !isLastSectionRepeat && (
+                /* Même traitement que la répétition de mesure : le compteur clignote
+                   pendant la lecture et décompte les passages restants, puis
+                   disparaît au dernier — afficher « ×1 » sur le dernier tour ne dit
+                   rien, et le badge fixe reprend sa place à l'arrêt. */
+                <span className={`text-xs font-semibold px-2 py-0.5 rounded
+                  ${isSectionRepeatActive ? 'animate-repeat-blink' : 'bg-[var(--accent)] text-white'}`}>
+                  ×{isSectionRepeatActive ? section.repeat - sectionRepeatIdx! : section.repeat}
                 </span>
               )}
               {(isDuplicate || isDuplicateForPrint) && firstLabel && (
@@ -1195,7 +1210,8 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               })}
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Suivi micro (suivi de position + défilement) — bouton flottant */}
