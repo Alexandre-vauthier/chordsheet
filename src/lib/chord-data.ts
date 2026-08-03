@@ -173,6 +173,38 @@ export const GUITAR_CHORDS: StringChord[] = [
   { id: "gAsus4",  name: "Asus4",  full: "A sus4",  category: "sus4", fingers: [[2,2,1],[3,2,1],[4,2,1],[5,2,1]], open: [1], muted: [6], startFret: 1 },
   { id: "gBbsus4", name: "Bbsus4", full: "Bb sus4", category: "sus4", barre: { fret: 1, fromString: 1, toString: 5 }, fingers: [[4,3,1],[3,3,1],[2,4,1]], open: [], muted: [6], startFret: 1 },
   { id: "gBsus4",  name: "Bsus4",  full: "B sus4",  category: "sus4", barre: { fret: 2, fromString: 1, toString: 5 }, fingers: [[3,4,1],[4,4,1],[5,4,1]], open: [], muted: [6], startFret: 2 },
+
+  /**
+   * Accords de puissance (« power chords »), guitare seule.
+   *
+   * Fondamentale, quinte, octave : pas de tierce, donc ni majeur ni mineur. C'est ce
+   * qui les rend interchangeables sur toute une progression, et c'est pourquoi le
+   * rock et le metal en vivent. Ils manquaient à la bibliothèque alors qu'ils sont
+   * parmi les premiers doigtés qu'on apprend.
+   *
+   * Trois formes mobiles, choisies pour rester dans les premières cases : la
+   * fondamentale sur la corde de mi grave (mi à sol#), sur la corde de la (la à
+   * ré bémol), et sur la corde de ré (ré et mi bémol). Aucune ne dépasse la sixième
+   * case, là où le même doigté plus haut sur le manche serait injouable pour un
+   * débutant.
+   *
+   * Les autres instruments n'en ont pas : à quatre cordes le doigté n'a plus d'intérêt,
+   * et au piano « A5 » ne veut rien dire de plus que « joue la et mi ». Un « A5 » écrit
+   * dans une grille d'ukulélé ou de piano retombe donc sur son accord majeur, cf. le
+   * repli en fin de `findChordVariants`.
+   */
+  { id: "gC5",  name: "C5",  full: "C power chord",  category: "power", fingers: [[5,3,1],[4,5,3],[3,5,4]], open: [],  muted: [1,2,6], startFret: 3 },
+  { id: "gDb5", name: "Db5", full: "Db power chord", category: "power", fingers: [[5,4,1],[4,6,3],[3,6,4]], open: [],  muted: [1,2,6], startFret: 4 },
+  { id: "gD5",  name: "D5",  full: "D power chord",  category: "power", fingers: [[3,2,1],[2,3,3]],         open: [4], muted: [1,5,6], startFret: 1 },
+  { id: "gEb5", name: "Eb5", full: "Eb power chord", category: "power", fingers: [[4,1,1],[3,3,3],[2,4,4]], open: [],  muted: [1,5,6], startFret: 1 },
+  { id: "gE5",  name: "E5",  full: "E power chord",  category: "power", fingers: [[5,2,1],[4,2,3]],         open: [6], muted: [1,2,3], startFret: 1 },
+  { id: "gF5",  name: "F5",  full: "F power chord",  category: "power", fingers: [[6,1,1],[5,3,3],[4,3,4]], open: [],  muted: [1,2,3], startFret: 1 },
+  { id: "gFs5", name: "F#5", full: "F# power chord", category: "power", fingers: [[6,2,1],[5,4,3],[4,4,4]], open: [],  muted: [1,2,3], startFret: 2 },
+  { id: "gG5",  name: "G5",  full: "G power chord",  category: "power", fingers: [[6,3,1],[5,5,3],[4,5,4]], open: [],  muted: [1,2,3], startFret: 3 },
+  { id: "gAb5", name: "Ab5", full: "Ab power chord", category: "power", fingers: [[6,4,1],[5,6,3],[4,6,4]], open: [],  muted: [1,2,3], startFret: 4 },
+  { id: "gA5",  name: "A5",  full: "A power chord",  category: "power", fingers: [[4,2,1],[3,2,3]],         open: [5], muted: [1,2,6], startFret: 1 },
+  { id: "gBb5", name: "Bb5", full: "Bb power chord", category: "power", fingers: [[5,1,1],[4,3,3],[3,3,4]], open: [],  muted: [1,2,6], startFret: 1 },
+  { id: "gB5",  name: "B5",  full: "B power chord",  category: "power", fingers: [[5,2,1],[4,4,3],[3,4,4]], open: [],  muted: [1,2,6], startFret: 2 },
 ];
 
 // ─── Accords Ukulélé ──────────────────────────────────────────────────────────
@@ -1226,6 +1258,17 @@ export function findChordVariants(
       if (chord) return [chord];
     }
   }
+
+  /**
+   * Accord de puissance sur un instrument qui n'en a pas : on rend l'accord majeur.
+   *
+   * Seule la guitare porte ces doigtés (voir la fin de GUITAR_CHORDS). Ailleurs,
+   * plutôt que de ne rien afficher, « A5 » se lit « A » : la fondamentale et la
+   * quinte y sont, la tierce en plus. C'est un compromis assumé — un ukuléliste
+   * préfère un doigté jouable à une case vide.
+   */
+  const power = name.trim().match(/^([A-G][#b]?)5$/i);
+  if (power) return findChordVariants(power[1], instrumentId, _visited);
 
   return [];
 }
