@@ -10,7 +10,7 @@ export function SocialLinkRow({ url, onRemove, removeLabel }: { url: string; onR
   if (!lien) return null;
 
   return (
-    <li className="flex items-center gap-3 px-3 py-2 rounded-lg border border-[var(--line)] bg-[var(--paper)]">
+    <li className="flex items-center gap-3 px-3 py-2 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)]">
       <span className="text-xs font-medium text-[var(--ink)] w-24 shrink-0">{t(lien.platform)}</span>
       <span className="flex-1 min-w-0 truncate text-xs text-[var(--ink-light)]">{lien.display}</span>
       <button

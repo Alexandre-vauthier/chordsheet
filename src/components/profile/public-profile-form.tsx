@@ -68,7 +68,7 @@ export function PublicProfileForm() {
         onBlur={() => persist(bio, links)}
         rows={3}
         placeholder={t('bioPlaceholder')}
-        className="mt-1.5 w-full rounded-lg border border-[var(--line)] bg-[var(--paper)] px-3 py-2 text-sm
+        className="mt-1.5 w-full rounded-lg border border-[var(--line)] bg-[var(--cell-bg)] px-3 py-2 text-sm
           text-[var(--ink)] placeholder:text-[var(--ink-faint)] outline-none focus:border-[var(--accent)] resize-y"
       />
       <p className="mt-1 text-[11px] text-[var(--ink-faint)]">{t('bioCount', { used: bio.length, max: MAX_BIO })}</p>
@@ -92,7 +92,7 @@ export function PublicProfileForm() {
             onChange={(e) => { setDraft(e.target.value); setError(''); }}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addLink(); } }}
             placeholder={t('urlPlaceholder')}
-            className="flex-1 rounded-lg border border-[var(--line)] bg-[var(--paper)] px-3 py-2 text-sm
+            className="flex-1 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)] px-3 py-2 text-sm
               text-[var(--ink)] placeholder:text-[var(--ink-faint)] outline-none focus:border-[var(--accent)]"
           />
           <button
