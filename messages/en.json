@@ -62,7 +62,9 @@
     "linkChordByNotes": "Find a chord by its notes",
     "linkInstrumentChords": "{instrument} chords",
     "linkEditor": "The chart editor",
-    "linkPrint": "Printing a chart"
+    "linkPrint": "Printing a chart",
+    "creditBpm": "Tempo: GetSongBPM",
+    "creditArtwork": "Artwork & previews: Apple Music"
   },
   "Landing": {
     "nav": {
@@ -1099,7 +1101,14 @@
     "gregBody": "A brilliant guitarist and a man of vision. Greg was one of the first to understand what this tool could become, to help shape it with me, and to ask the right questions at the right time. The kind of outside perspective that changes everything.",
     "bastienAlias": "aka Bataba",
     "bastienBody": "A guitarist and a developer — the dream combination for this project. Bastien understands both sides of it: what a musician expects from a tool, and how to build it properly. His help means a lot.",
-    "closing": "And to everyone who uses Alviena, shares their chord sheets, and sends feedback — thank you. You're the best reason to keep going."
+    "closing": "And to everyone who uses Alviena, shares their chord sheets, and sends feedback — thank you. You're the best reason to keep going.",
+    "sourcesTitle": "What comes from elsewhere",
+    "sourcesIntro": "The app would run without them, but it would not look or sound the same: no artwork, no previews, a piano made of oscillators and a tempo to type in by hand.",
+    "sourceApple": "album artwork, thirty-second previews, release year and genre, through the iTunes Search API.",
+    "sourceDeezer": "song tempo, queried first because it is freely available and has no quota.",
+    "sourceBpm": "tempo where Deezer has none. The key itself is worked out from the chords you write.",
+    "sourceSmplr": "the sampled instruments heard during playback: a concert piano, and General MIDI sounds for the stringed instruments.",
+    "sourceLinn": "the drum machine kit uses the sounds of this 1982 drum machine."
   },
   "Contact": {
     "pageTitle": "Contact",

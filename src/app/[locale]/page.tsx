@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
 import { useArtwork } from '@/lib/use-artwork';
+import { playPreviewAudio, stopPreviewAudio } from '@/lib/preview-audio';
 import { useAuth } from '@/lib/auth-context';
 import { Link } from '@/i18n/navigation';
 import { Footer } from '@/components/layout/footer';
@@ -86,6 +87,75 @@ function LandingCard({ sheet }: { sheet: MiniSheet }) {
         </div>
       </div>
     </Link>
+  );
+}
+
+/* ── Ligne du book ────────────────────────────────────────────────── */
+
+/**
+ * Une entrée du book illustré, avec sa vraie pochette et son extrait.
+ *
+ * Le bloc montrait quatre carrés violets identiques : on annonçait un book de
+ * morceaux avec un visuel qui n'en contenait aucun. La pochette et l'extrait de
+ * trente secondes viennent d'Apple Music, par le même chemin que les cartes
+ * d'Explore et la page d'une grille — rien de propre à l'accueil.
+ *
+ * Le lecteur d'extrait est partagé (`preview-audio`) : lancer celui-ci coupe celui
+ * qui jouait ailleurs sur la page, sans quoi deux morceaux se superposeraient.
+ */
+function BookRow({ title, artist, mine, tag }: { title: string; artist: string; mine: boolean; tag: string }) {
+  const { artworkUrl, previewUrl } = useArtwork(artist, title);
+  const [playing, setPlaying] = useState(false);
+
+  // Quitter la page pendant l'extrait laisserait le son tourner sans rien à l'écran.
+  useEffect(() => () => { if (playing) stopPreviewAudio(); }, [playing]);
+
+  const toggle = () => {
+    if (!previewUrl) return;
+    if (playing) { stopPreviewAudio(); setPlaying(false); }
+    else { setPlaying(true); playPreviewAudio(previewUrl, () => setPlaying(false)); }
+  };
+
+  return (
+    <div className="flex items-center gap-3 rounded-xl bg-white/4 px-3 py-2.5">
+      <button
+        type="button"
+        onClick={toggle}
+        disabled={!previewUrl}
+        aria-label={previewUrl ? `${playing ? '\u25a0' : '\u25b6'} ${title}` : title}
+        className="relative w-14 h-14 rounded-lg overflow-hidden shrink-0 bg-white/[0.06] group/art
+          disabled:cursor-default enabled:cursor-pointer"
+      >
+        {artworkUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={artworkUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        )}
+        {previewUrl && (
+          <span
+            className={`absolute inset-0 flex items-center justify-center transition-opacity ${
+              playing ? 'bg-black/55 opacity-100' : 'bg-black/45 opacity-0 group-hover/art:opacity-100'
+            }`}
+          >
+            {playing ? (
+              <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden>
+                <rect x="4" y="3" width="4" height="14" rx="1" /><rect x="12" y="3" width="4" height="14" rx="1" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4 ml-0.5 text-white" fill="currentColor" viewBox="0 0 20 20" aria-hidden>
+                <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+              </svg>
+            )}
+          </span>
+        )}
+      </button>
+      <div className="min-w-0 flex-1">
+        <p className="text-[var(--nav-text)]/85 text-sm font-semibold truncate">{title}</p>
+        <p className="text-[var(--nav-text)]/40 text-xs truncate">{artist}</p>
+      </div>
+      <span className={`text-[9px] px-1.5 py-0.5 rounded-full shrink-0 font-medium ${mine ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'bg-white/8 text-[var(--nav-text)]/40'}`}>
+        {tag}
+      </span>
+    </div>
   );
 }
 
@@ -374,19 +444,16 @@ export default function Home() {
                   { title: 'Hallelujah', artist: 'Leonard Cohen', mine: false },
                   { title: 'Hotel California', artist: 'Eagles', mine: true },
                 ].map((s) => (
-                  <div key={s.title} className="flex items-center gap-3 rounded-xl bg-white/4 px-3 py-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-800 to-indigo-900 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-[var(--nav-text)]/85 text-xs font-semibold truncate">{s.title}</p>
-                      <p className="text-[var(--nav-text)]/40 text-[10px] truncate">{s.artist}</p>
-                    </div>
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded-full shrink-0 font-medium ${s.mine ? 'bg-[var(--accent)]/20 text-[var(--accent)]' : 'bg-white/8 text-[var(--nav-text)]/40'}`}>
-                      {s.mine ? t('book.tagMine') : t('book.tagCommunity')}
-                    </span>
-                  </div>
+                  <BookRow
+                    key={s.title}
+                    title={s.title}
+                    artist={s.artist}
+                    mine={s.mine}
+                    tag={s.mine ? t('book.tagMine') : t('book.tagCommunity')}
+                  />
                 ))}
                 <div className="flex items-center gap-3 rounded-xl border border-dashed border-white/10 px-3 py-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-white/5 shrink-0 flex items-center justify-center text-white/20 text-lg">+</div>
+                  <div className="w-14 h-14 rounded-lg bg-white/5 shrink-0 flex items-center justify-center text-white/20 text-xl">+</div>
                   <p className="text-[var(--nav-text)]/25 text-xs">{t('book.previewAdd')}</p>
                 </div>
               </div>

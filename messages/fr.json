@@ -62,7 +62,9 @@
     "linkChordByNotes": "Trouver un accord par ses notes",
     "linkInstrumentChords": "Accords {instrumentOf}",
     "linkEditor": "L'éditeur de grilles",
-    "linkPrint": "Imprimer une grille"
+    "linkPrint": "Imprimer une grille",
+    "creditBpm": "Tempo : GetSongBPM",
+    "creditArtwork": "Pochettes & extraits : Apple Music"
   },
   "Landing": {
     "nav": {
@@ -1099,7 +1101,14 @@
     "gregBody": "Grand guitariste et homme de vision. Greg a été l'un des premiers à comprendre ce que cet outil pouvait devenir, à en dessiner les contours avec moi, et à poser les bonnes questions au bon moment. Ce genre de regard extérieur qui change tout.",
     "bastienAlias": "alias Bataba",
     "bastienBody": "Guitariste et développeur — la combinaison rêvée pour ce projet. Bastien comprend les deux côtés de la chose : ce qu'un musicien attend d'un outil, et comment le construire proprement. Son aide compte beaucoup.",
-    "closing": "Et à tous ceux qui utilisent Alviena, partagent leurs grilles, font remonter leurs retours — merci. Vous êtes la meilleure raison de continuer."
+    "closing": "Et à tous ceux qui utilisent Alviena, partagent leurs grilles, font remonter leurs retours — merci. Vous êtes la meilleure raison de continuer.",
+    "sourcesTitle": "Ce qui vient d'ailleurs",
+    "sourcesIntro": "L'application tournerait sans eux, mais elle n'aurait pas ce visage : pas de pochette, pas d'extrait, un piano en oscillateur et un tempo à saisir à la main.",
+    "sourceApple": "pochettes d'album, extraits de trente secondes, année de sortie et genre, via l'API iTunes Search.",
+    "sourceDeezer": "tempo des morceaux, interrogé en premier parce qu'il est libre d'accès et sans quota.",
+    "sourceBpm": "tempo là où Deezer n'en a pas. La tonalité, elle, se déduit des accords écrits.",
+    "sourceSmplr": "les instruments échantillonnés joués à la lecture : un piano de concert, et des sons General MIDI pour les instruments à cordes.",
+    "sourceLinn": "le kit de la boîte à rythmes reprend les sons de cette boîte à rythmes de 1982."
   },
   "Contact": {
     "pageTitle": "Contact",

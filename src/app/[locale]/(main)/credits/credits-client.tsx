@@ -69,6 +69,36 @@ export function CreditsClient() {
           </div>
         </section>
 
+        {/* Les sources extérieures. Sans elles l'application marcherait, mais elle
+            n'aurait pas ce rendu : pas de pochette, pas d'extrait, un piano en
+            oscillateur et un tempo à saisir à la main. */}
+        <section className="pt-6 border-t border-[var(--line)]">
+          <h2 className="font-playfair text-xl font-bold text-[var(--ink)] mb-2">{t('sourcesTitle')}</h2>
+          <p className="text-[var(--ink-light)] text-sm leading-relaxed mb-4">{t('sourcesIntro')}</p>
+
+          <ul className="space-y-3 text-sm text-[var(--ink-light)]">
+            {[
+              { name: 'Apple Music', url: 'https://music.apple.com', body: t('sourceApple') },
+              { name: 'Deezer', url: 'https://www.deezer.com', body: t('sourceDeezer') },
+              { name: 'GetSongBPM', url: 'https://getsongbpm.com', body: t('sourceBpm') },
+              { name: 'smplr', url: 'https://github.com/danigb/smplr', body: t('sourceSmplr') },
+              { name: 'LinnDrum LM-2', url: null, body: t('sourceLinn') },
+            ].map(({ name, url, body }) => (
+              <li key={name}>
+                <span className="font-semibold text-[var(--ink)]">
+                  {url ? (
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="hover:text-[var(--accent)] transition-colors">
+                      {name}
+                    </a>
+                  ) : name}
+                </span>
+                {' — '}
+                {body}
+              </li>
+            ))}
+          </ul>
+        </section>
+
         <p className="text-[var(--ink-faint)] text-xs pt-4 border-t border-[var(--line)]">
           {t('closing')}
         </p>

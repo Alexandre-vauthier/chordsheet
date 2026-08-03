@@ -117,15 +117,26 @@ export function Footer() {
             >
               {t('discord')}
             </a>
-            {/* Backlink requis par GetSongBPM (source tempo & tonalité). Lien suivi
-                (pas de nofollow), présent sur tout le site via le footer. */}
+            {/* Backlink requis par GetSongBPM. Lien suivi (pas de nofollow), présent
+                sur tout le site via le footer. Ne parle plus que du tempo : la tonalité
+                se déduit désormais des accords écrits, plus de cette source. */}
             <a
               href="https://getsongbpm.com"
               target="_blank"
               rel="noopener"
               className="text-[11px] text-[var(--ink-faint)] hover:text-[var(--ink-light)] transition-colors"
             >
-              Tempo &amp; tonalité : GetSongBPM
+              {t('creditBpm')}
+            </a>
+            {/* Pochettes et extraits de trente secondes viennent de l'API iTunes
+                Search. Ses conditions demandent d'en créditer la source. */}
+            <a
+              href="https://music.apple.com"
+              target="_blank"
+              rel="noopener"
+              className="text-[11px] text-[var(--ink-faint)] hover:text-[var(--ink-light)] transition-colors"
+            >
+              {t('creditArtwork')}
             </a>
           </div>
         </div>
