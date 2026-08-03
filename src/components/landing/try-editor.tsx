@@ -329,9 +329,9 @@ export function TryEditor({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: st
                             title={t('split')}
                             aria-label={t('split')}
                             className="absolute -bottom-3 left-1/2 -translate-x-1/2 z-10 w-6 h-6 flex items-center
-                              justify-center rounded-full bg-[var(--paper)] border border-[var(--accent)]
-                              text-xs leading-none text-[var(--accent)] cursor-pointer
-                              transition-colors hover:bg-[var(--accent)] hover:text-white"
+                              justify-center rounded-full bg-[var(--paper)] border border-transparent
+                              text-xs leading-none text-[var(--accent)] cursor-pointer transition-colors
+                              hover:bg-[var(--accent)] hover:border-[var(--accent)] hover:text-white"
                           >
                             /
                           </button>
@@ -357,8 +357,8 @@ export function TryEditor({ ctaHref, ctaLabel }: { ctaHref: string; ctaLabel: st
                         title={t('merge')}
                         aria-label={t('merge')}
                         className="w-6 h-6 flex items-center justify-center rounded-full bg-[var(--paper)]
-                          border border-[var(--accent)] text-[var(--accent)] cursor-pointer
-                          transition-colors hover:bg-[var(--accent)] hover:text-white"
+                          border border-transparent text-[var(--accent)] cursor-pointer transition-colors
+                          hover:bg-[var(--accent)] hover:border-[var(--accent)] hover:text-white"
                       >
                         <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} aria-hidden>
                           <path strokeLinecap="round" strokeLinejoin="round" d="M8 8l-4 4 4 4M16 8l4 4-4 4M4 12h16" />
