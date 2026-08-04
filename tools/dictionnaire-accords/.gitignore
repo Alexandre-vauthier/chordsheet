@@ -1,0 +1,5 @@
+# Images regenerables depuis le PDF avec pdf.py, et sorties intermediaires.
+*.raw
+*.png
+*.json
+__pycache__/
