@@ -735,7 +735,7 @@ export const PIANO_CHORDS: PianoChord[] = [
 
   // ── Mineurs ──────────────────────────────────────────────────────────────
   { id: 'pCm',  name: 'Cm',  full: 'C mineur',   category: 'minor', notes: ['C4','Eb4','G4'] },
-  { id: 'pCsm', name: 'C#m', full: 'C# mineur',  category: 'minor', notes: ['C#4','E4','G#4'] },
+  { id: 'pCsm', name: 'Dbm', full: 'Db mineur',  category: 'minor', notes: ['C#4','E4','G#4'] },
   { id: 'pDm',  name: 'Dm',  full: 'D mineur',   category: 'minor', notes: ['D4','F4','A4'] },
   { id: 'pEbm', name: 'Ebm', full: 'Eb mineur',  category: 'minor', notes: ['Eb4','Gb4','Bb4'] },
   { id: 'pEm',  name: 'Em',  full: 'E mineur',   category: 'minor', notes: ['E4','G4','B4'] },
@@ -777,7 +777,7 @@ export const PIANO_CHORDS: PianoChord[] = [
 
   // ── Mineures 7 ───────────────────────────────────────────────────────────
   { id: 'pCm7',  name: 'Cm7',  full: 'C min. 7',   category: 'min7', notes: ['C4','Eb4','G4','Bb4'] },
-  { id: 'pCsm7', name: 'C#m7', full: 'C# min. 7',  category: 'min7', notes: ['C#4','E4','G#4','B4'] },
+  { id: 'pCsm7', name: 'Dbm7', full: 'Db min. 7',  category: 'min7', notes: ['C#4','E4','G#4','B4'] },
   { id: 'pDm7',  name: 'Dm7',  full: 'D min. 7',   category: 'min7', notes: ['D4','F4','A4','C5'] },
   { id: 'pEbm7', name: 'Ebm7', full: 'Eb min. 7',  category: 'min7', notes: ['Eb4','Gb4','Bb4','Db5'] },
   { id: 'pEm7',  name: 'Em7',  full: 'E min. 7',   category: 'min7', notes: ['E4','G4','B4','D5'] },
@@ -791,7 +791,7 @@ export const PIANO_CHORDS: PianoChord[] = [
 
   // ── Diminués ─────────────────────────────────────────────────────────────
   { id: 'pCdim',  name: 'Cdim',  full: 'C diminué',   category: 'dim', notes: ['C4','Eb4','Gb4'] },
-  { id: 'pCsdim', name: 'C#dim', full: 'C# diminué',  category: 'dim', notes: ['C#4','E4','G4'] },
+  { id: 'pCsdim', name: 'Dbdim', full: 'Db diminué',  category: 'dim', notes: ['C#4','E4','G4'] },
   { id: 'pDdim',  name: 'Ddim',  full: 'D diminué',   category: 'dim', notes: ['D4','F4','Ab4'] },
   { id: 'pEbdim', name: 'Ebdim', full: 'Eb diminué',  category: 'dim', notes: ['Eb4','Gb4','A4'] },
   { id: 'pEdim',  name: 'Edim',  full: 'E diminué',   category: 'dim', notes: ['E4','G4','Bb4'] },
@@ -805,7 +805,7 @@ export const PIANO_CHORDS: PianoChord[] = [
 
   // ── Augmentés ────────────────────────────────────────────────────────────
   { id: 'pCaug',  name: 'Caug',  full: 'C augmenté',  category: 'aug', notes: ['C4','E4','G#4'] },
-  { id: 'pCsaug', name: 'C#aug', full: 'C# augmenté', category: 'aug', notes: ['C#4','F4','A4'] },
+  { id: 'pCsaug', name: 'Dbaug', full: 'Db augmenté', category: 'aug', notes: ['C#4','F4','A4'] },
   { id: 'pDaug',  name: 'Daug',  full: 'D augmenté',  category: 'aug', notes: ['D4','F#4','A#4'] },
   { id: 'pEbaug', name: 'Ebaug', full: 'Eb augmenté', category: 'aug', notes: ['Eb4','G4','B4'] },
   { id: 'pEaug',  name: 'Eaug',  full: 'E augmenté',  category: 'aug', notes: ['E4','G#4','C5'] },
@@ -1110,6 +1110,12 @@ const EXTENDED_FORMULAS: Record<string, { intervals: number[]; category: string;
   // Sus (instruments à cordes — le piano les a déjà en bibliothèque)
   'sus2':    { intervals: [0,2,7],              category:'sus',    label:'sus.2' },
   'sus4':    { intervals: [0,5,7],              category:'sus',    label:'sus.4' },
+  /**
+   * La septième sus4 manquait à l'appel, et rien ne la remplaçait : douze accords
+   * sans aucun doigté au ukulélé, autant à la mandoline et au banjo, et le C7sus4
+   * de la guitare le jour où la carte du dictionnaire s'est révélée fautive.
+   */
+  '7sus4':   { intervals: [0,5,7,10],           category:'sus',    label:'7 sus.4' },
 };
 
 // Correspondance suffixe → clé de formule (ordre : plus spécifique en premier)
@@ -1146,6 +1152,7 @@ const FORMULA_KEY_BY_SUFFIX: Array<[RegExp, string]> = [
   [/^7[#♯]13$/,                  '7#13'],
   [/^m(?:in)?6$/,                'm6'],
   [/^6$/,                        '6'],
+  [/^7sus4?$/,                   '7sus4'],
   [/^sus2$/,                     'sus2'],
   [/^sus4?$/,                    'sus4'],
   [/^2$/,                        'sus2'],
@@ -1522,7 +1529,7 @@ const FORMULA_SUFFIX: Record<string, string> = {
   '13': '13',       'maj13': 'maj13', 'min13': 'm13',
   '7b5': '7b5',     '7#5': '7#5',    '7b9': '7b9',     '7#9': '7#9',
   '7#11': '7#11',   '7b13': '7b13',  '7#13': '7#13',
-  'sus2': 'sus2',   'sus4': 'sus4',
+  'sus2': 'sus2',   'sus4': 'sus4',  '7sus4': '7sus4',
 };
 
 const CHROMATIC_ROOTS_GEN = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'] as const;
