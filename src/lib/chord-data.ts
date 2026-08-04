@@ -597,9 +597,17 @@ export const MANDOLIN_CHORDS: StringChord[] = [
 /**
  * Doigtés de banjo cinq cordes, accordage GDGBD, relevés sur une planche imprimée.
  *
- * Cent dix-neuf des cent cinquante-six viennent de ce document. Aucun n'était
- * identique à ce que portait la bibliothèque : soixante et onze doigtés
- * différaient, quarante-huit manquaient.
+ * Cent dix-neuf des cent trente-trois viennent de ce document, dont quarante-huit
+ * qui manquaient. Sur les soixante et onze que la bibliothèque avait déjà,
+ * quarante-cinq portaient un doigté réellement différent ; les vingt-six autres
+ * avaient les mêmes quatre cordes frettées et ne différaient que par la
+ * chanterelle. Deux entrées étaient vides de toute note — le la et le la bémol
+ * n'avaient que des cordes étouffées.
+ *
+ * La chanterelle, justement : la bibliothèque la jouait à vide, la planche ne la
+ * marque pas. Elle sonne un sol, qui n'appartient qu'à trente-huit des cent
+ * dix-neuf accords ; sur les quatre-vingt-un autres, la laisser sonner ajoutait
+ * une note étrangère. On suit donc le document.
  *
  * Trois conventions de la planche, établies en comparant les lectures possibles
  * plutôt qu'en les supposant :
