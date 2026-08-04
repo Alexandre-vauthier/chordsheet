@@ -1143,7 +1143,18 @@ function generateStringVoicing(
   let best: { fingers: FingerPosition[]; open: number[]; muted: number[]; startFret: number;
               score: number; barre?: { fret: number; fromString: number; toString: number } } | null = null;
 
+  /**
+   * Chaque fenêtre est explorée deux fois : cordes à vide permises, puis interdites.
+   *
+   * La corde à vide était essayée d'abord et gagnait toujours, dès qu'elle donnait une
+   * note de l'accord. Elle morcelle pourtant la forme : elle s'intercale entre les
+   * cordes pressées et empêche le barré, si bien que six accords de guitare (les
+   * dim.7, entre autres) ne trouvaient plus aucun doigté une fois le barré rendu
+   * honnête. La seconde passe rend les formes barrées classiques, celles qu'on joue
+   * réellement pour ces accords ; la notation départage les deux.
+   */
   for (let w = 0; w <= 9; w++) {
+  for (const videsPermises of [true, false]) {
     const fingers: FingerPosition[] = [];
     const open: number[] = [];
     const muted: number[] = [];
@@ -1153,7 +1164,7 @@ function generateStringVoicing(
       const strSemi = tuning[s - 1] % 12;
 
       // Cases à tester : corde à vide (0) + fenêtre [w, w+4]
-      const fretsToTry = [0];
+      const fretsToTry = videsPermises ? [0] : [];
       for (let f = Math.max(1, w); f <= Math.max(1, w) + 4; f++) fretsToTry.push(f);
 
       let placed = false;
@@ -1177,6 +1188,37 @@ function generateStringVoicing(
      * doigts, ou mêler des cordes à vide à une main posée en huitième case — exacte
      * sur le papier, injouable en pratique. Trois conditions s'ajoutent.
      */
+    /**
+     * Élagage : on n'a que quatre doigts, et toutes les cordes ne sont pas dues.
+     *
+     * Une note posée sur chaque corde donne des formes à six doigts, rejetées ensuite
+     * en bloc : six accords de guitare (les dim.7, surtout) n'avaient plus aucun
+     * doigté. Un guitariste, lui, étouffe ce qui double une note déjà présente. On
+     * retire donc, à partir des extrémités pour garder une forme d'un seul tenant, les
+     * cordes dont la note est ailleurs dans l'accord — jamais la basse fondamentale,
+     * qui porte l'accord.
+     */
+    for (let garde = 0; garde < numStrings && fingers.length > 4; garde++) {
+      const jouees = [...open, ...fingers.map(([s]) => s)].sort((a, b) => a - b);
+      const graveJouee = jouees[jouees.length - 1];
+      const noteDe = (s: number) => {
+        const f = fingers.find(([st]) => st === s);
+        return (tuning[s - 1] + (f ? f[1] : 0)) % 12;
+      };
+      const doublon = (s: number) =>
+        jouees.filter((autre) => autre !== s && noteDe(autre) === noteDe(s)).length > 0;
+
+      const retirable = [jouees[0], graveJouee]
+        .filter((s) => fingers.some(([st]) => st === s))
+        .filter((s) => doublon(s))
+        .filter((s) => !(s === graveJouee && noteDe(s) === rootSemi));
+      if (retirable.length === 0) break;
+
+      const cible = retirable[0];
+      fingers.splice(fingers.findIndex(([st]) => st === cible), 1);
+      muted.push(cible);
+    }
+
     const pressedFrets = fingers.map(([, f]) => f);
     if (pressedFrets.length > 1) {
       const span = Math.max(...pressedFrets) - Math.min(...pressedFrets);
@@ -1198,16 +1240,37 @@ function generateStringVoicing(
     if (pressedFrets.length >= 2) {
       const bas = Math.min(...pressedFrets);
       const surBas = fingers.filter(([, f]) => f === bas).map(([st]) => st).sort((a, b) => a - b);
-      if (surBas.length >= 2) {
-        const de = surBas[0], a = surBas[surBas.length - 1];
-        // Le barré ne vaut que si rien n'est étouffé sous lui.
-        const coupees = muted.filter((st) => st >= de && st <= a);
-        if (coupees.length === 0) barre = { fret: bas, fromString: de, toString: a };
+      /**
+       * Le barré s'arrête à ce que le doigt traverse réellement.
+       *
+       * On prenait la première et la dernière corde pressées à cette case, sans
+       * regarder ce qui se trouvait entre les deux : le diagramme affichait alors un
+       * barré passant sur des cordes marquées à vide, que le doigt presse forcément.
+       * Cent soixante-cinq des trois cent quatre-vingt-seize formes de guitare
+       * étaient dans ce cas.
+       *
+       * Refuser tout barré dès qu'une corde à vide le traverse coûtait seize doigtés
+       * de guitare, faute de quoi ces accords ne s'affichaient plus du tout. La forme
+       * juste est le barré **partiel** : le plus long segment de cordes voisines que
+       * rien n'interrompt, ni corde à vide ni corde étouffée. C'est ce que fait la
+       * main, et deux cordes suffisent à l'économiser un doigt.
+       */
+      let segment: number[] = [];
+      let courant: number[] = [];
+      for (const st of surBas) {
+        const suite = courant.length === 0 || st === courant[courant.length - 1] + 1;
+        courant = suite ? [...courant, st] : [st];
+        if (courant.length > segment.length) segment = courant;
+      }
+      if (segment.length >= 2) {
+        barre = { fret: bas, fromString: segment[0], toString: segment[segment.length - 1] };
       }
     }
 
+    // Le barré ne dispense que des cordes qu'il couvre : une corde pressée à la même
+    // case mais hors du segment demande son propre doigt.
     const doigtsPoses = barre
-      ? fingers.filter(([, f]) => f !== barre!.fret).length + 1
+      ? fingers.filter(([st, f]) => !(f === barre!.fret && st >= barre!.fromString && st <= barre!.toString)).length + 1
       : fingers.length;
     if (doigtsPoses > 4) continue;
 
@@ -1241,6 +1304,7 @@ function generateStringVoicing(
     if (!best || score > best.score) {
       best = { fingers, open, muted, startFret, score, barre };
     }
+  }
   }
 
   if (!best) return null;
@@ -1405,9 +1469,20 @@ const FORMULA_SUFFIX: Record<string, string> = {
 
 const CHROMATIC_ROOTS_GEN = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'] as const;
 
-/** Génère tous les accords étendus algorithmiques pour un instrument donné */
+/**
+ * Génère les accords étendus qu'aucun doigté du dictionnaire ne couvre déjà.
+ *
+ * La génération est un filet, pas une source concurrente. Là où le dictionnaire a
+ * son doigté, relevé à la main, il fait foi : c'est déjà la règle de
+ * `findChordVariants`, qui rend le doigté statique sans jamais générer quand il en
+ * trouve un. Faute de l'appliquer ici, la bibliothèque affichait deux D6, dont un
+ * barré de synthèse là où le dictionnaire donne une forme ouverte à deux doigts.
+ */
 export function getAllExtendedChords(instrumentId: InstrumentId): (StringChord | PianoChord)[] {
   const results: (StringChord | PianoChord)[] = [];
+  const auDictionnaire = new Set(
+    getChordsByInstrument(instrumentId).map((c) => c.name.trim().toLowerCase()),
+  );
   // Sus/add déjà couverts par la bibliothèque statique piano
   const pianoSkip = new Set(['sus2', 'sus4', 'add9', 'madd9']);
   for (const root of CHROMATIC_ROOTS_GEN) {
@@ -1417,6 +1492,7 @@ export function getAllExtendedChords(instrumentId: InstrumentId): (StringChord |
       if (!suffix) continue;
       if (instrumentId === 'piano' && pianoSkip.has(formulaKey)) continue;
       const name = `${root}${suffix}`;
+      if (auDictionnaire.has(name.toLowerCase())) continue;
       const full = `${root} ${formula.label}`;
       const safeId = name.replace(/[^a-zA-Z0-9]/g, '_');
       const id = `gen_${instrumentId}_${safeId}`;
