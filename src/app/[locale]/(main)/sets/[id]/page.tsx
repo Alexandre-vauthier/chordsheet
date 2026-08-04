@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
@@ -40,7 +40,9 @@ export default function SetPage({ params }: SetPageProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   const tOff = useTranslations('Offline');
-  const { etat: prechargement, precharger } = usePrechargement();
+  const locale = useLocale();
+  const { etat: prechargement, precharger, verifier } = usePrechargement();
+
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [exportError, setExportError] = useState('');
 
@@ -52,6 +54,33 @@ export default function SetPage({ params }: SetPageProps) {
   // Drag and drop
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [localSheets, setLocalSheets] = useState<Sheet[]>([]);
+
+  const idsDesGrilles = () => localSheets.map((sh) => sh.id).filter((x): x is string => !!x);
+
+  /**
+   * Les pages à garder pour que la setlist s'ouvre sans réseau.
+   *
+   * Ces adresses n'existent pas d'avance : elles ne peuvent donc pas être mises
+   * en cache à l'installation du service worker, et la navigation se faisant côté
+   * client, les visiter ne suffit pas non plus. On les demande explicitement.
+   *
+   * La page du groupe en fait partie : c'est par elle qu'on rejoint la setlist
+   * quand elle appartient à un groupe, et sans elle le chemin est coupé dès la
+   * première étape.
+   */
+  const pagesDuSet = () => [
+    `/${locale}/sets/${id}`,
+    `/${locale}/sets/${id}/play`,
+    ...(set?.groupId ? [`/${locale}/groups/${set.groupId}`] : []),
+    ...idsDesGrilles().map((sid) => `/${locale}/sheet/${sid}`),
+  ];
+
+  // À l'arrivée sur la setlist, on demande au cache s'il l'a déjà : c'est un fait
+  // vérifiable, contrairement au souvenir d'un préchargement passé.
+  useEffect(() => {
+    if (set && localSheets.length) void verifier(pagesDuSet());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [set?.id, localSheets.length, locale]);
 
   // Initialiser les valeurs du formulaire
   useEffect(() => {
@@ -340,7 +369,7 @@ export default function SetPage({ params }: SetPageProps) {
                 ouvrir chaque grille une par une la veille, ce qu'on ne fait pas. */}
             <Button
               variant="ghost"
-              onClick={() => precharger(localSheets.map((sh) => sh.id).filter((x): x is string => !!x))}
+              onClick={() => precharger(idsDesGrilles(), pagesDuSet())}
               isLoading={prechargement.phase === 'en cours'}
               title={tOff('preload')}
             >

@@ -49,37 +49,93 @@ export type EtatPrechargement =
   | { phase: 'echec' };
 
 /**
- * Met en cache les grilles d'une setlist, pour qu'elles s'ouvrent sans réseau.
+ * Ces pages sont-elles réellement en cache ?
  *
- * Il suffit de lire chaque document : le cache persistant de Firestore garde ce
- * qui passe par lui, et une lecture ultérieure hors ligne y retombera. On lit
- * donc une par une, en série — un concert fait vingt morceaux, pas mille, et la
- * série laisse la connexion tranquille tout en donnant une progression honnête.
+ * On pourrait retenir qu'on les a préchargées, mais ce serait retenir une
+ * affirmation plutôt que constater un fait : le cache est purgé à chaque montée
+ * de version du service worker, et l'utilisateur peut vider ses données. On
+ * interroge donc le cache lui-même, ce qui a le mérite de ne jamais mentir.
+ */
+async function toutesEnCache(pages: string[]): Promise<boolean> {
+  if (!pages.length || typeof caches === 'undefined') return false;
+  try {
+    const trouvees = await Promise.all(
+      pages.map((p) => caches.match(p, { ignoreVary: true }).then((r) => !!r)),
+    );
+    return trouvees.every(Boolean);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Rend une setlist jouable sans réseau : ses données **et** ses pages.
+ *
+ * Les deux sont nécessaires et ils ne se cachent pas au même endroit.
+ *
+ * Les **données** tiennent dans le cache de Firestore : il suffit de lire chaque
+ * document, ce qui y passe y reste, et une lecture ultérieure hors ligne y
+ * retombera.
+ *
+ * Les **pages** sont l'autre moitié, et c'est celle qui manquait. Une adresse
+ * comme `/fr/sets/abc` n'existe pas d'avance : elle ne peut pas être mise en
+ * cache à l'installation, et la navigation se faisant côté client, elle ne l'est
+ * pas non plus en la visitant. Hors ligne on obtenait donc les grilles mais pas
+ * de quoi les afficher, et le lancement du set échouait sur « This page couldn't
+ * load ». On demande donc explicitement chaque page ici : la requête traverse le
+ * service worker, qui la garde.
+ *
+ * Tout se fait en série. Un concert fait vingt morceaux, pas mille, et la série
+ * laisse la connexion tranquille tout en donnant une progression honnête.
  */
 export function usePrechargement() {
   const [etat, setEtat] = useState<EtatPrechargement>({ phase: 'repos' });
 
-  const precharger = useCallback(async (sheetIds: string[]) => {
-    if (!sheetIds.length) return;
-    setEtat({ phase: 'en cours', faits: 0, total: sheetIds.length });
+  const precharger = useCallback(async (sheetIds: string[], pages: string[] = []) => {
+    const total = sheetIds.length + pages.length;
+    if (!total) return;
+    setEtat({ phase: 'en cours', faits: 0, total });
     let echecs = 0;
+    let faits = 0;
     try {
       const db = getDb();
-      for (let i = 0; i < sheetIds.length; i++) {
+      for (const id of sheetIds) {
         try {
-          await getDoc(doc(db, 'sheets', sheetIds[i]));
+          await getDoc(doc(db, 'sheets', id));
         } catch {
           // Grille supprimée, droits insuffisants, coupure en cours de route :
           // on compte et on continue, une grille manquante n'empêche pas les autres.
           echecs++;
         }
-        setEtat({ phase: 'en cours', faits: i + 1, total: sheetIds.length });
+        setEtat({ phase: 'en cours', faits: ++faits, total });
       }
-      setEtat({ phase: 'fini', total: sheetIds.length, echecs });
+      for (const page of pages) {
+        try {
+          const rep = await fetch(page);
+          if (!rep.ok) echecs++;
+        } catch {
+          echecs++;
+        }
+        setEtat({ phase: 'en cours', faits: ++faits, total });
+      }
+      setEtat({ phase: 'fini', total, echecs });
     } catch {
       setEtat({ phase: 'echec' });
     }
   }, []);
 
-  return { etat, precharger };
+  /**
+   * Rétablit l'état « disponible » si les pages sont déjà là.
+   *
+   * Sans cela, l'information ne survivait pas au changement de page : on revenait
+   * sur sa setlist et l'application proposait de la mettre en cache une seconde
+   * fois, sans jamais dire qu'elle y était déjà.
+   */
+  const verifier = useCallback(async (pages: string[]) => {
+    if (await toutesEnCache(pages)) {
+      setEtat({ phase: 'fini', total: pages.length, echecs: 0 });
+    }
+  }, []);
+
+  return { etat, precharger, verifier };
 }
