@@ -97,20 +97,52 @@ export interface GrilleAPrecharger {
 }
 
 /**
- * Demande une page sous ses deux formes.
+ * Fichiers de build déjà demandés, pour ne pas les redemander quatre-vingt-douze
+ * fois : les pages d'un même type partagent presque tout leur code.
+ */
+const dejaDemandes = new Set<string>();
+
+/**
+ * Demande une page, et le code dont elle a besoin pour vivre.
  *
- * Le HTML sert quand on ouvre l'adresse directement ; la **charge du routeur**
- * sert quand on y arrive par un lien, ce qui est le cas ordinaire dans
- * l'application. Ne garder que le HTML donnait un hors ligne trompeur : les
- * pages étaient là, mais aucun lien n'y menait, et tout finissait sur « This page
- * couldn't load ».
+ * Le HTML seul ne suffit pas, et c'est ce qui manquait : sans réseau la page
+ * s'affichait un dixième de seconde puis laissait place à une erreur. Elle était
+ * bien servie depuis le cache, mais le code qui la fait fonctionner n'y était
+ * pas — sur un téléphone où l'on n'avait jamais ouvert de grille en ligne, ces
+ * fichiers n'avaient jamais été téléchargés.
+ *
+ * On les tire donc du HTML lui-même, qui les nomme tous, plutôt que d'entretenir
+ * une liste qui serait fausse au premier déploiement.
+ *
+ * La charge du routeur est demandée au passage. Elle ne suffit pas à naviguer
+ * hors ligne (elle dépend de l'état de navigation du moment, voir
+ * `NavigationHorsLigne`), mais elle ne coûte rien et sert aux préchargements que
+ * le routeur fait de lui-même.
  */
 async function demanderPage(page: string): Promise<boolean> {
-  const essais = await Promise.allSettled([
-    fetch(page),
-    fetch(page, { headers: { RSC: '1' } }),
-  ]);
-  return essais.every((e) => e.status === 'fulfilled' && e.value.ok);
+  let html: Response;
+  try {
+    html = await fetch(page);
+    if (!html.ok) return false;
+  } catch {
+    return false;
+  }
+
+  void fetch(page, { headers: { RSC: '1' } }).catch(() => {});
+
+  try {
+    const texte = await html.clone().text();
+    const fichiers = new Set(
+      [...texte.matchAll(/\/_next\/static\/[^"'\\\s>)]+/g)]
+        .map((m) => m[0])
+        .filter((f) => !dejaDemandes.has(f)),
+    );
+    for (const f of fichiers) dejaDemandes.add(f);
+    await Promise.allSettled([...fichiers].map((f) => fetch(f)));
+  } catch {
+    // Page servie mais illisible en texte : on garde ce qu'on a.
+  }
+  return true;
 }
 
 /**
