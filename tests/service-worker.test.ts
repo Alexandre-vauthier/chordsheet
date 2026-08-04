@@ -102,21 +102,21 @@ function chargerServiceWorker(): Contexte {
 
 /** Joue un `fetch` et rend ce que le service worker a décidé de servir. */
 async function demander(ctx: Contexte, url: string, options: { mode?: string; entetes?: Record<string, string> } = {}) {
-  let servi: Promise<RepFeinte> | null = null;
+  const capture: { rep: Promise<RepFeinte> | null } = { rep: null };
   const requete = {
     url,
     method: 'GET',
     mode: options.mode ?? 'cors',
     headers: { get: (n: string) => options.entetes?.[n] ?? null },
   };
-  ctx.ecouteurs.get('fetch')!({ request: requete, respondWith: (p: Promise<RepFeinte>) => { servi = p; } });
-  return servi ? await servi : null;
+  ctx.ecouteurs.get('fetch')!({ request: requete, respondWith: (p: Promise<RepFeinte>) => { capture.rep = p; } });
+  return capture.rep ? await capture.rep : null;
 }
 
 async function installer(ctx: Contexte) {
-  let attendu: Promise<unknown> | null = null;
-  ctx.ecouteurs.get('install')!({ waitUntil: (p: Promise<unknown>) => { attendu = p; } });
-  await attendu;
+  const capture: { promesse: Promise<unknown> | null } = { promesse: null };
+  ctx.ecouteurs.get('install')!({ waitUntil: (p: Promise<unknown>) => { capture.promesse = p; } });
+  await capture.promesse;
 }
 
 // ─── Ce qu'on attend de lui ──────────────────────────────────────────────────

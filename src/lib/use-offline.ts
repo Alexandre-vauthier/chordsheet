@@ -112,8 +112,7 @@ async function codeEnCache(pages: string[]): Promise<boolean> {
     for (const page of pages) {
       const rep = await caches.match(page, { ignoreVary: true });
       if (!rep) continue;
-      const fichiers = [...(await rep.text()).matchAll(/\/_next\/static\/[^"'\\\s>)]+/g)]
-        .map((m) => m[0]);
+      const fichiers = fichiersDeLaPage(await rep.text());
       if (!fichiers.length) return false;
       const presents = await Promise.all(
         fichiers.map((f) => caches.match(f, { ignoreVary: true }).then((r) => !!r)),
@@ -139,6 +138,23 @@ export interface GrilleAPrecharger {
  * fois : les pages d'un même type partagent presque tout leur code.
  */
 const dejaDemandes = new Set<string>();
+
+/**
+ * Fichiers de build cités par une page.
+ *
+ * La classe de caractères exclut les guillemets, l'espace et les chevrons, et
+ * rien d'autre. Elle excluait aussi la parenthèse fermante, ce qui coupait les
+ * adresses en deux : les dossiers de routes de Next s'appellent `(main)`, si bien
+ * que le fichier de la page des grilles était demandé sous la forme tronquée
+ * `…/app/%5Blocale%5D/(main` — une adresse qui répond 404, jamais mise en cache,
+ * jamais retrouvée par le contrôle. Le vrai fichier, lui, n'était jamais demandé.
+ *
+ * Les deux symptômes venaient de là : le bouton n'annonçait jamais « disponible
+ * hors ligne », et la grille s'affichait sans son code avant de mourir.
+ */
+export function fichiersDeLaPage(html: string): string[] {
+  return [...new Set([...html.matchAll(/\/_next\/static\/[^"'\\\s<>]+/g)].map((m) => m[0]))];
+}
 
 /**
  * Demande une page, et le code dont elle a besoin pour vivre.
@@ -170,11 +186,7 @@ async function demanderPage(page: string): Promise<boolean> {
 
   try {
     const texte = await html.clone().text();
-    const fichiers = new Set(
-      [...texte.matchAll(/\/_next\/static\/[^"'\\\s>)]+/g)]
-        .map((m) => m[0])
-        .filter((f) => !dejaDemandes.has(f)),
-    );
+    const fichiers = new Set(fichiersDeLaPage(texte).filter((f) => !dejaDemandes.has(f)));
     for (const f of fichiers) dejaDemandes.add(f);
     await Promise.allSettled([...fichiers].map((f) => fetch(f)));
   } catch {
