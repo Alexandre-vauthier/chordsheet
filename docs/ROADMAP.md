@@ -61,17 +61,40 @@ Les concurrents affichent des étoiles sous leurs grilles (Ultimate Guitar :
 « 4,8 ★ (159) »). C'est un avantage visible dans une page de résultats, et il est
 atteignable.
 
-Deux choses à savoir avant de s'y mettre :
+**Comment ils font**, relevé dans leur source le 5 août 2026 : un nœud à **deux
+types simultanés**, portant la note, les commentaires et les dates.
 
-- **Google n'accorde les extraits d'avis qu'à une liste fermée de types** : livre,
-  cours, événement, tutoriel, commerce local, film, produit, recette,
-  application. Une grille est un `MusicComposition`, qui n'y figure pas. Ajouter
-  simplement `aggregateRating` au schéma actuel serait juste au sens de
-  schema.org, mais ne produirait aucune étoile ;
-- **ceux qui en obtiennent déclarent donc autre chose**, vraisemblablement un
-  `Product`. Ça marche, et c'est un usage limite : le jour où Google resserre, la
-  sanction porte sur tout le site. À décider en connaissance de cause, pas par
-  imitation.
+```json
+{
+  "@type": ["MusicRecording", "Article"],
+  "name": "Sensualité",
+  "byArtist": { "@type": "MusicGroup", "name": "Axelle Red", "url": "…" },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8", "ratingCount": "159",
+    "bestRating": "5", "worstRating": "1"
+  },
+  "datePublished": "…", "dateModified": "…",
+  "commentCount": "4",
+  "comment": [ { "@type": "Comment", "author": { "@type": "Person", … } } ]
+}
+```
+
+Ce qu'il faut en retenir, et qui n'est pas confortable : **ni `MusicRecording` ni
+`Article` ne figurent sur la liste des types que Google documente comme éligibles
+aux extraits d'avis** (livre, cours, événement, tutoriel, commerce local, film,
+produit, recette, application). Les étoiles s'affichent pourtant. La
+documentation est donc plus stricte que le comportement observé — ce qui veut
+dire que ça marche aujourd'hui sans garantie que ça marche demain, et sans recours
+si Google resserre.
+
+Deux écarts avec notre modélisation actuelle, à trancher le moment venu :
+
+- nous déclarons un `MusicComposition`, eux un `MusicRecording`. Une grille
+  d'accords décrit plutôt l'œuvre que l'enregistrement : leur choix se défend
+  moins bien que le nôtre, mais c'est peut-être le leur qui rapporte les étoiles ;
+- ils publient aussi les **commentaires** et leurs auteurs. Nous en avons
+  (`SheetComments`), ils ne sont pas exposés.
 
 **Rien à faire tant qu'il n'y a pas d'avis.** Au 5 août 2026 : 69 grilles notées,
 dont 66 avec **un seul vote** et aucune avec trois votes ou plus, pour trois
@@ -82,9 +105,8 @@ Le seuil raisonnable : y revenir quand un nombre significatif de grilles atteint
 cinq votes de personnes distinctes. D'ici là, le sujet n'est pas le balisage,
 c'est qu'il n'y a personne pour noter.
 
-À vérifier en premier, le jour venu : sous quel type les sites qui obtiennent des
-étoiles déclarent réellement leurs pages. Je n'ai pas pu le faire (leur adresse
-n'est pas devinable), et c'est ce qui tranche entre les deux options.
+Reste à établir, le jour venu : lequel des deux types apporte réellement les
+étoiles, et si l'un des deux suffit.
 
 ### 4. Étendre les tests
 
