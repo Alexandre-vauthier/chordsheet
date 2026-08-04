@@ -26,7 +26,7 @@ type SortOption = 'recent' | 'rated' | 'viewed';
 export default function DashboardPage() {
   const t = useTranslations('Dashboard');
   const tOff = useTranslations('Offline');
-  const { etat: prechargement, precharger } = usePrechargement();
+  const { etat: prechargement, precharger, verifier } = usePrechargement();
   const locale = useLocale();
   const genreLabel = useGenreLabel();
   const difficultyLabel = useDifficultyLabel();
@@ -118,8 +118,18 @@ export default function DashboardPage() {
     ...bookmarkedSheets.filter(s => !ownedIds.has(s.id)),
   ];
 
-  const idsDuBook = () => allSheets.map((sh) => sh.id).filter((x): x is string => !!x);
-  const pagesDuBook = () => idsDuBook().map((sid) => `/${locale}/sheet/${sid}`);
+  const grillesDuBook = () =>
+    allSheets
+      .map((sh) => sh.id)
+      .filter((x): x is string => !!x)
+      .map((sid) => ({ id: sid, page: `/${locale}/sheet/${sid}` }));
+
+  // À l'arrivée, on demande au cache s'il a déjà tout : c'est un fait vérifiable,
+  // contrairement au souvenir d'un préchargement passé.
+  useEffect(() => {
+    if (allSheets.length) void verifier(grillesDuBook().map((g) => g.page));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allSheets.length, locale]);
 
   const filterAndSort = useCallback((list: Sheet[]) => {
     let result = [...list];
@@ -205,7 +215,7 @@ export default function DashboardPage() {
             <Button
               variant="ghost"
               className="hidden sm:inline-flex"
-              onClick={() => precharger(idsDuBook(), pagesDuBook())}
+              onClick={() => precharger(grillesDuBook())}
               isLoading={prechargement.phase === 'en cours'}
               title={tOff('preloadBookTitle', { count: allSheets.length })}
             >

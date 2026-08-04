@@ -55,7 +55,11 @@ export default function SetPage({ params }: SetPageProps) {
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [localSheets, setLocalSheets] = useState<Sheet[]>([]);
 
-  const idsDesGrilles = () => localSheets.map((sh) => sh.id).filter((x): x is string => !!x);
+  const grillesDuSet = () =>
+    localSheets
+      .map((sh) => sh.id)
+      .filter((x): x is string => !!x)
+      .map((sid) => ({ id: sid, page: `/${locale}/sheet/${sid}` }));
 
   /**
    * Les pages à garder pour que la setlist s'ouvre sans réseau.
@@ -72,8 +76,10 @@ export default function SetPage({ params }: SetPageProps) {
     `/${locale}/sets/${id}`,
     `/${locale}/sets/${id}/play`,
     ...(set?.groupId ? [`/${locale}/groups/${set.groupId}`] : []),
-    ...idsDesGrilles().map((sid) => `/${locale}/sheet/${sid}`),
   ];
+
+  /** Tout ce dont l'ouverture hors ligne dépend, pages des grilles comprises. */
+  const toutesLesPages = () => [...pagesDuSet(), ...grillesDuSet().map((g) => g.page)];
 
   /**
    * À l'arrivée sur une setlist, on la prépare pour le hors ligne sans rien
@@ -89,9 +95,8 @@ export default function SetPage({ params }: SetPageProps) {
    */
   useEffect(() => {
     if (!set || !localSheets.length) return;
-    const pages = pagesDuSet();
-    void verifier(pages).then((deja) => {
-      if (!deja && !connexionMenagee()) void precharger(idsDesGrilles(), pages);
+    void verifier(toutesLesPages()).then((deja) => {
+      if (!deja && !connexionMenagee()) void precharger(grillesDuSet(), pagesDuSet());
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [set?.id, localSheets.length, locale]);
@@ -383,7 +388,7 @@ export default function SetPage({ params }: SetPageProps) {
                 ouvrir chaque grille une par une la veille, ce qu'on ne fait pas. */}
             <Button
               variant="ghost"
-              onClick={() => precharger(idsDesGrilles(), pagesDuSet())}
+              onClick={() => precharger(grillesDuSet(), pagesDuSet())}
               isLoading={prechargement.phase === 'en cours'}
               title={tOff('preload')}
             >

@@ -89,30 +89,52 @@ async function toutesEnCache(pages: string[]): Promise<boolean> {
 }
 
 /**
- * Rend une setlist jouable sans réseau : ses données **et** ses pages.
+ * Une grille prête pour le hors ligne : ses données et sa page.
+ */
+export interface GrilleAPrecharger {
+  id: string;
+  page: string;
+}
+
+/**
+ * Demande une page sous ses deux formes.
  *
- * Les deux sont nécessaires et ils ne se cachent pas au même endroit.
+ * Le HTML sert quand on ouvre l'adresse directement ; la **charge du routeur**
+ * sert quand on y arrive par un lien, ce qui est le cas ordinaire dans
+ * l'application. Ne garder que le HTML donnait un hors ligne trompeur : les
+ * pages étaient là, mais aucun lien n'y menait, et tout finissait sur « This page
+ * couldn't load ».
+ */
+async function demanderPage(page: string): Promise<boolean> {
+  const essais = await Promise.allSettled([
+    fetch(page),
+    fetch(page, { headers: { RSC: '1' } }),
+  ]);
+  return essais.every((e) => e.status === 'fulfilled' && e.value.ok);
+}
+
+/**
+ * Rend un répertoire jouable sans réseau : ses données **et** ses pages.
  *
- * Les **données** tiennent dans le cache de Firestore : il suffit de lire chaque
- * document, ce qui y passe y reste, et une lecture ultérieure hors ligne y
- * retombera.
+ * Les deux sont nécessaires et ne se cachent pas au même endroit. Les données
+ * tiennent dans le cache de Firestore : il suffit de lire chaque document, ce qui
+ * y passe y reste. Les pages tiennent dans le service worker, et il faut les lui
+ * donner explicitement — une adresse comme `/fr/sheet/abc` n'existe pas d'avance,
+ * donc elle ne peut ni être mise en cache à l'installation ni l'être en la
+ * visitant, puisque la navigation se fait côté client.
  *
- * Les **pages** sont l'autre moitié, et c'est celle qui manquait. Une adresse
- * comme `/fr/sets/abc` n'existe pas d'avance : elle ne peut pas être mise en
- * cache à l'installation, et la navigation se faisant côté client, elle ne l'est
- * pas non plus en la visitant. Hors ligne on obtenait donc les grilles mais pas
- * de quoi les afficher, et le lancement du set échouait sur « This page couldn't
- * load ». On demande donc explicitement chaque page ici : la requête traverse le
- * service worker, qui la garde.
+ * Une grille compte pour **une** étape, quel que soit le nombre de requêtes
+ * qu'elle demande. Compter les requêtes affichait « 182 » à qui n'a que
+ * quatre-vingt-douze grilles.
  *
- * Six requêtes de front (voir `FRONT`) : en série, la connexion passait son temps
- * à attendre.
+ * Six unités de front (voir `FRONT`) : en série, la connexion passe son temps à
+ * attendre.
  */
 export function usePrechargement() {
   const [etat, setEtat] = useState<EtatPrechargement>({ phase: 'repos' });
 
-  const precharger = useCallback(async (sheetIds: string[], pages: string[] = []) => {
-    const total = sheetIds.length + pages.length;
+  const precharger = useCallback(async (grilles: GrilleAPrecharger[], pages: string[] = []) => {
+    const total = grilles.length + pages.length;
     if (!total) return;
     setEtat({ phase: 'en cours', faits: 0, total });
     let echecs = 0;
@@ -122,14 +144,17 @@ export function usePrechargement() {
     try {
       const db = getDb();
       const taches: (() => Promise<void>)[] = [
-        ...sheetIds.map((id) => async () => {
-          // Grille supprimée, droits insuffisants, coupure en cours de route :
-          // on compte et on continue, une grille manquante n'empêche pas les autres.
-          try { await getDoc(doc(db, 'sheets', id)); } catch { echecs++; }
+        ...grilles.map((g) => async () => {
+          // Grille supprimée, droits insuffisants, coupure en cours de route : on
+          // compte et on continue, une grille manquante n'empêche pas les autres.
+          try {
+            await getDoc(doc(db, 'sheets', g.id));
+            if (!(await demanderPage(g.page))) echecs++;
+          } catch { echecs++; }
           avance();
         }),
         ...pages.map((page) => async () => {
-          try { if (!(await fetch(page)).ok) echecs++; } catch { echecs++; }
+          try { if (!(await demanderPage(page))) echecs++; } catch { echecs++; }
           avance();
         }),
       ];
@@ -141,11 +166,11 @@ export function usePrechargement() {
   }, []);
 
   /**
-   * Rétablit l'état « disponible » si les pages sont déjà là.
+   * Rétablit l'état « disponible » si tout est déjà là.
    *
-   * Sans cela, l'information ne survivait pas au changement de page : on revenait
-   * sur sa setlist et l'application proposait de la mettre en cache une seconde
-   * fois, sans jamais dire qu'elle y était déjà.
+   * Sans cela, l'information ne survit pas au changement de page : on revient sur
+   * son book et l'application propose de le mettre en cache une seconde fois,
+   * sans jamais dire qu'il y est déjà.
    */
   const verifier = useCallback(async (pages: string[]) => {
     if (await toutesEnCache(pages)) {

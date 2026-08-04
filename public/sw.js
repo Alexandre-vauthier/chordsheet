@@ -28,7 +28,7 @@
  * Le nom du cache porte une version : la changer suffit à repartir propre.
  */
 
-const VERSION = 'alviena-v3';
+const VERSION = 'alviena-v4';
 const REPLI = '/offline';
 const LANGUES = ['fr', 'en'];
 const LANGUE_PAR_DEFAUT = 'fr';
@@ -63,6 +63,23 @@ function accueilPour(req) {
 }
 
 const match = (req) => caches.match(req, { ignoreVary: true });
+
+/**
+ * Clé de cache d'une charge de routeur.
+ *
+ * Le routeur demande la page avec un paramètre `_rsc` dont la valeur dépend de
+ * l'état de navigation : la même page n'a donc jamais deux fois la même adresse,
+ * et rien ne se retrouverait jamais en cache. On range ces charges sous une clé
+ * dérivée du seul chemin, distincte de celle du HTML pour ne pas se marcher
+ * dessus.
+ */
+function cleRouteur(url) {
+  return new Request(`${url.origin}${url.pathname}?__charge_routeur=1`);
+}
+
+function estCharge(req, url) {
+  return url.searchParams.has('_rsc') || req.headers.get('RSC') === '1';
+}
 
 async function garder(req, rep) {
   if (!rep || !rep.ok || rep.type === 'opaqueredirect') return;
@@ -139,14 +156,15 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Charges du routeur (`?_rsc=…`) : réseau d'abord, dernière connue ensuite.
-  // Sans elles, un lien cliqué hors ligne ne mène nulle part, même vers une page
-  // qu'on a par ailleurs en cache.
-  if (url.searchParams.has('_rsc') || req.headers.get('RSC') === '1') {
+  // Charges du routeur : réseau d'abord, dernière connue ensuite. Sans elles, un
+  // lien cliqué hors ligne ne mène nulle part — pas même vers une page dont on a
+  // pourtant le HTML, puisque la navigation interne ne demande jamais le HTML.
+  if (estCharge(req, url)) {
+    const cle = cleRouteur(url);
     e.respondWith(
       fetch(req)
-        .then((rep) => { void garder(req, rep); return rep; })
-        .catch(() => match(req).then((hit) => hit ?? Response.error())),
+        .then((rep) => { void garder(cle, rep); return rep; })
+        .catch(() => match(cle).then((hit) => hit ?? Response.error())),
     );
     return;
   }
