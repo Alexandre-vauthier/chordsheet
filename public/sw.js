@@ -1,37 +1,61 @@
 /**
  * Service worker : faire que l'application s'ouvre sans réseau.
  *
- * Les données sont déjà gardées par Firestore (cache IndexedDB). Ce qui manquait,
- * c'est la coque : sans réseau, le navigateur n'obtient même pas le HTML et
- * affiche sa page d'erreur. Ici on garde de quoi démarrer, et Firestore fournit
- * les grilles.
+ * Les données sont déjà gardées par Firestore (cache IndexedDB). Ce qui manque
+ * sans service worker, c'est la coque : le navigateur n'obtient même pas le HTML
+ * et affiche sa page d'erreur.
  *
- * Trois règles, une par nature de requête :
+ * Trois pièges propres à cette application, tous rencontrés :
  *
- * - **les fichiers de build** (`/_next/static/…`) portent un condensé dans leur
- *   nom : un contenu donné ne change jamais d'adresse. On les sert donc du cache
- *   sans rien demander au réseau, et on garde la version téléchargée ;
- * - **les navigations** passent par le réseau d'abord, cache ensuite. L'inverse
- *   servirait une version périmée de la page à chaque visite, ce qui se paie
- *   bien plus cher qu'une seconde d'attente ;
- * - **tout le reste** (Firestore, iTunes, échantillons audio, API) n'est pas
- *   touché. Firestore a son propre cache et gère la file d'attente hors ligne
- *   bien mieux qu'un cache HTTP ; intercepter ses requêtes ne ferait que casser
- *   ça.
+ * - **`/` répond par une redirection** vers la langue. Une redirection n'est pas
+ *   une réponse « ok », donc elle ne se met pas en cache, et hors ligne le
+ *   navigateur ne peut pas la suivre. On sert donc `/fr` quand `/` est demandé
+ *   sans réseau, ce qui est le raccourci que les gens gardent sur leur écran ;
+ * - **la navigation se fait côté client.** Passer du book à une grille ne produit
+ *   aucune requête de navigation : le service worker ne verrait jamais que la
+ *   toute première page chargée en dur. Attendre qu'une page soit « visitée »
+ *   pour l'avoir en cache ne marche donc pas. Les pages qui comptent sont mises
+ *   en cache à l'installation ;
+ * - **les pages portent un en-tête `Vary`** (`rsc`, `next-router-state-tree`…).
+ *   `caches.match` l'honore, si bien qu'une page bel et bien en cache ne
+ *   correspondait pas à la requête suivante. D'où `ignoreVary`.
  *
- * Le nom du cache porte une version. La changer suffit à repartir propre : le
- * `activate` supprime tout ce qui ne porte pas le nom courant.
+ * Ce qui n'est jamais intercepté : Firestore, l'authentification et nos routes
+ * API. Firestore gère sa file d'attente hors ligne bien mieux qu'un cache HTTP ;
+ * s'interposer ne ferait que la casser.
+ *
+ * Le nom du cache porte une version : la changer suffit à repartir propre.
  */
 
-const VERSION = 'alviena-v1';
-const COQUE = '/offline';
+const VERSION = 'alviena-v2';
+const REPLI = '/offline';
+const ACCUEIL = '/fr';
 
-// À l'installation, on ne met en cache que la page de repli. Le reste se remplit
-// à l'usage : lister les fichiers de build ici obligerait à régénérer ce fichier
-// à chaque déploiement, et une liste fausse fait échouer toute l'installation.
+/**
+ * Pages mises en cache à l'installation.
+ *
+ * Volontairement peu nombreuses : ce sont les portes d'entrée, celles depuis
+ * lesquelles on rejoint le reste. Une liste plus longue allongerait
+ * l'installation et échouerait entièrement à la première adresse fautive.
+ */
+const PAGES = [REPLI, ACCUEIL, '/fr/book', '/fr/sets', '/fr/dashboard'];
+
+const match = (req) => caches.match(req, { ignoreVary: true });
+
+async function garder(req, rep) {
+  if (!rep || !rep.ok || rep.type === 'opaqueredirect') return;
+  const copie = rep.clone();
+  const c = await caches.open(VERSION);
+  await c.put(req, copie).catch(() => {});
+}
+
 self.addEventListener('install', (e) => {
   e.waitUntil(
-    caches.open(VERSION).then((c) => c.add(COQUE)).catch(() => {}).then(() => self.skipWaiting()),
+    caches.open(VERSION)
+      // Une par une : `addAll` abandonne tout dès qu'une adresse échoue, et on
+      // préfère une installation partielle à pas d'installation du tout.
+      .then((c) => Promise.all(PAGES.map((p) => c.add(p).catch(() => {}))))
+      .then(() => self.skipWaiting()),
   );
 });
 
@@ -61,41 +85,50 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin || aLaisserPasser(url)) return;
 
-  // Fichiers de build : le nom vaut version, le cache fait foi.
+  // Fichiers de build : leur nom porte un condensé, l'adresse vaut version.
   if (url.pathname.startsWith('/_next/static/')) {
     e.respondWith(
-      caches.match(req).then((hit) =>
-        hit ?? fetch(req).then((rep) => {
-          if (rep.ok) { const copie = rep.clone(); caches.open(VERSION).then((c) => c.put(req, copie)); }
-          return rep;
-        }),
-      ),
+      match(req).then((hit) => hit ?? fetch(req).then((rep) => { void garder(req, rep); return rep; })),
     );
     return;
   }
 
-  // Navigation : réseau d'abord, dernière version connue ensuite, page de repli
-  // en dernier recours.
   if (req.mode === 'navigate') {
     e.respondWith(
       fetch(req)
-        .then((rep) => {
-          if (rep.ok) { const copie = rep.clone(); caches.open(VERSION).then((c) => c.put(req, copie)); }
-          return rep;
-        })
-        .catch(() => caches.match(req).then((hit) => hit ?? caches.match(COQUE))),
+        .then((rep) => { void garder(req, rep); return rep; })
+        .catch(async () => {
+          // La page demandée, telle quelle.
+          const exact = await match(req);
+          if (exact) return exact;
+          // La racine ne peut pas rediriger sans réseau : on sert l'accueil.
+          if (url.pathname === '/') {
+            const accueil = await match(ACCUEIL);
+            if (accueil) return accueil;
+          }
+          return (await match(REPLI)) ?? Response.error();
+        }),
+    );
+    return;
+  }
+
+  // Charges du routeur (`?_rsc=…`) : réseau d'abord, dernière connue ensuite.
+  // Sans elles, un lien cliqué hors ligne ne mène nulle part, même vers une page
+  // qu'on a par ailleurs en cache.
+  if (url.searchParams.has('_rsc') || req.headers.get('RSC') === '1') {
+    e.respondWith(
+      fetch(req)
+        .then((rep) => { void garder(req, rep); return rep; })
+        .catch(() => match(req).then((hit) => hit ?? Response.error())),
     );
     return;
   }
 
   // Le reste de nos fichiers (polices, images, échantillons de batterie) :
-  // cache d'abord, il ne change qu'au déploiement.
+  // cache d'abord, ils ne changent qu'au déploiement.
   e.respondWith(
-    caches.match(req).then((hit) =>
-      hit ?? fetch(req).then((rep) => {
-        if (rep.ok) { const copie = rep.clone(); caches.open(VERSION).then((c) => c.put(req, copie)); }
-        return rep;
-      }).catch(() => hit),
+    match(req).then((hit) =>
+      hit ?? fetch(req).then((rep) => { void garder(req, rep); return rep; }).catch(() => hit ?? Response.error()),
     ),
   );
 });

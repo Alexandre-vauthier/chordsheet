@@ -22,22 +22,34 @@ export default function OfflinePage() {
           pas s&apos;afficher sans connexion.
         </p>
         <p style={{ color: 'var(--ink-light)', margin: 0, lineHeight: 1.6 }}>
-          Les grilles et les setlists que tu as déjà consultées, elles, restent
-          disponibles : reviens en arrière ou ouvre ton book.
+          Tes grilles et tes setlists restent disponibles : passe par ton book ou
+          par l&apos;accueil.
         </p>
         {/* Lien HTML volontaire, pas `next/link` : cette page vit hors du routage
             par langue et doit provoquer un vrai chargement, celui-là même que le
             service worker servira depuis son cache. */}
-        {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-        <a
-          href="/fr/book"
-          style={{
-            marginTop: '.5rem', padding: '.7rem 1.2rem', borderRadius: '999px',
-            background: 'var(--accent)', color: '#fff', textDecoration: 'none', fontWeight: 600,
-          }}
-        >
-          Ouvrir mon book
-        </a>
+        <div style={{ display: 'flex', gap: '.6rem', justifyContent: 'center', flexWrap: 'wrap', marginTop: '.5rem' }}>
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a
+            href="/fr/book"
+            style={{
+              padding: '.7rem 1.2rem', borderRadius: '999px',
+              background: 'var(--accent)', color: '#fff', textDecoration: 'none', fontWeight: 600,
+            }}
+          >
+            Mon book
+          </a>
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
+          <a
+            href="/fr"
+            style={{
+              padding: '.7rem 1.2rem', borderRadius: '999px', border: '1px solid var(--line)',
+              color: 'var(--ink)', textDecoration: 'none', fontWeight: 600,
+            }}
+          >
+            Accueil
+          </a>
+        </div>
       </main>
     </div>
   );
