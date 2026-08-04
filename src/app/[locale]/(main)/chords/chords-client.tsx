@@ -28,15 +28,29 @@ function chromaticRootSemi(name: string): number {
   return m ? (ROOT_SEMI[m[1]] ?? 99) : 99;
 }
 
+/**
+ * Onglet d'un accord, d'après sa catégorie.
+ *
+ * Deux vocabulaires arrivent ici et désignent les mêmes accords : celui du
+ * dictionnaire statique, qui nomme la couleur (`6`, `m6`, `m7b5`), et celui des
+ * formules génératrices, qui nomme la famille (`major`, `minor`, `dim`). Tant que
+ * les deux ne se rejoignaient pas, un même accord se retrouvait dans deux onglets
+ * différents : le D6 du dictionnaire dans « Autres », le D6 généré dans « Majeurs »,
+ * et le doigté corrigé restait invisible pour qui le cherchait à sa place.
+ *
+ * Chaque catégorie du dictionnaire est donc rabattue sur l'onglet de sa famille.
+ * Seuls les accords de puissance restent dans « Autres » : un A5 n'a ni tierce
+ * majeure ni tierce mineure, le ranger dans l'un des deux serait faux.
+ */
 function getCategoryGroup(category: string): CategoryGroup {
-  if (category === 'major') return 'major';
-  if (category === 'minor') return 'minor';
-  if (category === 'dom7') return 'dom7';
+  if (category === 'major' || category === '6') return 'major';
+  if (category === 'minor' || category === 'm6') return 'minor';
+  if (category === 'dom7' || category === '9') return 'dom7';
   if (category === 'maj7') return 'maj7';
-  if (category === 'min7') return 'min7';
-  if (category === 'dim') return 'dim';
+  if (category === 'min7' || category === 'm9') return 'min7';
+  if (category === 'dim' || category === 'm7b5') return 'dim';
   if (category === 'aug') return 'aug';
-  if (category === 'sus' || category === 'add9' || category === 'sus2' || category === 'sus4') return 'sus';
+  if (category === 'sus' || category === 'add9' || category === 'sus2' || category === 'sus4' || category === '7sus4') return 'sus';
   return 'other';
 }
 
@@ -149,22 +163,10 @@ function ChordsPageContent() {
       }
     });
 
-    // 1a. Accords étendus algorithmiques (filtrés par catégorie)
-    // Skip si un override admin existe déjà pour cet accord (évite doublon override + statique généré)
-    extendedChords
-      .filter(c => getCategoryGroup(c.category) === categoryGroup)
-      .forEach((chord) => {
-        const nameLower = chord.name.trim().toLowerCase();
-        const overrideKey = libraryKey(chord.name, instrumentId);
-        if (overrides.has(overrideKey)) return; // l'override le remplace entièrement
-        if (!groups.has(nameLower)) {
-          groups.set(nameLower, { name: chord.name, variants: [], hasOverride: false, additionDocIds: [], additionStartIdx: 0 });
-        }
-        groups.get(nameLower)!.variants.push(chord);
-      });
-
-    // 1b. Accords statiques — override par nom exact uniquement (pas d'alias enharmonique)
+    // 1a. Accords statiques — override par nom exact uniquement (pas d'alias enharmonique)
     //    La recherche enharmonique est réservée à useChordVariants (inline dans les grilles)
+    //    Ils passent avant les générés : ce sont les doigtés du dictionnaire, relevés à
+    //    la main, et c'est celui-là qu'on veut voir en premier quand les deux existent.
     staticChords.forEach((chord) => {
       const key = libraryKey(chord.name, instrumentId);
       const override = overrides.get(key);
@@ -185,6 +187,20 @@ function ChordsPageContent() {
         g.variants.push(chord);
       }
     });
+
+    // 1b. Accords étendus algorithmiques (filtrés par catégorie), en variantes
+    //     supplémentaires. Skip si un override admin existe : il remplace tout.
+    extendedChords
+      .filter(c => getCategoryGroup(c.category) === categoryGroup)
+      .forEach((chord) => {
+        const nameLower = chord.name.trim().toLowerCase();
+        const overrideKey = libraryKey(chord.name, instrumentId);
+        if (overrides.has(overrideKey)) return; // l'override le remplace entièrement
+        if (!groups.has(nameLower)) {
+          groups.set(nameLower, { name: chord.name, variants: [], hasOverride: false, additionDocIds: [], additionStartIdx: 0 });
+        }
+        groups.get(nameLower)!.variants.push(chord);
+      });
 
     // Marquer où commencent les additions (après statiques/override)
     groups.forEach(g => { g.additionStartIdx = g.variants.length; });
@@ -221,7 +237,9 @@ function ChordsPageContent() {
     const groups = new Map<string, Group>();
     const allStatic = getChordsByInstrument(instrumentId);
     const allExtended = getAllExtendedChords(instrumentId);
-    [...allExtended, ...allStatic].forEach((chord) => {
+    // Statiques d'abord, pour la même raison que dans la liste par onglet :
+    // le doigté du dictionnaire est celui qu'on montre en premier.
+    [...allStatic, ...allExtended].forEach((chord) => {
       const nameLower = chord.name.trim().toLowerCase();
       if (!nameLower.includes(q)) return;
       const key = libraryKey(chord.name, instrumentId);

@@ -1140,7 +1140,8 @@ function generateStringVoicing(
   const targets = prioritizeIntervals(intervals, numStrings).map(i => (rootSemi + i) % 12);
   const uniqueTargets = [...new Set(targets)];
 
-  let best: { fingers: FingerPosition[]; open: number[]; muted: number[]; startFret: number; score: number } | null = null;
+  let best: { fingers: FingerPosition[]; open: number[]; muted: number[]; startFret: number;
+              score: number; barre?: { fret: number; fromString: number; toString: number } } | null = null;
 
   for (let w = 0; w <= 9; w++) {
     const fingers: FingerPosition[] = [];
@@ -1169,12 +1170,46 @@ function generateStringVoicing(
       if (!placed) muted.push(s);
     }
 
-    // Vérifier la jouabilité : écart de cases ≤ 4
+    /**
+     * Jouabilité : ce que la main peut réellement tenir.
+     *
+     * Le contrôle se limitait à l'écart de cases. Une forme pouvait donc réclamer six
+     * doigts, ou mêler des cordes à vide à une main posée en huitième case — exacte
+     * sur le papier, injouable en pratique. Trois conditions s'ajoutent.
+     */
     const pressedFrets = fingers.map(([, f]) => f);
     if (pressedFrets.length > 1) {
       const span = Math.max(...pressedFrets) - Math.min(...pressedFrets);
       if (span > 4) continue;
     }
+
+    // Une corde à vide ne se combine pas avec une main haut placée : le doigté
+    // existe, mais personne ne le joue ainsi. Le contrôle porte sur la case
+    // réellement atteinte, et non sur le début de la fenêtre — celle-ci s'étend sur
+    // cinq cases, et un doigt peut donc se poser bien plus haut qu'elle ne commence.
+    if (open.length > 0 && pressedFrets.length > 0 && Math.min(...pressedFrets) >= 5) continue;
+
+    /**
+     * Barré : plusieurs cordes contiguës à la case la plus basse ne coûtent qu'un
+     * doigt. Sans cette lecture, toute forme de barré serait rejetée comme réclamant
+     * six doigts, et on perdrait la moitié du répertoire.
+     */
+    let barre: { fret: number; fromString: number; toString: number } | undefined;
+    if (pressedFrets.length >= 2) {
+      const bas = Math.min(...pressedFrets);
+      const surBas = fingers.filter(([, f]) => f === bas).map(([st]) => st).sort((a, b) => a - b);
+      if (surBas.length >= 2) {
+        const de = surBas[0], a = surBas[surBas.length - 1];
+        // Le barré ne vaut que si rien n'est étouffé sous lui.
+        const coupees = muted.filter((st) => st >= de && st <= a);
+        if (coupees.length === 0) barre = { fret: bas, fromString: de, toString: a };
+      }
+    }
+
+    const doigtsPoses = barre
+      ? fingers.filter(([, f]) => f !== barre!.fret).length + 1
+      : fingers.length;
+    if (doigtsPoses > 4) continue;
 
     const coverage = used.size / uniqueTargets.length;
     if (coverage < 0.6) continue;
@@ -1188,19 +1223,30 @@ function generateStringVoicing(
     const rootInBass = bassNote === rootSemi;
 
     const startFret = pressedFrets.length > 0 ? Math.min(...pressedFrets) : 1;
+    /**
+     * Notation : à couverture égale, la forme la plus facile gagne.
+     *
+     * Les cordes à vide étaient récompensées sans regarder où la main se trouve, et
+     * la position haute à peine pénalisée. On préfère désormais franchement le bas du
+     * manche et le petit nombre de doigts, qui est ce qui distingue une forme qu'on
+     * joue d'une forme qu'on subit.
+     */
     const score = coverage * 100
       + (rootInBass ? 20 : 0)
       - muted.length * 8
-      - w * 0.5
-      + open.length * 3;
+      - w * 4
+      - doigtsPoses * 5
+      + (w === 0 ? open.length * 3 : 0);
 
     if (!best || score > best.score) {
-      best = { fingers, open, muted, startFret, score };
+      best = { fingers, open, muted, startFret, score, barre };
     }
   }
 
   if (!best) return null;
-  return { id, name, full, category, fingers: best.fingers, open: best.open, muted: best.muted, startFret: best.startFret };
+  return { id, name, full, category, fingers: best.fingers, open: best.open,
+           muted: best.muted, startFret: best.startFret,
+           ...(best.barre ? { barre: best.barre } : {}) };
 }
 
 // Génère un voicing piano dans la plage C4–C6
