@@ -330,3 +330,9 @@ silence : Firebase Admin, analyse audio, analyse de grille, Sentry.
 
 - `docs/ARCHITECTURE.md` : hiérarchie composants, flux données, règles Firestore, audio
 - `docs/IMPORT.md` : parser d'import texte (format tablature), logique d'inférence des durées
+- `docs/ROADMAP.md` : ce qui est décidé mais pas fait, ce qui a été écarté et pourquoi,
+  ce qui attend une décision. **À lire avant de proposer une fonctionnalité** : les
+  directions déjà refusées y sont, avec leur motif.
+- `tools/dictionnaire-accords/` : chaîne de relevé des dictionnaires d'accords imprimés
+  (PDF et images) et `INVENTAIRE.md`, qui dit quel doigté vient d'un document et lequel
+  n'a aucune référence.
