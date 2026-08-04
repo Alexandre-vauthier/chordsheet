@@ -3,18 +3,28 @@ import { useLibraryChords, libraryKey } from './library-chords-context';
 import { findChordVariants, enharmonicEquivalent } from './chord-data';
 import type { StringChord, PianoChord, InstrumentId } from '@/types';
 
+type Overrides = Map<string, { chord: StringChord | PianoChord }>;
+type Additions = { instrumentId: InstrumentId; chord: StringChord | PianoChord }[];
+
 /**
- * Variantes d'un accord en tenant compte des overrides/ajouts de la bibliothèque Firestore.
- * Priorité : override admin > ajouts admin > bibliothèque statique
- * Gère les alias enharmoniques (C# ↔ Db, etc.)
+ * Variantes d'un accord, dans l'ordre où on veut les proposer.
+ *
+ * Un **override** remplace le doigté de la bibliothèque ; un **ajout** vient en
+ * plus, après lui. La distinction se perd facilement : la lecture d'une grille en
+ * avait sa propre copie qui préférait l'ajout au doigté de la bibliothèque, si
+ * bien qu'on entendait autre chose que ce que la grille affichait. La règle vit
+ * ici désormais, et les deux chemins l'appellent.
+ *
+ * Les alias enharmoniques sont pris en compte : un override posé sur « C# »
+ * s'applique à « Db ».
  */
-export function useChordVariants(
+export function chordVariants(
   name: string,
   instrumentId: InstrumentId,
+  overrides: Overrides,
+  additions: Additions,
 ): (StringChord | PianoChord)[] {
-  const { overrides, additions } = useLibraryChords();
-
-  return useMemo(() => {
+  {
     if (!name.trim()) return [];
 
     // Chercher l'override par nom direct OU nom enharmonique
@@ -44,5 +54,17 @@ export function useChordVariants(
 
     // Les ajouts enrichissent la liste, la variante statique de base reste en [0]
     return [...staticVariants, ...matchingAdditions];
-  }, [name, instrumentId, overrides, additions]);
+  }
+}
+
+/** La même règle, branchée sur la bibliothèque Firestore. */
+export function useChordVariants(
+  name: string,
+  instrumentId: InstrumentId,
+): (StringChord | PianoChord)[] {
+  const { overrides, additions } = useLibraryChords();
+  return useMemo(
+    () => chordVariants(name, instrumentId, overrides, additions),
+    [name, instrumentId, overrides, additions],
+  );
 }

@@ -4,7 +4,8 @@ import type { Section, Cell, InstrumentId, StringChord, PianoChord } from '@/typ
 // (sans dépendance React), les appelants historiques les importent d'ici.
 import { ACCOMPANIMENT_INSTRUMENTS, type PlayStyle } from '@/lib/accompaniment';
 export { ACCOMPANIMENT_INSTRUMENTS, type PlayStyle };
-import { findChordVariants, enharmonicEquivalent, parseChordInput } from '@/lib/chord-data';
+import { parseChordInput } from '@/lib/chord-data';
+import { chordVariants } from '@/lib/use-chord-variants';
 import { playChord, playArpeggio, playMetronomeTick, getAudioContext } from '@/lib/chord-audio';
 
 /**
@@ -14,7 +15,7 @@ import { playChord, playArpeggio, playMetronomeTick, getAudioContext } from '@/l
  * secondes de retard ne s'expliquent que par une horloge figee.
  */
 const SUSPENSION_THRESHOLD_S = 2;
-import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
+import { useLibraryChords } from '@/lib/library-chords-context';
 
 export interface PlayStep {
   sectionId: string;
@@ -241,23 +242,22 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, playback
     const selected = selectedChords?.[chordName] ?? selectedChords?.[rawChordName];
     const customKey = `${chordName.toLowerCase()}-${inst}`;
     const custom = customChords?.[customKey];
-    const enh = enharmonicEquivalent(chordName);
-    const adminOverride =
-      overrides.get(libraryKey(chordName, inst))?.chord ??
-      (enh ? overrides.get(libraryKey(enh, inst))?.chord : undefined);
-    const nameLower = chordName.trim().toLowerCase();
-    const enhLower = enh?.trim().toLowerCase();
-    const adminAddition = additions.find(
-      a => a.instrumentId === inst &&
-        (a.chord.name.trim().toLowerCase() === nameLower ||
-         (enhLower && a.chord.name.trim().toLowerCase() === enhLower))
-    )?.chord;
+    /**
+     * Ce qu'on entend doit être ce que la grille montre.
+     *
+     * Cette résolution avait sa propre copie de l'ordre des variantes, et elle
+     * préférait un **ajout** de la bibliothèque au doigté de référence — alors
+     * qu'un ajout vient en plus, pas à la place. Le fa de guitare s'entendait donc
+     * une octave au-dessus de celui affiché. L'ordre vit maintenant dans
+     * `chordVariants`, que la grille utilise aussi.
+     *
+     * Restent prioritaires, dans cet ordre : la variante que l'utilisateur navigue,
+     * puis celle que l'auteur a fixée dans sa grille.
+     */
     return (
       selected ??
       (custom as StringChord | PianoChord | undefined) ??
-      adminOverride ??
-      adminAddition ??
-      findChordVariants(chordName, inst)[0]
+      chordVariants(chordName, inst, overrides, additions)[0]
     );
   }, [customChords, selectedChords, overrides, additions]);
 
