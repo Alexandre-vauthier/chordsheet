@@ -42,6 +42,26 @@ export function useHorsLigne(): boolean {
   return horsLigne;
 }
 
+/**
+ * Requêtes menées de front.
+ *
+ * En série, préparer un book de deux cents grilles demandait une minute et demie
+ * pour quatre-vingts secondes d'attente réseau : la connexion passait son temps
+ * à ne rien faire. Six de front la saturent sans la noyer, et ramènent le même
+ * book sous les vingt secondes. Au-delà, on gagne peu et on prend le risque de
+ * faire tousser un réseau de téléphone.
+ */
+const FRONT = 6;
+
+/** Exécute des tâches par petits paquets, sans jamais dépasser `front` en cours. */
+async function enParallele(taches: (() => Promise<void>)[], front: number): Promise<void> {
+  let i = 0;
+  const ouvriers = Array.from({ length: Math.min(front, taches.length) }, async () => {
+    while (i < taches.length) await taches[i++]();
+  });
+  await Promise.all(ouvriers);
+}
+
 export type EtatPrechargement =
   | { phase: 'repos' }
   | { phase: 'en cours'; faits: number; total: number }
@@ -85,8 +105,8 @@ async function toutesEnCache(pages: string[]): Promise<boolean> {
  * load ». On demande donc explicitement chaque page ici : la requête traverse le
  * service worker, qui la garde.
  *
- * Tout se fait en série. Un concert fait vingt morceaux, pas mille, et la série
- * laisse la connexion tranquille tout en donnant une progression honnête.
+ * Six requêtes de front (voir `FRONT`) : en série, la connexion passait son temps
+ * à attendre.
  */
 export function usePrechargement() {
   const [etat, setEtat] = useState<EtatPrechargement>({ phase: 'repos' });
@@ -97,27 +117,23 @@ export function usePrechargement() {
     setEtat({ phase: 'en cours', faits: 0, total });
     let echecs = 0;
     let faits = 0;
+    const avance = () => setEtat({ phase: 'en cours', faits: ++faits, total });
+
     try {
       const db = getDb();
-      for (const id of sheetIds) {
-        try {
-          await getDoc(doc(db, 'sheets', id));
-        } catch {
+      const taches: (() => Promise<void>)[] = [
+        ...sheetIds.map((id) => async () => {
           // Grille supprimée, droits insuffisants, coupure en cours de route :
           // on compte et on continue, une grille manquante n'empêche pas les autres.
-          echecs++;
-        }
-        setEtat({ phase: 'en cours', faits: ++faits, total });
-      }
-      for (const page of pages) {
-        try {
-          const rep = await fetch(page);
-          if (!rep.ok) echecs++;
-        } catch {
-          echecs++;
-        }
-        setEtat({ phase: 'en cours', faits: ++faits, total });
-      }
+          try { await getDoc(doc(db, 'sheets', id)); } catch { echecs++; }
+          avance();
+        }),
+        ...pages.map((page) => async () => {
+          try { if (!(await fetch(page)).ok) echecs++; } catch { echecs++; }
+          avance();
+        }),
+      ];
+      await enParallele(taches, FRONT);
       setEtat({ phase: 'fini', total, echecs });
     } catch {
       setEtat({ phase: 'echec' });
@@ -134,8 +150,29 @@ export function usePrechargement() {
   const verifier = useCallback(async (pages: string[]) => {
     if (await toutesEnCache(pages)) {
       setEtat({ phase: 'fini', total: pages.length, echecs: 0 });
+      return true;
     }
+    return false;
   }, []);
 
   return { etat, precharger, verifier };
+}
+
+/**
+ * Le forfait de la personne est-il compté ?
+ *
+ * On ne précharge d'office que si la réponse est non. Trois méga-octets passent
+ * inaperçus en wifi et se remarquent en itinérance ; le réglage « économiseur de
+ * données » du navigateur dit exactement cela, quand il existe.
+ *
+ * Absent de Safari : dans le doute on considère que non, sans quoi le
+ * préchargement automatique ne servirait jamais sur iPhone, là où il est le plus
+ * utile.
+ */
+export function connexionMenagee(): boolean {
+  const c = (navigator as Navigator & {
+    connection?: { saveData?: boolean; effectiveType?: string };
+  }).connection;
+  if (!c) return false;
+  return !!c.saveData || c.effectiveType === 'slow-2g' || c.effectiveType === '2g';
 }

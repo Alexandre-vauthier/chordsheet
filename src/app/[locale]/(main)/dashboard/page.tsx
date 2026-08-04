@@ -18,12 +18,15 @@ import { SheetCard } from '@/components/explore/sheet-card';
 import type { Sheet } from '@/types';
 import { createEmptySet, GENRES, DIFFICULTY_OPTIONS, type Difficulty } from '@/types';
 import { Link, useRouter } from '@/i18n/navigation';
+import { usePrechargement } from '@/lib/use-offline';
 
 type Tab = 'all' | 'mine' | 'book' | 'sets';
 type SortOption = 'recent' | 'rated' | 'viewed';
 
 export default function DashboardPage() {
   const t = useTranslations('Dashboard');
+  const tOff = useTranslations('Offline');
+  const { etat: prechargement, precharger } = usePrechargement();
   const locale = useLocale();
   const genreLabel = useGenreLabel();
   const difficultyLabel = useDifficultyLabel();
@@ -115,6 +118,9 @@ export default function DashboardPage() {
     ...bookmarkedSheets.filter(s => !ownedIds.has(s.id)),
   ];
 
+  const idsDuBook = () => allSheets.map((sh) => sh.id).filter((x): x is string => !!x);
+  const pagesDuBook = () => idsDuBook().map((sid) => `/${locale}/sheet/${sid}`);
+
   const filterAndSort = useCallback((list: Sheet[]) => {
     let result = [...list];
     if (searchQuery.trim()) {
@@ -192,6 +198,24 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Le book entier reste un geste volontaire, contrairement à une setlist
+              qui se prépare d'elle-même : il n'est pas borné, et peut représenter
+              plusieurs dizaines de méga-octets sur un forfait compté. */}
+          {allSheets.length > 0 && (
+            <Button
+              variant="ghost"
+              className="hidden sm:inline-flex"
+              onClick={() => precharger(idsDuBook(), pagesDuBook())}
+              isLoading={prechargement.phase === 'en cours'}
+              title={tOff('preloadBookTitle', { count: allSheets.length })}
+            >
+              {prechargement.phase === 'en cours'
+                ? tOff('preloading', { faits: prechargement.faits, total: prechargement.total })
+                : prechargement.phase === 'fini'
+                  ? tOff('preloaded')
+                  : tOff('preloadBook')}
+            </Button>
+          )}
           <Link href="/explore" className="hidden sm:block">
             <Button variant="ghost">{t('explore')}</Button>
           </Link>

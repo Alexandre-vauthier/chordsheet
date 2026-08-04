@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { Sheet } from '@/types';
 import { Link, useRouter } from '@/i18n/navigation';
-import { usePrechargement } from '@/lib/use-offline';
+import { connexionMenagee, usePrechargement } from '@/lib/use-offline';
 
 interface SetPageProps {
   params: Promise<{ id: string }>;
@@ -75,10 +75,24 @@ export default function SetPage({ params }: SetPageProps) {
     ...idsDesGrilles().map((sid) => `/${locale}/sheet/${sid}`),
   ];
 
-  // À l'arrivée sur la setlist, on demande au cache s'il l'a déjà : c'est un fait
-  // vérifiable, contrairement au souvenir d'un préchargement passé.
+  /**
+   * À l'arrivée sur une setlist, on la prépare pour le hors ligne sans rien
+   * demander.
+   *
+   * Créer une setlist, c'est déjà déclarer qu'on va la jouer : attendre un clic
+   * de plus n'apporte rien, et c'est précisément le clic qu'on oublie avant de
+   * partir. Le book entier, lui, garde son bouton — il n'est pas borné.
+   *
+   * On interroge d'abord le cache : s'il l'a déjà, il n'y a rien à retélécharger.
+   * Et on s'abstient si le forfait est compté, trois méga-octets se remarquant en
+   * itinérance.
+   */
   useEffect(() => {
-    if (set && localSheets.length) void verifier(pagesDuSet());
+    if (!set || !localSheets.length) return;
+    const pages = pagesDuSet();
+    void verifier(pages).then((deja) => {
+      if (!deja && !connexionMenagee()) void precharger(idsDesGrilles(), pages);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [set?.id, localSheets.length, locale]);
 

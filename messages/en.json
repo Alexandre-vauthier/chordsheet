@@ -1913,6 +1913,8 @@
     "preloading": "Caching… {faits}/{total}",
     "preloaded": "Available offline",
     "preloadedPartial": "{ok} of {total} sheets available offline",
-    "preloadFailed": "Could not cache"
+    "preloadFailed": "Could not cache",
+    "preloadBook": "Keep all offline",
+    "preloadBookTitle": "Make the {count} sheets in your book available without a network"
   }
 }
