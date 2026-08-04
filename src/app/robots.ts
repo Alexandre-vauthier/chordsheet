@@ -12,6 +12,11 @@ import { SITE_URL, IS_PRODUCTION } from '@/lib/seo';
 const PRIVATE_PATHS = [
   'dashboard', 'book', 'sets', 'groups', 'profile', 'admin', 'pending',
   'session', 'join', 'login', 'register',
+  // Parcours de compte : ces pages n'ont rien à dire à un moteur, et se
+  // retrouvaient indexables avec la description générale du site.
+  'reset-password', 'verify-email',
+  // Banc d'essai de la boîte à rythme : outil de mise au point.
+  'groove-box',
   'sheet/new', 'sheet/*/edit',
 ];
 

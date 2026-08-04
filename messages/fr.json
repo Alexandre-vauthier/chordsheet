@@ -91,7 +91,7 @@
       "scrollToFeatures": "Voir les fonctionnalités"
     },
     "book": {
-      "eyebrow": "Le cœur de Alviena",
+      "eyebrow": "Le cœur d'Alviena",
       "title": "Mon book de grilles d'accords.",
       "quote": "On sait. On a appris des dizaines de morceaux. Mais au moment de jouer — les accords exacts, la tonalité, l'enchaînement — plus vraiment sous la main.",
       "quoteFooter": "C'est exactement pour ça que le book existe.",
@@ -998,7 +998,7 @@
     "s3Title": "3. Compte utilisateur",
     "s3Body": "L'utilisateur est responsable de la confidentialité de son compte et de toute activité réalisée depuis celui-ci. Il s'engage à ne pas créer de compte avec de fausses informations et à notifier immédiatement l'éditeur de tout accès non autorisé à son compte.",
     "s4Title": "4. Contenu utilisateur et cession de droits",
-    "s4Body1": "L'utilisateur reste propriétaire des grilles d'accords qu'il crée. En publiant une grille en mode <strong>public</strong>, l'utilisateur concède à Alexandre Vauthier une licence mondiale, non exclusive, gratuite, sous-licenciable et transférable pour utiliser, reproduire, diffuser, afficher et adapter ce contenu dans le cadre du fonctionnement et de la promotion de Alviena.",
+    "s4Body1": "L'utilisateur reste propriétaire des grilles d'accords qu'il crée. En publiant une grille en mode <strong>public</strong>, l'utilisateur concède à Alexandre Vauthier une licence mondiale, non exclusive, gratuite, sous-licenciable et transférable pour utiliser, reproduire, diffuser, afficher et adapter ce contenu dans le cadre du fonctionnement et de la promotion d'Alviena.",
     "s4Body2": "Cette licence prend fin lorsque l'utilisateur supprime le contenu ou repasse la grille en mode privé, sous réserve des délais techniques de traitement. Les grilles privées ne sont accessibles qu'à leur auteur.",
     "s5Title": "5. Comportements interdits",
     "s5Intro": "Il est notamment interdit de :",
@@ -1045,7 +1045,7 @@
     "s4Item5": "Badge Pro sur le profil public",
     "s4Body": "Les fonctionnalités du plan gratuit (grilles illimitées, export PDF, accords personnalisés, 2 analyses OCR/mois) restent accessibles sans abonnement.",
     "s5Title": "5. Commande et paiement",
-    "s5Body1": "L'abonnement est souscrit en ligne via la page de tarifs de Alviena. Le paiement est traité par <strong>Stripe</strong> (Stripe Payments Europe, Ltd), prestataire de paiement sécurisé. Les coordonnées bancaires ne sont pas conservées par Alviena.",
+    "s5Body1": "L'abonnement est souscrit en ligne via la page de tarifs d'Alviena. Le paiement est traité par <strong>Stripe</strong> (Stripe Payments Europe, Ltd), prestataire de paiement sécurisé. Les coordonnées bancaires ne sont pas conservées par Alviena.",
     "s5Body2": "L'abonnement est renouvelé automatiquement à chaque échéance (mensuelle ou annuelle) jusqu'à résiliation. Un reçu est émis par Stripe à chaque renouvellement.",
     "s6Title": "6. Droit de rétractation",
     "s6Body1": "Conformément à l'article L.221-28 du Code de la consommation, le droit de rétractation de 14 jours ne s'applique pas aux contenus numériques dont l'exécution a commencé avec votre accord exprès avant l'expiration du délai de rétractation.",
@@ -1066,7 +1066,7 @@
     "s1Role": "Auto-entrepreneur",
     "emailLabel": "Email :",
     "s2Title": "2. Données collectées",
-    "s2Intro": "Lors de l'utilisation de Alviena, les données suivantes sont collectées :",
+    "s2Intro": "Lors de l'utilisation d'Alviena, les données suivantes sont collectées :",
     "colData": "Donnée",
     "colPurpose": "Finalité",
     "colLegalBasis": "Base légale",
@@ -1108,7 +1108,7 @@
     "familyTitle": "La famille",
     "familyBody": "Tout commence là. <strong>Julien</strong> — mon frère, Piza — dont la vision musicale et le solfège sont dans chaque mesure de cet outil. <strong>Mon père</strong>, qui a posé des guitares dans nos mains avant qu'on sache s'en servir. <strong>Ma mère</strong>, qui depuis s'est mise à la guitare et à la basse — parce que la musique, une fois qu'elle entre dans une maison, elle ne repart plus.",
     "bandTitle": "Le groupe",
-    "bandBody": "Ceux avec qui tout a vraiment commencé — les premières répétitions dans des garages et à la MJC, les premiers concerts, les premiers riffs appris ensemble. C'est un peu pour eux, et à cause d'eux, que Alviena existe.",
+    "bandBody": "Ceux avec qui tout a vraiment commencé — les premières répétitions dans des garages et à la MJC, les premiers concerts, les premiers riffs appris ensemble. C'est un peu pour eux, et à cause d'eux, qu'Alviena existe.",
     "friendsTitle": "Les complices",
     "gregAlias": "alias Keiturna",
     "gregBody": "Grand guitariste et homme de vision. Greg a été l'un des premiers à comprendre ce que cet outil pouvait devenir, à en dessiner les contours avec moi, et à poser les bonnes questions au bon moment. Ce genre de regard extérieur qui change tout.",
@@ -1443,7 +1443,7 @@
       },
       "chordInstrument": {
         "title": "Accords {instrumentLower} : diagrammes, notes et positions",
-        "description": "Les {count} accords {instrumentOf} de Alviena. Pour chacun : le diagramme, les notes, le détail de la position et les grilles qui l'utilisent."
+        "description": "Les {count} accords {instrumentOf} d'Alviena. Pour chacun : le diagramme, les notes, le détail de la position et les grilles qui l'utilisent."
       },
       "chord": {
         "title": "Accord {chord} {instrumentLower} : diagramme, notes et position",
