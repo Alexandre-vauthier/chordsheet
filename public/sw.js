@@ -9,8 +9,9 @@
  *
  * - **`/` répond par une redirection** vers la langue. Une redirection n'est pas
  *   une réponse « ok », donc elle ne se met pas en cache, et hors ligne le
- *   navigateur ne peut pas la suivre. On sert donc `/fr` quand `/` est demandé
- *   sans réseau, ce qui est le raccourci que les gens gardent sur leur écran ;
+ *   navigateur ne peut pas la suivre. C'est pourtant le raccourci que les gens
+ *   gardent sur leur écran : on sert donc l'accueil, dans la langue annoncée par
+ *   le navigateur ;
  * - **la navigation se fait côté client.** Passer du book à une grille ne produit
  *   aucune requête de navigation : le service worker ne verrait jamais que la
  *   toute première page chargée en dur. Attendre qu'une page soit « visitée »
@@ -27,18 +28,39 @@
  * Le nom du cache porte une version : la changer suffit à repartir propre.
  */
 
-const VERSION = 'alviena-v2';
+const VERSION = 'alviena-v3';
 const REPLI = '/offline';
-const ACCUEIL = '/fr';
+const LANGUES = ['fr', 'en'];
+const LANGUE_PAR_DEFAUT = 'fr';
 
 /**
- * Pages mises en cache à l'installation.
+ * Pages mises en cache à l'installation, dans les deux langues.
  *
  * Volontairement peu nombreuses : ce sont les portes d'entrée, celles depuis
  * lesquelles on rejoint le reste. Une liste plus longue allongerait
  * l'installation et échouerait entièrement à la première adresse fautive.
+ *
+ * Les deux langues et non celle du visiteur : le service worker ne peut pas lire
+ * les cookies, donc il ne connaît pas la langue choisie. Dix pages légères
+ * coûtent moins qu'une devinette qui laisserait la moitié des gens sans coque.
  */
-const PAGES = [REPLI, ACCUEIL, '/fr/book', '/fr/sets', '/fr/dashboard'];
+const PAGES = [
+  REPLI,
+  ...LANGUES.flatMap((l) => [`/${l}`, `/${l}/book`, `/${l}/sets`, `/${l}/dashboard`]),
+];
+
+/**
+ * Langue à servir quand la racine est demandée sans réseau.
+ *
+ * On ne peut pas relire le cookie de préférence depuis un service worker, mais
+ * l'en-tête de langue du navigateur accompagne la requête et suffit à ne pas
+ * envoyer un anglophone sur l'accueil français.
+ */
+function accueilPour(req) {
+  const entete = (req.headers.get('accept-language') || '').toLowerCase();
+  const langue = LANGUES.find((l) => entete.startsWith(l)) || LANGUE_PAR_DEFAUT;
+  return `/${langue}`;
+}
 
 const match = (req) => caches.match(req, { ignoreVary: true });
 
@@ -101,10 +123,15 @@ self.addEventListener('fetch', (e) => {
           // La page demandée, telle quelle.
           const exact = await match(req);
           if (exact) return exact;
-          // La racine ne peut pas rediriger sans réseau : on sert l'accueil.
+          // La racine ne peut pas rediriger sans réseau : on sert l'accueil, dans
+          // la langue du navigateur si on l'a, dans l'autre sinon.
           if (url.pathname === '/') {
-            const accueil = await match(ACCUEIL);
-            if (accueil) return accueil;
+            const prefere = await match(accueilPour(req));
+            if (prefere) return prefere;
+            for (const l of LANGUES) {
+              const repli = await match(`/${l}`);
+              if (repli) return repli;
+            }
           }
           return (await match(REPLI)) ?? Response.error();
         }),
