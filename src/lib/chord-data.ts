@@ -205,6 +205,72 @@ export const GUITAR_CHORDS: StringChord[] = [
   { id: "gA5",  name: "A5",  full: "A power chord",  category: "power", fingers: [[4,2,1],[3,2,3]],         open: [5], muted: [1,2,6], startFret: 1 },
   { id: "gBb5", name: "Bb5", full: "Bb power chord", category: "power", fingers: [[5,1,1],[4,3,3],[3,3,4]], open: [],  muted: [1,2,6], startFret: 1 },
   { id: "gB5",  name: "B5",  full: "B power chord",  category: "power", fingers: [[5,2,1],[4,4,3],[3,4,4]], open: [],  muted: [1,2,6], startFret: 2 },
+
+  /**
+   * Accords enrichis, relevés dans un dictionnaire de doigtés.
+   *
+   * L'application savait déjà les construire toute seule, à partir de la formule de
+   * l'accord. Le résultat sonnait juste mais ne se jouait pas : sur les 396 formes
+   * qu'elle produisait pour la guitare, 132 demandaient plus de quatre doigts sans
+   * barré et 93 mêlaient cordes à vide et haut du manche. Un « D6 » proposé aux cases
+   * 10 et 11 avec trois cordes à vide est exact et inutilisable.
+   *
+   * Ces cinquante-là sont des doigtés de main humaine. La table statique passant
+   * avant la génération, ils la remplacent d'eux-mêmes. Chacun a été vérifié deux
+   * fois : les notes produites sont celles de son nom, et la forme tient dans une
+   * main — quatre doigts au plus, quatre cases d'écart au plus, pas de corde à vide
+   * au-delà de la cinquième case.
+   */
+  { id: "gA6", name: "A6", full: "A 6", category: "6", fingers: [[4,2,1],[3,2,1],[2,2,1],[1,2,1]], open: [5], muted: [6], startFret: 1 },
+  { id: "gAm6", name: "Am6", full: "A m6", category: "m6", fingers: [[4,2,1],[3,2,1],[2,1,1],[1,2,1]], open: [5], muted: [6], startFret: 1 },
+  { id: "gA7sus4", name: "A7sus4", full: "A 7sus4", category: "7sus4", fingers: [[4,2,1],[2,3,1]], open: [1,3,5], muted: [6], startFret: 1 },
+  { id: "gAm7b5", name: "Am7b5", full: "A m7b5", category: "m7b5", fingers: [[4,1,1],[2,1,1]], open: [3,5], muted: [1,6], startFret: 1 },
+  { id: "gA9", name: "A9", full: "A 9", category: "9", fingers: [[4,2,1],[3,4,1],[2,2,1],[1,3,1]], open: [5], muted: [6], startFret: 1 },
+  { id: "gAadd9", name: "Aadd9", full: "A add9", category: "add9", fingers: [[4,2,1],[3,4,1],[2,2,1]], open: [1,5], muted: [6], startFret: 1 },
+  { id: "gBbm6", name: "Bbm6", full: "Bb m6", category: "m6", barre: { fret: 6, fromString: 1, toString: 6 }, fingers: [[6,6,1],[5,8,1],[4,8,1],[3,6,1],[2,8,1],[1,6,1]], open: [], muted: [], startFret: 5 },
+  { id: "gBb7sus4", name: "Bb7sus4", full: "Bb 7sus4", category: "7sus4", barre: { fret: 1, fromString: 1, toString: 5 }, fingers: [[5,1,1],[4,3,1],[3,1,1],[2,4,1],[1,1,1]], open: [], muted: [6], startFret: 1 },
+  { id: "gBbm7b5", name: "Bbm7b5", full: "Bb m7b5", category: "m7b5", fingers: [[5,1,1],[4,2,1],[3,1,1],[2,2,1]], open: [], muted: [1,6], startFret: 1 },
+  { id: "gBbm9", name: "Bbm9", full: "Bb m9", category: "m9", barre: { fret: 6, fromString: 1, toString: 6 }, fingers: [[6,6,1],[5,8,1],[4,6,1],[3,6,1],[2,6,1],[1,8,1]], open: [], muted: [], startFret: 5 },
+  { id: "gB6", name: "B6", full: "B 6", category: "6", fingers: [[5,2,1],[4,1,1],[3,1,1],[1,2,1]], open: [2], muted: [6], startFret: 1 },
+  { id: "gBm7b5", name: "Bm7b5", full: "B m7b5", category: "m7b5", fingers: [[5,2,1],[4,3,1],[3,2,1],[2,3,1]], open: [], muted: [1,6], startFret: 1 },
+  { id: "gCm7b5", name: "Cm7b5", full: "C m7b5", category: "m7b5", fingers: [[5,3,1],[4,4,1],[3,3,1],[2,4,1]], open: [], muted: [1,6], startFret: 2 },
+  { id: "gCadd9", name: "Cadd9", full: "C add9", category: "add9", fingers: [[5,3,1],[2,1,1]], open: [1,3,4], muted: [6], startFret: 1 },
+  { id: "gDbm7b5", name: "Dbm7b5", full: "Db m7b5", category: "m7b5", fingers: [[5,4,1],[4,5,1],[3,4,1],[2,5,1]], open: [], muted: [1,6], startFret: 3 },
+  { id: "gD6", name: "D6", full: "D 6", category: "6", fingers: [[3,2,1],[1,2,1]], open: [2,4], muted: [5,6], startFret: 1 },
+  { id: "gDm6", name: "Dm6", full: "D m6", category: "m6", fingers: [[3,2,1],[1,1,1]], open: [2,4], muted: [5,6], startFret: 1 },
+  { id: "gD7sus4", name: "D7sus4", full: "D 7sus4", category: "7sus4", fingers: [[3,2,1],[2,1,1],[1,3,1]], open: [4], muted: [5,6], startFret: 1 },
+  { id: "gDadd9", name: "Dadd9", full: "D add9", category: "add9", fingers: [[5,5,1],[4,4,1],[3,2,1],[2,3,1]], open: [1], muted: [6], startFret: 2 },
+  { id: "gEb6", name: "Eb6", full: "Eb 6", category: "6", barre: { fret: 1, fromString: 1, toString: 4 }, fingers: [[4,1,1],[3,3,1],[2,1,1],[1,3,1]], open: [], muted: [5,6], startFret: 1 },
+  { id: "gEbm6", name: "Ebm6", full: "Eb m6", category: "m6", barre: { fret: 1, fromString: 1, toString: 4 }, fingers: [[4,1,1],[3,3,1],[2,1,1],[1,2,1]], open: [], muted: [5,6], startFret: 1 },
+  { id: "gEbm7b5", name: "Ebm7b5", full: "Eb m7b5", category: "m7b5", fingers: [[5,6,1],[4,7,1],[3,6,1],[2,7,1]], open: [], muted: [1,6], startFret: 5 },
+  { id: "gE6", name: "E6", full: "E 6", category: "6", fingers: [[5,2,1],[4,2,1],[3,1,1],[2,2,1]], open: [1,6], muted: [], startFret: 1 },
+  { id: "gEm6", name: "Em6", full: "E m6", category: "m6", fingers: [[5,2,1],[4,2,1],[2,2,1]], open: [1,3,6], muted: [], startFret: 1 },
+  { id: "gE7sus4", name: "E7sus4", full: "E 7sus4", category: "7sus4", fingers: [[5,2,1],[3,2,1]], open: [1,2,4,6], muted: [], startFret: 1 },
+  { id: "gEm7b5", name: "Em7b5", full: "E m7b5", category: "m7b5", fingers: [[5,7,1],[4,8,1],[3,7,1],[2,8,1]], open: [], muted: [1,6], startFret: 6 },
+  { id: "gE9", name: "E9", full: "E 9", category: "9", fingers: [[5,2,1],[3,1,1],[1,2,1]], open: [2,4,6], muted: [], startFret: 1 },
+  { id: "gEadd9", name: "Eadd9", full: "E add9", category: "add9", fingers: [[5,2,1],[4,4,1],[3,1,1]], open: [1,2,6], muted: [], startFret: 1 },
+  { id: "gFm6", name: "Fm6", full: "F m6", category: "m6", barre: { fret: 1, fromString: 1, toString: 6 }, fingers: [[6,1,1],[5,3,1],[4,3,1],[3,1,1],[2,3,1],[1,1,1]], open: [], muted: [], startFret: 1 },
+  { id: "gF7sus4", name: "F7sus4", full: "F 7sus4", category: "7sus4", barre: { fret: 1, fromString: 1, toString: 6 }, fingers: [[6,1,1],[5,3,1],[4,1,1],[3,3,1],[2,1,1],[1,1,1]], open: [], muted: [], startFret: 1 },
+  { id: "gFm7b5", name: "Fm7b5", full: "F m7b5", category: "m7b5", fingers: [[5,8,1],[4,9,1],[3,8,1],[2,9,1]], open: [], muted: [1,6], startFret: 7 },
+  { id: "gF9", name: "F9", full: "F 9", category: "9", barre: { fret: 1, fromString: 1, toString: 6 }, fingers: [[6,1,1],[5,3,1],[4,1,1],[3,2,1],[2,1,1],[1,3,1]], open: [], muted: [], startFret: 1 },
+  { id: "gFadd9", name: "Fadd9", full: "F add9", category: "add9", fingers: [[4,3,1],[3,2,1],[2,1,1],[1,3,1]], open: [], muted: [5,6], startFret: 1 },
+  { id: "gFsm6", name: "F#m6", full: "F# m6", category: "m6", barre: { fret: 2, fromString: 1, toString: 6 }, fingers: [[6,2,1],[5,4,1],[4,4,1],[3,2,1],[2,4,1],[1,2,1]], open: [], muted: [], startFret: 1 },
+  { id: "gFs7sus4", name: "F#7sus4", full: "F# 7sus4", category: "7sus4", barre: { fret: 2, fromString: 1, toString: 6 }, fingers: [[6,2,1],[5,4,1],[4,2,1],[3,4,1],[2,2,1],[1,2,1]], open: [], muted: [], startFret: 1 },
+  { id: "gFsm7b5", name: "F#m7b5", full: "F# m7b5", category: "m7b5", fingers: [[6,2,1],[4,2,1],[3,2,1],[2,1,1]], open: [], muted: [1,5], startFret: 1 },
+  { id: "gFsadd9", name: "F#add9", full: "F# add9", category: "add9", fingers: [[4,4,1],[3,3,1],[2,2,1],[1,4,1]], open: [], muted: [5,6], startFret: 1 },
+  { id: "gFsm9", name: "F#m9", full: "F# m9", category: "m9", barre: { fret: 2, fromString: 1, toString: 6 }, fingers: [[6,2,1],[5,4,1],[4,2,1],[3,2,1],[2,2,1],[1,4,1]], open: [], muted: [], startFret: 1 },
+  { id: "gG6", name: "G6", full: "G 6", category: "6", fingers: [[6,3,1],[5,2,1]], open: [1,2,3,4], muted: [], startFret: 1 },
+  { id: "gGm6", name: "Gm6", full: "G m6", category: "m6", barre: { fret: 3, fromString: 1, toString: 6 }, fingers: [[6,3,1],[5,5,1],[4,5,1],[3,3,1],[2,5,1],[1,3,1]], open: [], muted: [], startFret: 2 },
+  { id: "gG7sus4", name: "G7sus4", full: "G 7sus4", category: "7sus4", barre: { fret: 3, fromString: 1, toString: 6 }, fingers: [[6,3,1],[5,5,1],[4,3,1],[3,5,1],[2,3,1],[1,3,1]], open: [], muted: [], startFret: 2 },
+  { id: "gGm7b5", name: "Gm7b5", full: "G m7b5", category: "m7b5", fingers: [[6,3,1],[4,3,1],[3,3,1],[2,2,1]], open: [], muted: [1,5], startFret: 1 },
+  { id: "gG9", name: "G9", full: "G 9", category: "9", barre: { fret: 3, fromString: 1, toString: 6 }, fingers: [[6,3,1],[5,5,1],[4,3,1],[3,4,1],[2,3,1],[1,5,1]], open: [], muted: [], startFret: 2 },
+  { id: "gGadd9", name: "Gadd9", full: "G add9", category: "add9", fingers: [[6,3,1],[1,3,1]], open: [2,3,4,5], muted: [], startFret: 1 },
+  { id: "gGm9", name: "Gm9", full: "G m9", category: "m9", barre: { fret: 3, fromString: 1, toString: 6 }, fingers: [[6,3,1],[5,5,1],[4,3,1],[3,3,1],[2,3,1],[1,5,1]], open: [], muted: [], startFret: 2 },
+  { id: "gAbm6", name: "Abm6", full: "Ab m6", category: "m6", barre: { fret: 4, fromString: 1, toString: 6 }, fingers: [[6,4,1],[5,6,1],[4,6,1],[3,4,1],[2,6,1],[1,4,1]], open: [], muted: [], startFret: 3 },
+  { id: "gAb7sus4", name: "Ab7sus4", full: "Ab 7sus4", category: "7sus4", barre: { fret: 4, fromString: 1, toString: 6 }, fingers: [[6,4,1],[5,6,1],[4,4,1],[3,6,1],[2,4,1],[1,4,1]], open: [], muted: [], startFret: 3 },
+  { id: "gAbm7b5", name: "Abm7b5", full: "Ab m7b5", category: "m7b5", fingers: [[6,4,1],[4,4,1],[3,4,1],[2,3,1]], open: [], muted: [1,5], startFret: 2 },
+  { id: "gAb9", name: "Ab9", full: "Ab 9", category: "9", barre: { fret: 4, fromString: 1, toString: 6 }, fingers: [[6,4,1],[5,6,1],[4,4,1],[3,5,1],[2,4,1],[1,6,1]], open: [], muted: [], startFret: 3 },
+  { id: "gAbm9", name: "Abm9", full: "Ab m9", category: "m9", barre: { fret: 4, fromString: 1, toString: 6 }, fingers: [[6,4,1],[5,6,1],[4,4,1],[3,4,1],[2,4,1],[1,6,1]], open: [], muted: [], startFret: 3 },
 ];
 
 // ─── Accords Ukulélé ──────────────────────────────────────────────────────────
