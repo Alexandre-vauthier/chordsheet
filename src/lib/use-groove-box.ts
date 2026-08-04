@@ -257,6 +257,28 @@ function playVoice(ctx: AudioContext, dest: AudioNode, voice: Voice, t: number) 
   playVoiceFallback(ctx, dest, voice, t);
 }
 
+/** Ce que chaque voix va chercher dans le kit : échantillon et vélocité. */
+export const VOICE_INFO: Record<Voice, { group: string; velocity: number }> = VOICE_SAMPLE;
+export const VOICES = ALL_VOICES;
+
+/**
+ * Frappe une voix seule, tout de suite.
+ *
+ * Même chemin que la boîte à rythme — mêmes échantillons, même compresseur, même
+ * repli sur la synthèse tant que le kit charge : ce qu'on entend au pad est
+ * exactement ce qu'on entendra dans un motif.
+ */
+export function frapperVoix(voice: Voice): void {
+  const ctx = getAudioContext();
+  const dest = ensureAudioGraph(ctx);
+  playVoice(ctx, dest, voice, ctx.currentTime);
+}
+
+/** Les échantillons du kit sont-ils chargés, ou la synthèse de secours joue-t-elle ? */
+export function kitCharge(): boolean {
+  return drumReady;
+}
+
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useGrooveBox({
