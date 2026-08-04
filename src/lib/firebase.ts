@@ -1,6 +1,9 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getAuth, Auth } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
+import {
+  Firestore, getFirestore, initializeFirestore,
+  persistentLocalCache, persistentMultipleTabManager,
+} from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 
 // Configuration Firebase - À remplacer par tes propres credentials
@@ -40,10 +43,34 @@ function getFirebaseAuth(): Auth {
   return auth;
 }
 
-// Fonction pour obtenir Firestore
+/**
+ * Firestore, avec ses données gardées sur l'appareil.
+ *
+ * Une grille consultée une fois reste lisible sans réseau, et une modification
+ * faite hors ligne part toute seule au retour de la connexion. C'est ce qui
+ * permet de compter sur l'application en cave de répétition ou sur scène, là où
+ * il n'y a ni wifi ni 4G — et c'est exactement le moment où on en a besoin.
+ *
+ * `persistentMultipleTabManager` parce qu'on ouvre volontiers une grille par
+ * onglet : le gestionnaire simple laisse le cache au premier onglet venu et les
+ * autres repassent en mémoire, donc sans rien hors ligne.
+ *
+ * Côté serveur, il n'y a pas d'IndexedDB : le rendu des pages publiques garde le
+ * Firestore ordinaire. L'échec d'initialisation retombe dessus aussi, plutôt que
+ * de priver l'application de sa base pour une histoire de cache (navigation
+ * privée, stockage refusé, navigateur ancien).
+ */
 function getFirebaseDb(): Firestore {
   if (!db) {
-    db = getFirestore(getFirebaseApp());
+    const app = getFirebaseApp();
+    if (typeof window === 'undefined') return (db = getFirestore(app));
+    try {
+      db = initializeFirestore(app, {
+        localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+      });
+    } catch {
+      db = getFirestore(app);
+    }
   }
   return db;
 }

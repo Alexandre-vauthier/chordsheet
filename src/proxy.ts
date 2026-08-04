@@ -106,8 +106,11 @@ export default function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Exclut les routes API, /export (cible de rendu Puppeteer pour le PDF, jamais
+  // Exclut les routes API, /offline (page de repli du service worker : elle doit
+  // avoir une adresse stable, sans préfixe de langue, puisque c'est le service
+  // worker qui la met en cache et non un visiteur), /export (cible de rendu
+  // Puppeteer pour le PDF, jamais
   // visitée par un humain), les fichiers statiques Next.js et les fichiers avec
   // extension (icônes, manifest, etc.) — la locale ne s'applique qu'aux pages.
-  matcher: ['/((?!api|export|_next|_vercel|.*\\..*).*)'],
+  matcher: ['/((?!api|export|offline|_next|_vercel|.*\\..*).*)'],
 };

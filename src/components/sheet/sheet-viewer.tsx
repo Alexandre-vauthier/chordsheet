@@ -27,6 +27,7 @@ import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import { useGenreLabel } from '@/lib/use-genre-labels';
 import { LiveChordFollow, type ActiveRow } from './live-chord-follow';
+import { useWakeLock } from '@/lib/use-wake-lock';
 
 const LS_KEY = 'chordsheet_instrument';
 
@@ -113,6 +114,16 @@ function sectionSignature(section: { rows: { chord: string; span: number }[][] }
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingBookmark, concertCellPath, printChordDiagramsOverride, printMinimizeRepeatedSectionsOverride, concertMode }: SheetViewerProps) {
+  /**
+   * L'écran reste allumé tant qu'une grille est à l'écran.
+   *
+   * On lit une grille en jouant, pas en la faisant défiler : sans cela l'écran
+   * s'éteint au bout d'une minute d'immobilité, c'est-à-dire toujours. Le verrou
+   * se relâche de lui-même dès que la page passe en arrière-plan, donc un onglet
+   * laissé ouvert ne retient rien.
+   */
+  useWakeLock(true);
+
   const t = useTranslations('SheetViewer');
   const tGroove = useTranslations('GroovePatterns');
   const genreLabel = useGenreLabel();

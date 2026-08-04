@@ -6,8 +6,12 @@ import { QRCodeSVG } from 'qrcode.react';
 
 import { useLiveSession } from '@/lib/live-session-context';
 import { Link, useRouter } from '@/i18n/navigation';
+import { useWakeLock } from '@/lib/use-wake-lock';
 
 export function SessionViewClient({ code }: { code: string }) {
+  // Session live : plusieurs personnes suivent l'écran, il ne doit pas s'éteindre.
+  useWakeLock(true);
+
   const t = useTranslations('LiveSession');
   const router = useRouter();
   const normalizedCode = code.toUpperCase();

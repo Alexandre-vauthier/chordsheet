@@ -9,31 +9,22 @@ date ; l'ordre de priorité, lui, est un jugement.
 
 ---
 
+## Fait
+
+- **Le verrou d'écran** (4 août 2026) : `useWakeLock`, actif sur le mode concert,
+  la session live et la consultation d'une grille. Le verrou se relâche quand la
+  page passe en arrière-plan et se reprend au retour, ce qui le rend sans danger
+  sur une simple consultation.
+- **Le hors ligne** (4 août 2026), en deux couches : le cache persistant de
+  Firestore (une grille consultée reste lisible sans réseau, les modifications
+  partent au retour de la connexion) et un service worker pour la coque, avec une
+  page de repli à `/offline`. Restent à voir à l'usage : le préchargement
+  volontaire d'une setlist avant un concert, et le signalement visible de l'état
+  hors ligne.
+
 ## Décidé, à faire
 
-### 1. Fonctionner hors ligne
-
-Il y a un manifeste (l'application s'installe) mais aucun service worker : rien
-n'est mis en cache. Pas de réseau en cave de répétition ou sur scène, pas de
-setlist.
-
-C'est le point qui décide de tout le reste. Tant qu'un musicien ne peut pas
-compter dessus le soir du concert, la bibliothèque d'accords et la boîte à rythme
-ne servent à rien : il aura imprimé ses grilles.
-
-Portée minimale : la coque de l'application, les grilles du book et les setlists
-consultées récemment.
-
-### 2. Empêcher l'écran de s'éteindre
-
-Aucun appel à l'API Wake Lock dans le code. Une tablette posée sur un pied
-s'endort au deuxième couplet.
-
-Vingt lignes, sur le mode concert et sur la consultation d'une grille. Le meilleur
-rapport effort sur valeur de cette liste. À relâcher quand l'onglet passe en
-arrière-plan, et à reprendre au retour (le verrou est perdu à chaque masquage).
-
-### 3. Import et export ChordPro
+### 1. Import et export ChordPro
 
 C'est le format d'échange de ce monde (OnSong, SongBook, les exports d'Ultimate
 Guitar). Deux besoins distincts, également importants :
@@ -46,7 +37,7 @@ L'import texte existant (`docs/IMPORT.md`) lit un format de tablature, pas
 ChordPro. À voir s'il se généralise ou s'il vaut mieux un lecteur séparé, comme
 pour les dictionnaires d'accords.
 
-### 4. Historique de version d'une grille
+### 2. Historique de version d'une grille
 
 Rien dans le modèle de données : pas de révision, pas de corbeille. Une mauvaise
 manipulation sur une grille travaillée pendant des mois est définitive.
@@ -55,7 +46,7 @@ Pour quelqu'un qui confie son répertoire entier, c'est le genre d'incident dont
 produit ne se remet pas. Une corbeille avec restauration à trente jours couvre
 déjà l'essentiel du risque, pour bien moins cher qu'un historique complet.
 
-### 5. Des tests automatisés
+### 3. Des tests automatisés
 
 Quarante mille lignes, trois cent soixante-dix-sept commits de correction, zéro
 test. C'est le seul endroit où le projet est plus jeune que sa taille.

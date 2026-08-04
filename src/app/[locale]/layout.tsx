@@ -6,6 +6,7 @@ import { setRequestLocale, getTranslations } from 'next-intl/server';
 import { SITE_URL, SITE_NAME, buildAlternates, buildOpenGraph } from '@/lib/seo';
 import { DM_Sans, DM_Mono, Playfair_Display } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { RegisterSW } from "@/components/register-sw";
 import { routing } from "@/i18n/routing";
 import "../globals.css";
 
@@ -76,6 +77,7 @@ export default async function RootLayout({
         className={`${dmSans.variable} ${dmMono.variable} ${playfair.variable} font-sans antialiased`}
       >
         <NextIntlClientProvider messages={clientMessages}>
+          <RegisterSW />
           <Providers>{children}</Providers>
         </NextIntlClientProvider>
       </body>

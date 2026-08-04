@@ -12,6 +12,7 @@ import { SheetViewer } from '@/components/sheet/sheet-viewer';
 import { Button } from '@/components/ui/button';
 import type { Section } from '@/types';
 import { Link, useRouter } from '@/i18n/navigation';
+import { useWakeLock } from '@/lib/use-wake-lock';
 
 interface SetPlayPageProps {
   params: Promise<{ id: string }>;
@@ -67,6 +68,9 @@ function calculateConcertCell(
 }
 
 export default function SetPlayPage({ params }: SetPlayPageProps) {
+  // Mode concert : l'écran ne doit pas s'endormir entre deux morceaux.
+  useWakeLock(true);
+
   const t = useTranslations('Sets');
   const { id } = use(params);
   const router = useRouter();
