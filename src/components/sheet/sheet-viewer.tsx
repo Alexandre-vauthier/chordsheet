@@ -19,7 +19,7 @@ import type { PlayStep, PlayStyle, PlaybackVoice } from '@/lib/use-playback';
 import { useArtwork } from '@/lib/use-artwork';
 import { useAuth } from '@/lib/auth-context';
 import { swapSelectorVoice } from '@/lib/accompaniment';
-import { INSTRUMENT_CONFIG, findChordVariants, parseChordInput } from '@/lib/chord-data';
+import { INSTRUMENT_CONFIG } from '@/lib/chord-data';
 import { useChordVariants } from '@/lib/use-chord-variants';
 import { playChord, playMetronomeTick, preloadInstrument } from '@/lib/chord-audio';
 import { transposeSections, transposeKey } from '@/lib/transpose';
@@ -172,7 +172,6 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   const previewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Écoute micro en cours (remontée par LiveChordFollow) : sert à démarrer la
   // boîte à rythme pendant le suivi si elle est activée.
-  const [recListening, setRecListening] = useState(false);
   // Lignes actives pendant le suivi micro (pour faire clignoter et décrémenter
   // leurs badges de répétition).
   const [recActiveRows, setRecActiveRows] = useState<ActiveRow[]>([]);
@@ -297,21 +296,6 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
     capo: sheet.capo ?? 0,
   });
 
-  // Jouer un accord (par son nom déjà transposé + capo) sur les instruments
-  // d'accompagnement — utilisé par le suivi micro à chaque changement d'accord.
-  // Pendant le REC, on ne joue l'accompagnement QUE si la boîte à rythme est
-  // cochée (sinon le suivi reste silencieux, purement visuel).
-  // En REC l'accompagnement reste en plaqué (l'arpège au tempo est réservé au Play).
-  const playAccompanimentChord = useCallback((chordName: string) => {
-    if (!grooveEnabled || !accompVoices.length) return;
-    const parsed = parseChordInput(chordName).chord;
-    for (const voice of accompVoices) {
-      const custom = (sheet.customChords as Record<string, CustomChord> | undefined)?.[`${parsed.toLowerCase()}-${voice.id}`];
-      const chordData = (custom as StringChord | PianoChord | undefined) ?? findChordVariants(parsed, voice.id)[0];
-      if (chordData) playChord(chordData, voice.id, 0); // le nom inclut déjà transposition + capo
-    }
-  }, [grooveEnabled, accompVoices, sheet.customChords]);
-
   const bpm = parseTempo(sheet.tempo);
 
   const cancelCountIn = useCallback(() => {
@@ -415,9 +399,16 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   }, [metroMenuOpen]);
 
   useGrooveBox({
-    // Tourne pendant la lecture, pendant le suivi micro si la boîte à rythme est
-    // activée, ou pendant un aperçu de pattern.
-    enabled: isPlaying || (recListening && grooveEnabled) || previewPattern !== null,
+    /**
+     * Tourne pendant la lecture ou l'aperçu d'un motif, jamais pendant le suivi
+     * micro.
+     *
+     * La batterie y sortait par les enceintes et rentrait par le micro : la
+     * détection y voyait des accords qui n'étaient pas ceux du joueur, et le
+     * suivi partait en avant. Aucune interface du navigateur ne dit si un casque
+     * est branché, donc on ne peut pas le savoir — on se tait.
+     */
+    enabled: isPlaying || previewPattern !== null,
     muted: previewPattern !== null ? false : !grooveEnabled,
     bpm: grooveBpm,
     beatsPerMeasure: sheet.beatsPerMeasure ?? 4,
@@ -1225,11 +1216,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
       {instrumentId !== 'voice' && (
         <LiveChordFollow
           sequence={followSequence}
-          bpm={parseTempo(localTempo) || bpm || 90}
-          onListeningChange={setRecListening}
           onActiveRowsChange={setRecActiveRows}
-          onAdvance={playAccompanimentChord}
-          outputActive={grooveEnabled}
         />
       )}
 

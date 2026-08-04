@@ -1658,7 +1658,7 @@
   },
   "LiveFollow": {
     "listening": "Écoute",
-    "muted": "Suivi coupé : relance-le pour éviter que le son joué repique dans le micro.",
+    "muted": "Batterie et accompagnement coupés pendant le suivi : le micro ne doit entendre que toi.",
     "stop": "Arrêter le suivi micro",
     "start": "Suivre au micro — surligne l'accord joué et fait défiler"
   },

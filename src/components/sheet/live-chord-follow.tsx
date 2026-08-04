@@ -13,18 +13,17 @@
 // L'écoute vit dans CE composant isolé (ses mises à jour ~10 Hz ne re-rendent pas
 // le sheet-viewer) ; le surlignage se fait par le DOM (toggle de classe).
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { suivreMesure } from '@/lib/follow-scroll';
 import { useTranslations } from 'next-intl';
 import { useChordListener } from '@/lib/use-chord-listener';
 import { chordsMatch } from '@/lib/chord-match';
-import { clampMsPerBeat, updateMsPerBeat, shouldAnticipate } from '@/lib/follow-tempo';
 
 export interface FollowSeqItem {
   pos: string;         // data-pos de la cellule
   rowId: string;       // data-row-id de la mesure (défilement)
   sound: string;       // accord réellement entendu (forme + capo effectif)
-  beats: number;       // durée de la cellule en temps (sert à l'horloge du suivi)
+  beats: number;       // durée de la cellule en temps
   repeatIndex: number; // passage courant de la mesure répétée (0-based)
   rowRepeat: number;   // nombre total de passages de la mesure
 }
@@ -79,26 +78,25 @@ function buildGroups(seq: FollowSeqItem[]): ChordGroup[] {
 
 export function LiveChordFollow({
   sequence,
-  bpm,
   onListeningChange,
   onActiveRowsChange,
-  onAdvance,
-  outputActive = false,
 }: {
   sequence: FollowSeqItem[];
-  // Tempo de la grille : amorce l'horloge avant d'avoir observé le joueur.
-  bpm: number;
   onListeningChange?: (listening: boolean) => void;
   onActiveRowsChange?: (rows: ActiveRow[]) => void;
-  // Appelé au passage à un nouveau bloc, avec l'accord entendu (pour jouer un
-  // accompagnement suivant la position détectée).
-  onAdvance?: (sound: string) => void;
-  // Vrai si un son sort des enceintes pendant l'écoute (boîte à rythme et/ou
-  // accompagnement) : active l'annulation d'écho pour éviter le repiquage.
-  outputActive?: boolean;
 }) {
   const t = useTranslations('LiveFollow');
-  const { listening, chord, audible, start, stop, error } = useChordListener(outputActive);
+  /**
+   * Pendant le suivi, l'application ne sort aucun son : ni boîte à rythme, ni
+   * accompagnement. Le micro n'a donc rien d'autre à entendre que le joueur.
+   *
+   * Faute de quoi il se repique lui-même : l'accompagnement entre dans le micro,
+   * la détection y voit des accords qui ne sont pas ceux du joueur, et le suivi
+   * part en avant. L'annulation d'écho aidait sans régler — elle est prévue pour
+   * la parole, pas pour distinguer deux guitares. Rien ne permet, depuis un
+   * navigateur, de savoir si l'utilisateur porte un casque : autant se taire.
+   */
+  const { listening, chord, start, stop, error } = useChordListener(false);
 
   const groupsRef = useRef<ChordGroup[]>(buildGroups(sequence));
   const latestChordRef = useRef('');
@@ -106,62 +104,21 @@ export function LiveChordFollow({
   // Dernière section traversée, pour ne recadrer qu'aux changements de section.
   const derniereSectionRef = useRef<string | null>(null);
 
-  // Horloge : tempo estimé du joueur, instant d'entrée dans le bloc courant, et
-  // nombre d'avances consécutives décidées sans confirmation du micro.
-  const msPerBeatRef = useRef(clampMsPerBeat(60000 / (bpm || 90)));
-  // Le BPM passe par une ref : éditer le champ tempo pendant l'écoute ne doit pas
-  // relancer l'effet de suivi, qui remettrait la position à zéro.
-  const bpmRef = useRef(bpm);
-  const enteredAtRef = useRef(0);
-  // Y a-t-il du son en ce moment ? Lu dans la boucle, d'où la ref.
-  const audibleRef = useRef(false);
 
-  const [autoStopped, setAutoStopped] = useState(false);
-  const prevOutputRef = useRef(outputActive);
 
   useEffect(() => { groupsRef.current = buildGroups(sequence); posRef.current = -1; }, [sequence]);
   useEffect(() => { latestChordRef.current = chord; }, [chord]);
-  useEffect(() => { audibleRef.current = audible; }, [audible]);
-  useEffect(() => { bpmRef.current = bpm; }, [bpm]);
   useEffect(() => { onListeningChange?.(listening); }, [listening, onListeningChange]);
   // Plus d'écoute → plus de ligne active (arrête le clignotement des répétitions).
   useEffect(() => { if (!listening) onActiveRowsChange?.([]); }, [listening, onActiveRowsChange]);
 
-  // Si un son (boîte à rythme ou accompagnement) est activé alors que le suivi
-  // tourne déjà, l'annulation d'écho n'a pas été appliquée (décidée au démarrage).
-  // On coupe donc le suivi pour inviter à le relancer proprement (anti-repiquage).
-  useEffect(() => {
-    const outputJustEnabled = outputActive && !prevOutputRef.current;
-    prevOutputRef.current = outputActive;
-    if (outputJustEnabled && listening) {
-      stop();
-      setAutoStopped(true);
-    }
-  }, [outputActive, listening, stop]);
-
   useEffect(() => {
     if (!listening) return;
     posRef.current = -1;
-    enteredAtRef.current = 0;
-    msPerBeatRef.current = clampMsPerBeat(60000 / (bpmRef.current || 90));
     clearClass('chord-current');
 
-    // `confirmed` : le changement d'accord a été reconnu au micro. Seuls ces
-    // passages nourrissent l'estimation du tempo — une avance décidée par
-    // l'horloge dériverait sur ses propres prédictions.
-    const goToGroup = (idx: number, confirmed: boolean) => {
+    const goToGroup = (idx: number) => {
       const groups = groupsRef.current;
-      const now = Date.now();
-
-      // Le tempo ne s'apprend que sur les changements réellement entendus : une
-      // avance décidée par l'horloge ne doit pas nourrir sa propre estimation.
-      if (confirmed && posRef.current >= 0 && enteredAtRef.current > 0) {
-        msPerBeatRef.current = updateMsPerBeat(
-          msPerBeatRef.current, now - enteredAtRef.current, groups[posRef.current].beats,
-        );
-      }
-      enteredAtRef.current = now;
-
       posRef.current = idx;
       clearClass('chord-current');
       for (const p of groups[idx].positions) {
@@ -170,7 +127,6 @@ export function LiveChordFollow({
           ?.classList.add('chord-current');
       }
       onActiveRowsChange?.(groups[idx].rows);
-      onAdvance?.(groups[idx].sound);
       // Même règle que la lecture : on cadre la section, on ne suit la mesure que
       // lorsqu'elle sort de l'écran. Sans quoi une section répétée fait remonter la
       // grille sous les yeux du joueur, en plein morceau.
@@ -178,21 +134,18 @@ export function LiveChordFollow({
     };
 
     const id = setInterval(() => {
-      // `c` peut être vide (silence, attaque, note étouffée). On ne s'en sert que
-      // pour les comparaisons : l'horloge, elle, doit tourner même sans rien
-      // entendre, sinon un joueur qui s'arrête laisserait le suivi figé au lieu
-      // d'être coupé.
+      // `c` peut être vide : silence, attaque, note étouffée, ou accord non
+      // reconnu. Dans tous ces cas on reste où on est.
       const c = latestChordRef.current;
       const groups = groupsRef.current;
       if (!groups.length) return;
       const gpos = posRef.current;
 
-      // Pas encore calé : il faut une vraie détection pour se caler, l'horloge
-      // n'a pas de point de départ tant qu'on ne sait pas où on en est.
+      // Pas encore calé : il faut une vraie détection pour se caler.
       if (gpos < 0) {
         if (!c) return;
         for (let k = 0; k < START_WINDOW && k < groups.length; k++) {
-          if (chordsMatch(c, groups[k].sound)) { goToGroup(k, true); return; }
+          if (chordsMatch(c, groups[k].sound)) { goToGroup(k); return; }
         }
         return;
       }
@@ -203,27 +156,29 @@ export function LiveChordFollow({
         // Toujours dans le bloc courant → rien à faire (déjà surligné en entier).
         if (chordsMatch(c, groups[gpos].sound)) return;
         // Changement d'accord entendu : avancer au bloc suivant (jamais de saut).
-        if (next && chordsMatch(c, next.sound)) { goToGroup(gpos + 1, true); return; }
+        if (next && chordsMatch(c, next.sound)) { goToGroup(gpos + 1); return; }
       }
 
-      // Rien de reconnaissable au micro. Deux cas, que seule l'énergie du signal
-      // distingue — l'accord lissé, lui, est vide dans les deux :
-      //   - on entend le joueur : l'accord a été mal joué ou mal reconnu, on
-      //     rattrape à l'horloge dès la durée attendue écoulée ;
-      //   - on n'entend rien : le joueur s'est arrêté, on l'attend sans avancer.
-      // Le suivi ne se coupe jamais de lui-même : il a été démarré explicitement,
-      // c'est à l'utilisateur de l'arrêter.
-      if (!next || !audibleRef.current) return;
-      if (!shouldAnticipate(Date.now() - enteredAtRef.current, groups[gpos].beats, msPerBeatRef.current)) return;
-
-      goToGroup(gpos + 1, false);
+      /**
+       * Rien de reconnaissable au micro : on attend, sans avancer.
+       *
+       * Le suivi rattrapait ici à l'horloge, dès la durée attendue écoulée, dès
+       * lors qu'il entendait du son sans y reconnaître d'accord. L'intention
+       * était de survivre à un accord mal joué ; l'effet, quand le micro entend
+       * autre chose que la grille — l'accompagnement de l'application, un bruit
+       * de pièce, une guitare mal captée — était de défiler tout le morceau
+       * d'un bloc à l'autre sans jamais se recaler.
+       *
+       * Rester en place le temps que le joueur soit reconnu se voit et se
+       * corrige ; galoper jusqu'à la fin de la grille, non.
+       */
     }, TICK_MS);
 
     return () => {
       clearInterval(id);
       clearClass('chord-current');
     };
-  }, [listening, onActiveRowsChange, onAdvance, stop]);
+  }, [listening, onActiveRowsChange]);
 
   useEffect(() => () => clearClass('chord-current'), []);
 
@@ -244,13 +199,13 @@ export function LiveChordFollow({
             Micro indisponible
           </div>
         )}
-        {autoStopped && !listening && (
+        {listening && (
           <div className="absolute bottom-full mb-2 right-0 max-w-[220px] text-xs text-[var(--ink-light)] bg-[var(--cream)] border border-[var(--line)] rounded-lg px-2 py-1 shadow">
             {t('muted')}
           </div>
         )}
         <button
-          onClick={listening ? stop : () => { setAutoStopped(false); start(); }}
+          onClick={listening ? stop : start}
           title={listening ? t('stop') : t('start')}
           className={`flex items-center gap-2 h-12 px-4 rounded-full shadow-lg font-semibold text-white transition-colors ${
             listening ? 'bg-red-600 hover:bg-red-700' : 'bg-[var(--accent)] hover:bg-[#a83d25]'

@@ -1658,7 +1658,7 @@
   },
   "LiveFollow": {
     "listening": "Listening",
-    "muted": "Following is off: restart it so the sound played doesn't feed back into the mic.",
+    "muted": "Drums and backing are off while following: the mic should only hear you.",
     "stop": "Stop following",
     "start": "Follow with the mic — highlights the chord played and scrolls along"
   },
