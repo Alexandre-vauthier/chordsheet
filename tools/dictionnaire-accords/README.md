@@ -50,6 +50,28 @@ sens des cordes**. En accordage ouvert, une orientation fausse donne quand même
 des accords justes ici et là. On lit la planche des deux façons et on garde celle
 qui valide le plus de cartes.
 
+## Qui vient d'où — [INVENTAIRE.md](INVENTAIRE.md)
+
+Trois provenances coexistent dans `chord-data.ts`, et rien dans le fichier ne les
+distingue à l'œil. L'inventaire les sépare, nom par nom.
+
+| Provenance | Combien | Ce que ça vaut |
+|---|---:|---|
+| **Relevé** sur un document | 533 | Lu sur une planche imprimée, puis vérifié contre le nom de l'accord : aucune note étrangère. C'est la référence. |
+| **Hérité** | 191 | Déjà là avant ces relevés, sur aucun document. Sans référence extérieure : c'est là que restent les erreurs à trouver. |
+| **Calculé** | à la demande | Produit par `generateStringVoicing` pour tout nom qu'aucun doigté ne couvre. Sans référence non plus, mais construit pour ne contenir que les notes de l'accord. |
+
+Les 191 hérités sont l'endroit où chercher : les triades diminuées des quatre
+instruments à cordes, les augmentés de la mandoline, les douze accords de basse et
+les cent dix-neuf du piano, qu'aucun document n'a encore couverts. Les erreurs
+trouvées jusqu'ici venaient toutes de là — les douze sus2/sus4 de guitare qui ne
+sonnaient pas leur nom, les vingt-trois du banjo, les vingt-deux du ukulélé, le ré
+bémol augmenté de mandoline sans sa fondamentale.
+
+```bash
+python3 inventaire.py > INVENTAIRE.md   # à refaire après toute reprise de document
+```
+
 ## Le principe
 
 **Rien n'est présumé, tout est mesuré.** La position de départ ne vient pas d'une
