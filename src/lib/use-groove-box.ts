@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { DrumMachine } from 'smplr';
 import { getAudioContext } from './chord-audio';
+import { echantillon } from './drum-kits';
 
 // ─── Voix disponibles (kit LM-2 "LinnDrum") ──────────────────────────────────
 // Le LinnDrum a été le premier échantillonneur de batterie du marché : ses sons
@@ -249,6 +250,22 @@ function ensureAudioGraph(ctx: AudioContext): AudioNode {
 }
 
 function playVoice(ctx: AudioContext, dest: AudioNode, voice: Voice, t: number) {
+  // Un kit local, s'il couvre cette voix, passe avant le LM-2. Voix par voix :
+  // un kit incomplet n'oblige pas à renoncer au reste.
+  const local = echantillon(voice);
+  if (local) {
+    const src = ctx.createBufferSource();
+    src.buffer = local;
+    const gain = ctx.createGain();
+    // Même dosage que pour le LM-2 : la vélocité de la voix fait le niveau, donc
+    // l'équilibre du kit se conserve d'un jeu d'échantillons à l'autre.
+    gain.gain.value = VOICE_SAMPLE[voice].velocity / 127;
+    src.connect(gain);
+    gain.connect(dest);
+    src.start(t);
+    return;
+  }
+
   if (drumReady && drumInstance) {
     const { group, velocity } = VOICE_SAMPLE[voice];
     drumInstance.start({ note: group, time: t, velocity });

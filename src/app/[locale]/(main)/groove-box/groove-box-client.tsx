@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ensureAudioContext } from '@/lib/chord-audio';
 import { PATTERN_DEFS, VOICE_INFO, VOICES, frapperVoix, kitCharge, type Voice } from '@/lib/use-groove-box';
+import { KITS, chargerKit, choisirKit, restaurerKit, voixDisponibles } from '@/lib/drum-kits';
 
 /**
  * Banc d'essai de la boîte à rythme.
@@ -45,7 +46,33 @@ export function GrooveBoxClient() {
   const [actif, setActif] = useState<Voice | null>(null);
   const [pret, setPret] = useState(false);
   const [survole, setSurvole] = useState<Voice | null>(null);
+  const [kit, setKit] = useState<string | null>(null);
+  const [localesPretes, setLocalesPretes] = useState<Set<Voice>>(new Set());
+  const [chargeEnCours, setChargeEnCours] = useState(false);
   const minuteur = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const appliquerKit = useCallback(async (id: string | null) => {
+    choisirKit(id);
+    setKit(id);
+    if (!id) { setLocalesPretes(new Set()); return; }
+    setChargeEnCours(true);
+    await chargerKit(id, VOICES);
+    setLocalesPretes(voixDisponibles(id));
+    setChargeEnCours(false);
+  }, []);
+
+  /**
+   * Le kit choisi la dernière fois vaut aussi pour la lecture d'une grille : on le
+   * restaure au montage plutôt que de repartir du LM-2 à chaque visite.
+   *
+   * Le choix est lu ici et non au premier rendu : `localStorage` n'existe pas au
+   * rendu serveur, et l'y lire ferait diverger le HTML servi de celui que le
+   * navigateur reconstruit.
+   */
+  useEffect(() => {
+    const id = restaurerKit();
+    if (id) void appliquerKit(id);
+  }, [appliquerKit]);
 
   // Le kit se charge en tâche de fond au premier son : on interroge son état
   // plutôt que de deviner, et on s'arrête dès qu'il est là.
@@ -88,9 +115,40 @@ export function GrooveBoxClient() {
         </p>
         <p className="text-xs" style={{ color: pret ? 'var(--ink-faint)' : 'var(--accent)' }}>
           {pret
-            ? 'Échantillons chargés.'
-            : 'Échantillons pas encore chargés — la synthèse de secours joue en attendant. Frappe un pad pour lancer le chargement.'}
+            ? 'Échantillons LM-2 chargés.'
+            : 'Échantillons LM-2 pas encore chargés — la synthèse de secours joue en attendant. Frappe un pad pour lancer le chargement.'}
         </p>
+
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <span className="text-xs" style={{ color: 'var(--ink-light)' }}>Kit :</span>
+          {[{ id: null, label: 'LM-2 (défaut)' }, ...KITS.map(k => ({ id: k.id as string | null, label: k.label }))].map((k) => {
+            const choisi = kit === k.id;
+            return (
+              <button
+                key={k.id ?? 'lm2'}
+                type="button"
+                onClick={() => void appliquerKit(k.id)}
+                aria-pressed={choisi}
+                className="text-xs px-2.5 py-1 rounded-full border transition-colors"
+                style={{
+                  background: choisi ? 'var(--accent)' : 'transparent',
+                  borderColor: choisi ? 'var(--accent)' : 'var(--line)',
+                  color: choisi ? '#fff' : 'var(--ink-light)',
+                }}
+              >
+                {k.label}
+              </button>
+            );
+          })}
+          {chargeEnCours && (
+            <span className="text-xs" style={{ color: 'var(--ink-faint)' }}>chargement…</span>
+          )}
+          {kit && !chargeEnCours && (
+            <span className="text-xs" style={{ color: 'var(--ink-faint)' }}>
+              {localesPretes.size} voix sur {VOICES.length} ; les autres restent au LM-2
+            </span>
+          )}
+        </div>
       </header>
 
       <section aria-label="Pads" className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }}>
@@ -128,7 +186,7 @@ export function GrooveBoxClient() {
                 </kbd>
               </span>
               <span className="text-[11px] font-mono" style={{ color: enFrappe ? 'rgba(255,255,255,.85)' : 'var(--ink-faint)' }}>
-                {info.group} · vél. {info.velocity}
+                {localesPretes.has(voix) ? `${voix}.wav` : info.group} · vél. {info.velocity}
               </span>
               <span className="text-[11px]" style={{ color: enFrappe ? 'rgba(255,255,255,.85)' : 'var(--ink-light)' }}>
                 {usages.length === 0
