@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { DrumMachine } from 'smplr';
 import { getAudioContext } from './chord-audio';
-import { echantillon } from './drum-kits';
+import { chargerKit, echantillon, restaurerKit } from './drum-kits';
 
 // ─── Voix disponibles (kit LM-2 "LinnDrum") ──────────────────────────────────
 // Le LinnDrum a été le premier échantillonneur de batterie du marché : ses sons
@@ -321,6 +321,23 @@ export function useGrooveBox({
   const bpmPerMeasureRef = useRef(beatsPerMeasure);
   const patternRef = useRef(resolvePattern(groovePattern, genres));
   const mutedRef = useRef(muted);
+
+  /**
+   * Rendre au kit choisi sa place, sur toute page qui joue un rythme.
+   *
+   * Le choix vivait en mémoire de module et dans `localStorage`, mais seule la
+   * page d'essai le relisait : sur une grille rechargée, la boîte à rythme
+   * repartait du LM-2 sans rien dire. Il se restaure donc ici, au point de
+   * passage commun.
+   *
+   * Le chargement démarre au montage et non au premier temps : les échantillons
+   * sont là avant qu'on appuie sur lecture, sinon la première mesure sonnerait
+   * avec l'autre kit.
+   */
+  useEffect(() => {
+    const id = restaurerKit();
+    if (id) void chargerKit(id, ALL_VOICES);
+  }, []);
 
   useEffect(() => { bpmRef.current = bpm; }, [bpm]);
   useEffect(() => { bpmPerMeasureRef.current = beatsPerMeasure; }, [beatsPerMeasure]);
