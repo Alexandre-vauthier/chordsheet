@@ -28,7 +28,7 @@
  * Le nom du cache porte une version : la changer suffit à repartir propre.
  */
 
-const VERSION = 'alviena-v4';
+const VERSION = 'alviena-v5';
 const REPLI = '/offline';
 const LANGUES = ['fr', 'en'];
 const LANGUE_PAR_DEFAUT = 'fr';
@@ -169,11 +169,33 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Le reste de nos fichiers (polices, images, échantillons de batterie) :
-  // cache d'abord, ils ne changent qu'au déploiement.
+  /**
+   * Fichiers portant une extension (polices, images, échantillons de batterie) :
+   * cache d'abord, ils ne changent qu'au déploiement.
+   */
+  if (/\.[a-z0-9]+$/i.test(url.pathname)) {
+    e.respondWith(
+      match(req).then((hit) =>
+        hit ?? fetch(req).then((rep) => { void garder(req, rep); return rep; }).catch(() => hit ?? Response.error()),
+      ),
+    );
+    return;
+  }
+
+  /**
+   * Tout le reste est une page, demandée autrement que par une navigation : c'est
+   * le cas du préchargement. Réseau d'abord, comme pour une navigation.
+   *
+   * Le cache d'abord était une faute lourde et invisible : le préchargement
+   * recevait la page telle qu'elle avait été enregistrée la première fois, sans
+   * jamais interroger le serveur. Elle ne se rafraîchissait donc jamais et
+   * continuait de désigner les fichiers de code d'un déploiement périmé — ceux-là
+   * mêmes qu'on cherchait à mettre en cache. Le hors ligne restait cassé quoi
+   * qu'on ajoute ensuite.
+   */
   e.respondWith(
-    match(req).then((hit) =>
-      hit ?? fetch(req).then((rep) => { void garder(req, rep); return rep; }).catch(() => hit ?? Response.error()),
-    ),
+    fetch(req)
+      .then((rep) => { void garder(req, rep); return rep; })
+      .catch(() => match(req).then((hit) => hit ?? Response.error())),
   );
 });
