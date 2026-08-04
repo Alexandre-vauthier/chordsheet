@@ -28,19 +28,27 @@ python3 convertir.py                              # → pdf-app.json, au format 
 | `convertir.py` | Passage au format `StringChord` de l'application |
 | `png.py` | Lecture et écriture de PNG, pour **regarder** une carte au lieu de la deviner |
 
-## La mandoline
+## Les autres instruments
 
-Un second document, une planche PNG cette fois, avec ses propres règles. D'où un
-lecteur séparé plutôt qu'un paramétrage de plus :
+Trois planches PNG, trois mises en page sans rien de commun : un lecteur chacun
+plutôt qu'un paramétrage qui les couvrirait mal toutes les trois.
 
 ```bash
-python3 mandoline.py ~/Desktop/mandoline-chords.png      # lecture + contrôle
-python3 convertir_mandoline.py ~/Desktop/mandoline-chords.png
+python3 mandoline.py ~/Desktop/mandoline-chords.png   &&  python3 convertir_mandoline.py
+python3 banjo.py     ~/Desktop/banjo-chords.png       &&  python3 convertir_banjo.py
+python3 ukulele.py   ~/Desktop/ukulele-chords.png     &&  python3 convertir_ukulele.py
 ```
 
-Quatre-vingt-seize accords, les fondamentales en colonnes et les types en rangées
-(l'inverse du document guitare), et le numéro de case en minuscule à gauche du
-manche au lieu d'un chiffre coloré à droite.
+| Planche | Disposition | Particularité |
+|---|---|---|
+| Mandoline | fondamentales en colonnes, types en rangées | numéro de case minuscule à gauche du manche |
+| Banjo | fondamentales en rangées, types en colonnes | cinq cordes, chanterelle jamais frettée, repère à droite |
+| Ukulélé | fondamentales en rangées, types en colonnes | deux doigtés superposés par carte, le second en cercles creux |
+
+Ce que ces trois relevés ont appris et qui resservira : **ne jamais présumer le
+sens des cordes**. En accordage ouvert, une orientation fausse donne quand même
+des accords justes ici et là. On lit la planche des deux façons et on garde celle
+qui valide le plus de cartes.
 
 ## Le principe
 
