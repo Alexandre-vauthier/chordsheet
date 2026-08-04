@@ -69,22 +69,27 @@ export type EtatPrechargement =
   | { phase: 'echec' };
 
 /**
- * Ces pages sont-elles réellement en cache ?
+ * Combien de ces pages sont réellement en cache ?
  *
  * On pourrait retenir qu'on les a préchargées, mais ce serait retenir une
  * affirmation plutôt que constater un fait : le cache est purgé à chaque montée
  * de version du service worker, et l'utilisateur peut vider ses données. On
  * interroge donc le cache lui-même, ce qui a le mérite de ne jamais mentir.
+ *
+ * On compte au lieu de répondre par oui ou par non. Le tout-ou-rien annonçait
+ * « rien en cache » dès qu'une seule page sur quatre-vingt-douze manquait — une
+ * grille supprimée ou devenue inaccessible dans un book suffisait à ce que
+ * l'application repropose éternellement de tout télécharger.
  */
-async function toutesEnCache(pages: string[]): Promise<boolean> {
-  if (!pages.length || typeof caches === 'undefined') return false;
+async function combienEnCache(pages: string[]): Promise<number> {
+  if (!pages.length || typeof caches === 'undefined') return 0;
   try {
     const trouvees = await Promise.all(
       pages.map((p) => caches.match(p, { ignoreVary: true }).then((r) => !!r)),
     );
-    return trouvees.every(Boolean);
+    return trouvees.filter(Boolean).length;
   } catch {
-    return false;
+    return 0;
   }
 }
 
@@ -205,11 +210,12 @@ export function usePrechargement() {
    * sans jamais dire qu'il y est déjà.
    */
   const verifier = useCallback(async (pages: string[]) => {
-    if (await toutesEnCache(pages)) {
-      setEtat({ phase: 'fini', total: pages.length, echecs: 0 });
-      return true;
-    }
-    return false;
+    const presentes = await combienEnCache(pages);
+    if (!presentes) return false;
+    setEtat({ phase: 'fini', total: pages.length, echecs: pages.length - presentes });
+    // Complet seulement si tout y est : un préchargement partiel doit pouvoir
+    // être relancé, et le dire.
+    return presentes === pages.length;
   }, []);
 
   return { etat, precharger, verifier };

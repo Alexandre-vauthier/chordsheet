@@ -222,7 +222,9 @@ export default function DashboardPage() {
               {prechargement.phase === 'en cours'
                 ? tOff('preloading', { faits: prechargement.faits, total: prechargement.total })
                 : prechargement.phase === 'fini'
-                  ? tOff('preloaded')
+                  ? (prechargement.echecs
+                      ? tOff('preloadedPartial', { ok: prechargement.total - prechargement.echecs, total: prechargement.total })
+                      : tOff('preloaded'))
                   : tOff('preloadBook')}
             </Button>
           )}
