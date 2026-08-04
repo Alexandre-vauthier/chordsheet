@@ -45,10 +45,10 @@ function chromaticRootSemi(name: string): number {
 function getCategoryGroup(category: string): CategoryGroup {
   if (category === 'major' || category === '6') return 'major';
   if (category === 'minor' || category === 'm6') return 'minor';
-  if (category === 'dom7' || category === '9') return 'dom7';
+  if (category === 'dom7' || category === '9' || category === '11' || category === '13') return 'dom7';
   if (category === 'maj7') return 'maj7';
   if (category === 'min7' || category === 'm9') return 'min7';
-  if (category === 'dim' || category === 'm7b5') return 'dim';
+  if (category === 'dim' || category === 'm7b5' || category === 'dim7') return 'dim';
   if (category === 'aug') return 'aug';
   if (category === 'sus' || category === 'add9' || category === 'sus2' || category === 'sus4' || category === '7sus4') return 'sus';
   return 'other';
