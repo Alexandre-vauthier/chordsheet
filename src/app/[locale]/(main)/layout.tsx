@@ -12,6 +12,7 @@ import { LiveSessionBanner } from '@/components/layout/live-session-banner';
 import { EmailVerificationGate } from '@/components/layout/email-verification-gate';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { OfflineBanner } from '@/components/offline-banner';
+import { NavigationHorsLigne } from '@/components/navigation-hors-ligne';
 
 // Routes accessibles sans authentification (contenu public en lecture seule).
 // /about, /faq, /credits sont liées depuis le pied de page : les garder privées
@@ -91,6 +92,7 @@ export default function MainLayout({
           <main className="flex-1">{children}</main>
           <Footer />
           <OfflineBanner />
+          <NavigationHorsLigne />
         </div>
       </AddToCollectionProvider>
     </LiveSessionProvider>
