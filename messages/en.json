@@ -1498,7 +1498,16 @@
     "scaleFlat": "♭ low",
     "scaleTrue": "in tune",
     "scaleSharp": "high ♯",
-    "stringsLabel": "Strings (low → high)"
+    "stringsLabel": "Strings (low → high)",
+    "tuningLabel": "Tuning",
+    "tuning": {
+      "standard": "Standard",
+      "dropD": "Drop D",
+      "halfStep": "Half step down",
+      "openG": "Open G"
+    },
+    "micHears": "The microphone is picking up sound.",
+    "micSilent": "The microphone hears nothing: move closer, or check that nothing else is using it."
   },
   "ChordDetect": {
     "backToLibrary": "Chord library",

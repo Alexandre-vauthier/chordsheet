@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { usePitchDetect } from '@/lib/use-pitch-detect';
-import { TUNINGS, analyzeFreq, matchString, type TunerInstrument } from '@/lib/tuner-data';
+import { TUNINGS, GUITAR_TUNINGS, guitarTuning, analyzeFreq, matchString, type TunerInstrument } from '@/lib/tuner-data';
 
 type Mode = TunerInstrument | 'chromatic';
 
@@ -17,20 +17,26 @@ export function TunerClient() {
   const modeLabel = (m: Mode) => (m === 'chromatic' ? t('chromatic') : tInstrument(m));
 
   const [mode, setMode] = useState<Mode>('guitar');
+  /**
+   * Accordage de guitare, seul instrument où l'on en change couramment.
+   * Remis au standard dès qu'on quitte la guitare : revenir sur un ukulélé en
+   * gardant « open G » en tête n'aurait aucun sens.
+   */
+  const [accordage, setAccordage] = useState('standard');
 
   // Plage de détection bornée à l'instrument (±3 demi-tons autour des cordes) : élimine
   // le ronflement secteur (~50 Hz) et les hautes fréquences parasites hors de l'instrument.
   const range = useMemo(() => {
     if (mode === 'chromatic') return { min: 40, max: 1500 };
-    const strs = TUNINGS[mode];
+    const strs = mode === 'guitar' ? guitarTuning(accordage) : TUNINGS[mode];
     const lo = Math.min(...strs.map((s) => s.freq));
     const hi = Math.max(...strs.map((s) => s.freq));
     return { min: lo * Math.pow(2, -3 / 12), max: hi * Math.pow(2, 3 / 12) };
-  }, [mode]);
+  }, [mode, accordage]);
 
-  const { freq, listening, error, start, stop } = usePitchDetect(range.min, range.max);
+  const { freq, level, listening, error, start, stop } = usePitchDetect(range.min, range.max);
 
-  const strings = mode === 'chromatic' ? null : TUNINGS[mode];
+  const strings = mode === 'chromatic' ? null : mode === 'guitar' ? guitarTuning(accordage) : TUNINGS[mode];
   const info = freq ? analyzeFreq(freq) : null;
   // Mode instrument : on replie la fréquence sur les cordes connues (anti-octave).
   const target = freq && strings ? matchString(strings, freq) : null;
@@ -57,7 +63,7 @@ export function TunerClient() {
         {MODES.map((m) => (
           <button
             key={m}
-            onClick={() => setMode(m)}
+            onClick={() => { setMode(m); if (m !== 'guitar') setAccordage('standard'); }}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
               mode === m
                 ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
@@ -68,6 +74,28 @@ export function TunerClient() {
           </button>
         ))}
       </div>
+
+      {/* Accordages alternatifs : proposés pour la seule guitare, où l'on en change
+          couramment. Les afficher partout encombrerait pour rien. */}
+      {mode === 'guitar' && (
+        <div className="flex flex-wrap items-center gap-2 mb-6 -mt-2">
+          <span className="text-xs text-[var(--ink-faint)]">{t('tuningLabel')}</span>
+          {GUITAR_TUNINGS.map((g) => (
+            <button
+              key={g.id}
+              onClick={() => setAccordage(g.id)}
+              className={`px-2.5 py-1 rounded-lg text-xs border transition-colors ${
+                accordage === g.id
+                  ? 'bg-[var(--accent-soft)] border-[var(--accent)] text-[var(--accent)] font-medium'
+                  : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)]'
+              }`}
+              title={guitarTuning(g.id).map((c) => c.label).join(' ')}
+            >
+              {t(`tuning.${g.id}`)}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Zone d'affichage */}
       <div className="rounded-2xl border border-[var(--line)] bg-[var(--cell-bg)] p-6 sm:p-8 text-center">
@@ -118,9 +146,29 @@ export function TunerClient() {
 
             <p className={`mt-4 text-sm font-medium ${inTune ? 'text-green-500' : 'text-[var(--ink-light)]'}`}>{status}</p>
 
+            {/* Jauge d'entrée.
+                Quand rien ne se détecte, la seule question utile est de savoir si le
+                micro entend quelque chose. Sans elle, on ne distingue pas un micro
+                muet d'une note trop floue pour être reconnue — et sur un téléphone,
+                où le niveau de capture varie beaucoup d'un appareil à l'autre, c'est
+                la première chose à regarder. */}
+            <div className="mt-5 mx-auto max-w-xs">
+              <div className="h-1.5 rounded-full bg-[var(--line)] overflow-hidden" role="presentation">
+                <div
+                  className={`h-full rounded-full transition-[width,background-color] duration-100 ${
+                    level > 0.06 ? 'bg-[var(--accent)]' : 'bg-[var(--ink-faint)]'
+                  }`}
+                  style={{ width: `${Math.round(level * 100)}%` }}
+                />
+              </div>
+              <p className="mt-1.5 text-[11px] text-[var(--ink-faint)]">
+                {level > 0.06 ? t('micHears') : t('micSilent')}
+              </p>
+            </div>
+
             <button
               onClick={stop}
-              className="mt-5 px-4 py-2 border border-[var(--line)] text-[var(--ink-light)] text-sm rounded-lg hover:border-[var(--ink-faint)] transition-colors"
+              className="mt-4 px-4 py-2 border border-[var(--line)] text-[var(--ink-light)] text-sm rounded-lg hover:border-[var(--ink-faint)] transition-colors"
             >
               {t('stopMic')}
             </button>

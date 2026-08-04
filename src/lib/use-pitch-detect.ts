@@ -92,6 +92,16 @@ function median(arr: number[]): number {
 
 export function usePitchDetect(minFreq = 38, maxFreq = 1400) {
   const [freq, setFreq] = useState<number | null>(null);
+  /**
+   * Niveau d'entrée, de 0 à 1.
+   *
+   * Rendu à l'écran plutôt que gardé pour nous : quand rien ne se détecte, la seule
+   * question utile est de savoir si le micro entend quelque chose. Sans cette
+   * indication, on ne peut pas distinguer un micro muet d'une note trop floue pour
+   * être reconnue — et sur un téléphone, où le niveau de capture varie beaucoup d'un
+   * appareil à l'autre, c'est la première chose à vérifier.
+   */
+  const [level, setLevel] = useState(0);
   const [listening, setListening] = useState(false);
   const [error, setError] = useState<'denied' | 'error' | null>(null);
 
@@ -121,6 +131,7 @@ export function usePitchDetect(minFreq = 38, maxFreq = 1400) {
     silentRef.current = 0;
     setListening(false);
     setFreq(null);
+    setLevel(0);
   }, []);
 
   const start = useCallback(async () => {
@@ -155,6 +166,16 @@ export function usePitchDetect(minFreq = 38, maxFreq = 1400) {
         const c = ctxRef.current;
         if (!a || !buf || !c) return;
         a.getFloatTimeDomainData(buf);
+
+        // Niveau efficace, ramené sur une échelle lisible. La racine étale le bas de
+        // la plage, là où se joue la différence entre « rien » et « faible ».
+        let somme = 0;
+        for (let i = 0; i < buf.length; i++) somme += buf[i] * buf[i];
+        const rms = Math.sqrt(somme / buf.length);
+        const brut = Math.min(1, Math.sqrt(rms * 12));
+        // Lissage : une jauge qui saute à chaque image ne se lit pas.
+        setLevel((prev) => prev + (brut - prev) * 0.25);
+
         const { min, max } = rangeRef.current;
         const d = detectPitch(buf, c.sampleRate, min, max);
 
@@ -180,5 +201,5 @@ export function usePitchDetect(minFreq = 38, maxFreq = 1400) {
 
   useEffect(() => () => stop(), [stop]);
 
-  return { freq, listening, error, start, stop };
+  return { freq, level, listening, error, start, stop };
 }

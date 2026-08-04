@@ -19,7 +19,7 @@
         "colString": "String",
         "colNote": "Note",
         "colFreq": "Frequency",
-        "note": "Only standard tunings are offered. The tuner has no open or dropped variants; for an unusual tuning, chromatic mode still works."
+        "note": "The guitar offers three alternative tunings alongside standard: drop D, half a step down, and open G. The other instruments use standard tuning; for anything else, chromatic mode still works."
       },
       "chromatic": {
         "h2": "Chromatic mode",

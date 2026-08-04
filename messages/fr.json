@@ -1498,7 +1498,16 @@
     "scaleFlat": "♭ grave",
     "scaleTrue": "juste",
     "scaleSharp": "aigu ♯",
-    "stringsLabel": "Cordes (grave → aigu)"
+    "stringsLabel": "Cordes (grave → aigu)",
+    "tuningLabel": "Accordage",
+    "tuning": {
+      "standard": "Standard",
+      "dropD": "Drop D",
+      "halfStep": "½ ton plus bas",
+      "openG": "Open G"
+    },
+    "micHears": "Le micro capte le son.",
+    "micSilent": "Le micro n'entend rien : approchez l'instrument, ou vérifiez que rien d'autre ne l'utilise."
   },
   "ChordDetect": {
     "backToLibrary": "Bibliothèque d'accords",

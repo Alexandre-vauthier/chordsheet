@@ -19,7 +19,7 @@
         "colString": "Corde",
         "colNote": "Note",
         "colFreq": "Fréquence",
-        "note": "Seuls les accordages standards sont proposés. L'accordeur ne comporte pas de variantes ouvertes ou abaissées ; pour un accordage particulier, le mode chromatique reste utilisable."
+        "note": "La guitare propose trois accordages alternatifs en plus du standard : drop D, un demi-ton plus bas, et open G. Les autres instruments s'accordent au standard ; pour un accordage qui n'y figure pas, le mode chromatique reste utilisable."
       },
       "chromatic": {
         "h2": "Le mode chromatique",

@@ -36,6 +36,42 @@ export const TUNINGS: Record<TunerInstrument, TunerString[]> = {
   banjo:    [s('G', 4), s('D', 3), s('G', 3), s('B', 3), s('D', 4)],
 };
 
+/**
+ * Accordages alternatifs de la guitare.
+ *
+ * Trois seulement, et les trois qu'on rencontre vraiment. Il en existe des dizaines ;
+ * les aligner tous ferait une liste où l'on ne trouve plus le sien.
+ *
+ * - **Drop D** : la corde grave descend d'un ton. De loin le plus courant, il suffit
+ *   à jouer une bonne partie du rock et du metal, et il ne demande de retoucher
+ *   qu'une seule corde.
+ * - **Demi-ton plus bas** : tout descend d'un demi-ton. Beaucoup d'enregistrements
+ *   sont dans cet accordage (Hendrix, Slash, une grande part du hard rock), et c'est
+ *   aussi ce qu'on fait pour soulager une voix.
+ * - **Open G** : les cordes à vide donnent un accord de sol. C'est l'accordage du
+ *   slide et du blues, et celui de tout un pan des Rolling Stones.
+ *
+ * DADGAD, l'accordage celtique, est le suivant sur la liste : une ligne à ajouter
+ * ici le jour où le répertoire folk le réclame.
+ */
+export interface GuitarTuning {
+  /** Identifiant stable, utilisé comme clé de traduction. */
+  id: string;
+  strings: TunerString[];
+}
+
+export const GUITAR_TUNINGS: GuitarTuning[] = [
+  { id: 'standard', strings: [s('E', 2), s('A', 2), s('D', 3), s('G', 3), s('B', 3), s('E', 4)] },
+  { id: 'dropD',    strings: [s('D', 2), s('A', 2), s('D', 3), s('G', 3), s('B', 3), s('E', 4)] },
+  { id: 'halfStep', strings: [s('D#', 2), s('G#', 2), s('C#', 3), s('F#', 3), s('A#', 3), s('D#', 4)] },
+  { id: 'openG',    strings: [s('D', 2), s('G', 2), s('D', 3), s('G', 3), s('B', 3), s('D', 4)] },
+];
+
+/** Les cordes d'un accordage de guitare, par son identifiant. */
+export function guitarTuning(id: string): TunerString[] {
+  return (GUITAR_TUNINGS.find((t) => t.id === id) ?? GUITAR_TUNINGS[0]).strings;
+}
+
 export interface NoteInfo {
   midi: number;     // note chromatique la plus proche (entier)
   note: string;
