@@ -1906,5 +1906,13 @@
     "allLevels": "Tous les niveaux",
     "clearFilters": "Tout afficher",
     "emptyFiltered": "Aucun morceau ne correspond à ces filtres."
+  },
+  "Offline": {
+    "banner": "Hors ligne — tes grilles déjà consultées restent disponibles.",
+    "preload": "Rendre disponible hors ligne",
+    "preloading": "Mise en cache… {faits}/{total}",
+    "preloaded": "Disponible hors ligne",
+    "preloadedPartial": "{ok} grilles sur {total} disponibles hors ligne",
+    "preloadFailed": "Mise en cache impossible"
   }
 }

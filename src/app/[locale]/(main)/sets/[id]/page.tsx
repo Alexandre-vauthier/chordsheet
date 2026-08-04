@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import type { Sheet } from '@/types';
 import { Link, useRouter } from '@/i18n/navigation';
+import { usePrechargement } from '@/lib/use-offline';
 
 interface SetPageProps {
   params: Promise<{ id: string }>;
@@ -38,6 +39,8 @@ export default function SetPage({ params }: SetPageProps) {
   const [description, setDescription] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
+  const tOff = useTranslations('Offline');
+  const { etat: prechargement, precharger } = usePrechargement();
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [exportError, setExportError] = useState('');
 
@@ -332,6 +335,25 @@ export default function SetPage({ params }: SetPageProps) {
             <Link href={`/sets/${id}/play`}>
               <Button>{t('launchSet')}</Button>
             </Link>
+            {/* Préchargement : on prépare un concert chez soi et on le joue
+                ailleurs, souvent sans réseau. Sans ce bouton il faudrait penser à
+                ouvrir chaque grille une par une la veille, ce qu'on ne fait pas. */}
+            <Button
+              variant="ghost"
+              onClick={() => precharger(localSheets.map((sh) => sh.id).filter((x): x is string => !!x))}
+              isLoading={prechargement.phase === 'en cours'}
+              title={tOff('preload')}
+            >
+              {prechargement.phase === 'en cours'
+                ? tOff('preloading', { faits: prechargement.faits, total: prechargement.total })
+                : prechargement.phase === 'fini'
+                  ? (prechargement.echecs
+                      ? tOff('preloadedPartial', { ok: prechargement.total - prechargement.echecs, total: prechargement.total })
+                      : tOff('preloaded'))
+                  : prechargement.phase === 'echec'
+                    ? tOff('preloadFailed')
+                    : tOff('preload')}
+            </Button>
             {canExportPdf ? (
               <Button variant="ghost" onClick={handleExportPdf} isLoading={isExportingPdf}>
                 {t('exportPdf')}

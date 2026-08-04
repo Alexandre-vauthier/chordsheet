@@ -11,6 +11,7 @@ import { ConcertBanner } from '@/components/layout/concert-banner';
 import { LiveSessionBanner } from '@/components/layout/live-session-banner';
 import { EmailVerificationGate } from '@/components/layout/email-verification-gate';
 import { usePathname, useRouter } from '@/i18n/navigation';
+import { OfflineBanner } from '@/components/offline-banner';
 
 // Routes accessibles sans authentification (contenu public en lecture seule).
 // /about, /faq, /credits sont liées depuis le pied de page : les garder privées
@@ -89,6 +90,7 @@ export default function MainLayout({
           <LiveSessionBanner />
           <main className="flex-1">{children}</main>
           <Footer />
+          <OfflineBanner />
         </div>
       </AddToCollectionProvider>
     </LiveSessionProvider>

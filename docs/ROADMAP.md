@@ -18,9 +18,13 @@ date ; l'ordre de priorité, lui, est un jugement.
 - **Le hors ligne** (4 août 2026), en deux couches : le cache persistant de
   Firestore (une grille consultée reste lisible sans réseau, les modifications
   partent au retour de la connexion) et un service worker pour la coque, avec une
-  page de repli à `/offline`. Restent à voir à l'usage : le préchargement
-  volontaire d'une setlist avant un concert, et le signalement visible de l'état
-  hors ligne.
+  page de repli à `/offline`.
+- **Le préchargement d'une setlist et le signalement hors ligne** (4 août 2026) :
+  un bouton sur la page d'une setlist met ses grilles en cache d'avance, et un
+  bandeau discret apparaît quand la connexion tombe. Le premier existe parce qu'on
+  prépare un concert chez soi et qu'on le joue ailleurs ; le second parce que sans
+  lui la coupure ne se voit qu'au moment où elle déçoit, et passe pour une panne
+  de l'application.
 
 ## Décidé, à faire
 
