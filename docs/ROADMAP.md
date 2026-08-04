@@ -11,6 +11,11 @@ date ; l'ordre de priorité, lui, est un jugement.
 
 ## Fait
 
+- **Des tests, là où ça a fait mal** (5 août 2026) : vingt-sept contrôles lancés
+  par `npm test`, sans nouvelle dépendance de production. Ils portent sur la
+  théorie des accords, l'ordre des variantes et les règles du service worker.
+  Chacun a été vérifié en remettant le défaut d'origine : un test qui passe sans
+  attraper ce qu'il vise ne vaut rien, et le premier écrit était dans ce cas.
 - **Le verrou d'écran** (4 août 2026) : `useWakeLock`, actif sur le mode concert,
   la session live et la consultation d'une grille. Le verrou se relâche quand la
   page passe en arrière-plan et se reprend au retour, ce qui le rend sans danger
@@ -50,19 +55,21 @@ Pour quelqu'un qui confie son répertoire entier, c'est le genre d'incident dont
 produit ne se remet pas. Une corbeille avec restauration à trente jours couvre
 déjà l'essentiel du risque, pour bien moins cher qu'un historique complet.
 
-### 3. Des tests automatisés
+### 3. Étendre les tests
 
-Quarante mille lignes, trois cent soixante-dix-sept commits de correction, zéro
-test. C'est le seul endroit où le projet est plus jeune que sa taille.
+Vingt-sept tests existent (`npm test`), posés là où les défauts ont eu lieu :
+théorie des accords, résolution des variantes, règles du service worker. Chacun a
+été éprouvé en réintroduisant le défaut historique qu'il doit attraper.
 
-Les défauts trouvés en août sont exactement ceux qu'un test attrape : un accord
-qui ne sonne pas les notes de son nom, une lecture qui joue autre chose que ce
-qu'elle affiche, un barré qui traverse une corde à vide. Les contrôles ont été
-écrits à chaque fois, mais en scripts jetables : ils ont vérifié une fois puis
-disparu.
+Restent sans filet, par ordre d'intérêt :
 
-Commencer par figer une vingtaine d'entre eux, sur les fonctions pures : théorie
-des accords, résolution des variantes, règles du catalogue, durées de lecture.
+- **les durées de lecture** (`buildSequence`, `buildChordSequence`) : les
+  répétitions de mesure et de section s'y comptent, et une erreur y décale tout
+  un morceau ;
+- **les règles du catalogue** (`sheet-catalogue.ts`) : ce qui est public, ce qui
+  est une copie de groupe. Un défaut y cache des grilles sans rien dire ;
+- **le parseur d'import** (`chord-sheet-parser.ts`), déjà couvert par des essais
+  manuels lors de son écriture, jamais figés.
 
 ---
 
