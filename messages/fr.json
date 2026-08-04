@@ -1912,7 +1912,7 @@
     "preload": "Rendre disponible hors ligne",
     "preloading": "Mise en cache… {faits}/{total}",
     "preloaded": "Disponible hors ligne",
-    "preloadedPartial": "{ok} grilles sur {total} disponibles hors ligne",
+    "preloadedPartial": "{ok} sur {total} disponibles hors ligne",
     "preloadFailed": "Mise en cache impossible",
     "preloadBook": "Tout garder hors ligne",
     "preloadBookTitle": "Rendre les {count} grilles de ton book disponibles sans réseau"

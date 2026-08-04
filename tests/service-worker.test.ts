@@ -125,7 +125,7 @@ test("l'installation met en cache les portes d'entrée, dans les deux langues", 
   const ctx = chargerServiceWorker();
   await installer(ctx);
   const enCache = [...ctx.caches.magasins.values()].flatMap((m) => [...m.keys()]);
-  for (const attendue of ['/offline', '/fr', '/fr/book', '/en', '/en/book']) {
+  for (const attendue of ['/offline', '/fr', '/fr/book', '/fr/sets', '/fr/groups', '/en', '/en/book', '/en/groups']) {
     assert.ok(enCache.includes(`${ORIGINE}${attendue}`), `${attendue} devrait être en cache après installation`);
   }
 });

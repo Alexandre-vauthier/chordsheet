@@ -28,7 +28,7 @@
  * Le nom du cache porte une version : la changer suffit à repartir propre.
  */
 
-const VERSION = 'alviena-v5';
+const VERSION = 'alviena-v6';
 const REPLI = '/offline';
 const LANGUES = ['fr', 'en'];
 const LANGUE_PAR_DEFAUT = 'fr';
@@ -46,7 +46,7 @@ const LANGUE_PAR_DEFAUT = 'fr';
  */
 const PAGES = [
   REPLI,
-  ...LANGUES.flatMap((l) => [`/${l}`, `/${l}/book`, `/${l}/sets`, `/${l}/dashboard`]),
+  ...LANGUES.flatMap((l) => [`/${l}`, `/${l}/book`, `/${l}/sets`, `/${l}/groups`, `/${l}/dashboard`]),
 ];
 
 /**

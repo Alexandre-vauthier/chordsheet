@@ -124,12 +124,27 @@ export default function DashboardPage() {
       .filter((x): x is string => !!x)
       .map((sid) => ({ id: sid, page: `/${locale}/sheet/${sid}` }));
 
+  /**
+   * Le reste du répertoire : setlists et groupes.
+   *
+   * « Tout garder hors ligne » ne gardait que les grilles. Sur scène on n'ouvre
+   * pourtant pas une grille au hasard : on part d'une setlist, souvent atteinte
+   * par son groupe. Sans ces pages-là, le chemin est coupé dès la première étape
+   * et les grilles preparées restent hors d'atteinte.
+   */
+  const pagesDuRepertoire = () => [
+    ...sets.flatMap((set) => [`/${locale}/sets/${set.id}`, `/${locale}/sets/${set.id}/play`]),
+    ...groups.map((g) => `/${locale}/groups/${g.id}`),
+  ];
+
   // À l'arrivée, on demande au cache s'il a déjà tout : c'est un fait vérifiable,
   // contrairement au souvenir d'un préchargement passé.
   useEffect(() => {
-    if (allSheets.length) void verifier(grillesDuBook().map((g) => g.page));
+    if (allSheets.length) {
+      void verifier([...grillesDuBook().map((g) => g.page), ...pagesDuRepertoire()]);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allSheets.length, locale]);
+  }, [allSheets.length, sets.length, groups.length, locale]);
 
   const filterAndSort = useCallback((list: Sheet[]) => {
     let result = [...list];
@@ -215,7 +230,7 @@ export default function DashboardPage() {
             <Button
               variant="ghost"
               className="hidden sm:inline-flex"
-              onClick={() => precharger(grillesDuBook())}
+              onClick={() => precharger(grillesDuBook(), pagesDuRepertoire())}
               isLoading={prechargement.phase === 'en cours'}
               title={tOff('preloadBookTitle', { count: allSheets.length })}
             >
