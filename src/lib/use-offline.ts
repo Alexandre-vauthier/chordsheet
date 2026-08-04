@@ -94,6 +94,39 @@ async function combienEnCache(pages: string[]): Promise<number> {
 }
 
 /**
+ * Le code des pages en cache y est-il aussi ?
+ *
+ * Une page en cache sans son code s'affiche un dixième de seconde puis meurt.
+ * Ne vérifier que les pages laissait donc l'application annoncer « disponible
+ * hors ligne » à propos d'un répertoire injouable — et, pire, dissuadait de
+ * relancer le préchargement qui aurait justement rapporté ce qui manque.
+ *
+ * On ne tient pas de liste : on relit le HTML d'une page déjà en cache, qui nomme
+ * ses fichiers, et on demande au cache s'il les a. Une seule page suffit, elles
+ * partagent le même code, et cela reste juste après un déploiement puisque les
+ * noms de fichiers changent avec lui.
+ */
+async function codeEnCache(pages: string[]): Promise<boolean> {
+  if (typeof caches === 'undefined') return false;
+  try {
+    for (const page of pages) {
+      const rep = await caches.match(page, { ignoreVary: true });
+      if (!rep) continue;
+      const fichiers = [...(await rep.text()).matchAll(/\/_next\/static\/[^"'\\\s>)]+/g)]
+        .map((m) => m[0]);
+      if (!fichiers.length) return false;
+      const presents = await Promise.all(
+        fichiers.map((f) => caches.match(f, { ignoreVary: true }).then((r) => !!r)),
+      );
+      return presents.every(Boolean);
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Une grille prête pour le hors ligne : ses données et sa page.
  */
 export interface GrilleAPrecharger {
@@ -212,6 +245,11 @@ export function usePrechargement() {
   const verifier = useCallback(async (pages: string[]) => {
     const presentes = await combienEnCache(pages);
     if (!presentes) return false;
+
+    // Les pages ne servent à rien sans leur code : tant qu'il manque, on reste au
+    // repos pour que le préchargement soit relancé plutôt qu'évité.
+    if (!(await codeEnCache(pages))) return false;
+
     setEtat({ phase: 'fini', total: pages.length, echecs: pages.length - presentes });
     // Complet seulement si tout y est : un préchargement partiel doit pouvoir
     // être relancé, et le dire.
