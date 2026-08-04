@@ -26,7 +26,21 @@ python3 convertir.py                              # → pdf-app.json, au format 
 | `extraire_final.py` | Table des chiffres imprimés, apprise sur le document entier |
 | `final.py` | Lecture des cartes + contrôle : aucune note étrangère, fondamentale présente |
 | `convertir.py` | Passage au format `StringChord` de l'application |
-| `png.py` | Encodeur PNG, pour **regarder** une carte au lieu de la deviner |
+| `png.py` | Lecture et écriture de PNG, pour **regarder** une carte au lieu de la deviner |
+
+## La mandoline
+
+Un second document, une planche PNG cette fois, avec ses propres règles. D'où un
+lecteur séparé plutôt qu'un paramétrage de plus :
+
+```bash
+python3 mandoline.py ~/Desktop/mandoline-chords.png      # lecture + contrôle
+python3 convertir_mandoline.py ~/Desktop/mandoline-chords.png
+```
+
+Quatre-vingt-seize accords, les fondamentales en colonnes et les types en rangées
+(l'inverse du document guitare), et le numéro de case en minuscule à gauche du
+manche au lieu d'un chiffre coloré à droite.
 
 ## Le principe
 
@@ -66,14 +80,22 @@ Dans l'ordre, et en vérifiant à chaque étape :
 6. **`convertir.py`** : `RACINE` (le document écrit en dièses, l'application en
    bémols sauf fa dièse), `SUFFIXE` et `CATEGORIE`.
 
-Deux pièges rencontrés, qui se reproduiront :
+Quatre pièges rencontrés, qui se reproduiront :
 
 - **le barré ressemble au sillet** : même largeur, même bord. Ce qui les sépare est
   ce qu'ils ont au-dessus, et c'est ce que teste `coiffe()` ;
 - **le titre déborde sur les marqueurs** : le chiffre bleu descendait dans la
   fenêtre qui compte l'encre au-dessus du sillet, et faisait passer un losange
   (corde à vide) pour un X (corde étouffée). D'où le comptage de la seule encre
-  neutre.
+  neutre ;
+- **le pas des colonnes n'est pas constant** : soixante-quatre pixels ici,
+  soixante-cinq là. Deux pixels suffisent à manquer une pastille, puisqu'on sonde
+  la corde à sa position supposée. Mesurer les manches vaut mieux que les calculer ;
+- **les symboles n'ont pas tous la même encre** : sur la planche mandoline, les
+  pastilles sont noires et les cercles de cordes à vide d'un gris bien plus clair.
+  Au seuil des pastilles, des cartes entières passaient pour muettes. Et le symbole
+  n'est pas exactement centré sur sa corde : on le repère, puis on teste **son**
+  centre — creux pour un cercle, plein pour une croix.
 
 ## Ce qui n'est pas versionné
 
