@@ -55,7 +55,38 @@ Pour quelqu'un qui confie son répertoire entier, c'est le genre d'incident dont
 produit ne se remet pas. Une corbeille avec restauration à trente jours couvre
 déjà l'essentiel du risque, pour bien moins cher qu'un historique complet.
 
-### 3. Étendre les tests
+### 3. Les notes dans les résultats de recherche
+
+Les concurrents affichent des étoiles sous leurs grilles (Ultimate Guitar :
+« 4,8 ★ (159) »). C'est un avantage visible dans une page de résultats, et il est
+atteignable.
+
+Deux choses à savoir avant de s'y mettre :
+
+- **Google n'accorde les extraits d'avis qu'à une liste fermée de types** : livre,
+  cours, événement, tutoriel, commerce local, film, produit, recette,
+  application. Une grille est un `MusicComposition`, qui n'y figure pas. Ajouter
+  simplement `aggregateRating` au schéma actuel serait juste au sens de
+  schema.org, mais ne produirait aucune étoile ;
+- **ceux qui en obtiennent déclarent donc autre chose**, vraisemblablement un
+  `Product`. Ça marche, et c'est un usage limite : le jour où Google resserre, la
+  sanction porte sur tout le site. À décider en connaissance de cause, pas par
+  imitation.
+
+**Rien à faire tant qu'il n'y a pas d'avis.** Au 5 août 2026 : 69 grilles notées,
+dont 66 avec **un seul vote** et aucune avec trois votes ou plus, pour trois
+personnes ayant noté en tout. Publier « 5 sur 5 » sur la foi d'une personne
+serait exact et trompeur.
+
+Le seuil raisonnable : y revenir quand un nombre significatif de grilles atteint
+cinq votes de personnes distinctes. D'ici là, le sujet n'est pas le balisage,
+c'est qu'il n'y a personne pour noter.
+
+À vérifier en premier, le jour venu : sous quel type les sites qui obtiennent des
+étoiles déclarent réellement leurs pages. Je n'ai pas pu le faire (leur adresse
+n'est pas devinable), et c'est ce qui tranche entre les deux options.
+
+### 4. Étendre les tests
 
 Vingt-sept tests existent (`npm test`), posés là où les défauts ont eu lieu :
 théorie des accords, résolution des variantes, règles du service worker. Chacun a
@@ -114,3 +145,6 @@ Consigné ici pour ne pas revenir le proposer.
   couvre encore.
 - **Trois voix de la boîte à rythme ne servent dans aucun motif** : les deux toms
   et le tambourin. À employer ou à retirer.
+- **La page d'une grille pèse 152 Ko**, contre 6 Ko pour la grille elle-même :
+  c'est la coque répétée à chaque page qui fait le volume. Sans conséquence
+  aujourd'hui, mais c'est ce qui décide du poids d'un book mis en cache.
