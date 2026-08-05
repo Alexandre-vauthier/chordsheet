@@ -18,7 +18,7 @@ import { useGrooveBox, PATTERN_DEFS } from '@/lib/use-groove-box';
 import type { PlayStep, PlayStyle, PlaybackVoice } from '@/lib/use-playback';
 import { useArtwork } from '@/lib/use-artwork';
 import { useAuth } from '@/lib/auth-context';
-import { swapSelectorVoice } from '@/lib/accompaniment';
+import { initialAccompaniment, swapSelectorVoice } from '@/lib/accompaniment';
 import { INSTRUMENT_CONFIG } from '@/lib/chord-data';
 import { useChordVariants } from '@/lib/use-chord-variants';
 import { playChord, playMetronomeTick, preloadInstrument } from '@/lib/chord-audio';
@@ -55,16 +55,6 @@ const TRANSPOSE_LIMIT = 6;
 
 // Map instrument -> style de jeu (plaqué / arpège). Une entrée = instrument activé.
 type AccompMap = Record<string, PlayStyle>;
-
-/**
- * Point de départ de l'accompagnement à chaque chargement de grille : l'instrument
- * du sélecteur, en plaqué. Rien n'est relu depuis la grille (l'auteur ne fixe plus
- * de config de lecture) ni depuis le stockage local (le choix de session n'est pas
- * mémorisé d'une grille à l'autre).
- */
-function initialAccompaniment(instrument: InstrumentId, chordsAudioDisabled: boolean): AccompMap {
-  return chordsAudioDisabled ? {} : { [instrument]: 'block' };
-}
 
 // Icône SVG (au lieu des glyphes Unicode ♩/♪, absents des polices de l'environnement
 // headless utilisé pour l'export PDF serveur)
@@ -161,24 +151,6 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   /** L'onde sur le bouton Play, tant que le visiteur n'a pas lancé la lecture. */
   const [inviteLecture, setInviteLecture] = useState(false);
 
-  useEffect(() => {
-    if (visiteur) {
-      // La grille d'abord : le résumé des accords occupait le haut de l'écran, et
-      // c'est la grille qu'on est venu voir. Les diagrammes passent dans les
-      // cases, là où ils servent à jouer. Rien n'est retiré : « Accords utilisés »
-      // s'ouvre toujours d'un clic.
-      setShowChordSummary(false);
-      setShowInlineDiagram(true);
-      setInviteLecture(true);
-      return;
-    }
-    setShowInlineDiagram(user?.showInlineDiagram ?? false);
-    if (window.innerWidth >= 640) {
-      setShowChordSummary(user?.showChordSummaryByDefault ?? true);
-    }
-    // Mobile : reste false (replié par défaut)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visiteur, user?.showChordSummaryByDefault, user?.showInlineDiagram]);
   // L'état initial ne dépend QUE de la grille : c'est la seule valeur que le serveur
   // et le client calculent à l'identique. Lire localStorage ici produirait un rendu
   // serveur différent du premier rendu client, donc une erreur d'hydratation.
@@ -233,6 +205,30 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
     () => initialAccompaniment(instrumentId, user?.defaultChordsAudio === false),
   );
 
+  useEffect(() => {
+    if (visiteur) {
+      // La grille d'abord : le résumé des accords occupait le haut de l'écran, et
+      // c'est la grille qu'on est venu voir. Les diagrammes passent dans les
+      // cases, là où ils servent à jouer. Rien n'est retiré : « Accords utilisés »
+      // s'ouvre toujours d'un clic.
+      setShowChordSummary(false);
+      setShowInlineDiagram(true);
+      setInviteLecture(true);
+      // Et de quoi entendre le morceau : la boîte à rythmes, dont le motif se
+      // déduit déjà des genres de la grille, et l'ensemble au lieu d'un seul
+      // instrument. Tout se retire d'un clic dans le menu de lecture.
+      setGrooveEnabled(true);
+      setAccompaniment(initialAccompaniment(instrumentId, false, true));
+      return;
+    }
+    setShowInlineDiagram(user?.showInlineDiagram ?? false);
+    if (window.innerWidth >= 640) {
+      setShowChordSummary(user?.showChordSummaryByDefault ?? true);
+    }
+    // Mobile : reste false (replié par défaut)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visiteur, user?.showChordSummaryByDefault, user?.showInlineDiagram]);
+
   // Changement de grille (navigation, et setlist en mode concert où le viewer n'est
   // pas remonté) : on repart du sélecteur. Ajustement d'état pendant le rendu — le
   // motif React prévu pour ça — plutôt qu'un effet, qui laisserait passer un rendu
@@ -245,7 +241,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   if (accompSheetId !== sheet.id) {
     setAccompSheetId(sheet.id);
     setSelectorVoice(instrumentId);
-    setAccompaniment(initialAccompaniment(instrumentId, user?.defaultChordsAudio === false));
+    setAccompaniment(initialAccompaniment(instrumentId, user?.defaultChordsAudio === false, visiteur));
   } else if (selectorVoice !== instrumentId) {
     // Changement d'instrument au sélecteur : le Play doit suivre (voir swapSelectorVoice).
     const previous = selectorVoice;

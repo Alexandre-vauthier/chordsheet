@@ -15,6 +15,31 @@ export const ACCOMPANIMENT_INSTRUMENTS: InstrumentId[] = ['guitar', 'bass', 'pia
 export type AccompMap = Record<string, PlayStyle>;
 
 /**
+ * Les voix qu'entend un visiteur au premier Play.
+ *
+ * Toutes en plaqué : l'arpège se perd quand quatre instruments jouent ensemble.
+ */
+export const ENSEMBLE_VISITEUR: InstrumentId[] = ['guitar', 'piano', 'bass', 'mandolin'];
+
+/**
+ * Point de départ de l'accompagnement à chaque chargement de grille : l'instrument
+ * du sélecteur, en plaqué. Rien n'est relu depuis la grille (l'auteur ne fixe plus
+ * de config de lecture) ni depuis le stockage local (le choix de session n'est pas
+ * mémorisé d'une grille à l'autre).
+ */
+export function initialAccompaniment(
+  instrument: InstrumentId,
+  chordsAudioDisabled: boolean,
+  visiteur = false,
+): AccompMap {
+  if (chordsAudioDisabled) return {};
+  // Un visiteur entend un ensemble, pas un instrument seul : c'est au premier Play
+  // qu'il comprend ce que fait le site. Il peut retirer une voix d'un clic.
+  if (visiteur) return Object.fromEntries(ENSEMBLE_VISITEUR.map((id) => [id, 'block'])) as AccompMap;
+  return { [instrument]: 'block' };
+}
+
+/**
  * Le sélecteur d'instrument vient de changer : on répercute le changement sur
  * l'accompagnement pour que le Play suive, sans écraser le reste du choix.
  *
