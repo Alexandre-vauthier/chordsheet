@@ -1,7 +1,7 @@
 // Système audio pour jouer les accords
 import type { StringChord, PianoChord, InstrumentId } from '@/types';
 import { isPianoChord } from '@/types';
-import { preloadInstrumentSound, isInstrumentSoundReady, playSampledNote } from './instrument-sounds';
+import { chargerInstrumentSound, preloadInstrumentSound, isInstrumentSoundReady, playSampledNote } from './instrument-sounds';
 
 // Fréquence (Hz) → numéro MIDI le plus proche. Nos accordages sont tempérés égaux
 // et les frettes des demi-tons entiers, donc l'arrondi est exact (à l'erreur flottante près).
@@ -129,6 +129,11 @@ function getPianoChordFrequencies(chord: PianoChord, capo = 0): number[] {
 // la vue, changement d'instrument) pour qu'il soit prêt au premier clic.
 export function preloadInstrument(instrumentId: InstrumentId): void {
   preloadInstrumentSound(getAudioContext(), instrumentId);
+}
+
+/** Attendre que l'instrument soit réellement prêt à sonner. */
+export function prepareInstrument(instrumentId: InstrumentId): Promise<boolean> {
+  return chargerInstrumentSound(getAudioContext(), instrumentId);
 }
 
 // Jouer une seule note
