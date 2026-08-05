@@ -19,7 +19,37 @@ const SOUNDFONT_PRESET: Partial<Record<InstrumentId, string>> = {
   bass: 'electric_bass_finger',
 };
 
+/**
+ * Balance entre instruments, en gain linéaire.
+ *
+ * Le piano échantillonné n'est pas gravé au même niveau que les soundfonts
+ * General MIDI des instruments à cordes : dans l'ensemble joué au premier Play,
+ * il couvre la guitare et la basse. 0,5 le pose six décibels plus bas.
+ *
+ * En gain et non en vélocité : la vélocité passe par la courbe de smplr et, sur
+ * un piano à couches, sert d'abord à choisir un échantillon plus doux — passer
+ * de 100 à 85 restait dans la même couche et ne s'entendait pas. Un gain fait
+ * exactement ce qu'il annonce.
+ */
+const NIVEAU: Partial<Record<InstrumentId, number>> = { piano: 0.5 };
+
 const instances = new Map<InstrumentId, SmplrInstance>();
+/** Un étage de gain par instrument concerné, gardé pour toute la session. */
+const sorties = new Map<InstrumentId, GainNode>();
+
+function sortie(ctx: AudioContext, instrumentId: InstrumentId): AudioNode | undefined {
+  const niveau = NIVEAU[instrumentId];
+  if (niveau === undefined) return undefined;
+
+  let gain = sorties.get(instrumentId);
+  if (!gain) {
+    gain = ctx.createGain();
+    gain.gain.value = niveau;
+    gain.connect(ctx.destination);
+    sorties.set(instrumentId, gain);
+  }
+  return gain;
+}
 const readyInstruments = new Set<InstrumentId>();
 /** Chargements en cours, pour pouvoir les attendre plutôt que de jouer un bip. */
 const chargements = new Map<InstrumentId, Promise<boolean>>();
@@ -31,11 +61,11 @@ export function preloadInstrumentSound(ctx: AudioContext, instrumentId: Instrume
 
   let instance: SmplrInstance;
   if (instrumentId === 'piano') {
-    instance = SplendidGrandPiano(ctx) as unknown as SmplrInstance;
+    instance = SplendidGrandPiano(ctx, { destination: sortie(ctx, instrumentId) }) as unknown as SmplrInstance;
   } else {
     const preset = SOUNDFONT_PRESET[instrumentId];
     if (!preset) return;
-    instance = Soundfont(ctx, { instrument: preset }) as unknown as SmplrInstance;
+    instance = Soundfont(ctx, { instrument: preset, destination: sortie(ctx, instrumentId) }) as unknown as SmplrInstance;
   }
 
   instances.set(instrumentId, instance);
@@ -65,22 +95,6 @@ export function isInstrumentSoundReady(instrumentId: InstrumentId): boolean {
 
 // Joue une note échantillonnée. `atTime` en secondes, sur l'horloge de l'AudioContext
 // (mêmes conventions que le reste de chord-audio.ts). Renvoie une fonction pour l'arrêter.
-/**
- * Niveau de chaque instrument, en vélocité MIDI.
- *
- * Le piano échantillonné n'est pas gravé au même niveau que les soundfonts
- * General MIDI des instruments à cordes : à vélocité égale il sort au-dessus, et
- * dans un ensemble il couvre la guitare et la basse. On le pose un peu en
- * retrait — environ trois décibels, de quoi le remettre dans le rang sans le
- * faire disparaître.
- *
- * C'est le seul endroit où se règle une balance entre instruments : la mettre
- * ici plutôt que dans chaque appelant évite qu'un écran sonne autrement qu'un
- * autre.
- */
-const VELOCITE: Partial<Record<InstrumentId, number>> = { piano: 85 };
-const VELOCITE_ORDINAIRE = 100;
-
 export function playSampledNote(
   instrumentId: InstrumentId,
   midiNote: number,
@@ -89,11 +103,6 @@ export function playSampledNote(
 ): (() => void) | null {
   const instance = instances.get(instrumentId);
   if (!instance || !readyInstruments.has(instrumentId)) return null;
-  const stop = instance.start({
-    note: midiNote,
-    time: atTime,
-    duration,
-    velocity: VELOCITE[instrumentId] ?? VELOCITE_ORDINAIRE,
-  });
+  const stop = instance.start({ note: midiNote, time: atTime, duration });
   return () => stop();
 }
