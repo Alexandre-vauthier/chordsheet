@@ -65,6 +65,22 @@ export function isInstrumentSoundReady(instrumentId: InstrumentId): boolean {
 
 // Joue une note échantillonnée. `atTime` en secondes, sur l'horloge de l'AudioContext
 // (mêmes conventions que le reste de chord-audio.ts). Renvoie une fonction pour l'arrêter.
+/**
+ * Niveau de chaque instrument, en vélocité MIDI.
+ *
+ * Le piano échantillonné n'est pas gravé au même niveau que les soundfonts
+ * General MIDI des instruments à cordes : à vélocité égale il sort au-dessus, et
+ * dans un ensemble il couvre la guitare et la basse. On le pose un peu en
+ * retrait — environ trois décibels, de quoi le remettre dans le rang sans le
+ * faire disparaître.
+ *
+ * C'est le seul endroit où se règle une balance entre instruments : la mettre
+ * ici plutôt que dans chaque appelant évite qu'un écran sonne autrement qu'un
+ * autre.
+ */
+const VELOCITE: Partial<Record<InstrumentId, number>> = { piano: 85 };
+const VELOCITE_ORDINAIRE = 100;
+
 export function playSampledNote(
   instrumentId: InstrumentId,
   midiNote: number,
@@ -73,6 +89,11 @@ export function playSampledNote(
 ): (() => void) | null {
   const instance = instances.get(instrumentId);
   if (!instance || !readyInstruments.has(instrumentId)) return null;
-  const stop = instance.start({ note: midiNote, time: atTime, duration });
+  const stop = instance.start({
+    note: midiNote,
+    time: atTime,
+    duration,
+    velocity: VELOCITE[instrumentId] ?? VELOCITE_ORDINAIRE,
+  });
   return () => stop();
 }
