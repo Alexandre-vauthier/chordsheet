@@ -69,7 +69,17 @@ export function ChordDiagramCard({
 
   return (
     <div className="flex items-center gap-5">
-      <div className="relative overflow-hidden p-4 rounded-xl border border-[var(--line)] bg-[var(--cell-bg)]">
+      {/* Le diagramme s'écoute d'un clic, comme dans une grille : c'est le geste
+          qu'on y a déjà, et il est plus naturel que de viser le bouton. Le repère
+          n'apparaît qu'au survol pour ne pas encombrer le dessin. */}
+      <button
+        type="button"
+        onClick={ecouter}
+        onPointerEnter={() => preloadInstrument(instrumentId)}
+        title={t('listen')}
+        className="group relative overflow-hidden p-4 rounded-xl border border-[var(--line)]
+          bg-[var(--cell-bg)] cursor-pointer transition-colors hover:border-[var(--accent)]"
+      >
         {balayage > 0 && (
           <div
             key={balayage}
@@ -82,7 +92,15 @@ export function ChordDiagramCard({
           />
         )}
         <div className="relative">{children}</div>
-      </div>
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100
+          transition-opacity pointer-events-none">
+          <span className="w-11 h-11 rounded-full bg-[var(--accent)] text-white flex items-center justify-center shadow-md">
+            <svg className="w-5 h-5 ml-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+            </svg>
+          </span>
+        </div>
+      </button>
 
       <button
         type="button"

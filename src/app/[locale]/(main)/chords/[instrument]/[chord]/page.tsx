@@ -139,6 +139,27 @@ export default async function ChordPage({ params }: PageProps) {
         </div>
       </section>
 
+      {/* Grilles utilisant cet accord, tout de suite après les diagrammes : ce sont
+          de vrais morceaux, la seule chose de cette page qu'un dictionnaire ne
+          contient pas. Les reléguer après les explications revenait à les cacher. */}
+      {sheets.length > 0 && (
+        <section className="mb-10">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--ink-light)] mb-3">
+            {t('sheetsHeading', { chord: name })}
+          </h2>
+          <ul className="space-y-1.5">
+            {sheets.map((sheet) => (
+              <li key={sheet.id}>
+                <Link href={`/sheet/${sheet.id}`} className="text-sm text-[var(--accent)] hover:underline">
+                  {sheet.title}
+                </Link>
+                {sheet.artist && <span className="text-sm text-[var(--ink-faint)]"> — {sheet.artist}</span>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* Notes */}
       {notes.length > 0 && (
         <section className="mb-10">
@@ -168,25 +189,6 @@ export default async function ChordPage({ params }: PageProps) {
             t={t}
           />
         ),
-      )}
-
-      {/* Grilles utilisant cet accord */}
-      {sheets.length > 0 && (
-        <section className="mb-10">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--ink-light)] mb-3">
-            {t('sheetsHeading', { chord: name })}
-          </h2>
-          <ul className="space-y-1.5">
-            {sheets.map((sheet) => (
-              <li key={sheet.id}>
-                <Link href={`/sheet/${sheet.id}`} className="text-sm text-[var(--accent)] hover:underline">
-                  {sheet.title}
-                </Link>
-                {sheet.artist && <span className="text-sm text-[var(--ink-faint)]"> — {sheet.artist}</span>}
-              </li>
-            ))}
-          </ul>
-        </section>
       )}
 
       {/* Maillage */}
