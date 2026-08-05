@@ -145,7 +145,7 @@ export default async function ChordPage({ params }: PageProps) {
       {sheets.length > 0 && (
         <section className="mb-10">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--ink-light)] mb-3">
-            {t('sheetsHeading', { chord: name })}
+            {t('sheetsHeading', { ...forms, chord: name })}
           </h2>
           <ul className="space-y-1.5">
             {sheets.map((sheet) => (

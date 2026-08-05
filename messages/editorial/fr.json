@@ -464,7 +464,7 @@
       "colFret": "Case",
       "colNote": "Note",
       "fretOpen": "à vide",
-      "sheetsHeading": "Des grilles qui utilisent {chord}",
+      "sheetsHeading": "Des chansons à jouer avec l'accord {chord} {instrumentAt}",
       "sameRootHeading": "Les autres accords de {root}",
       "sameFamilyHeading": "La même couleur, sur une autre fondamentale",
       "elsewhereHeading": "{chord} sur les autres instruments",

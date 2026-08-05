@@ -464,7 +464,7 @@
       "colFret": "Fret",
       "colNote": "Note",
       "fretOpen": "open",
-      "sheetsHeading": "Charts that use {chord}",
+      "sheetsHeading": "Songs to play with the {chord} chord {instrumentAt}",
       "sameRootHeading": "Other {root} chords",
       "sameFamilyHeading": "The same colour, on another root",
       "elsewhereHeading": "{chord} on other instruments",
