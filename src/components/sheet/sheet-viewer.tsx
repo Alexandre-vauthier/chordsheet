@@ -1581,11 +1581,21 @@ function ViewerChordCell({
         )}
       </div>
 
-      {/* Le repère d'écoute, sur toute la case. */}
+      {/* Le repère d'écoute, sur toute la case.
+
+          Un rond plein plutôt qu'un petit triangle en filigrane : il faut
+          comprendre au premier survol qu'on peut cliquer pour entendre. Le même
+          rond que sur les pages d'accord, un peu resserré sur les demi-mesures,
+          qui n'ont pas la place. */}
       {playableChord && (
         <div className="print:hidden absolute inset-0 z-20 flex items-center justify-center rounded
-          opacity-0 group-hover/cell:opacity-100 transition-opacity pointer-events-none bg-[var(--ink)]/10">
-          <span className="text-[var(--ink)] text-sm opacity-70">▶</span>
+          opacity-0 group-hover/cell:opacity-100 transition-opacity pointer-events-none bg-[var(--ink)]/20">
+          <span className={`rounded-full bg-[var(--accent)] text-white flex items-center justify-center shadow-md
+            ${span <= 0.5 ? 'w-7 h-7' : 'w-9 h-9'}`}>
+            <svg className={`ml-0.5 ${span <= 0.5 ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+            </svg>
+          </span>
         </div>
       )}
 
