@@ -81,6 +81,24 @@ body {
   animation: repeatBlink 0.9s step-start infinite;
 }
 
+/* Invitation à lancer la lecture, pour un visiteur qui découvre la page : une
+   onde qui s'échappe du bouton, sans clignotement dur. Elle s'arrête au premier
+   clic — une animation qui ne s'arrête jamais devient du bruit — et disparaît si
+   le système demande moins d'animations. */
+@keyframes playInvite {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); }
+  70%  { box-shadow: 0 0 0 9px color-mix(in srgb, var(--accent) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+.animate-play-invite {
+  animation: playInvite 2.2s ease-out infinite;
+  border-color: var(--accent);
+  color: var(--accent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-play-invite { animation: none; }
+}
+
 @keyframes beatSweep {
   from { transform: scaleX(0); }
   to   { transform: scaleX(1); }

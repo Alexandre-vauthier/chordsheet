@@ -135,17 +135,50 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   const genreLabel = useGenreLabel();
   const translate = useChordNotation();
   const getColor = useChordColor();
-  const { user, updateUser } = useAuth();
-  const [showInlineDiagram, setShowInlineDiagram] = useState(() => user?.showInlineDiagram ?? false);
+  const { user, updateUser, loading: authEnCours } = useAuth();
+  /**
+   * Les diagrammes dans les cases, dès le rendu serveur.
+   *
+   * L'authentification ne se prononce qu'après l'hydratation. Attendre sa réponse
+   * pour les afficher ferait grandir chaque case une demi-seconde après
+   * l'affichage, et toute la grille descendrait sous les yeux du visiteur — le
+   * défaut de mise en page que Google mesure justement sur les pages d'atterrissage.
+   * On part donc de ce que voit le visiteur, et la préférence d'un utilisateur
+   * connu s'applique ensuite.
+   */
+  const [showInlineDiagram, setShowInlineDiagram] = useState(true);
   const [showChordSummary, setShowChordSummary] = useState(false);
 
+  /**
+   * Un visiteur : personne de connu, l'authentification ayant fini de se prononcer.
+   *
+   * C'est lui qui arrive par un moteur de recherche, et la page est sa première
+   * impression du produit. Attendre que l'authentification se prononce évite
+   * qu'un utilisateur connu voie une demi-seconde la mise en page du visiteur.
+   */
+  const visiteur = !authEnCours && !user;
+
+  /** L'onde sur le bouton Play, tant que le visiteur n'a pas lancé la lecture. */
+  const [inviteLecture, setInviteLecture] = useState(false);
+
   useEffect(() => {
+    if (visiteur) {
+      // La grille d'abord : le résumé des accords occupait le haut de l'écran, et
+      // c'est la grille qu'on est venu voir. Les diagrammes passent dans les
+      // cases, là où ils servent à jouer. Rien n'est retiré : « Accords utilisés »
+      // s'ouvre toujours d'un clic.
+      setShowChordSummary(false);
+      setShowInlineDiagram(true);
+      setInviteLecture(true);
+      return;
+    }
+    setShowInlineDiagram(user?.showInlineDiagram ?? false);
     if (window.innerWidth >= 640) {
       setShowChordSummary(user?.showChordSummaryByDefault ?? true);
     }
     // Mobile : reste false (replié par défaut)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.showChordSummaryByDefault]);
+  }, [visiteur, user?.showChordSummaryByDefault, user?.showInlineDiagram]);
   // L'état initial ne dépend QUE de la grille : c'est la seule valeur que le serveur
   // et le client calculent à l'identique. Lire localStorage ici produirait un rendu
   // serveur différent du premier rendu client, donc une erreur d'hydratation.
@@ -362,6 +395,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   const scrollToRow = useCallback((rowId: string) => suivreMesure(rowId, derniereSectionRef), []);
 
   const handlePlay = useCallback(() => {
+    setInviteLecture(false);
     if (isPlaying) { stop(); return; }
     // Nouvelle lecture : la première section doit être cadrée comme les autres.
     derniereSectionRef.current = null;
@@ -883,6 +917,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                     ? 'bg-[var(--accent)] border-[var(--accent)] text-white hover:bg-[#a83d25]'
                     : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
                   }
+                  ${inviteLecture && !isPlaying && countBeat === 0 ? 'animate-play-invite' : ''}
                 `}
               >
                 {countBeat > 0 ? (
