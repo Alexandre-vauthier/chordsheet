@@ -1592,8 +1592,9 @@ function ViewerChordCell({
           qui n'ont pas la place. */}
       {playableChord && !inlineDiagramChord && (
         <span className="print:hidden absolute top-1 right-1 z-20 opacity-0 group-hover/cell:opacity-100
-          transition-opacity pointer-events-none text-[var(--accent)]">
-          <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+          transition-opacity pointer-events-none w-5 h-5 rounded-full bg-white shadow-md
+          flex items-center justify-center text-[var(--accent)]">
+          <svg className="w-2.5 h-2.5 ml-px" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
             <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
           </svg>
         </span>
@@ -1602,19 +1603,17 @@ function ViewerChordCell({
       {playableChord && inlineDiagramChord && (
         <div className="print:hidden absolute inset-0 z-20 flex items-center justify-center rounded
           opacity-0 group-hover/cell:opacity-100 transition-opacity pointer-events-none bg-[var(--ink)]/20">
-          {/* Le triangle nu, en accent, et grand. Le rond plein qu'on avait
-              d'abord se confondait avec un point de doigt sur le diagramme.
-              Il ne s'affiche que là où un diagramme l'accueille : sans lui, il
-              recouvrirait le nom de l'accord, seule chose que la case a à dire. */}
-          <svg
-            className={`text-[var(--accent)] drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)]
-              ${span <= 0.5 ? 'w-8 h-8' : 'w-12 h-12'}`}
-            viewBox="0 0 20 20"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-          </svg>
+          {/* Pastille blanche, triangle en accent. Le rond plein *orange* qu'on
+              avait d'abord se confondait avec un point de doigt du diagramme ;
+              inversé, il s'en détache au contraire. Il ne s'affiche que là où un
+              diagramme l'accueille : sans lui, il recouvrirait le nom de
+              l'accord, seule chose que la case a à dire. */}
+          <span className={`rounded-full bg-white shadow-lg flex items-center justify-center text-[var(--accent)]
+            ${span <= 0.5 ? 'w-8 h-8' : 'w-11 h-11'}`}>
+            <svg className={`ml-0.5 ${span <= 0.5 ? 'w-3.5 h-3.5' : 'w-5 h-5'}`} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+            </svg>
+          </span>
         </div>
       )}
 
