@@ -28,15 +28,14 @@ export function ChordListenButton({
       type="button"
       onClick={() => playChord(chord, instrumentId)}
       title={t('listen')}
-      aria-label={t('listen')}
-      className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center border-[1.5px]
-        border-[var(--line)] bg-[var(--cream)] text-[var(--ink-light)]
-        transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]
-        active:scale-95"
+      className="flex-shrink-0 flex items-center gap-2.5 h-12 px-5 rounded-full font-medium
+        bg-[var(--accent)] text-white shadow-sm
+        transition-transform hover:scale-[1.03] active:scale-95"
     >
-      <svg className="w-4 h-4 ml-0.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+      <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
         <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
       </svg>
+      {t('listenButton')}
     </button>
   );
 }

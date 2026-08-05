@@ -126,7 +126,7 @@ export default async function ChordPage({ params }: PageProps) {
         </h2>
         <div className="flex flex-wrap gap-6">
           {entries.map((entry) => (
-            <div key={entry.id} className="flex items-center gap-4 p-4 rounded-xl border border-[var(--line)] bg-[var(--cell-bg)]">
+            <div key={entry.id} className="flex items-center gap-6 sm:gap-8 p-4 pr-6 rounded-xl border border-[var(--line)] bg-[var(--cell-bg)]">
               {isPianoChord(entry)
                 ? <PianoKeyboard chord={entry} />
                 : <ChordDiagram chord={entry} numStrings={strings} />}

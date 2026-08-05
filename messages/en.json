@@ -1759,7 +1759,8 @@
     "end": "End the concert"
   },
   "ChordCard": {
-    "listen": "Click to hear it"
+    "listen": "Click to hear it",
+    "listenButton": "Listen"
   },
   "Badges": {
     "first_bookmark": {
