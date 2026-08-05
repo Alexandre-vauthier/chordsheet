@@ -12,18 +12,16 @@ import { getChordsByInstrument } from '@/lib/chord-data';
 /**
  * Instruments dotés de pages d'accord.
  *
- * `banjo` en a été écarté tant que ses données se contredisaient : ses doigtés
- * référencent une cinquième corde que `INSTRUMENT_CONFIG` ne déclarait pas, et
- * publier des notes calculées sur une donnée qui se contredit revient à publier
- * une affirmation fausse. La contradiction venait du nombre de cordes, corrigé
- * depuis ; les 133 doigtés font entendre les notes de leur nom, comme le vérifie
- * `tests/accords.test.ts`.
+ * `banjo` en est absent volontairement : ses doigtés référencent une cinquième
+ * corde que `INSTRUMENT_CONFIG` ne déclare pas (4), contrairement à l'accordeur et à
+ * la table d'accordage interne qui en décrivent cinq. Publier des notes calculées
+ * sur une donnée qui se contredit reviendrait à publier une affirmation fausse.
  *
  * `bass` en est absent pour une autre raison : ses douze entrées sont des notes
  * isolées, pas des accords. Une page « accord Do à la basse » n'aurait qu'une note à
  * montrer. `voice` n'a aucun diagramme.
  */
-export const CHORD_PAGE_INSTRUMENTS: InstrumentId[] = ['guitar', 'ukulele', 'mandolin', 'banjo', 'piano'];
+export const CHORD_PAGE_INSTRUMENTS: InstrumentId[] = ['guitar', 'ukulele', 'mandolin', 'piano'];
 
 export function isChordPageInstrument(value: string): value is InstrumentId {
   return (CHORD_PAGE_INSTRUMENTS as string[]).includes(value);
@@ -41,7 +39,7 @@ export function isChordPageInstrument(value: string): value is InstrumentId {
  * gardent la forme courte, « am » plutôt que « a-m ». Aucun suffixe de la
  * bibliothèque ne commence par « b », il n'y a donc pas d'ambiguïté avec un bémol.
  *
- * Vérifié sur les 712 accords concernés : aucune collision.
+ * Vérifié sur les 443 accords concernés : aucune collision.
  */
 export function chordSlug(name: string): string {
   const parts = splitChordName(name);
