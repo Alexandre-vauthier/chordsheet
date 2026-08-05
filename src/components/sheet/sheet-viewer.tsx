@@ -1516,6 +1516,7 @@ function ViewerChordCell({
         ${span <= 0.5 ? 'opacity-70' : ''}
         ${isActive && !color ? 'border-[var(--accent)]' : ''}
         ${playableChord ? 'cursor-pointer' : ''}
+        ${hovered ? 'z-50' : ''}
         print:min-h-10 print:border
       `}
       onMouseEnter={handleMouseEnter}
@@ -1594,7 +1595,13 @@ function ViewerChordCell({
         </span>
       )}
 
-      {/* Popup diagramme au survol — seulement si l'option inline est désactivée */}
+      {/* Popup diagramme au survol — seulement si l'option inline est désactivée.
+
+          La case monte au-dessus de ses voisines le temps du survol, sans quoi la
+          fenêtre passe sous la ligne de mesure suivante. Son `z-50` ne suffit pas :
+          une demi-mesure porte `opacity-70`, et une opacité inférieure à 1 crée un
+          contexte d'empilement qui enferme ce `z-50` dans la case. C'est donc la
+          case elle-même qu'il faut élever. */}
       {hovered && (!showInlineDiagram || span < minSpanForInline) && displayChord && (
         <div
           className="print:hidden absolute top-full mt-2 left-1/2 -translate-x-1/2 z-50"
