@@ -1,6 +1,7 @@
 import type { Sheet, Section, Row, NewSheet, Difficulty, BeatsPerMeasure, InstrumentId, CustomChord, StringChord, PianoChord, FingerPosition } from '@/types';
 import { indexedChords } from '@/lib/sheet-chords';
 import { isPianoChord } from '@/types';
+import { normaliserLibelle } from './section-label';
 
 // Firestore n'accepte pas les tableaux imbriqués
 // On convertit rows[][] en rows[{cells:[]}] pour la sauvegarde
@@ -131,7 +132,8 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
     sections: sheet.sections.map((section) => {
       const s: FirestoreSection = {
         id: section.id,
-        label: section.label,
+        // Casse normalisée ici, au seul passage obligé de toute sauvegarde.
+        label: normaliserLibelle(section.label),
         repeat: section.repeat,
         beatsPerMeasure: section.beatsPerMeasure || 4,
         rows: section.rows.map((row) => ({ cells: row })),
