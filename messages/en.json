@@ -392,7 +392,11 @@
     "capoOn": "Capo on: piano chords transposed and mic following adjusted (click if you play without the capo)",
     "capoOff": "Capo off: chords at their real pitch (click to put it back)",
     "viaItunes": "via iTunes",
-    "appleMusic": "Apple Music"
+    "appleMusic": "Apple Music",
+    "visitorKeepTitle": "Keep this chart in your book",
+    "visitorKeepBody": "The account is free: your charts follow you from one device to the next, and you can browse the whole catalogue. Nothing to pay to read and play.",
+    "visitorKeepCta": "Create my free account",
+    "visitorExplore": "Or browse the catalogue"
   },
   "Groups": {
     "title": "My bands",

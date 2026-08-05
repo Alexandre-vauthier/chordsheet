@@ -29,6 +29,7 @@ import { useGenreLabel } from '@/lib/use-genre-labels';
 import { LiveChordFollow, type ActiveRow } from './live-chord-follow';
 import { useWakeLock } from '@/lib/use-wake-lock';
 import { traduireLibelle } from '@/lib/section-dictionary';
+import { garderPourPlusTard } from '@/lib/pending-bookmark';
 import { cleMesure, deroulerStructure, positionCellule, positionMesure, structureUtile } from '@/lib/sheet-structure';
 
 const LS_KEY = 'chordsheet_instrument';
@@ -599,6 +600,16 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               <h1 className="font-playfair text-3xl font-bold text-[var(--ink)] print:text-2xl">
                 {sheet.title || t('untitled')}
               </h1>
+              {!onToggleBookmark && visiteur && sheet.id && (
+                <Link
+                  href="/register"
+                  onClick={() => garderPourPlusTard(sheet.id!)}
+                  title={t('addToBook')}
+                  className="print:hidden shrink-0 text-2xl leading-none text-[var(--ink-faint)] hover:text-amber-400 transition-colors"
+                >
+                  ☆
+                </Link>
+              )}
               {onToggleBookmark && (
                 <button
                   onClick={onToggleBookmark}
@@ -1333,6 +1344,33 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
           );
         })}
       </div>
+
+      {/* Fin de grille, pour un visiteur : qui arrive ici a lu jusqu'au bout, c'est
+          le meilleur signal d'intérêt qu'on puisse avoir. Un bloc dans le flux
+          plutôt qu'une fenêtre par-dessus la grille — Google traite comme
+          intrusif ce qui recouvre une page ouverte depuis la recherche, et
+          personne n'a envie qu'on lui couvre l'écran pendant qu'il joue. */}
+      {visiteur && sheet.id && instrumentId !== 'voice' && (
+        <section className="mt-12 print:hidden rounded-2xl border border-[var(--line)] bg-[var(--cell-bg)] p-6 text-center">
+          <h2 className="font-playfair text-xl font-bold text-[var(--ink)]">{t('visitorKeepTitle')}</h2>
+          <p className="mt-2 text-sm text-[var(--ink-light)] max-w-md mx-auto leading-relaxed">
+            {t('visitorKeepBody')}
+          </p>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              href="/register"
+              onClick={() => garderPourPlusTard(sheet.id!)}
+              className="h-11 px-6 rounded-full font-medium bg-[var(--accent)] text-white
+                flex items-center transition-transform hover:scale-[1.03]"
+            >
+              {t('visitorKeepCta')}
+            </Link>
+            <Link href="/explore" className="text-sm text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors">
+              {t('visitorExplore')}
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Suivi micro (suivi de position + défilement) — bouton flottant.
           Masqué au visiteur : il suppose un instrument en main et un micro

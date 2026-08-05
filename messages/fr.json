@@ -392,7 +392,11 @@
     "capoOn": "Capo posé : accords piano transposés et suivi micro adaptés (cliquer si tu joues sans le capo)",
     "capoOff": "Capo retiré : accords à leur hauteur réelle (cliquer pour le remettre)",
     "viaItunes": "via iTunes",
-    "appleMusic": "Apple Music"
+    "appleMusic": "Apple Music",
+    "visitorKeepTitle": "Gardez cette grille dans votre book",
+    "visitorKeepBody": "Le compte est gratuit : vos grilles vous suivent d'un appareil à l'autre, et vous pouvez fouiller librement le catalogue. Rien à payer pour lire et jouer.",
+    "visitorKeepCta": "Créer mon compte gratuit",
+    "visitorExplore": "Ou explorer le catalogue"
   },
   "Groups": {
     "title": "Mes groupes",

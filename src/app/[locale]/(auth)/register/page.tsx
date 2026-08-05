@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { BrandLogo } from '@/components/layout/brand-logo';
 import { GoogleSignIn } from '@/components/auth/google-sign-in';
 import { useTranslations } from 'next-intl';
@@ -22,6 +23,7 @@ export default function RegisterPage() {
 function RegisterForm() {
   const t = useTranslations('Auth');
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { signUp } = useAuth();
 
   const [displayName, setDisplayName] = useState('');
@@ -31,6 +33,19 @@ function RegisterForm() {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  /**
+   * Où atterrir une fois le compte créé. Même règle que sur la page de connexion :
+   * seuls les chemins internes sont acceptés, un `next` absolu ferait de cette
+   * page un tremplin de redirection vers n'importe quel site au nom du nôtre.
+   *
+   * Sert au visiteur qui vient de cliquer « garder dans mon book » depuis une
+   * grille : il doit revenir sur cette grille, pas atterrir sur Explorer.
+   */
+  const goToDestination = () => {
+    const next = searchParams.get('next');
+    router.push(next && next.startsWith('/') && !next.startsWith('//') ? next : '/explore');
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +71,7 @@ function RegisterForm() {
     try {
       await signUp(email, password, displayName);
       localStorage.setItem('chordsheet_show_welcome', '1');
-      router.push('/explore');
+      goToDestination();
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : t('errorGenericRegister');
       if (errorMessage.includes('email-already-in-use')) {
@@ -85,7 +100,7 @@ function RegisterForm() {
 
         <div className="bg-[var(--cell-bg)] rounded-xl p-8 shadow-sm border border-[var(--line)]">
         <GoogleSignIn
-          onSuccess={() => router.push('/explore')}
+          onSuccess={goToDestination}
           note={
             <>
               {t('googleTermsPrefix')}{' '}

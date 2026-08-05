@@ -29,6 +29,29 @@ interface UseBookmarksReturn {
   toggleBookmark: (sheetId: string) => Promise<void>;
 }
 
+/**
+ * Ajouter une grille au book de quelqu'un, sans passer par le hook.
+ *
+ * Sert au rattrapage : un visiteur clique sur l'étoile, part créer son compte,
+ * et revient sur une autre page que la grille. C'est là qu'il faut pouvoir
+ * ajouter, loin du composant qui affichait l'étoile.
+ *
+ * Sans effet si la grille y est déjà : le rattrapage ne doit pas créer un doublon
+ * ni gonfler le compteur une seconde fois.
+ */
+export async function ajouterAuBook(userId: string, sheetId: string): Promise<void> {
+  const db = getDb();
+  const deja = await getDocs(query(
+    collection(db, 'bookmarks'),
+    where('userId', '==', userId),
+    where('sheetId', '==', sheetId),
+  ));
+  if (!deja.empty) return;
+
+  await addDoc(collection(db, 'bookmarks'), { userId, sheetId, addedAt: serverTimestamp() });
+  await updateDoc(doc(db, 'sheets', sheetId), { bookmarkCount: increment(1) });
+}
+
 export function useBookmarks(userId: string | undefined): UseBookmarksReturn {
   const [bookmarkedSheetIds, setBookmarkedSheetIds] = useState<string[]>([]);
   const [bookmarkedSheets, setBookmarkedSheets] = useState<Sheet[]>([]);
@@ -88,15 +111,7 @@ export function useBookmarks(userId: string | undefined): UseBookmarksReturn {
 
   const addBookmark = useCallback(
     async (sheetId: string) => {
-      if (!userId) return;
-
-      const db = getDb();
-      await addDoc(collection(db, 'bookmarks'), {
-        userId,
-        sheetId,
-        addedAt: serverTimestamp(),
-      });
-      await updateDoc(doc(db, 'sheets', sheetId), { bookmarkCount: increment(1) });
+      if (userId) await ajouterAuBook(userId, sheetId);
     },
     [userId]
   );

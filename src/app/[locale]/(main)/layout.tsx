@@ -13,6 +13,8 @@ import { EmailVerificationGate } from '@/components/layout/email-verification-ga
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { OfflineBanner } from '@/components/offline-banner';
 import { stopPreviewAudio } from '@/lib/preview-audio';
+import { reprendrePourPlusTard } from '@/lib/pending-bookmark';
+import { ajouterAuBook } from '@/lib/use-bookmarks';
 import { NavigationHorsLigne } from '@/components/navigation-hors-ligne';
 
 // Routes accessibles sans authentification (contenu public en lecture seule).
@@ -64,6 +66,21 @@ export default function MainLayout({
    * reproduit à chaque nouvelle page.
    */
   useEffect(() => { stopPreviewAudio(); }, [pathname]);
+
+  /**
+   * La grille qu'un visiteur voulait garder avant d'avoir un compte.
+   *
+   * Il a cliqué sur l'étoile, il est parti s'inscrire, il revient sur Explorer
+   * pour découvrir le catalogue : sans cela, la grille serait perdue en route et
+   * on aurait promis un book pour livrer un book vide.
+   *
+   * Ici plutôt que sur la page de la grille : on ne sait pas où il atterrit.
+   */
+  useEffect(() => {
+    if (!user) return;
+    const id = reprendrePourPlusTard();
+    if (id) void ajouterAuBook(user.id, id);
+  }, [user]);
 
   useEffect(() => {
     if (!loading && !user && !isPublic) {
