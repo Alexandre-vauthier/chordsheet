@@ -33,6 +33,7 @@ import { useChordDictation } from '@/lib/use-chord-dictation';
 import { applyDictatedChord, undoDictatedChord } from '@/lib/chord-dictation';
 import { DictationBar } from './dictation-bar';
 import { StructurePanel } from '@/components/sheet/structure-panel';
+import { deroulerStructure, structureUtile } from '@/lib/sheet-structure';
 
 // Filtre local pour les grilles privées de l'utilisateur (petit lot déjà chargé,
 // pas besoin d'une requête Firestore dédiée par frappe).
@@ -1222,6 +1223,26 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             </button>
           )}
         </div>
+      )}
+
+      {/* Le déroulé, rappelé sous le titre : en édition on manipule des sections
+          distinctes, et rien ne dirait plus dans quel ordre elles se lisent. Un
+          clic rouvre le panneau. */}
+      {sheet.instrumentId !== 'voice' && structureUtile(sheet.sections, sheet.structure) && (
+        <button
+          type="button"
+          onClick={() => setStructureOuverte(true)}
+          className="print:hidden w-full mb-4 flex flex-wrap items-center gap-x-1.5 gap-y-1 rounded-lg border px-3 py-2 text-left transition-colors hover:border-[var(--accent)]"
+          style={{ background: 'var(--cell-bg)', borderColor: 'var(--line)' }}
+        >
+          {deroulerStructure(sheet.sections, sheet.structure).map((bloc, i) => (
+            <span key={i} className="text-xs" style={{ color: 'var(--ink-light)' }}>
+              {i > 0 && <span className="mr-1.5" style={{ color: 'var(--ink-faint)' }}>›</span>}
+              {bloc.section.label || '—'}
+              {bloc.repeat > 1 && <span className="font-semibold" style={{ color: 'var(--accent)' }}> ×{bloc.repeat}</span>}
+            </span>
+          ))}
+        </button>
       )}
 
       {structureOuverte && (
