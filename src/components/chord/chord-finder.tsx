@@ -5,16 +5,28 @@ import { useTranslations } from 'next-intl';
 import type { InstrumentId, StringChord, PianoChord, FingerPosition, ChordBarre } from '@/types';
 import { playChord, playNote, OPEN_FREQS, noteNameToFreq, preloadInstrument } from '@/lib/chord-audio';
 import { selectionToPitchClasses, pianoPitchClasses, findMatchingChords, type ChordMatch } from '@/lib/chord-finder';
+import { INSTRUMENT_CONFIG as CONFIG_BIBLIOTHEQUE } from '@/lib/chord-data';
 import { ChordDiagram } from './chord-diagram';
 import { PianoKeyboard } from './piano-keyboard';
 
-const INSTRUMENT_CONFIG: Record<Exclude<InstrumentId, 'piano' | 'voice' | 'percussion'>, { strings: number; frets: number }> = {
-  guitar:   { strings: 6, frets: 5 },
-  ukulele:  { strings: 4, frets: 5 },
-  mandolin: { strings: 4, frets: 5 },
-  banjo:    { strings: 5, frets: 5 },
-  bass:     { strings: 4, frets: 5 },
-};
+/** Cases montrées dans la fenêtre de recherche : c'est la seule donnée qui appartienne au chercheur. */
+const CASES_VISIBLES = 5;
+
+/**
+ * Cordes et cases, par instrument.
+ *
+ * Le nombre de cordes vient de la configuration de la bibliothèque, il n'est pas
+ * redit ici : cette table en tenait sa propre version, qui donnait cinq cordes au
+ * banjo là où la configuration en déclarait quatre. Le chercheur dessinait donc la
+ * chanterelle que les cartes d'accord omettaient, et personne ne pouvait voir
+ * laquelle des deux avait raison.
+ */
+const INSTRUMENT_CONFIG = Object.fromEntries(
+  (['guitar', 'ukulele', 'mandolin', 'banjo', 'bass'] as const).map((id) => [
+    id,
+    { strings: CONFIG_BIBLIOTHEQUE[id].strings, frets: CASES_VISIBLES },
+  ]),
+) as Record<Exclude<InstrumentId, 'piano' | 'voice' | 'percussion'>, { strings: number; frets: number }>;
 
 const PIANO_NOTES = [
   'C4', 'C#4', 'D4', 'D#4', 'E4', 'F4', 'F#4', 'G4', 'G#4', 'A4', 'A#4', 'B4',
@@ -309,7 +321,7 @@ function MatchCard({ chord, instrumentId, score, onSelect }: { chord: StringChor
         {isPianoChord(chord) ? (
           <PianoKeyboard chord={chord} />
         ) : (
-          <ChordDiagram chord={chord} size="xs" numStrings={isPianoChord(chord) ? 0 : (instrumentId === 'guitar' ? 6 : instrumentId === 'banjo' ? 5 : 4)} />
+          <ChordDiagram chord={chord} size="xs" numStrings={isPianoChord(chord) ? 0 : CONFIG_BIBLIOTHEQUE[instrumentId].strings} />
         )}
       </div>
       <div className="flex-1 min-w-0">

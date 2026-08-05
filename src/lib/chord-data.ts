@@ -6,7 +6,11 @@ import type { StringChord, PianoChord, Instrument, InstrumentId, FingerPosition 
 export const INSTRUMENT_CONFIG: Record<InstrumentId, Instrument> = {
   guitar: { id: 'guitar', label: 'Guitare', strings: 6 },
   mandolin: { id: 'mandolin', label: 'Mandoline', strings: 4 },
-  banjo: { id: 'banjo', label: 'Banjo', strings: 4 },
+  // Cinq cordes, chanterelle comprise : les 133 doigtés de la bibliothèque la
+  // mentionnent tous, et l'accordage interne (GDGBD) en décrit cinq. Déclarer
+  // quatre cordes ici faisait dessiner les diagrammes sans la chanterelle et
+  // interdisait de la placer dans l'éditeur d'accord.
+  banjo: { id: 'banjo', label: 'Banjo', strings: 5 },
   ukulele: { id: 'ukulele', label: 'Ukulélé', strings: 4 },
   piano: { id: 'piano', label: 'Piano', strings: 0 },
   bass: { id: 'bass', label: 'Basse', strings: 4 },

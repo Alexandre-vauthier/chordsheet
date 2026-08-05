@@ -40,7 +40,7 @@ interface PageProps {
  * les autres instruments. Rien n'est rédigé accord par accord, donc rien ne peut
  * contredire ce que l'application affiche.
  *
- * Pas de `generateStaticParams` : 443 accords × 2 langues feraient 886 pages
+ * Pas de `generateStaticParams` : 712 accords × 2 langues feraient 1 424 pages
  * pré-rendues à chaque déploiement, pour un trafic qui se concentrera sur quelques
  * dizaines d'entre elles. Rendu à la demande puis mis en cache, c'est le même
  * résultat pour un temps de construction inchangé.
