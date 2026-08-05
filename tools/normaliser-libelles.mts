@@ -69,6 +69,7 @@ for (const doc of grilles) {
 
 console.log(`${grilles.length} grilles, ${sections} sections`);
 console.log(`${changements.length} libellés à corriger, dans ${aEcrire.length} grilles`);
+for (const c of [...new Set(changements)].sort()) console.log(`  ${c}`);
 
 if (!ECRIRE) {
   console.log('\n(essai à blanc — relancer avec --ecrire pour appliquer)');

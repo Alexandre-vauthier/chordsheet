@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
+import { normaliserLibelle } from '@/lib/section-label';
 import { deroulerStructure, structureParDefaut } from '@/lib/sheet-structure';
 import type { Section, StructureEntry } from '@/types';
 
@@ -195,6 +196,10 @@ export function StructurePanel({
                     type="text"
                     value={entree.label ?? ''}
                     onChange={(e) => modifier(i, { label: e.target.value })}
+                    // Même raison qu'au titre de section : l'affichage en
+                    // capitales cache ce qui est tapé, la casse se fixe donc à la
+                    // sortie du champ.
+                    onBlur={(e) => modifier(i, { label: normaliserLibelle(e.target.value) })}
                     placeholder={parId.get(entree.sectionId)?.label || t('untitled')}
                     className="ml-[2.1rem] mr-1 rounded-md border px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wider outline-none focus:border-[var(--accent)] transition-colors"
                     style={{ background: 'var(--cream)', borderColor: 'var(--line)', color: 'var(--ink)' }}

@@ -6,6 +6,7 @@ import type { Section, Cell, CellSpan, InstrumentId, StringChord, PianoChord } f
 import { GridRow } from './grid-row';
 import { createEmptyRow } from '@/types';
 import { CoachMark } from './coach-mark';
+import { normaliserLibelle } from '@/lib/section-label';
 
 // Accords en filigrane sur la première mesure d'une grille en cours de création :
 // ils montrent où se remplit la grille. Une section en 3/4 n'en affiche que trois.
@@ -231,6 +232,15 @@ export function SectionBlock({
             type="text"
             value={section.label}
             onChange={(e) => onUpdate({ label: e.target.value })}
+            // Le champ s'affiche en capitales par CSS : personne ne voit ce qu'il
+            // tape réellement, et c'est ainsi qu'on s'est retrouvé avec `refrain`,
+            // `Refrain` et `REFRAIN` dans la même base. On fixe la casse en
+            // sortant du champ, plutôt qu'à l'enregistrement où elle reste
+            // invisible.
+            onBlur={(e) => {
+              const propre = normaliserLibelle(e.target.value);
+              if (propre !== section.label) onUpdate({ label: propre });
+            }}
             placeholder={t('sectionPlaceholder')}
             className="font-sans text-sm font-semibold uppercase tracking-wider text-[var(--ink)]
               bg-transparent border-none outline-none w-36"
