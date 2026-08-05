@@ -12,16 +12,19 @@ import { getChordsByInstrument } from '@/lib/chord-data';
 /**
  * Instruments dotés de pages d'accord.
  *
- * `banjo` en est absent volontairement : ses doigtés référencent une cinquième
- * corde que `INSTRUMENT_CONFIG` ne déclare pas (4), contrairement à l'accordeur et à
- * la table d'accordage interne qui en décrivent cinq. Publier des notes calculées
- * sur une donnée qui se contredit reviendrait à publier une affirmation fausse.
+ * Le banjo en a longtemps été écarté : ses données se contredisaient, l'accordage
+ * interne décrivant cinq cordes là où l'instrument n'en déclare que quatre
+ * jouables, et publier des notes calculées là-dessus revenait à annoncer des notes
+ * qu'aucun diagramme ne montre. La contradiction est levée du bon côté : la
+ * chanterelle est un bourdon attaché à la cinquième case, elle ne se joue pas dans
+ * les positions d'accord, l'instrument en déclare donc quatre et `chordPlayedNotes`
+ * s'en tient à ce nombre. Les notes annoncées sont celles du diagramme.
  *
  * `bass` en est absent pour une autre raison : ses douze entrées sont des notes
  * isolées, pas des accords. Une page « accord Do à la basse » n'aurait qu'une note à
  * montrer. `voice` n'a aucun diagramme.
  */
-export const CHORD_PAGE_INSTRUMENTS: InstrumentId[] = ['guitar', 'ukulele', 'mandolin', 'piano'];
+export const CHORD_PAGE_INSTRUMENTS: InstrumentId[] = ['guitar', 'ukulele', 'mandolin', 'banjo', 'piano'];
 
 export function isChordPageInstrument(value: string): value is InstrumentId {
   return (CHORD_PAGE_INSTRUMENTS as string[]).includes(value);
@@ -39,7 +42,7 @@ export function isChordPageInstrument(value: string): value is InstrumentId {
  * gardent la forme courte, « am » plutôt que « a-m ». Aucun suffixe de la
  * bibliothèque ne commence par « b », il n'y a donc pas d'ambiguïté avec un bémol.
  *
- * Vérifié sur les 443 accords concernés : aucune collision.
+ * Vérifié sur les 712 accords concernés : aucune collision.
  */
 export function chordSlug(name: string): string {
   const parts = splitChordName(name);

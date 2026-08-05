@@ -102,3 +102,29 @@ test('tout accord courant a un doigté sur chaque instrument à cordes', () => {
   }
   assert.deepEqual(manquants, [], `accords sans doigté :\n  ${manquants.join('\n  ')}`);
 });
+
+/**
+ * Une page de référence ne doit annoncer que ce que son diagramme montre.
+ *
+ * Le banjo a cinq cordes accordées mais n'en déclare que quatre jouables : la
+ * chanterelle est un bourdon attaché à la cinquième case, qui ne se frette pas
+ * dans une position d'accord. Les notes se calculaient pourtant sur l'accordage
+ * entier, si bien qu'un accord pouvait annoncer une note qu'aucun diagramme
+ * n'affiche.
+ */
+test('les notes ne viennent que des cordes que l’instrument déclare', async () => {
+  const { chordPlayedNotes, INSTRUMENT_CONFIG } = await import('@/lib/chord-data');
+  for (const instrument of INSTRUMENTS) {
+    const cordes = INSTRUMENT_CONFIG[instrument].strings;
+    if (!cordes) continue; // le piano n'a pas de cordes numérotées
+    for (const chord of getChordsByInstrument(instrument)) {
+      if (!('fingers' in chord)) continue;
+      for (const note of chordPlayedNotes(chord as StringChord, instrument)) {
+        assert.ok(
+          note.string <= cordes,
+          `${instrument} ${chord.name} : note annoncée sur la corde ${note.string}, l'instrument n'en déclare que ${cordes}`,
+        );
+      }
+    }
+  }
+});

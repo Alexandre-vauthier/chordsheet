@@ -1038,8 +1038,15 @@ export function chordPlayedNotes(chord: StringChord, instrumentId: InstrumentId)
     }
   }
 
+  // Les cordes de l'instrument, et non celles de l'accordage : le banjo a cinq
+  // cordes accordées mais n'en déclare que quatre jouables, la chanterelle étant
+  // un bourdon attaché à la cinquième case. Compter sur l'accordage faisait
+  // annoncer des notes qu'aucun diagramme ne montre — c'est exactement ce qu'une
+  // page de référence ne doit pas faire.
+  const cordes = Math.min(INSTRUMENT_CONFIG[instrumentId]?.strings || tuning.length, tuning.length);
+
   const notes: PlayedNote[] = [];
-  for (let stringNo = tuning.length; stringNo >= 1; stringNo--) {
+  for (let stringNo = cordes; stringNo >= 1; stringNo--) {
     if (muted.has(stringNo)) continue;
 
     const fret = open.has(stringNo) ? 0 : fretted.get(stringNo);
