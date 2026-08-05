@@ -170,3 +170,26 @@ Consigné ici pour ne pas revenir le proposer.
 - **La page d'une grille pèse 152 Ko**, contre 6 Ko pour la grille elle-même :
   c'est la coque répétée à chaque page qui fait le volume. Sans conséquence
   aujourd'hui, mais c'est ce qui décide du poids d'un book mis en cache.
+- **Le générateur de doigtés frette la chanterelle du banjo.**
+  `generateStringVoicing` prend son nombre de cordes dans la table d'accordage
+  (cinq pour le banjo) et non dans la configuration de l'instrument (quatre
+  jouables). Il pose donc des doigts sur la cinquième corde : deux cent
+  soixante et un doigtés générés sur trois cent cinquante-neuf, dont deux cent
+  quarante-deux en dessous de la case 5, où la chanterelle n'existe pas
+  physiquement — elle est attachée à cette case. Cent un ont même un barré qui
+  l'atteint. Sans effet visible aujourd'hui : l'affichage à quatre cordes ne la
+  dessine pas, les notes annoncées ne la comptent plus, et aucun de ces accords
+  ne sonne autrement qu'il ne se dessine. C'est une donnée fausse qui dort, et
+  qui a déjà mordu une fois : passer l'affichage à cinq cordes l'a rendue
+  visible d'un coup sur toutes les grilles de banjo. Correctif : faire prendre
+  au générateur les cordes déclarées par l'instrument et marquer la chanterelle
+  étouffée, comme le fait la planche imprimée sur cent vingt de ses cent
+  trente-trois cartes.
+- **Onze accords de banjo n'ont pas leur note de couleur** une fois réduits aux
+  quatre cordes jouables : `D`, `D7`, `Eb7`, `Ebmaj7`, `Ebm7`, `Ddim`, `Ebdim`,
+  `Gdim`, `Edim7`, `Ebaug`, `D9`. Le `D` donne un ré et un la, sans tierce : ce
+  n'est pas un ré majeur. Ce sont les doigtés que l'application affiche depuis
+  toujours, mais ils ont désormais une page de référence qui les énonce. À
+  revoir sur la planche imprimée. À distinguer des vingt qui n'ont pas leur
+  fondamentale : ceux-là sont normaux et voulus, quatre cordes ne portent pas un
+  accord de cinq sons.
