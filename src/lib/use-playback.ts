@@ -1,5 +1,5 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
-import type { Section, Cell, InstrumentId, StringChord, PianoChord } from '@/types';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import type { Section, Cell, InstrumentId, StringChord, PianoChord, StructureEntry } from '@/types';
 // Réexport : PlayStyle et ACCOMPANIMENT_INSTRUMENTS vivent dans accompaniment.ts
 // (sans dépendance React), les appelants historiques les importent d'ici.
 import { ACCOMPANIMENT_INSTRUMENTS, type PlayStyle } from '@/lib/accompaniment';
@@ -16,6 +16,7 @@ import { playChord, playArpeggio, playMetronomeTick, getAudioContext } from '@/l
  */
 const SUSPENSION_THRESHOLD_S = 2;
 import { useLibraryChords } from '@/lib/library-chords-context';
+import { deroulerStructure, positionCellule, positionMesure, type Bloc } from '@/lib/sheet-structure';
 
 export interface PlayStep {
   sectionId: string;
@@ -43,11 +44,12 @@ export function parseTempo(tempoStr: string | undefined): number {
 // Durée = span × beatsPerMeasure × beatMs (3 en ternaire, 4 en binaire).
 // Exportée : c'est elle qui fixe l'ordre de lecture et les compteurs de passage,
 // autant pouvoir la vérifier sans passer par un rendu React.
-export function buildSequence(sections: Section[], beatMs: number): PlayStep[] {
+export function buildSequence(blocs: Bloc[], beatMs: number): PlayStep[] {
   const steps: PlayStep[] = [];
-  for (const section of sections) {
+  for (const bloc of blocs) {
+    const section = bloc.section;
     const bpm = section.beatsPerMeasure || 4;
-    for (let rep = 0; rep < (section.repeat || 1); rep++) {
+    for (let rep = 0; rep < bloc.repeat; rep++) {
       for (let r = 0; r < section.rows.length; r++) {
         const rowRepeat = section.rowRepeats?.[r] ?? 1;
         for (let rr = 0; rr < rowRepeat; rr++) {
@@ -89,10 +91,11 @@ export interface ChordSeqItem {
 
 // Séquence ordonnée des cellules porteuses d'accord, dans l'ordre de lecture
 // (sections, répétitions de section puis de mesure). Base du suivi micro.
-export function buildChordSequence(sections: Section[]): ChordSeqItem[] {
+export function buildChordSequence(blocs: Bloc[]): ChordSeqItem[] {
   const seq: ChordSeqItem[] = [];
-  for (const section of sections) {
-    for (let rep = 0; rep < (section.repeat || 1); rep++) {
+  for (const bloc of blocs) {
+    const section = bloc.section;
+    for (let rep = 0; rep < bloc.repeat; rep++) {
       for (let r = 0; r < section.rows.length; r++) {
         const rowRepeat = section.rowRepeats?.[r] ?? 1;
         for (let rr = 0; rr < rowRepeat; rr++) {
@@ -104,8 +107,8 @@ export function buildChordSequence(sections: Section[]): ChordSeqItem[] {
               sectionId: section.id,
               rowIndex: r,
               cellIndex: c,
-              rowId: `${section.id}-${r}`,
-              pos: `${section.id}:${r}:${c}`,
+              rowId: positionMesure(bloc, r),
+              pos: positionCellule(bloc, r, c),
               chord,
               span: row[c].span,
               beats: section.beatsPerMeasure || 4,
@@ -139,6 +142,12 @@ export interface PlaybackVoice {
 
 interface UsePlaybackOptions {
   sections: Section[];
+  /**
+   * Ordre d'enchaînement du morceau. Absente, les sections se lisent dans leur
+   * ordre : la lecture doit dérouler la même chose que ce que la page affiche,
+   * sinon on entend un couplet que l'écran ne montre pas.
+   */
+  structure?: StructureEntry[];
   tempo: string | undefined;
   tempoUnit?: TempoUnit;
   instrumentId: InstrumentId;
@@ -152,8 +161,10 @@ interface UsePlaybackOptions {
   capo?: number;
 }
 
-export function usePlayback({ sections, tempo, tempoUnit, instrumentId, playbackInstruments, customChords, selectedChords, metronomeEnabled, chordsEnabled = true, capo = 0 }: UsePlaybackOptions) {
+export function usePlayback({ sections, structure, tempo, tempoUnit, instrumentId, playbackInstruments, customChords, selectedChords, metronomeEnabled, chordsEnabled = true, capo = 0 }: UsePlaybackOptions) {
   const { overrides, additions } = useLibraryChords();
+  // Le déroulé, une fois pour toutes : la lecture ne connaît que des blocs.
+  const blocs = useMemo(() => deroulerStructure(sections, structure), [sections, structure]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeStep, setActiveStep] = useState<PlayStep | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -320,13 +331,13 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, playback
     advance();
   }, [resolveChord, capo]);
 
-  const playSequence = useCallback((targetSections: Section[]) => {
+  const playSequence = useCallback((targetBlocs: Bloc[]) => {
     const bpm = parseTempo(tempo);
     const factor = TEMPO_UNIT_FACTOR[tempoUnit ?? 'quarter'];
     const beatMs = (60 / bpm) * 1000 * factor;
-    const steps = buildSequence(targetSections, beatMs);
+    const steps = buildSequence(targetBlocs, beatMs);
     runSteps(steps, (step) =>
-      targetSections.find(s => s.id === step.sectionId)?.rows[step.rowIndex]?.[step.cellIndex]
+      targetBlocs.find((b) => b.section.id === step.sectionId)?.section.rows[step.rowIndex]?.[step.cellIndex]
     );
   }, [tempo, tempoUnit, runSteps]);
 
@@ -354,17 +365,23 @@ export function usePlayback({ sections, tempo, tempoUnit, instrumentId, playback
   }, [sections, tempo, tempoUnit, runSteps]);
 
   const play = useCallback(() => {
-    playSequence(sections);
-  }, [sections, playSequence]);
+    playSequence(blocs);
+  }, [blocs, playSequence]);
 
-  const playSection = useCallback((sectionId: string) => {
-    const idx = sections.findIndex(s => s.id === sectionId);
-    if (idx !== -1) playSequence(sections.slice(idx));
-  }, [sections, playSequence]);
+  /**
+   * Reprendre à un passage donné.
+   *
+   * Repéré par son rang dans le déroulé et non par l'identifiant de sa section :
+   * avec une structure, le même couplet apparaît à plusieurs endroits, et « joue
+   * à partir d'ici » doit partir d'ici, pas du premier des trois.
+   */
+  const playFromBloc = useCallback((index: number) => {
+    if (index >= 0 && index < blocs.length) playSequence(blocs.slice(index));
+  }, [blocs, playSequence]);
 
   const togglePlay = useCallback(() => {
     if (isPlaying) stop(); else play();
   }, [isPlaying, stop, play]);
 
-  return { isPlaying, activeStep, play, stop, playSection, playRow, togglePlay };
+  return { isPlaying, activeStep, play, stop, playFromBloc, playRow, togglePlay, blocs };
 }

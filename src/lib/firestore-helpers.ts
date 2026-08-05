@@ -102,6 +102,8 @@ interface FirestoreSheet {
   ownerName: string;
   isPublic: boolean;
   sections: FirestoreSection[];
+  /** Ordre d'enchaînement du morceau. Absent, les sections se lisent dans l'ordre. */
+  structure?: { sectionId: string; repeat: number }[];
   tags: string[];
   // Métadonnées V2
   genres: string[];
@@ -198,6 +200,8 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
   if (sheet.year != null) {
     (base as unknown as Record<string, unknown>).year = sheet.year;
   }
+  // Firestore refuse `undefined` : le champ n'existe que si la structure existe.
+  if (sheet.structure?.length) base.structure = sheet.structure;
   return base;
 }
 
@@ -225,6 +229,9 @@ export function fromFirestore(
       rows: section.rows.map((row) => row.cells || row),
       ...(section.rowRepeats ? { rowRepeats: section.rowRepeats } : {}),
     })) as Section[],
+    // Absente sur toutes les grilles écrites avant la structure : le déroulé
+    // retombe alors sur l'ordre des sections, comme depuis toujours.
+    ...(Array.isArray(data.structure) ? { structure: data.structure as Sheet['structure'] } : {}),
     tags: (data.tags as string[]) || [],
     genres: (data.genres as string[]) || [],
     difficulty: (data.difficulty as Difficulty) || null,

@@ -21,6 +21,21 @@ export interface Section {
   rowRepeats?: number[]; // nombre de répétitions par mesure (index = rowIndex)
 }
 
+/**
+ * Un passage du morceau : une section, jouée un certain nombre de fois, à cet
+ * endroit précis.
+ *
+ * La structure dit l'ordre dans lequel le morceau s'enchaîne, sans recopier les
+ * sections : un couplet joué trois fois dans le morceau reste une seule section
+ * qu'on corrige à un seul endroit. Un tiers des sections existantes sont
+ * aujourd'hui des copies faites à la main, avec la dérive que cela suppose.
+ */
+export interface StructureEntry {
+  sectionId: string;
+  /** Passages consécutifs à cet endroit. Un couplet joué deux fois d'affilée. */
+  repeat: number;
+}
+
 // Niveaux de difficulté
 export type Difficulty = 1 | 2 | 3;
 
@@ -32,6 +47,21 @@ export const DIFFICULTY_LABELS: Record<number, string> = {
   4: 'Avancé',
   5: 'Avancé',
 };
+
+/**
+ * Un passage du morceau : une section, jouée un certain nombre de fois, à cet
+ * endroit précis.
+ *
+ * La structure dit l'ordre dans lequel le morceau s'enchaîne, sans recopier les
+ * sections : un couplet joué trois fois dans le morceau reste une seule section
+ * qu'on corrige à un seul endroit. Un tiers des sections existantes sont
+ * aujourd'hui des copies faites à la main, avec la dérive que cela suppose.
+ */
+export interface StructureEntry {
+  sectionId: string;
+  /** Passages consécutifs à cet endroit. Un couplet joué deux fois d'affilée. */
+  repeat: number;
+}
 
 // Niveaux de difficulté uniques pour les sélecteurs (pas de doublons)
 export const DIFFICULTY_OPTIONS: { value: number; label: string }[] = [
@@ -158,6 +188,16 @@ export interface Sheet {
   ownerName: string;
   isPublic: boolean;
   sections: Section[];
+  /**
+   * Ordre dans lequel le morceau s'enchaîne. Absente, les sections se lisent dans
+   * leur ordre, une fois chacune : c'est le comportement de toujours, et aucune
+   * grille existante n'a besoin d'être reprise.
+   *
+   * Quand elle existe, **c'est elle qui compte** : le `repeat` d'une section ne
+   * sert plus qu'à pré-remplir la structure au moment où on la crée. Sans quoi un
+   * couplet marqué deux fois et placé deux fois se jouerait quatre fois.
+   */
+  structure?: StructureEntry[];
   tags: string[];
   // Nouvelles métadonnées V2
   genres: string[];

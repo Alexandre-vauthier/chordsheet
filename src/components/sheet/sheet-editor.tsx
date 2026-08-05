@@ -235,7 +235,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     [displayPbMap],
   );
 
-  const { isPlaying, activeStep, playSection, playRow, togglePlay, stop } = usePlayback({
+  const { isPlaying, activeStep, playFromBloc, playRow, togglePlay, stop } = usePlayback({
     sections: sheet.sections,
     tempo: sheet.tempo,
     tempoUnit: sheet.tempoUnit,
@@ -1227,7 +1227,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 onDuplicate={() => duplicateSection(section.id)}
                 onPlaySection={() => {
                   if (isPlaying && activeStep?.sectionId === section.id) stop();
-                  else playSection(section.id);
+                  else playFromBloc(sheet.sections.findIndex((s) => s.id === section.id));
                 }}
                 isSectionPlaying={isPlaying && activeStep?.sectionId === section.id}
                 onPlayRow={(rowIndex) => {

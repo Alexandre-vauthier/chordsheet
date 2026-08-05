@@ -28,6 +28,7 @@ import { useTranslations } from 'next-intl';
 import { useGenreLabel } from '@/lib/use-genre-labels';
 import { LiveChordFollow, type ActiveRow } from './live-chord-follow';
 import { useWakeLock } from '@/lib/use-wake-lock';
+import { deroulerStructure, positionCellule, positionMesure } from '@/lib/sheet-structure';
 
 const LS_KEY = 'chordsheet_instrument';
 
@@ -265,13 +266,25 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   const [minimizeRepeated, setMinimizeRepeated] = useState(() => user?.minimizeRepeatedSections ?? false);
 
   const displaySections = transposeSections(sheet.sections, transpose);
+
+  /**
+   * Le morceau tel qu'il se joue.
+   *
+   * Sans structure, ce sont les sections dans leur ordre : rien ne change pour les
+   * grilles écrites jusqu'ici. Avec structure, un même couplet apparaît à
+   * plusieurs endroits sans avoir été recopié.
+   */
+  const blocs = useMemo(
+    () => deroulerStructure(displaySections, sheet.structure),
+    [displaySections, sheet.structure],
+  );
   const displayKey = transposeKey(sheet.key, transpose);
 
   // Séquence ordonnée pour le suivi micro : chaque cellule dans l'ordre de
   // lecture, avec le son réellement entendu (forme transposée + capo effectif).
   const followSequence = useMemo(
     () =>
-      buildChordSequence(displaySections).map((it) => ({
+      buildChordSequence(blocs).map((it) => ({
         pos: it.pos,
         rowId: it.rowId,
         sound: effectiveCapo > 0 ? transposeChord(it.chord, effectiveCapo) : it.chord,
@@ -279,7 +292,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
         repeatIndex: it.repeatIndex,
         rowRepeat: it.rowRepeat,
       })),
-    [displaySections, effectiveCapo],
+    [blocs, effectiveCapo],
   );
 
   // Y a-t-il au moins une section en doublon ?
@@ -294,8 +307,9 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   })();
 
   // Playback
-  const { isPlaying, activeStep, playSection, play, togglePlay, stop } = usePlayback({
+  const { isPlaying, activeStep, playFromBloc, play, togglePlay, stop } = usePlayback({
     sections: displaySections,
+    structure: sheet.structure,
     tempo: localTempo,
     tempoUnit: localTempoUnit,
     instrumentId,
@@ -1066,15 +1080,16 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
       <div className={`space-y-8 print:space-y-6 ${instrumentId === 'voice' && lyrics ? 'hidden' : ''}`}>
         {(() => {
           const seenSignatures = new Map<string, string>(); // signature → label de la première occurrence
-          return displaySections.map((section) => {
+          return blocs.map((bloc) => {
+            const section = bloc.section;
             const sig = sectionSignature(section);
             const firstLabel = seenSignatures.get(sig);
             const isDuplicate = minimizeRepeated && !!firstLabel;
             const isDuplicateForPrint = (printMinimizeRepeatedSectionsOverride ?? user?.printMinimizeRepeatedSections ?? false) && !!firstLabel;
             if (!seenSignatures.has(sig)) seenSignatures.set(sig, section.label);
-            return { section, isDuplicate, isDuplicateForPrint, firstLabel: firstLabel ?? null };
+            return { bloc, section, isDuplicate, isDuplicateForPrint, firstLabel: firstLabel ?? null };
           });
-        })().map(({ section, isDuplicate, isDuplicateForPrint, firstLabel }, sectionIdx) => {
+        })().map(({ bloc, section, isDuplicate, isDuplicateForPrint, firstLabel }, sectionIdx) => {
           // Passage en cours dans la répétition de la section, pendant la lecture.
           // Le mode concert et le suivi micro ne comptent pas les passages de
           // section : leur badge reste fixe, ce qui vaut mieux qu'un décompte faux.
@@ -1082,7 +1097,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             ? activeStep.sectionRepeatIndex
             : undefined;
           const isSectionRepeatActive = sectionRepeatIdx !== undefined;
-          const isLastSectionRepeat = isSectionRepeatActive && sectionRepeatIdx === section.repeat - 1;
+          const isLastSectionRepeat = isSectionRepeatActive && sectionRepeatIdx === bloc.repeat - 1;
 
           return (
           <div key={section.id} className="print:break-inside-avoid" data-section-id={section.id}>
@@ -1091,14 +1106,14 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               <span className="text-sm font-semibold uppercase tracking-wider text-[var(--ink)]">
                 {section.label}
               </span>
-              {section.repeat > 1 && !isLastSectionRepeat && (
+              {bloc.repeat > 1 && !isLastSectionRepeat && (
                 /* Même traitement que la répétition de mesure : le compteur clignote
                    pendant la lecture et décompte les passages restants, puis
                    disparaît au dernier — afficher « ×1 » sur le dernier tour ne dit
                    rien, et le badge fixe reprend sa place à l'arrêt. */
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded
                   ${isSectionRepeatActive ? 'animate-repeat-blink' : 'bg-[var(--accent)] text-white'}`}>
-                  ×{isSectionRepeatActive ? section.repeat - sectionRepeatIdx! : section.repeat}
+                  ×{isSectionRepeatActive ? bloc.repeat - sectionRepeatIdx! : bloc.repeat}
                 </span>
               )}
               {(isDuplicate || isDuplicateForPrint) && firstLabel && (
@@ -1109,7 +1124,10 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               <button
                 onClick={() => {
                   if (isPlaying && activeStep?.sectionId === section.id) stop();
-                  else playSection(section.id);
+                  // À partir de ce passage-ci : avec une structure, le même
+                  // couplet apparaît ailleurs, et « joue à partir d'ici » doit
+                  // partir d'ici.
+                  else playFromBloc(sectionIdx);
                 }}
                 className={`print:hidden ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all border
                   ${isPlaying && activeStep?.sectionId === section.id
@@ -1162,7 +1180,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 const isLastRepeat = isRepeatBadgeActive && currentRepeatIdx === rowRepeat - 1;
 
                 return (
-                  <div key={rowIndex} className="relative" data-row-id={`${section.id}-${rowIndex}`}>
+                  <div key={rowIndex} className="relative" data-row-id={positionMesure(bloc, rowIndex)}>
                     <div
                       className="grid gap-1 w-full measure-row"
                       style={{ gridTemplateColumns: `repeat(16, minmax(0, 1fr))` }}
@@ -1187,7 +1205,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                         return (
                           <ViewerChordCell
                             key={cellIndex}
-                            pos={`${section.id}:${rowIndex}:${cellIndex}`}
+                            pos={positionCellule(bloc, rowIndex, cellIndex)}
                             chord={cell.chord}
                             span={cell.span}
                             isActive={isActive}
