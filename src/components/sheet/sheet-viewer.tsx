@@ -28,7 +28,7 @@ import { useTranslations } from 'next-intl';
 import { useGenreLabel } from '@/lib/use-genre-labels';
 import { LiveChordFollow, type ActiveRow } from './live-chord-follow';
 import { useWakeLock } from '@/lib/use-wake-lock';
-import { deroulerStructure, positionCellule, positionMesure, structureUtile } from '@/lib/sheet-structure';
+import { cleMesure, deroulerStructure, positionCellule, positionMesure, structureUtile } from '@/lib/sheet-structure';
 
 const LS_KEY = 'chordsheet_instrument';
 
@@ -365,10 +365,12 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
     if (!countInEnabled) { play(); return; }
 
     // Scroll vers la première ligne dès le démarrage du décompte
-    const firstSection = displaySections[0];
-    if (firstSection) {
-      const firstRowIndex = firstSection.rows.findIndex(r => r.some(c => c.chord));
-      if (firstRowIndex !== -1) scrollToRow(`${firstSection.id}-${firstRowIndex}`);
+    // Le premier bloc du déroulé, et non la première section de la grille : avec
+    // une structure, le morceau ne commence pas forcément par elle.
+    const premier = blocs[0];
+    if (premier) {
+      const firstRowIndex = premier.section.rows.findIndex(r => r.some(c => c.chord));
+      if (firstRowIndex !== -1) scrollToRow(positionMesure(premier, firstRowIndex));
     }
 
     const factor = localTempoUnit === 'eighth' ? 0.5 : 1;
@@ -387,19 +389,19 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
       play();
     }, 4 * msPerBeat);
     countTimersRef.current.push(startT);
-  }, [isPlaying, countBeat, countInEnabled, stop, cancelCountIn, play, localTempo, localTempoUnit, displaySections, scrollToRow]);
+  }, [isPlaying, countBeat, countInEnabled, stop, cancelCountIn, play, localTempo, localTempoUnit, blocs, scrollToRow]);
 
   useEffect(() => {
     if (!isPlaying) { derniereSectionRef.current = null; return; }
     if (!activeStep) return;
-    scrollToRow(`${activeStep.sectionId}-${activeStep.rowIndex}`);
+    scrollToRow(cleMesure(activeStep.sectionId, activeStep.occurrence, activeStep.rowIndex));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPlaying, activeStep?.sectionId, activeStep?.rowIndex]);
+  }, [isPlaying, activeStep?.sectionId, activeStep?.occurrence, activeStep?.rowIndex]);
 
   useEffect(() => {
     if (!concertCellPath) return;
-    const section = displaySections[concertCellPath.sectionIdx];
-    if (section) scrollToRow(`${section.id}-${concertCellPath.rowIdx}`);
+    const bloc = blocs[concertCellPath.sectionIdx];
+    if (bloc) scrollToRow(positionMesure(bloc, concertCellPath.rowIdx));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [concertCellPath?.sectionIdx, concertCellPath?.rowIdx]);
 
@@ -1133,14 +1135,17 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
           // Passage en cours dans la répétition de la section, pendant la lecture.
           // Le mode concert et le suivi micro ne comptent pas les passages de
           // section : leur badge reste fixe, ce qui vaut mieux qu'un décompte faux.
-          const sectionRepeatIdx = isPlaying && activeStep?.sectionId === section.id
-            ? activeStep.sectionRepeatIndex
-            : undefined;
+          // Ce bloc-ci est-il celui qu'on entend ? Comparer le seul identifiant de
+          // section surlignait les trois couplets à la fois : ils partagent la même
+          // section, seul le rang du passage les distingue.
+          const estBlocJoue = isPlaying && activeStep?.sectionId === section.id
+            && activeStep.occurrence === bloc.occurrence;
+          const sectionRepeatIdx = estBlocJoue ? activeStep!.sectionRepeatIndex : undefined;
           const isSectionRepeatActive = sectionRepeatIdx !== undefined;
           const isLastSectionRepeat = isSectionRepeatActive && sectionRepeatIdx === bloc.repeat - 1;
 
           return (
-          <div key={section.id} className="print:break-inside-avoid" data-section-id={section.id}>
+          <div key={`${section.id}:${bloc.occurrence}`} className="print:break-inside-avoid" data-section-id={section.id}>
             {/* Header de section */}
             <div className="flex items-center gap-3 mb-3">
               <span className="text-sm font-semibold uppercase tracking-wider text-[var(--ink)]">
@@ -1163,20 +1168,20 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               )}
               <button
                 onClick={() => {
-                  if (isPlaying && activeStep?.sectionId === section.id) stop();
+                  if (estBlocJoue) stop();
                   // À partir de ce passage-ci : avec une structure, le même
                   // couplet apparaît ailleurs, et « joue à partir d'ici » doit
                   // partir d'ici.
                   else playFromBloc(sectionIdx);
                 }}
                 className={`print:hidden ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-all border
-                  ${isPlaying && activeStep?.sectionId === section.id
+                  ${estBlocJoue
                     ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
                     : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
                   }`}
-                title={isPlaying && activeStep?.sectionId === section.id ? 'Stop' : t('playSection')}
+                title={estBlocJoue ? 'Stop' : t('playSection')}
               >
-                {isPlaying && activeStep?.sectionId === section.id ? (
+                {estBlocJoue ? (
                   <><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><rect x="4" y="3" width="4" height="14" rx="1"/><rect x="12" y="3" width="4" height="14" rx="1"/></svg>Stop</>
                 ) : (
                   <><svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>Play</>
@@ -1198,10 +1203,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 if (row.every(c => !c.chord)) return null;
 
                 const rowRepeat = section.rowRepeats?.[rowIndex] ?? 1;
-                const isRowActive =
-                  isPlaying &&
-                  activeStep?.sectionId === section.id &&
-                  activeStep?.rowIndex === rowIndex;
+                const isRowActive = estBlocJoue && activeStep!.rowIndex === rowIndex;
                 const isRowConcertActive = !!concertCellPath &&
                   concertCellPath.sectionIdx === sectionIdx &&
                   concertCellPath.rowIdx === rowIndex;
@@ -1213,7 +1215,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                     ? (concertCellPath!.rowRepeatIndex ?? 0)
                     : undefined;
                 // Passage courant remonté par le suivi micro pour cette mesure (décompte des répétitions).
-                const recRow = recActiveRows.find(r => r.rowId === `${section.id}-${rowIndex}`);
+                const recRow = recActiveRows.find(r => r.rowId === positionMesure(bloc, rowIndex));
                 // Passage courant : lecture (solo/concert) OU suivi micro.
                 const currentRepeatIdx = activeRepeatIdx ?? recRow?.repeatIndex;
                 const isRepeatBadgeActive = currentRepeatIdx !== undefined;

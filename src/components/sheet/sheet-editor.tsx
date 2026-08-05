@@ -237,8 +237,24 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     [displayPbMap],
   );
 
+  /**
+   * En édition on travaille par défaut sur les sections distinctes : c'est là
+   * qu'on corrige un accord une seule fois. La vue déroulé montre le morceau tel
+   * qu'il se lira, pour vérifier l'ordre sans quitter l'éditeur.
+   */
+  const [vueEdition, setVueEdition] = useState<'grid' | 'flow'>('grid');
+
+  // Le déroulé affiché en édition. En vue « grille harmonique », c'est l'ordre
+  // simple des sections : la lecture et le surlignage suivent alors l'écran, comme
+  // en consultation.
+  const blocsEdition = useMemo(
+    () => deroulerStructure(sheet.sections, vueEdition === 'flow' ? sheet.structure : undefined),
+    [sheet.sections, sheet.structure, vueEdition],
+  );
+
   const { isPlaying, activeStep, playFromBloc, playRow, togglePlay, stop } = usePlayback({
     sections: sheet.sections,
+    structure: vueEdition === 'flow' ? sheet.structure : undefined,
     tempo: sheet.tempo,
     tempoUnit: sheet.tempoUnit,
     instrumentId: sheet.instrumentId || 'guitar',
@@ -458,6 +474,10 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     setSheet((prev) => ({
       ...prev,
       sections: prev.sections.filter((s) => s.id !== sectionId),
+      // Ses passages partent avec elle : une structure qui cite une section
+      // disparue se déroule quand même, mais le panneau afficherait des lignes
+      // orphelines qu'on ne saurait plus nommer.
+      structure: prev.structure?.filter((e) => e.sectionId !== sectionId),
     }));
     setHasChanges(true);
   }, [t]);
@@ -1207,8 +1227,28 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
         <div className="flex items-center gap-3 mb-4">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">{t('harmonicGrid')}</h2>
           <div className="flex-1 h-px bg-[var(--line)]" />
-          {/* On édite toujours les sections distinctes ; la structure ne dit que
-              l'ordre. Le déroulé se vérifie côté consultation. */}
+          {/* La même bascule qu'en consultation : on vérifie l'ordre sur place,
+              sans quitter l'éditeur ni ouvrir la grille dans un autre onglet. */}
+          {structureUtile(sheet.sections, sheet.structure) && (
+            <div className="flex items-center gap-1 print:hidden">
+              {([['grid', tStruct('viewGrid')], ['flow', tStruct('viewFlow')]] as const).map(([mode, libelle]) => (
+                <button
+                  key={mode}
+                  type="button"
+                  onClick={() => setVueEdition(mode)}
+                  aria-pressed={vueEdition === mode}
+                  className="text-xs px-2.5 py-1 rounded-full border transition-colors"
+                  style={{
+                    background: vueEdition === mode ? 'var(--accent)' : 'transparent',
+                    borderColor: vueEdition === mode ? 'var(--accent)' : 'var(--line)',
+                    color: vueEdition === mode ? '#fff' : 'var(--ink-light)',
+                  }}
+                >
+                  {libelle}
+                </button>
+              ))}
+            </div>
+          )}
           {sheet.sections.length > 1 && (
             <button
               type="button"
@@ -1256,35 +1296,66 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
 
       {/* Sections — masquées pour Voix */}
       <div className={sheet.instrumentId === 'voice' ? 'hidden' : ''}>
-        {sheet.sections.map((section, sectionIndex) => {
+        {blocsEdition.map((bloc, sectionIndex) => {
+          const section = bloc.section;
+          const reordonnable = vueEdition === 'grid';
           const isDragging = dragSectionId === section.id;
           const draggedIdx = sheet.sections.findIndex(s => s.id === dragSectionId);
           // Ne pas afficher "Déposer ici" sur la section immédiatement après la section draggée
           // (ce serait un no-op : insérer avant B alors que A est déjà avant B)
           const isNoOpTarget = draggedIdx !== -1 && sectionIndex === draggedIdx + 1;
+          // Ce passage-ci est-il celui qu'on entend ? Deux passages partagent la
+          // même section : sans leur rang, les deux se surligneraient ensemble.
+          const estBlocJoue = isPlaying && activeStep?.sectionId === section.id
+            && activeStep.occurrence === bloc.occurrence;
           return (
             <div
-              key={section.id}
+              key={`${section.id}:${bloc.occurrence}`}
               className={isDragging ? 'opacity-30 pointer-events-none' : ''}
             >
               <SectionBlock
-                section={section}
+                // En déroulé, le « ×N » vient de la structure, pas de la section.
+                section={vueEdition === 'flow' ? { ...section, repeat: bloc.repeat } : section}
+                reorderable={reordonnable}
                 instrumentId={sheet.instrumentId || 'guitar'}
-                onUpdate={(updates) => updateSection(section.id, updates)}
+                onUpdate={(updates) => {
+                  if (vueEdition === 'flow' && updates.repeat !== undefined) {
+                    // Sinon on écrirait le nombre de passages sur la section, donc
+                    // sur *tous* ses passages : changer le « ×2 » du dernier refrain
+                    // doublerait aussi le premier.
+                    const repeat = updates.repeat;
+                    // Le rang du bloc n'est celui de l'entrée que si toutes les
+                    // entrées désignent une section existante : le déroulé saute
+                    // celles qui n'en désignent plus. On recompte donc.
+                    const connues = new Set(sheet.sections.map((sec) => sec.id));
+                    let rang = -1;
+                    updateSheet({
+                      structure: (sheet.structure ?? []).map((e) => {
+                        if (!connues.has(e.sectionId)) return e;
+                        rang += 1;
+                        return rang === sectionIndex ? { ...e, repeat } : e;
+                      }),
+                    });
+                    const { repeat: _, ...reste } = updates;
+                    if (Object.keys(reste).length) updateSection(section.id, reste);
+                    return;
+                  }
+                  updateSection(section.id, updates);
+                }}
                 onDelete={() => deleteSection(section.id)}
                 onDuplicate={() => duplicateSection(section.id)}
                 onPlaySection={() => {
-                  if (isPlaying && activeStep?.sectionId === section.id) stop();
-                  else playFromBloc(sheet.sections.findIndex((s) => s.id === section.id));
+                  if (estBlocJoue) stop();
+                  else playFromBloc(sectionIndex);
                 }}
-                isSectionPlaying={isPlaying && activeStep?.sectionId === section.id}
+                isSectionPlaying={estBlocJoue}
                 onPlayRow={(rowIndex) => {
-                  if (isPlaying && activeStep?.sectionId === section.id && activeStep.rowIndex === rowIndex) stop();
-                  else playRow(section.id, rowIndex);
+                  if (estBlocJoue && activeStep!.rowIndex === rowIndex) stop();
+                  else playRow(section.id, rowIndex, bloc.occurrence);
                 }}
-                activeRowIndex={isPlaying && activeStep?.sectionId === section.id ? activeStep.rowIndex : undefined}
-                activeCellIndex={isPlaying && activeStep?.sectionId === section.id ? activeStep.cellIndex : undefined}
-                activeDurationMs={isPlaying && activeStep?.sectionId === section.id ? activeStep.durationMs : undefined}
+                activeRowIndex={estBlocJoue ? activeStep!.rowIndex : undefined}
+                activeCellIndex={estBlocJoue ? activeStep!.cellIndex : undefined}
+                activeDurationMs={estBlocJoue ? activeStep!.durationMs : undefined}
                 dictationRowIndex={dictationTarget?.sectionId === section.id ? dictationTarget.rowIndex : undefined}
                 dictationCellIndex={dictationTarget?.sectionId === section.id ? dictationTarget.cellIndex : undefined}
                 onNavigateToCell={navigateToCell}
@@ -1292,14 +1363,14 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 onDragEnd={handleDragEnd}
                 onDragOver={(e) => { e.preventDefault(); if (dragSectionIdRef.current !== section.id) handleDragOver(section.id); }}
                 onDrop={() => handleDrop(section.id)}
-                isDragOver={dragOverSectionId === section.id && dragSectionId !== section.id && !isNoOpTarget}
+                isDragOver={reordonnable && dragOverSectionId === section.id && dragSectionId !== section.id && !isNoOpTarget}
                 isFirstSection={isFirstSheet && sectionIndex === 0}
                 showExampleChords={isNewSheet && sectionIndex === 0}
                 onDismissOnboarding={dismissOnboarding}
                 onFrenchDetected={handleFrenchDetected}
                 finderChordPool={finderChordPool}
-                onMoveUp={sectionIndex > 0 ? () => moveSection(section.id, 'up') : undefined}
-                onMoveDown={sectionIndex < sheet.sections.length - 1 ? () => moveSection(section.id, 'down') : undefined}
+                onMoveUp={reordonnable && sectionIndex > 0 ? () => moveSection(section.id, 'up') : undefined}
+                onMoveDown={reordonnable && sectionIndex < sheet.sections.length - 1 ? () => moveSection(section.id, 'down') : undefined}
                 anyDragging={anyDragging}
                 isSelf={false}
               />

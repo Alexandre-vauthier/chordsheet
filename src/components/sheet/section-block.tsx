@@ -75,6 +75,14 @@ interface SectionBlockProps {
   finderChordPool?: Record<InstrumentId, (StringChord | PianoChord)[]>;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
+  /**
+   * L'ordre des sections se change-t-il ici ?
+   *
+   * Faux en vue « déroulé » : c'est la structure qui commande l'ordre, et
+   * déplacer une section à la souris n'y changerait rien tout en donnant à croire
+   * le contraire.
+   */
+  reorderable?: boolean;
   anyDragging?: boolean;
   isSelf?: boolean;
 }
@@ -106,6 +114,7 @@ export function SectionBlock({
   finderChordPool,
   onMoveUp,
   onMoveDown,
+  reorderable = true,
   anyDragging = false,
   isSelf = false,
 }: SectionBlockProps) {
@@ -198,11 +207,11 @@ export function SectionBlock({
     )}
     <div
       className={`${anyDragging ? 'mb-2' : 'mb-10'} animate-fadeIn`}
-      draggable
-      onDragStart={(e) => { e.dataTransfer.effectAllowed = 'move'; requestAnimationFrame(() => onDragStart()); }}
-      onDragEnd={() => onDragEnd()}
-      onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; onDragOver(e); }}
-      onDrop={(e) => { e.preventDefault(); onDrop(); }}
+      draggable={reorderable}
+      onDragStart={(e) => { if (!reorderable) return; e.dataTransfer.effectAllowed = 'move'; requestAnimationFrame(() => onDragStart()); }}
+      onDragEnd={() => reorderable && onDragEnd()}
+      onDragOver={(e) => { if (!reorderable) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; onDragOver(e); }}
+      onDrop={(e) => { if (!reorderable) return; e.preventDefault(); onDrop(); }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -210,7 +219,7 @@ export function SectionBlock({
       <div className="flex items-center gap-3 mb-3">
         {/* Drag handle */}
         <span
-          className={`cursor-grab active:cursor-grabbing text-[var(--ink-faint)] transition-opacity select-none ${headerControlsVisible ? 'opacity-100' : 'opacity-0'}`}
+          className={`cursor-grab active:cursor-grabbing text-[var(--ink-faint)] transition-opacity select-none ${headerControlsVisible && reorderable ? 'opacity-100' : 'opacity-0'}`}
           title={t('dragToReorder')}
         >
           ⠿

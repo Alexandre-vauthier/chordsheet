@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  deroulerStructure, positionCellule, structureParDefaut, structureUtile,
+  cleMesure, deroulerStructure, positionCellule, structureParDefaut, structureUtile,
 } from '@/lib/sheet-structure';
 import type { Section } from '@/types';
 
@@ -101,4 +101,29 @@ test('toFirestore écrit un tableau vide quand la structure est retirée', async
     (toFirestore({ ...grille, structure: [{ sectionId: 'c', repeat: 2 }] } as never) as { structure: unknown }).structure,
     [{ sectionId: 'c', repeat: 2 }],
   );
+});
+
+/**
+ * Un passage joué doit être désignable sans ambiguïté.
+ *
+ * `buildSequence` ne transporte pas le bloc, seulement de quoi le retrouver. Tant
+ * qu'elle ne disait que l'identifiant de section, la vue ne pouvait pas savoir
+ * lequel des trois couplets était en cours : elle les surlignait tous les trois
+ * en même temps, et le défilement ne visait rien.
+ */
+test('la lecture distingue deux passages de la même section', async () => {
+  const { buildSequence } = await import('@/lib/use-playback');
+  const blocs = deroulerStructure([COUPLET, REFRAIN], [
+    { sectionId: 'c', repeat: 1 },
+    { sectionId: 'r', repeat: 1 },
+    { sectionId: 'c', repeat: 1 },
+  ]);
+  const pas = buildSequence(blocs, 500);
+  const couplets = pas.filter((p) => p.sectionId === 'c');
+  assert.deepEqual([...new Set(couplets.map((p) => p.occurrence))], [0, 1]);
+
+  // Et la clé de mesure suit le passage, sans quoi le défilement viserait la
+  // première mesure du premier couplet pendant qu'on joue le troisième.
+  const cles = pas.map((p) => cleMesure(p.sectionId, p.occurrence, p.rowIndex));
+  assert.equal(new Set(cles).size, 3);
 });

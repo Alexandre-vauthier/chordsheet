@@ -74,12 +74,24 @@ export function deroulerStructure(sections: Section[], structure?: StructureEntr
  * dans la page — surlignage, défilement, suivi micro — confondrait les deux.
  */
 export function positionCellule(bloc: Bloc, rowIndex: number, cellIndex: number): string {
-  return `${bloc.section.id}:${bloc.occurrence}:${rowIndex}:${cellIndex}`;
+  return `${cleMesure(bloc.section.id, bloc.occurrence, rowIndex)}:${cellIndex}`;
 }
 
 /** Identifiant d'une mesure dans le morceau déroulé, pour le défilement. */
 export function positionMesure(bloc: Bloc, rowIndex: number): string {
-  return `${bloc.section.id}:${bloc.occurrence}:${rowIndex}`;
+  return cleMesure(bloc.section.id, bloc.occurrence, rowIndex);
+}
+
+/**
+ * La même clé, à partir des champs bruts.
+ *
+ * La lecture ne transporte pas le bloc, seulement de quoi le désigner. Elle doit
+ * pourtant viser la mesure exacte à l'écran : le défilement s'était mis à ne plus
+ * rien trouver le jour où la clé a gagné le rang du passage sans que le
+ * défilement le sache.
+ */
+export function cleMesure(sectionId: string, occurrence: number, rowIndex: number): string {
+  return `${sectionId}:${occurrence}:${rowIndex}`;
 }
 
 /**
