@@ -17,6 +17,7 @@ import { doc, setDoc, getDoc, getDocs, deleteDoc, collection, query, where, writ
 import { getAuth, getDb } from './firebase';
 import type { User, UserRole, NotationPreference, InstrumentId } from '@/types';
 import { isAdminEmail } from '@/types';
+import * as Sentry from '@sentry/nextjs';
 
 interface AuthContextType {
   user: User | null;
@@ -79,6 +80,14 @@ async function notifyAdminsOfSignup(user: FirebaseUser): Promise<void> {
     /* sans effet sur l'inscription */
   }
 }
+
+/**
+ * La connexion Google en cours, s'il y en a une.
+ *
+ * Hors du composant à dessein : deux pages différentes montent chacune leur
+ * bouton, et c'est justement entre les deux que naissait la fenêtre de trop.
+ */
+let connexionGoogleEnCours: Promise<void> | null = null;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
@@ -234,12 +243,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
    * il ne rencontre donc pas la porte de confirmation.
    */
   const signInWithGoogle = async () => {
+    // Une seule fenêtre à la fois, quel que soit le bouton cliqué.
+    //
+    // Chaque bouton « Continuer avec Google » se désactive pendant l'opération,
+    // mais il y en a un par page (connexion, inscription) et chacun a son propre
+    // état : passer de l'une à l'autre pendant qu'une fenêtre est ouverte en
+    // demandait une seconde. Firebase rejette alors la première — et si elle
+    // venait de se régler, il la rejette une fois de trop, ce qui déclenche son
+    // assertion interne « Pending promise was never set ». Le second appel attend
+    // donc le premier au lieu d'ouvrir une fenêtre concurrente.
+    if (connexionGoogleEnCours) return connexionGoogleEnCours;
+
     const provider = new GoogleAuthProvider();
     // Force le choix du compte : sans ça, quelqu'un connecté à un compte Google sur
     // sa machine est enrôlé avec celui-là sans qu'on lui demande, ce qui surprend
     // ceux qui en ont plusieurs.
     provider.setCustomParameters({ prompt: 'select_account' });
-    await signInWithPopup(getAuth(), provider);
+
+    // Ces traces accompagnent le prochain rapport d'erreur : elles diront si la
+    // connexion avait abouti avant que l'assertion ne survienne, ce qu'un rapport
+    // seul ne permet pas de savoir.
+    Sentry.addBreadcrumb({ category: 'auth', level: 'info', message: 'Google : ouverture de la fenêtre' });
+
+    connexionGoogleEnCours = signInWithPopup(getAuth(), provider)
+      .then(() => {
+        Sentry.addBreadcrumb({ category: 'auth', level: 'info', message: 'Google : connexion réussie' });
+      })
+      .catch((e: unknown) => {
+        const code = typeof e === 'object' && e && 'code' in e ? String((e as { code: string }).code) : 'inconnu';
+        Sentry.addBreadcrumb({ category: 'auth', level: 'warning', message: `Google : échec (${code})` });
+        throw e;
+      })
+      .finally(() => { connexionGoogleEnCours = null; });
+
+    return connexionGoogleEnCours;
   };
 
   // Inscription
