@@ -28,7 +28,7 @@ import { useTranslations } from 'next-intl';
 import { useGenreLabel } from '@/lib/use-genre-labels';
 import { LiveChordFollow, type ActiveRow } from './live-chord-follow';
 import { useWakeLock } from '@/lib/use-wake-lock';
-import { deroulerStructure, positionCellule, positionMesure } from '@/lib/sheet-structure';
+import { deroulerStructure, positionCellule, positionMesure, structureUtile } from '@/lib/sheet-structure';
 
 const LS_KEY = 'chordsheet_instrument';
 
@@ -126,6 +126,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   useWakeLock(true);
 
   const t = useTranslations('SheetViewer');
+  const tStruct = useTranslations('Structure');
   const tGroove = useTranslations('GroovePatterns');
   const genreLabel = useGenreLabel();
   const translate = useChordNotation();
@@ -267,16 +268,29 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
 
   const displaySections = transposeSections(sheet.sections, transpose);
 
+  const aUneStructure = structureUtile(displaySections, sheet.structure);
   /**
-   * Le morceau tel qu'il se joue.
+   * Le déroulé par défaut : c'est le morceau tel qu'il se joue, ce qu'un musicien
+   * veut lire. La grille harmonique reste à un clic pour embrasser l'harmonie d'un
+   * coup d'œil, sans les redites.
+   */
+  const [vue, setVue] = useState<'flow' | 'grid'>('flow');
+
+  /**
+   * Le morceau tel qu'il s'affiche, et donc tel qu'il se joue.
    *
    * Sans structure, ce sont les sections dans leur ordre : rien ne change pour les
    * grilles écrites jusqu'ici. Avec structure, un même couplet apparaît à
    * plusieurs endroits sans avoir été recopié.
+   *
+   * En vue « grille harmonique » on ignore volontairement la structure : la lecture
+   * et le suivi micro suivent alors ce qui est à l'écran. Les faire dérouler la
+   * structure pendant que la page montre les sections nues surlignerait des mesures
+   * absentes de l'écran.
    */
   const blocs = useMemo(
-    () => deroulerStructure(displaySections, sheet.structure),
-    [displaySections, sheet.structure],
+    () => deroulerStructure(displaySections, vue === 'grid' ? undefined : sheet.structure),
+    [displaySections, sheet.structure, vue],
   );
   const displayKey = transposeKey(sheet.key, transpose);
 
@@ -309,7 +323,8 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   // Playback
   const { isPlaying, activeStep, playFromBloc, play, togglePlay, stop } = usePlayback({
     sections: displaySections,
-    structure: sheet.structure,
+    // En vue « grille harmonique », la lecture suit l'écran et non la structure.
+    structure: vue === 'grid' ? undefined : sheet.structure,
     tempo: localTempo,
     tempoUnit: localTempoUnit,
     instrumentId,
@@ -1073,6 +1088,31 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               setSelectedChords(prev => ({ ...prev, [chordName]: chord }))
             }
           />
+        </div>
+      )}
+
+      {/* Bascule entre les sections distinctes et le morceau déroulé.
+          Affichée seulement si la structure dit autre chose que l'ordre naturel :
+          sinon les deux vues montreraient la même chose. À l'impression, jamais —
+          un PDF est linéaire, et c'est le déroulé qu'on imprime. */}
+      {aUneStructure && instrumentId !== 'voice' && (
+        <div className="flex items-center gap-2 mb-4 print:hidden">
+          {([['flow', tStruct('viewFlow')], ['grid', tStruct('viewGrid')]] as const).map(([mode, libelle]) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setVue(mode)}
+              aria-pressed={vue === mode}
+              className="text-xs px-3 py-1 rounded-full border transition-colors"
+              style={{
+                background: vue === mode ? 'var(--accent)' : 'transparent',
+                borderColor: vue === mode ? 'var(--accent)' : 'var(--line)',
+                color: vue === mode ? '#fff' : 'var(--ink-light)',
+              }}
+            >
+              {libelle}
+            </button>
+          ))}
         </div>
       )}
 

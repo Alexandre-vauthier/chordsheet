@@ -1916,5 +1916,23 @@
     "preloadFailed": "Could not cache",
     "preloadBook": "Keep all offline",
     "preloadBookTitle": "Make the {count} sheets in your book available without a network"
+  },
+  "Structure": {
+    "title": "Song structure",
+    "intro": "Say in which order the sections follow one another. Nothing is copied: a verse played three times stays a single section, which you fix in one place.",
+    "whichSection": "Which section",
+    "howManyTimes": "How many times",
+    "moveUp": "Move up",
+    "moveDown": "Move down",
+    "remove": "Remove this pass",
+    "addPassage": "+ pass",
+    "untitled": "Untitled",
+    "missing": "section deleted",
+    "apply": "Apply",
+    "cancel": "Cancel",
+    "clear": "Remove the structure",
+    "define": "Set the structure",
+    "viewGrid": "Chord grid",
+    "viewFlow": "Flow"
   }
 }

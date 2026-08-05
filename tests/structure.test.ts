@@ -81,3 +81,24 @@ test('une structure qui redit l\'ordre naturel n\'apporte rien', () => {
     { sectionId: 'c', repeat: 2 }, { sectionId: 'r', repeat: 1 }, { sectionId: 'c', repeat: 1 },
   ]), true);
 });
+
+/**
+ * Retirer une structure doit tenir au rechargement.
+ *
+ * L'enregistrement passe par `updateDoc`, qui laisse intacts les champs absents
+ * de la charge. Tant que `toFirestore` omettait la structure quand il n'y en
+ * avait pas, « Retirer la structure » ne retirait rien en base : l'écran suivait,
+ * puis l'ancienne structure revenait au rechargement.
+ */
+test('toFirestore écrit un tableau vide quand la structure est retirée', async () => {
+  const { toFirestore } = await import('@/lib/firestore-helpers');
+  const grille = {
+    title: 'x', artist: '', key: 'C', tempo: '120', ownerId: 'u', ownerName: 'u',
+    isPublic: false, sections: [COUPLET], tags: [], genres: [], difficulty: null, capo: null,
+  };
+  assert.deepEqual((toFirestore(grille as never) as { structure: unknown }).structure, []);
+  assert.deepEqual(
+    (toFirestore({ ...grille, structure: [{ sectionId: 'c', repeat: 2 }] } as never) as { structure: unknown }).structure,
+    [{ sectionId: 'c', repeat: 2 }],
+  );
+});

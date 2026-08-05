@@ -32,6 +32,7 @@ import { Link } from '@/i18n/navigation';
 import { useChordDictation } from '@/lib/use-chord-dictation';
 import { applyDictatedChord, undoDictatedChord } from '@/lib/chord-dictation';
 import { DictationBar } from './dictation-bar';
+import { StructurePanel } from '@/components/sheet/structure-panel';
 
 // Filtre local pour les grilles privées de l'utilisateur (petit lot déjà chargé,
 // pas besoin d'une requête Firestore dédiée par frappe).
@@ -495,6 +496,8 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
 
   // Drag & drop sections
   const [dragSectionId, setDragSectionId] = useState<string | null>(null);
+  const [structureOuverte, setStructureOuverte] = useState(false);
+  const tStruct = useTranslations('Structure');
   const [dragOverSectionId, setDragOverSectionId] = useState<string | null>(null);
   // Refs pour éviter les closures périmées et avoir des valeurs synchrones
   const dragSectionIdRef = useRef<string | null>(null);
@@ -1203,7 +1206,31 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
         <div className="flex items-center gap-3 mb-4">
           <h2 className="text-xs font-semibold uppercase tracking-widest text-[var(--ink-faint)]">{t('harmonicGrid')}</h2>
           <div className="flex-1 h-px bg-[var(--line)]" />
+          {/* On édite toujours les sections distinctes ; la structure ne dit que
+              l'ordre. Le déroulé se vérifie côté consultation. */}
+          {sheet.sections.length > 1 && (
+            <button
+              type="button"
+              onClick={() => setStructureOuverte(true)}
+              className="print:hidden text-xs px-2.5 py-1 rounded-full border transition-colors"
+              style={{
+                borderColor: sheet.structure?.length ? 'var(--accent)' : 'var(--line)',
+                color: sheet.structure?.length ? 'var(--accent)' : 'var(--ink-light)',
+              }}
+            >
+              {tStruct('define')}
+            </button>
+          )}
         </div>
+      )}
+
+      {structureOuverte && (
+        <StructurePanel
+          sections={sheet.sections}
+          structure={sheet.structure}
+          onChange={(structure) => updateSheet({ structure })}
+          onClose={() => setStructureOuverte(false)}
+        />
       )}
 
       {/* Sections — masquées pour Voix */}

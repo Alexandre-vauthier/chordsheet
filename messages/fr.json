@@ -1916,5 +1916,23 @@
     "preloadFailed": "Mise en cache impossible",
     "preloadBook": "Tout garder hors ligne",
     "preloadBookTitle": "Rendre les {count} grilles de ton book disponibles sans réseau"
+  },
+  "Structure": {
+    "title": "Structure du morceau",
+    "intro": "Dis dans quel ordre les sections s'enchaînent. Rien n'est recopié : un couplet joué trois fois reste une seule section, que tu corriges à un seul endroit.",
+    "whichSection": "Quelle section",
+    "howManyTimes": "Nombre de passages",
+    "moveUp": "Monter",
+    "moveDown": "Descendre",
+    "remove": "Retirer ce passage",
+    "addPassage": "+ passage",
+    "untitled": "Sans titre",
+    "missing": "section supprimée",
+    "apply": "Appliquer",
+    "cancel": "Annuler",
+    "clear": "Retirer la structure",
+    "define": "Établir la structure",
+    "viewGrid": "Grille harmonique",
+    "viewFlow": "Déroulé"
   }
 }

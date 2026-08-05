@@ -200,8 +200,11 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
   if (sheet.year != null) {
     (base as unknown as Record<string, unknown>).year = sheet.year;
   }
-  // Firestore refuse `undefined` : le champ n'existe que si la structure existe.
-  if (sheet.structure?.length) base.structure = sheet.structure;
+  // Toujours écrit, tableau vide compris. L'enregistrement passe par `updateDoc`,
+  // qui ne touche pas aux champs absents : omettre la structure quand on vient de
+  // la retirer laisserait l'ancienne en base, et elle reviendrait au rechargement.
+  // Un tableau vide se lit partout comme « pas de structure ».
+  base.structure = sheet.structure ?? [];
   return base;
 }
 
