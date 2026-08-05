@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { DrumMachine } from 'smplr';
 import { getAudioContext } from './chord-audio';
-import { chargerKit, echantillon, restaurerKit } from './drum-kits';
+import { chargerKit, echantillon, kitParDefaut, restaurerKit } from './drum-kits';
 
 // ─── Voix disponibles (kit LM-2 "LinnDrum") ──────────────────────────────────
 // Le LinnDrum a été le premier échantillonneur de batterie du marché : ses sons
@@ -305,6 +305,7 @@ export function useGrooveBox({
   beatsPerMeasure,
   genres,
   groovePattern,
+  kitDefaut,
 }: {
   enabled: boolean;  // lifecycle : suit isPlaying
   muted: boolean;    // mute/unmute sans relancer la programmation
@@ -312,6 +313,13 @@ export function useGrooveBox({
   beatsPerMeasure: number;
   genres: string[];
   groovePattern?: string; // id explicite (voir PATTERN_DEFS) ; sinon déduit des genres
+  /**
+   * Kit à employer si personne n'en a choisi. Ne s'inscrit pas dans le navigateur.
+   *
+   * Sert au visiteur non connecté, à qui on veut faire entendre une vraie
+   * batterie plutôt que la boîte à rythmes de synthèse.
+   */
+  kitDefaut?: string;
 }) {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stepRef = useRef(0);
@@ -335,9 +343,25 @@ export function useGrooveBox({
    * avec l'autre kit.
    */
   useEffect(() => {
-    const id = restaurerKit();
-    if (id) void chargerKit(id, ALL_VOICES);
-  }, []);
+    const choisi = restaurerKit();
+    if (choisi) { void chargerKit(choisi, ALL_VOICES); return; }
+    if (!kitDefaut || !kitParDefaut(kitDefaut)) return;
+
+    // Un kit pèse quelques mégaoctets. Choisi, on le télécharge tout de suite :
+    // c'est une décision, il doit être prêt. Simple défaut, on attend que le
+    // navigateur soit tranquille — la page doit s'afficher d'abord, et il reste
+    // le temps du clic sur Lecture avant que le premier temps ne tombe.
+    const lancer = () => { void chargerKit(kitDefaut, ALL_VOICES); };
+    const ric = (window as unknown as {
+      requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+    }).requestIdleCallback;
+    if (ric) {
+      const id = ric(lancer, { timeout: 4000 });
+      return () => (window as unknown as { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(id);
+    }
+    const id = setTimeout(lancer, 1500);
+    return () => clearTimeout(id);
+  }, [kitDefaut]);
 
   useEffect(() => { bpmRef.current = bpm; }, [bpm]);
   useEffect(() => { bpmPerMeasureRef.current = beatsPerMeasure; }, [beatsPerMeasure]);

@@ -475,6 +475,10 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   }, [metroMenuOpen]);
 
   useGrooveBox({
+    // Un visiteur entend une vraie batterie, pas la boîte de synthèse : c'est au
+    // premier Play qu'il juge le produit. Le choix n'est pas mémorisé, il ne
+    // s'imposera pas le jour où il se crée un compte.
+    kitDefaut: visiteur ? 'classic' : undefined,
     /**
      * Tourne pendant la lecture ou l'aperçu d'un motif, jamais pendant le suivi
      * micro.

@@ -98,6 +98,23 @@ export function choisirKit(kitId: string | null): void {
   }
 }
 
+/**
+ * Kit à employer faute de choix explicite.
+ *
+ * Ne mémorise rien : c'est un défaut, pas une décision de l'utilisateur. Un
+ * visiteur de passage ne doit pas repartir avec un réglage inscrit dans son
+ * navigateur, qu'il retrouverait le jour où il se crée un compte.
+ *
+ * Sans effet si un kit est déjà en place, choisi ou restauré : un défaut ne
+ * remplace jamais une décision.
+ */
+export function kitParDefaut(kitId: string): boolean {
+  if (kitCourantId) return false;
+  if (!KITS.some((k) => k.id === kitId)) return false;
+  kitCourantId = kitId;
+  return true;
+}
+
 /** Restaure le choix mémorisé. À appeler une fois, côté navigateur. */
 export function restaurerKit(): string | null {
   try {
