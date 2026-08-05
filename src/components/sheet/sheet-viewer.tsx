@@ -1513,7 +1513,6 @@ function ViewerChordCell({
       className={`
         group/cell chord-cell relative rounded-lg border-2 min-h-12 flex items-center justify-center
         bg-[var(--cell-bg)] border-[var(--line)]
-        ${span <= 0.5 ? 'opacity-70' : ''}
         ${isActive && !color ? 'border-[var(--accent)]' : ''}
         ${playableChord ? 'cursor-pointer' : ''}
         ${hovered ? 'z-50' : ''}
@@ -1563,7 +1562,11 @@ function ViewerChordCell({
         />
       )}
 
-      <div className="relative z-10 flex flex-col items-center gap-1 py-1">
+      {/* L'atténuation d'une demi-mesure porte sur le contenu, pas sur la case :
+          posée sur la case, elle rendait translucide tout ce qu'elle contient,
+          fenêtre de diagramme comprise — d'où une fenêtre à travers laquelle on
+          lisait la mesure du dessous. */}
+      <div className={`relative z-10 flex flex-col items-center gap-1 py-1 ${span <= 0.5 ? 'opacity-70' : ''}`}>
         <span className={`chord-name font-mono font-medium text-[var(--ink)] ${span <= 0.5 ? 'text-sm' : 'text-base'} print:text-sm`}>
           {bassRoot ? translate(bassRoot) : translate(lookupChord)}
         </span>
@@ -1587,11 +1590,22 @@ function ViewerChordCell({
           comprendre au premier survol qu'on peut cliquer pour entendre. Le même
           rond que sur les pages d'accord, un peu resserré sur les demi-mesures,
           qui n'ont pas la place. */}
-      {playableChord && (
+      {playableChord && !inlineDiagramChord && (
+        <span className="print:hidden absolute top-1 right-1 z-20 opacity-0 group-hover/cell:opacity-100
+          transition-opacity pointer-events-none text-[var(--accent)]">
+          <svg className="w-3 h-3" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+          </svg>
+        </span>
+      )}
+
+      {playableChord && inlineDiagramChord && (
         <div className="print:hidden absolute inset-0 z-20 flex items-center justify-center rounded
           opacity-0 group-hover/cell:opacity-100 transition-opacity pointer-events-none bg-[var(--ink)]/20">
           {/* Le triangle nu, en accent, et grand. Le rond plein qu'on avait
-              d'abord se confondait avec un point de doigt sur le diagramme. */}
+              d'abord se confondait avec un point de doigt sur le diagramme.
+              Il ne s'affiche que là où un diagramme l'accueille : sans lui, il
+              recouvrirait le nom de l'accord, seule chose que la case a à dire. */}
           <svg
             className={`text-[var(--accent)] drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)]
               ${span <= 0.5 ? 'w-8 h-8' : 'w-12 h-12'}`}
