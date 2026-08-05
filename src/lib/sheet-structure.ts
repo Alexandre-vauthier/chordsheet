@@ -19,6 +19,15 @@ import type { Section, StructureEntry } from '@/types';
 /** Un passage du morceau, prêt à être affiché ou joué. */
 export interface Bloc {
   section: Section;
+  /**
+   * Nom affiché pour ce passage.
+   *
+   * Celui de la section, sauf quand la structure en impose un autre : les mêmes
+   * accords s'appellent souvent « Intro » ici et « Refrain » plus loin. C'est ce
+   * nom-là que la vue, l'éditeur et le PDF doivent afficher — lire directement
+   * `section.label` afficherait « Intro » sur les six passages.
+   */
+  label: string;
   /** Passages consécutifs à cet endroit (le « ×2 » affiché à côté du titre). */
   repeat: number;
   /**
@@ -47,6 +56,7 @@ export function deroulerStructure(sections: Section[], structure?: StructureEntr
   if (!structure?.length) {
     return sections.map((section) => ({
       section,
+      label: section.label,
       repeat: Math.max(1, section.repeat || 1),
       occurrence: 0,
     }));
@@ -61,7 +71,12 @@ export function deroulerStructure(sections: Section[], structure?: StructureEntr
     if (!section) continue;
     const occurrence = vues.get(section.id) ?? 0;
     vues.set(section.id, occurrence + 1);
-    blocs.push({ section, repeat: Math.max(1, entree.repeat || 1), occurrence });
+    blocs.push({
+      section,
+      label: entree.label?.trim() || section.label,
+      repeat: Math.max(1, entree.repeat || 1),
+      occurrence,
+    });
   }
   return blocs;
 }
@@ -108,6 +123,9 @@ export function structureParDefaut(sections: Section[]): StructureEntry[] {
 /**
  * La structure dit-elle autre chose que l'ordre naturel des sections ?
  *
+ * Renommer un passage compte : deux passages de la même section nommés
+ * différemment ne se lisent pas comme l'ordre nu des sections.
+ *
  * Sert à ne pas proposer une bascule « Grille harmonique / Déroulé » qui
  * montrerait deux fois la même chose.
  */
@@ -115,5 +133,7 @@ export function structureUtile(sections: Section[], structure?: StructureEntry[]
   if (!structure?.length) return false;
   const naturel = structureParDefaut(sections);
   if (naturel.length !== structure.length) return true;
-  return structure.some((e, i) => e.sectionId !== naturel[i].sectionId || e.repeat !== naturel[i].repeat);
+  return structure.some(
+    (e, i) => e.sectionId !== naturel[i].sectionId || e.repeat !== naturel[i].repeat || !!e.label?.trim(),
+  );
 }

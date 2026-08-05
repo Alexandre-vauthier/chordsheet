@@ -103,7 +103,7 @@ interface FirestoreSheet {
   isPublic: boolean;
   sections: FirestoreSection[];
   /** Ordre d'enchaînement du morceau. Absent, les sections se lisent dans l'ordre. */
-  structure?: { sectionId: string; repeat: number }[];
+  structure?: { sectionId: string; repeat: number; label?: string }[];
   tags: string[];
   // Métadonnées V2
   genres: string[];
@@ -204,7 +204,14 @@ export function toFirestore(sheet: Sheet | NewSheet): FirestoreSheet {
   // qui ne touche pas aux champs absents : omettre la structure quand on vient de
   // la retirer laisserait l'ancienne en base, et elle reviendrait au rechargement.
   // Un tableau vide se lit partout comme « pas de structure ».
-  base.structure = sheet.structure ?? [];
+  // Un `label: undefined` suffit à faire rejeter l'écriture entière par Firestore :
+  // le champ n'existe que là où un passage porte vraiment un autre nom.
+  base.structure = (sheet.structure ?? []).map((e) => ({
+    sectionId: e.sectionId,
+    repeat: e.repeat,
+    // Même casse que les libellés de section : ils s'affichent côte à côte.
+    ...(e.label?.trim() ? { label: normaliserLibelle(e.label) } : {}),
+  }));
   return base;
 }
 

@@ -1278,7 +1278,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
           {deroulerStructure(sheet.sections, sheet.structure).map((bloc, i) => (
             <span key={i} className="text-xs" style={{ color: 'var(--ink-light)' }}>
               {i > 0 && <span className="mr-1.5" style={{ color: 'var(--ink-faint)' }}>›</span>}
-              {bloc.section.label || '—'}
+              {bloc.label || '—'}
               {bloc.repeat > 1 && <span className="font-semibold" style={{ color: 'var(--accent)' }}> ×{bloc.repeat}</span>}
             </span>
           ))}
@@ -1315,15 +1315,21 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             >
               <SectionBlock
                 // En déroulé, le « ×N » vient de la structure, pas de la section.
-                section={vueEdition === 'flow' ? { ...section, repeat: bloc.repeat } : section}
+                // En déroulé, le nom et le « ×N » viennent du passage, pas de la
+                // section : les mêmes accords s'appellent « Intro » ici et
+                // « Refrain » plus loin.
+                section={vueEdition === 'flow' ? { ...section, label: bloc.label, repeat: bloc.repeat } : section}
                 reorderable={reordonnable}
                 instrumentId={sheet.instrumentId || 'guitar'}
                 onUpdate={(updates) => {
-                  if (vueEdition === 'flow' && updates.repeat !== undefined) {
-                    // Sinon on écrirait le nombre de passages sur la section, donc
-                    // sur *tous* ses passages : changer le « ×2 » du dernier refrain
-                    // doublerait aussi le premier.
-                    const repeat = updates.repeat;
+                  // En déroulé, le nom et le nombre de passages appartiennent au
+                  // passage, pas à la section.
+                  const duPassage = vueEdition === 'flow'
+                    && (updates.repeat !== undefined || updates.label !== undefined);
+                  if (duPassage) {
+                    // Sinon on écrirait sur la section, donc sur *tous* ses
+                    // passages : renommer le dernier refrain renommerait l'intro.
+                    const { repeat, label, ...reste } = updates;
                     // Le rang du bloc n'est celui de l'entrée que si toutes les
                     // entrées désignent une section existante : le déroulé saute
                     // celles qui n'en désignent plus. On recompte donc.
@@ -1333,10 +1339,14 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                       structure: (sheet.structure ?? []).map((e) => {
                         if (!connues.has(e.sectionId)) return e;
                         rang += 1;
-                        return rang === sectionIndex ? { ...e, repeat } : e;
+                        if (rang !== sectionIndex) return e;
+                        return {
+                          ...e,
+                          ...(repeat !== undefined ? { repeat } : {}),
+                          ...(label !== undefined ? { label } : {}),
+                        };
                       }),
                     });
-                    const { repeat: _, ...reste } = updates;
                     if (Object.keys(reste).length) updateSection(section.id, reste);
                     return;
                   }

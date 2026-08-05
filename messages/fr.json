@@ -1936,6 +1936,8 @@
     "viewFlow": "Déroulé",
     "chooseSection": "Choisir une section",
     "reorder": "Déplacer",
-    "preview": "Aperçu du déroulé"
+    "preview": "Aperçu du déroulé",
+    "passName": "Nom de ce passage",
+    "passNameHint": "Laisse vide pour garder le nom de la section. À remplir quand les mêmes accords s'appellent autrement ici (« Refrain » alors que la section s'appelle « Intro »)."
   }
 }

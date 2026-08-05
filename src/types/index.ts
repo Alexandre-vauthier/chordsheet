@@ -34,6 +34,18 @@ export interface StructureEntry {
   sectionId: string;
   /** Passages consécutifs à cet endroit. Un couplet joué deux fois d'affilée. */
   repeat: number;
+  /**
+   * Nom de ce passage, quand il diffère de celui de la section.
+   *
+   * Les mêmes accords portent souvent des noms différents : sur cinquante-trois
+   * grilles, l'intro, le refrain et l'outro sont le même accordage recopié sous
+   * trois titres. Sans ce nom, les fusionner en une seule section ferait perdre
+   * les trois titres, et une grille dont tout s'appelle « Intro » ne se lit plus.
+   *
+   * Vide, c'est le nom de la section qui s'affiche : on ne le renseigne que là où
+   * le passage doit s'appeler autrement.
+   */
+  label?: string;
 }
 
 // Niveaux de difficulté
@@ -47,21 +59,6 @@ export const DIFFICULTY_LABELS: Record<number, string> = {
   4: 'Avancé',
   5: 'Avancé',
 };
-
-/**
- * Un passage du morceau : une section, jouée un certain nombre de fois, à cet
- * endroit précis.
- *
- * La structure dit l'ordre dans lequel le morceau s'enchaîne, sans recopier les
- * sections : un couplet joué trois fois dans le morceau reste une seule section
- * qu'on corrige à un seul endroit. Un tiers des sections existantes sont
- * aujourd'hui des copies faites à la main, avec la dérive que cela suppose.
- */
-export interface StructureEntry {
-  sectionId: string;
-  /** Passages consécutifs à cet endroit. Un couplet joué deux fois d'affilée. */
-  repeat: number;
-}
 
 // Niveaux de difficulté uniques pour les sélecteurs (pas de doublons)
 export const DIFFICULTY_OPTIONS: { value: number; label: string }[] = [

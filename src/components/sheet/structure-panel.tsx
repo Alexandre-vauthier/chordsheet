@@ -7,6 +7,24 @@ import { deroulerStructure, structureParDefaut } from '@/lib/sheet-structure';
 import type { Section, StructureEntry } from '@/types';
 
 /**
+ * Les premiers accords d'une section, pour la reconnaître dans le menu.
+ *
+ * Trois sections nommées « Couplet » sont indistinguables, et une section nommée
+ * « Intro » qu'on emploie comme refrain se choisirait à l'aveugle. Ce sont les
+ * accords qui disent laquelle on prend.
+ */
+function apercuAccords(section: Section, max = 4): string {
+  const accords: string[] = [];
+  for (const row of section.rows) {
+    for (const cell of row) {
+      if (cell.chord?.trim()) accords.push(cell.chord.trim());
+      if (accords.length >= max) return `${accords.join(' ')}…`;
+    }
+  }
+  return accords.join(' ');
+}
+
+/**
  * Établir l'ordre dans lequel le morceau s'enchaîne.
  *
  * Un morceau s'articule autour de quelques sections qui reviennent : couplet,
@@ -90,76 +108,100 @@ export function StructurePanel({
                 onDragEnd={() => { setTire(null); setSurvole(null); setPoignee(false); }}
                 onDragOver={(e) => { e.preventDefault(); setSurvole(i); }}
                 onDrop={(e) => { e.preventDefault(); if (tire !== null) reordonner(tire, i); }}
-                className={`flex items-center gap-2 p-2 rounded-lg border transition-opacity ${tire === i ? 'opacity-40' : ''}`}
+                className={`flex flex-col gap-1.5 p-2 rounded-lg border transition-opacity ${tire === i ? 'opacity-40' : ''}`}
                 style={{
                   background: 'var(--cell-bg)',
                   borderColor: survole === i && tire !== null && tire !== i ? 'var(--accent)' : 'var(--line)',
                 }}
               >
-                <span
-                  onMouseDown={() => setPoignee(true)}
-                  onMouseUp={() => setPoignee(false)}
-                  onTouchStart={() => setPoignee(true)}
-                  className="cursor-grab active:cursor-grabbing select-none px-0.5 text-sm leading-none"
-                  style={{ color: 'var(--ink-faint)' }}
-                  aria-label={t('reorder')}
-                  title={t('reorder')}
-                >
-                  ⠿
-                </span>
-                <span className="w-4 text-xs tabular-nums" style={{ color: 'var(--ink-faint)' }}>{i + 1}</span>
-
-                <div className="relative flex-1 min-w-0">
-                  <select
-                    value={entree.sectionId}
-                    onChange={(e) => modifier(i, { sectionId: e.target.value })}
-                    className="w-full appearance-none rounded-md border pl-2.5 pr-7 py-1.5 text-sm font-medium outline-none cursor-pointer focus:border-[var(--accent)] transition-colors"
-                    style={{
-                      background: 'var(--cream)',
-                      borderColor: 'var(--line)',
-                      color: entree.sectionId ? 'var(--ink)' : 'var(--accent)',
-                    }}
-                    aria-label={t('whichSection')}
-                  >
-                    {!entree.sectionId && <option value="">{t('chooseSection')}</option>}
-                    {sections.map((s) => (
-                      <option key={s.id} value={s.id}>{s.label || t('untitled')}</option>
-                    ))}
-                  </select>
+                <div className="flex items-center gap-2">
                   <span
-                    className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px]"
+                    onMouseDown={() => setPoignee(true)}
+                    onMouseUp={() => setPoignee(false)}
+                    onTouchStart={() => setPoignee(true)}
+                    className="cursor-grab active:cursor-grabbing select-none px-0.5 text-sm leading-none"
                     style={{ color: 'var(--ink-faint)' }}
+                    aria-label={t('reorder')}
+                    title={t('reorder')}
                   >
-                    ▼
+                    ⠿
                   </span>
+                  <span className="w-4 text-xs tabular-nums" style={{ color: 'var(--ink-faint)' }}>{i + 1}</span>
+
+                  <div className="relative flex-1 min-w-0">
+                    <select
+                      value={entree.sectionId}
+                      onChange={(e) => modifier(i, { sectionId: e.target.value })}
+                      className="w-full appearance-none rounded-md border pl-2.5 pr-7 py-1.5 text-sm font-medium outline-none cursor-pointer focus:border-[var(--accent)] transition-colors"
+                      style={{
+                        background: 'var(--cream)',
+                        borderColor: 'var(--line)',
+                        color: entree.sectionId ? 'var(--ink)' : 'var(--accent)',
+                      }}
+                      aria-label={t('whichSection')}
+                    >
+                      {!entree.sectionId && <option value="">{t('chooseSection')}</option>}
+                      {sections.map((s) => {
+                        const accords = apercuAccords(s);
+                        return (
+                          <option key={s.id} value={s.id}>
+                            {s.label || t('untitled')}{accords && ` — ${accords}`}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    <span
+                      className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px]"
+                      style={{ color: 'var(--ink-faint)' }}
+                    >
+                      ▼
+                    </span>
+                  </div>
+
+                  {!connue && (
+                    <span className="text-xs" style={{ color: 'var(--accent)' }}>{t('missing')}</span>
+                  )}
+
+                  <label className="flex items-center gap-1 text-xs" style={{ color: 'var(--ink-light)' }}>
+                    ×
+                    <input
+                      type="number" min={1} max={16} value={entree.repeat}
+                      onChange={(e) => modifier(i, { repeat: Math.max(1, Number(e.target.value) || 1) })}
+                      className="w-12 px-1 py-1 rounded-md border text-center tabular-nums"
+                      style={{ background: 'var(--cream)', borderColor: 'var(--line)', color: 'var(--ink)' }}
+                      aria-label={t('howManyTimes')}
+                    />
+                  </label>
+
+                  <div className="flex">
+                    <button type="button" onClick={() => deplacer(i, -1)} disabled={i === 0}
+                      className="px-1.5 py-1 text-sm disabled:opacity-30" style={{ color: 'var(--ink-light)' }}
+                      aria-label={t('moveUp')}>↑</button>
+                    <button type="button" onClick={() => deplacer(i, 1)} disabled={i === entrees.length - 1}
+                      className="px-1.5 py-1 text-sm disabled:opacity-30" style={{ color: 'var(--ink-light)' }}
+                      aria-label={t('moveDown')}>↓</button>
+                    <button type="button" onClick={() => setEntrees((e) => e.filter((_, j) => j !== i))}
+                      className="px-1.5 py-1 text-sm" style={{ color: 'var(--ink-light)' }}
+                      aria-label={t('remove')}>×</button>
+                  </div>
                 </div>
 
-                {!connue && (
-                  <span className="text-xs" style={{ color: 'var(--accent)' }}>{t('missing')}</span>
-                )}
-
-                <label className="flex items-center gap-1 text-xs" style={{ color: 'var(--ink-light)' }}>
-                  ×
+                {/* Le nom de ce passage-ci. Vide, c'est celui de la section qui
+                    s'affiche : on ne le remplit que là où les mêmes accords
+                    doivent s'appeler autrement (« Intro » ici, « Refrain » plus
+                    loin). */}
+                {entree.sectionId && (
                   <input
-                    type="number" min={1} max={16} value={entree.repeat}
-                    onChange={(e) => modifier(i, { repeat: Math.max(1, Number(e.target.value) || 1) })}
-                    className="w-12 px-1 py-1 rounded-md border text-center tabular-nums"
+                    type="text"
+                    value={entree.label ?? ''}
+                    onChange={(e) => modifier(i, { label: e.target.value })}
+                    placeholder={parId.get(entree.sectionId)?.label || t('untitled')}
+                    className="ml-[2.1rem] mr-1 rounded-md border px-2.5 py-1 text-xs outline-none focus:border-[var(--accent)] transition-colors"
                     style={{ background: 'var(--cream)', borderColor: 'var(--line)', color: 'var(--ink)' }}
-                    aria-label={t('howManyTimes')}
+                    aria-label={t('passName')}
+                    title={t('passNameHint')}
                   />
-                </label>
-
-                <div className="flex">
-                  <button type="button" onClick={() => deplacer(i, -1)} disabled={i === 0}
-                    className="px-1.5 py-1 text-sm disabled:opacity-30" style={{ color: 'var(--ink-light)' }}
-                    aria-label={t('moveUp')}>↑</button>
-                  <button type="button" onClick={() => deplacer(i, 1)} disabled={i === entrees.length - 1}
-                    className="px-1.5 py-1 text-sm disabled:opacity-30" style={{ color: 'var(--ink-light)' }}
-                    aria-label={t('moveDown')}>↓</button>
-                  <button type="button" onClick={() => setEntrees((e) => e.filter((_, j) => j !== i))}
-                    className="px-1.5 py-1 text-sm" style={{ color: 'var(--ink-light)' }}
-                    aria-label={t('remove')}>×</button>
-                </div>
+                )}
               </li>
             );
           })}
@@ -189,7 +231,7 @@ export function StructurePanel({
                 <div key={i} className="flex flex-col gap-0.5">
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-xs font-semibold" style={{ color: 'var(--ink)' }}>
-                      {bloc.section.label || t('untitled')}
+                      {bloc.label || t('untitled')}
                     </span>
                     {bloc.repeat > 1 && (
                       <span className="text-[10px] font-semibold" style={{ color: 'var(--accent)' }}>×{bloc.repeat}</span>

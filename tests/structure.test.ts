@@ -127,3 +127,43 @@ test('la lecture distingue deux passages de la même section', async () => {
   const cles = pas.map((p) => cleMesure(p.sectionId, p.occurrence, p.rowIndex));
   assert.equal(new Set(cles).size, 3);
 });
+
+/**
+ * Les mêmes accords sous des noms différents.
+ *
+ * C'est le cas dominant : sur cinquante-trois grilles, l'intro, le refrain et
+ * l'outro sont le même accordage recopié sous trois titres. Sans un nom porté par
+ * le passage, les fusionner en une seule section ferait perdre les trois titres.
+ */
+test('un passage peut porter un autre nom que sa section', () => {
+  const blocs = deroulerStructure([COUPLET], [
+    { sectionId: 'c', repeat: 4 },
+    { sectionId: 'c', repeat: 4, label: 'Refrain' },
+    { sectionId: 'c', repeat: 4, label: '  ' },
+  ]);
+  // Le nom de la section quand le passage n'en impose pas, y compris quand le
+  // champ ne contient que des espaces : sinon la grille afficherait un titre vide.
+  assert.deepEqual(blocs.map((b) => b.label), ['c', 'Refrain', 'c']);
+});
+
+test('renommer un passage suffit à rendre la structure utile', () => {
+  // Même ordre, mêmes passages : seul le nom change. La bascule « Grille
+  // harmonique / Déroulé » doit quand même apparaître, sinon le renommage
+  // resterait invisible.
+  assert.equal(structureUtile([COUPLET], [{ sectionId: 'c', repeat: 1, label: 'Refrain' }]), true);
+  assert.equal(structureUtile([COUPLET], [{ sectionId: 'c', repeat: 1 }]), false);
+});
+
+test('toFirestore ne laisse pas passer un nom de passage indéfini', async () => {
+  const { toFirestore } = await import('@/lib/firestore-helpers');
+  const grille = {
+    title: 'x', artist: '', key: 'C', tempo: '120', ownerId: 'u', ownerName: 'u',
+    isPublic: false, sections: [COUPLET], tags: [], genres: [], difficulty: null, capo: null,
+    // Un `undefined` dans la charge fait rejeter l'écriture entière par Firestore.
+    structure: [{ sectionId: 'c', repeat: 1, label: undefined }, { sectionId: 'c', repeat: 1, label: 'REFRAIN' }],
+  };
+  const ecrit = (toFirestore(grille as never) as { structure: Record<string, unknown>[] }).structure;
+  assert.deepEqual(Object.keys(ecrit[0]), ['sectionId', 'repeat']);
+  // Et la casse suit la même règle que les libellés de section, qu'il côtoie.
+  assert.equal(ecrit[1].label, 'Refrain');
+});

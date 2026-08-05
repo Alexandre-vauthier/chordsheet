@@ -1128,7 +1128,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             const firstLabel = seenSignatures.get(sig);
             const isDuplicate = minimizeRepeated && !!firstLabel;
             const isDuplicateForPrint = (printMinimizeRepeatedSectionsOverride ?? user?.printMinimizeRepeatedSections ?? false) && !!firstLabel;
-            if (!seenSignatures.has(sig)) seenSignatures.set(sig, section.label);
+            if (!seenSignatures.has(sig)) seenSignatures.set(sig, bloc.label);
             return { bloc, section, isDuplicate, isDuplicateForPrint, firstLabel: firstLabel ?? null };
           });
         })().map(({ bloc, section, isDuplicate, isDuplicateForPrint, firstLabel }, sectionIdx) => {
@@ -1149,7 +1149,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             {/* Header de section */}
             <div className="flex items-center gap-3 mb-3">
               <span className="text-sm font-semibold uppercase tracking-wider text-[var(--ink)]">
-                {section.label}
+                {bloc.label}
               </span>
               {bloc.repeat > 1 && !isLastSectionRepeat && (
                 /* Même traitement que la répétition de mesure : le compteur clignote

@@ -1936,6 +1936,8 @@
     "viewFlow": "Flow",
     "chooseSection": "Choose a section",
     "reorder": "Reorder",
-    "preview": "Flow preview"
+    "preview": "Flow preview",
+    "passName": "Name of this pass",
+    "passNameHint": "Leave empty to keep the section name. Fill it in when the same chords go by another name here (\"Chorus\" while the section is called \"Intro\")."
   }
 }
