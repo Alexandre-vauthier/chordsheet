@@ -128,3 +128,25 @@ test('les notes ne viennent que des cordes que l’instrument déclare', async (
     }
   }
 });
+
+/**
+ * Le troisième champ d'un doigté n'est pas un numéro de doigt.
+ *
+ * Il vaut « 1 » sur chacun des points de chacun des accords de la bibliothèque :
+ * il n'a jamais été renseigné. Le diagramme l'écrivait quand même, couvrant les
+ * pages de référence de 1 qui n'apprennent rien. Ce test dit ce qui est vrai
+ * aujourd'hui ; s'il tombe, c'est qu'un relevé a enfin apporté de vrais numéros,
+ * et le diagramme les affichera alors de lui-même.
+ */
+test('aucun doigté ne porte encore de vrais numéros de doigt', () => {
+  for (const instrument of INSTRUMENTS) {
+    for (const chord of getChordsByInstrument(instrument)) {
+      if (!('fingers' in chord) || !chord.fingers.length) continue;
+      const distincts = new Set((chord.fingers as [number, number, number][]).map(([, , d]) => d));
+      assert.equal(
+        distincts.size, 1,
+        `${instrument} ${chord.name} porte des numéros de doigt variés : le diagramme doit les afficher`,
+      );
+    }
+  }
+});

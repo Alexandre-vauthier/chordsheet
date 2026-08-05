@@ -7,6 +7,7 @@ import { JsonLd } from '@/components/seo/json-ld';
 import { breadcrumbSchema } from '@/lib/seo-schema';
 import { ChordDiagram } from '@/components/chord/chord-diagram';
 import { PianoKeyboard } from '@/components/chord/piano-keyboard';
+import { ChordListenButton } from '@/components/chord/chord-listen-button';
 import {
   chordEntries,
   chordFromSlug,
@@ -125,10 +126,13 @@ export default async function ChordPage({ params }: PageProps) {
         </h2>
         <div className="flex flex-wrap gap-6">
           {entries.map((entry) => (
-            <div key={entry.id} className="p-4 rounded-xl border border-[var(--line)] bg-[var(--cell-bg)]">
+            <div key={entry.id} className="flex items-center gap-4 p-4 rounded-xl border border-[var(--line)] bg-[var(--cell-bg)]">
               {isPianoChord(entry)
                 ? <PianoKeyboard chord={entry} />
                 : <ChordDiagram chord={entry} numStrings={strings} />}
+              {/* Le son est la seule chose qu'un dictionnaire imprimé ne sait pas
+                  faire : c'est lui qui dit si le diagramme a été bien lu. */}
+              <ChordListenButton chord={entry} instrumentId={instrument} />
             </div>
           ))}
         </div>

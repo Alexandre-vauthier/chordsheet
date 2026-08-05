@@ -41,6 +41,9 @@ export function ChordDiagram({
   const NUT_H = xs ? 3 : sm ? 4 : 5;
 
   const { fingers = [], barre, open = [], muted = [] } = chord;
+  // Plusieurs doigts distincts : le numéro devient une information de placement.
+  // Un seul, et il n'apprend rien qu'on ne voie déjà sur le manche.
+  const doigtsInformatifs = new Set(fingers.map(([, , d]) => d)).size > 1;
 
   const getSX = (s: number) => RIGHT - (s - 1) * CELL_W;
   const getFY = (f: number) => TOP + (f - startFret) * CELL_H + CELL_H / 2;
@@ -316,7 +319,14 @@ export function ChordDiagram({
         );
       })()}
 
-      {/* Points de doigts */}
+      {/* Points de doigts.
+
+          Le numéro de doigt n'est écrit que s'il apprend quelque chose, c'est-à-dire
+          si le doigté en emploie plusieurs. Les 598 accords doigtés de la
+          bibliothèque portent aujourd'hui « 1 » sur chaque point : ce troisième
+          champ n'a jamais été renseigné, c'est un remplissage. L'afficher revenait
+          à couvrir les diagrammes de 1 qui ne disent rien. Le jour où un relevé
+          apporte de vrais numéros, ils réapparaissent d'eux-mêmes. */}
       {fingers.filter(([s, f]) => f > 0 && s <= numStrings).map(([s, f, finger], i) => {
         const cx = getSX(s);
         const cy = getFY(f);
@@ -328,7 +338,7 @@ export function ChordDiagram({
         return (
           <g key={`finger-${i}`}>
             <circle cx={cx} cy={cy} r={DOT_R} fill="var(--ink, #111)" />
-            {!sm && finger && (
+            {!sm && finger && doigtsInformatifs && (
               <text
                 x={cx}
                 y={cy}
