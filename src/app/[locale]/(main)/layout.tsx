@@ -12,6 +12,7 @@ import { LiveSessionBanner } from '@/components/layout/live-session-banner';
 import { EmailVerificationGate } from '@/components/layout/email-verification-gate';
 import { usePathname, useRouter } from '@/i18n/navigation';
 import { OfflineBanner } from '@/components/offline-banner';
+import { stopPreviewAudio } from '@/lib/preview-audio';
 import { NavigationHorsLigne } from '@/components/navigation-hors-ligne';
 
 // Routes accessibles sans authentification (contenu public en lecture seule).
@@ -52,6 +53,17 @@ export default function MainLayout({
   const pathname = usePathname();
 
   const isPublic = isPublicRoute(pathname);
+
+  /**
+   * Un extrait iTunes s'arrête quand on change de page.
+   *
+   * Chaque écran de liste devait y penser pour lui-même, et le tableau de bord ne
+   * le faisait pas : on lançait un extrait depuis son book, on ouvrait la grille,
+   * et il continuait par-dessus la lecture. La règle vit donc ici, une fois pour
+   * toutes les pages de ce groupe, plutôt que dans chacune — c'est un oubli qui se
+   * reproduit à chaque nouvelle page.
+   */
+  useEffect(() => { stopPreviewAudio(); }, [pathname]);
 
   useEffect(() => {
     if (!loading && !user && !isPublic) {

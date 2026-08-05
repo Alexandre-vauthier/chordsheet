@@ -14,7 +14,6 @@ import { useCardTilt } from '@/lib/use-card-tilt';
 
 // Réexporté : plusieurs écrans l'importaient d'ici avant que la lecture ait son
 // propre module.
-export { stopPreviewAudio };
 
 interface SheetCardProps {
   sheet: Sheet;

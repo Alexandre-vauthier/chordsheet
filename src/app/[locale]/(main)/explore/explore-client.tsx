@@ -13,7 +13,7 @@ import { fromFirestore } from '@/lib/firestore-helpers';
 import { useBookmarks } from '@/lib/use-bookmarks';
 import { useGenreLabel, useDifficultyLabel } from '@/lib/use-genre-labels';
 import { Input } from '@/components/ui/input';
-import { SheetCard, stopPreviewAudio } from '@/components/explore/sheet-card';
+import { SheetCard } from '@/components/explore/sheet-card';
 import { WelcomeBanner } from '@/components/explore/welcome-banner';
 import { GENRES, DIFFICULTY_OPTIONS, type Difficulty } from '@/types';
 import type { Sheet } from '@/types';
@@ -43,11 +43,6 @@ export function ExploreClient() {
   useEffect(() => {
     setSearchQuery(searchParams.get('q') ?? '');
   }, [searchParams]);
-
-  // Stopper la preview iTunes au démontage (navigation vers une grille)
-  useEffect(() => {
-    return () => { stopPreviewAudio(); };
-  }, []);
 
   // Filtres — initialisés depuis l'URL pour survivre au retour arrière
   const [sortBy, setSortBy] = useState<SortOption>(() => (searchParams.get('sort') as SortOption) ?? 'recent');

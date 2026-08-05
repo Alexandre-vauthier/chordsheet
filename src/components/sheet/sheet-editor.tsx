@@ -16,7 +16,7 @@ import type { CustomChordMap } from '@/components/chord';
 import { usePlayback, parseTempo, ACCOMPANIMENT_INSTRUMENTS, type PlayStyle, type PlaybackVoice } from '@/lib/use-playback';
 import { useGrooveBox } from '@/lib/use-groove-box';
 import { PlaybackInstrumentsMenu, GrooveBoxMenu } from './playback-menus';
-import { stopPreviewAudio } from '@/components/explore/sheet-card';
+import { stopPreviewAudio } from '@/lib/preview-audio';
 import { CoachMark } from './coach-mark';
 import { getChordsByInstrument, getAllExtendedChords } from '@/lib/chord-data';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
