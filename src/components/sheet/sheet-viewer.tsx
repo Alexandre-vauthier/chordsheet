@@ -21,7 +21,7 @@ import { useAuth } from '@/lib/auth-context';
 import { initialAccompaniment, swapSelectorVoice } from '@/lib/accompaniment';
 import { INSTRUMENT_CONFIG } from '@/lib/chord-data';
 import { useChordVariants } from '@/lib/use-chord-variants';
-import { playChord, playMetronomeTick, preloadInstrument } from '@/lib/chord-audio';
+import { chordDurationMs, playChord, playMetronomeTick, preloadInstrument } from '@/lib/chord-audio';
 import { transposeSections, transposeKey } from '@/lib/transpose';
 import { Link } from '@/i18n/navigation';
 import { useLocale, useTranslations } from 'next-intl';
@@ -1487,6 +1487,13 @@ function ViewerChordCell({
   })();
 
   const playableChord = displayChord;
+  /**
+   * Le rang de l'écoute en cours, pour le balayage de la case.
+   *
+   * Il sert de clé : recliquer pendant qu'il court doit le reprendre depuis la
+   * gauche, et une animation CSS ne redémarre que si son élément est remplacé.
+   */
+  const [ecoute, setEcoute] = useState(0);
   const minSpanForInline = instrumentId === 'piano' ? 1 : 0.5;
   const inlineDiagramChord = showInlineDiagram && span >= minSpanForInline ? displayChord : null;
   const numStrings = INSTRUMENT_CONFIG[instrumentId]?.strings ?? 6;
@@ -1504,14 +1511,20 @@ function ViewerChordCell({
         ...((isActive || isConcertActive) && !color ? { borderColor: 'var(--accent)' } : {}),
       }}
       className={`
-        chord-cell relative rounded-lg border-2 min-h-12 flex items-center justify-center
+        group/cell chord-cell relative rounded-lg border-2 min-h-12 flex items-center justify-center
         bg-[var(--cell-bg)] border-[var(--line)]
         ${span <= 0.5 ? 'opacity-70' : ''}
         ${isActive && !color ? 'border-[var(--accent)]' : ''}
+        ${playableChord ? 'cursor-pointer' : ''}
         print:min-h-10 print:border
       `}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onClick={playableChord ? () => {
+        playChord(playableChord, instrumentId, capo);
+        setEcoute((n) => n + 1);
+      } : undefined}
+      title={playableChord ? t('clickToListen') : undefined}
     >
       {/* Sweep animation — lecture normale */}
       {isActive && activeStep && (
@@ -1534,31 +1547,46 @@ function ViewerChordCell({
         />
       )}
 
+      {/* Balayage d'une écoute isolée : la case dit ce qu'elle fait, exactement
+          comme pendant la lecture d'une grille ou sur une page d'accord. Sa durée
+          est celle du son, pas une valeur recopiée à côté. */}
+      {ecoute > 0 && (
+        <div
+          key={ecoute}
+          className="absolute inset-0 origin-left pointer-events-none print:hidden"
+          style={{
+            background: color ? color.border.substring(0, 7) + '66' : 'rgba(200,75,47,0.13)',
+            animation: `beatSweep ${chordDurationMs(instrumentId)}ms linear forwards`,
+          }}
+          onAnimationEnd={() => setEcoute(0)}
+        />
+      )}
+
       <div className="relative z-10 flex flex-col items-center gap-1 py-1">
         <span className={`chord-name font-mono font-medium text-[var(--ink)] ${span <= 0.5 ? 'text-sm' : 'text-base'} print:text-sm`}>
           {bassRoot ? translate(bassRoot) : translate(lookupChord)}
         </span>
-        {/* Diagramme inline — cliquable pour jouer, avec overlay ▶ au survol */}
+        {/* Diagramme inline. Il ne porte plus le clic : c'est la case entière qui
+            écoute, le repère de lecture étant posé par-dessus elle. Viser le
+            dessin demandait une précision que personne n'a en jouant. */}
         {inlineDiagramChord && (
-          <div
-            className="group/play relative cursor-pointer print:hidden"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (playableChord) playChord(playableChord, instrumentId, capo);
-            }}
-            title={t('clickToListen')}
-          >
+          <div className="print:hidden">
             {!isPianoChord(inlineDiagramChord) ? (
               <ChordDiagram chord={inlineDiagramChord} size="xs" numStrings={numStrings} />
             ) : (
               <PianoKeyboard chord={inlineDiagramChord} />
             )}
-            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/play:opacity-100 transition-opacity rounded bg-[var(--ink)]/10 print:hidden">
-              <span className="text-[var(--ink)] text-xs opacity-70">▶</span>
-            </div>
           </div>
         )}
       </div>
+
+      {/* Le repère d'écoute, sur toute la case. */}
+      {playableChord && (
+        <div className="print:hidden absolute inset-0 z-20 flex items-center justify-center rounded
+          opacity-0 group-hover/cell:opacity-100 transition-opacity pointer-events-none bg-[var(--ink)]/10">
+          <span className="text-[var(--ink)] text-sm opacity-70">▶</span>
+        </div>
+      )}
 
       {span <= 0.5 && (
         <span className="absolute bottom-0.5 left-1 text-[8px] text-[var(--ink-faint)] font-mono print:hidden">
