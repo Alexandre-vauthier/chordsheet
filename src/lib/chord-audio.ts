@@ -257,6 +257,20 @@ export function startScheduledMetronome(bpm: number, beatsPerMeasure: number): (
 }
 
 // Jouer un accord complet
+/**
+ * Durée pendant laquelle un accord continue de sonner.
+ *
+ * Exportée par `chordDurationMs` : une animation qui accompagne le son doit durer
+ * ce que dure le son, et non une valeur recopiée à côté qui dériverait au premier
+ * réglage.
+ */
+const DECAY_S = { piano: 1.8, cordes: 2.2 };
+
+/** Combien de temps un accord de cet instrument reste audible, en millisecondes. */
+export function chordDurationMs(instrumentId: InstrumentId): number {
+  return DECAY_S[instrumentId === 'piano' ? 'piano' : 'cordes'] * 1000;
+}
+
 export function playChord(
   chord: StringChord | PianoChord,
   instrumentId: InstrumentId,
@@ -273,7 +287,7 @@ export function playChord(
     : getStringChordFrequencies(chord, instrumentId, capo);
 
   const strumDelay = isPiano ? 0.06 : 0.04;
-  const decay = isPiano ? 1.8 : 2.2;
+  const decay = DECAY_S[isPiano ? 'piano' : 'cordes'];
   const vol = isPiano ? 0.22 : 0.28;
 
   if (isInstrumentSoundReady(instrumentId)) {
