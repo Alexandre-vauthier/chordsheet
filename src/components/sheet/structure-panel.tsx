@@ -88,7 +88,7 @@ export function StructurePanel({
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 print:hidden" onClick={onClose}>
       <div
-        className="w-full sm:max-w-lg max-h-[85vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border p-5 flex flex-col gap-4 shadow-2xl"
+        className="w-full sm:max-w-2xl max-h-[85vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl border p-5 flex flex-col gap-4 shadow-2xl"
         style={{ background: 'var(--cream)', borderColor: 'var(--line)' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -196,7 +196,7 @@ export function StructurePanel({
                     value={entree.label ?? ''}
                     onChange={(e) => modifier(i, { label: e.target.value })}
                     placeholder={parId.get(entree.sectionId)?.label || t('untitled')}
-                    className="ml-[2.1rem] mr-1 rounded-md border px-2.5 py-1 text-xs outline-none focus:border-[var(--accent)] transition-colors"
+                    className="ml-[2.1rem] mr-1 rounded-md border px-2.5 py-1.5 text-xs font-semibold uppercase tracking-wider outline-none focus:border-[var(--accent)] transition-colors"
                     style={{ background: 'var(--cream)', borderColor: 'var(--line)', color: 'var(--ink)' }}
                     aria-label={t('passName')}
                     title={t('passNameHint')}
@@ -230,7 +230,7 @@ export function StructurePanel({
               {apercu.map((bloc, i) => (
                 <div key={i} className="flex flex-col gap-0.5">
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-xs font-semibold" style={{ color: 'var(--ink)' }}>
+                    <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--ink)' }}>
                       {bloc.label || t('untitled')}
                     </span>
                     {bloc.repeat > 1 && (
