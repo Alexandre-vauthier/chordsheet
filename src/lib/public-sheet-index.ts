@@ -32,6 +32,13 @@ export interface PublicSheetRef {
   /** Genres et niveau, pour filtrer sans requête supplémentaire. */
   genres?: string[];
   difficulty?: number | null;
+  /**
+   * Accords employés, tels qu'ils sont stockés : en minuscules.
+   *
+   * Absents des lectures ciblées, qui n'en ont pas besoin. Sert à compter les
+   * accords les plus joués sans une seconde traversée du catalogue.
+   */
+  chords?: string[];
 }
 
 /**
@@ -46,7 +53,7 @@ export const getPublicSheetIndex = cache(async (): Promise<PublicSheetRef[]> => 
     const snap = await getAdminDb()
       .collection('sheets')
       .where('isPublic', '==', true)
-      .select('title', 'artist', 'updatedAt', 'ownerId', 'groupId', 'forkedFrom', 'genres', 'difficulty')
+      .select('title', 'artist', 'updatedAt', 'ownerId', 'groupId', 'forkedFrom', 'genres', 'difficulty', 'chords')
       .limit(MAX_SHEETS)
       .get();
 
@@ -73,6 +80,7 @@ export const getPublicSheetIndex = cache(async (): Promise<PublicSheetRef[]> => 
           groupId: '',
           genres: Array.isArray(data.genres) ? (data.genres as string[]) : [],
           difficulty: typeof data.difficulty === 'number' ? data.difficulty : null,
+          chords: Array.isArray(data.chords) ? (data.chords as string[]) : [],
         };
       });
   } catch {
@@ -181,6 +189,34 @@ export const getSheetsWithChord = cache(async (chord: string, max = 12): Promise
  * La déclarer permet à quelqu'un qui cherche le nom d'un créateur de tomber dessus,
  * ce qui est exactement le canal qu'on essaie d'ouvrir.
  */
+/**
+ * Les accords les plus employés du catalogue public.
+ *
+ * Compté sur les grilles elles-mêmes, une grille comptant pour un quel que soit le
+ * nombre de fois où l'accord y revient : « présent dans quarante-six grilles » dit
+ * quelque chose, « joué trois cents fois » ne dit que la longueur des morceaux.
+ *
+ * Lu depuis l'index public plutôt que par une requête propre : les cinq pages
+ * d'instrument se construisent en deux langues, ce qui aurait fait dix traversées
+ * du catalogue à chaque déploiement pour une réponse identique.
+ *
+ * Les noms sont ceux du champ `chords`, normalisés en minuscules à l'écriture :
+ * c'est à l'appelant de les rapprocher des noms d'affichage de sa bibliothèque.
+ */
+export async function getTopChords(max = 12): Promise<{ nom: string; grilles: number }[]> {
+  const compte = new Map<string, number>();
+  for (const sheet of await getPublicSheetIndex()) {
+    for (const nom of new Set(sheet.chords ?? [])) {
+      if (nom) compte.set(nom, (compte.get(nom) ?? 0) + 1);
+    }
+  }
+
+  return [...compte.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, max)
+    .map(([nom, grilles]) => ({ nom, grilles }));
+}
+
 export const getPublicBands = cache(async (): Promise<{ id: string; updatedAt: Date | null }[]> => {
   try {
     const snap = await getAdminDb()

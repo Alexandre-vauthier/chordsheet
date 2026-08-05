@@ -442,6 +442,24 @@
         "sus": "Suspended",
         "add9": "Add9",
         "other": "Other"
+      },
+      "startTitle": "Where to start",
+      "startLead": "These are the chords that come up most often in the charts published on the site. Learning them {instrumentAt} before the rest opens up the largest part of the repertoire: the figure says how many charts each one appears in.",
+      "startCount": "These {count} chords are enough to play a good share of the catalogue. The rest of this page groups them by family, from the most common to the rarest.",
+      "aboutTitle": "The instrument",
+      "readingTitle": "Reading a diagram",
+      "reading": "Read the diagram as if the instrument were standing upright in front of you: the strings run vertically, the lowest on the left, and the horizontal bars are the frets. A dot marks a finger; a circle above a string means it rings open; a cross means it is not played. A thick bar across the top means the shape starts at the nut; otherwise the number on the left gives the fret of the first row shown. A solid bar across several strings is a barre: one finger lays them all down.",
+      "linksTitle": "Going further",
+      "linkTuner": "Tune up before you play",
+      "linkFinder": "Find a chord from its notes",
+      "linkTranspose": "Transpose a chart into another key",
+      "linkExplore": "Browse the catalogue",
+      "about": {
+        "guitar": "Six strings, tuned E A D G B E from low to high. Open shapes — the ones that let strings ring in the first few frets — are both the easiest and the loudest, which is why they come first. Barre chords follow: harder on the hand, but they slide along the neck, one shape giving twelve chords.",
+        "ukulele": "Four strings tuned G C E A, with the quirk that the top string is not the lowest: that re-entrant tuning is what gives the ukulele its sound. Most chords take one to three fingers, which makes it the quickest string instrument to get under the hands.",
+        "mandolin": "Four courses of two strings tuned in unison, G D A E like a violin. The fifth between courses makes shapes tighter than on a guitar and keeps chords close to their theoretical form: three or four notes, rarely more.",
+        "banjo": "Five strings in open G, g D G B D, the fifth being a drone attached at the fifth fret: it is not fretted in a chord shape. The diagrams in this library therefore show the four strings the fretting hand actually uses.",
+        "piano": "No neck, no fingering to work out: a piano chord is a stack of notes, and the keyboard shows it. Each page gives the exact notes to press, in the most common inversion. The same shape transposes by sliding the whole thing up or down as many semitones as needed."
       }
     },
     "chordPage": {

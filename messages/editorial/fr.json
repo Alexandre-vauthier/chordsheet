@@ -442,6 +442,24 @@
         "sus": "Suspendus",
         "add9": "Add9",
         "other": "Autres"
+      },
+      "startTitle": "Par où commencer",
+      "startLead": "Ce sont les accords qui reviennent le plus souvent dans les grilles publiées sur le site. Les apprendre {instrumentAt} avant les autres ouvre la plus grande part du répertoire : le chiffre indique dans combien de grilles chacun apparaît.",
+      "startCount": "Ces {count} accords suffisent à jouer une bonne partie du catalogue. Le reste de la page les range par famille, du plus courant au plus rare.",
+      "aboutTitle": "L'instrument",
+      "readingTitle": "Lire un diagramme",
+      "reading": "Le diagramme se lit comme si l'instrument était posé debout devant vous : les cordes sont verticales, la plus grave à gauche, et les barres horizontales sont les frettes. Un point marque un doigt posé, un rond au-dessus d'une corde qu'elle se joue à vide, une croix qu'elle ne se joue pas. Un trait épais tout en haut signale que la position part du sillet ; sinon, le chiffre à gauche donne la case de la première ligne affichée. Une barre pleine sur plusieurs cordes est un barré : un seul doigt les couche toutes.",
+      "linksTitle": "Pour aller plus loin",
+      "linkTuner": "S'accorder avant de jouer",
+      "linkFinder": "Trouver un accord à partir de ses notes",
+      "linkTranspose": "Transposer une grille dans une autre tonalité",
+      "linkExplore": "Parcourir les grilles du catalogue",
+      "about": {
+        "guitar": "Six cordes, accordées mi la ré sol si mi du grave à l'aigu. Les positions dites ouvertes, celles qui laissent sonner des cordes à vide dans les premières cases, sont les plus faciles et les plus sonores : ce sont elles qu'on apprend d'abord. Viennent ensuite les barrés, qui coûtent plus à la main mais se déplacent le long du manche, un même geste donnant douze accords.",
+        "ukulele": "Quatre cordes en sol do mi la, avec la particularité que la corde la plus haute n'est pas la plus grave : c'est ce qu'on appelle un accordage rentrant, et il donne au ukulélé son timbre reconnaissable. La plupart des accords se posent avec un à trois doigts, ce qui en fait l'instrument à cordes le plus rapide à mettre en main.",
+        "mandolin": "Quatre chœurs de deux cordes accordés à l'unisson, en sol ré la mi comme un violon. La quinte entre chaque chœur rend les positions plus resserrées qu'à la guitare et rapproche les accords de leur forme théorique : trois ou quatre sons, rarement plus.",
+        "banjo": "Cinq cordes en sol ouvert, sol ré sol si ré, dont la cinquième est une chanterelle attachée à la cinquième case : elle ne se frette pas dans une position d'accord et sert de bourdon. Les diagrammes de cette bibliothèque montrent donc les quatre cordes que la main gauche emploie réellement.",
+        "piano": "Pas de manche ni de doigté à trouver : un accord au piano est un empilement de notes, et c'est le clavier qui le montre. Chaque page indique les notes exactes à enfoncer, du renversement le plus courant. La même position se transpose en glissant l'ensemble d'autant de demi-tons que nécessaire."
       }
     },
     "chordPage": {

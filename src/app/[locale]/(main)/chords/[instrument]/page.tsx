@@ -15,6 +15,7 @@ import {
 import { CHORD_CATEGORIES, getChordsByInstrument } from '@/lib/chord-data';
 import type { InstrumentId } from '@/types';
 import { getInstrumentNames } from '@/lib/instrument-names';
+import { InstrumentEditorial } from './instrument-editorial';
 
 interface PageProps {
   params: Promise<{ locale: string; instrument: string }>;
@@ -125,6 +126,12 @@ export default async function ChordInstrumentPage({ params }: PageProps) {
           ))}
         </ul>
       </section>
+
+      {/* Le fond éditorial de la page : par où commencer, comment lire un
+          diagramme, ce que l'instrument a de particulier. Sous les listes, parce
+          qu'on vient d'abord chercher un accord — mais il fallait qu'il existe :
+          une liste de liens ne pèse rien sur « accords guitare ». */}
+      <InstrumentEditorial locale={locale} instrument={instrument} forms={forms} />
 
       <JsonLd
         data={breadcrumbSchema(
