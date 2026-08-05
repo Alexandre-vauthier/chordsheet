@@ -1590,12 +1590,17 @@ function ViewerChordCell({
       {playableChord && (
         <div className="print:hidden absolute inset-0 z-20 flex items-center justify-center rounded
           opacity-0 group-hover/cell:opacity-100 transition-opacity pointer-events-none bg-[var(--ink)]/20">
-          <span className={`rounded-full bg-[var(--accent)] text-white flex items-center justify-center shadow-md
-            ${span <= 0.5 ? 'w-7 h-7' : 'w-9 h-9'}`}>
-            <svg className={`ml-0.5 ${span <= 0.5 ? 'w-3.5 h-3.5' : 'w-4 h-4'}`} viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-              <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
-            </svg>
-          </span>
+          {/* Le triangle nu, en accent, et grand. Le rond plein qu'on avait
+              d'abord se confondait avec un point de doigt sur le diagramme. */}
+          <svg
+            className={`text-[var(--accent)] drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)]
+              ${span <= 0.5 ? 'w-8 h-8' : 'w-12 h-12'}`}
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+          </svg>
         </div>
       )}
 
