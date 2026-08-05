@@ -92,8 +92,6 @@ body {
 }
 .animate-play-invite {
   animation: playInvite 2.2s ease-out infinite;
-  border-color: var(--accent);
-  color: var(--accent);
 }
 @media (prefers-reduced-motion: reduce) {
   .animate-play-invite { animation: none; }

@@ -148,6 +148,18 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
    */
   const visiteur = !authEnCours && !user;
 
+  /**
+   * Comment se marque un réglage actif dans la barre de lecture.
+   *
+   * Rempli en accent pour un utilisateur connu, qui lit sa barre d'un coup d'œil.
+   * Chez un visiteur, seul le Play porte l'accent plein : trois boutons oranges
+   * côte à côte se valent, et plus rien ne dit par où commencer. Un réglage actif
+   * s'y marque donc d'un contour, pas d'un aplat.
+   */
+  const styleActif = visiteur
+    ? 'bg-[var(--cell-bg)] border-[var(--accent)] text-[var(--accent)]'
+    : 'bg-[var(--accent)] border-[var(--accent)] text-white';
+
   /** L'onde sur le bouton Play, tant que le visiteur n'a pas lancé la lecture. */
   const [inviteLecture, setInviteLecture] = useState(false);
 
@@ -689,7 +701,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   className={`
                     relative flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
                     ${metronomeEnabled
-                      ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                      ? styleActif
                       : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
                     }
                   `}
@@ -741,7 +753,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   className={`
                     flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
                     ${grooveEnabled
-                      ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                      ? styleActif
                       : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
                     }
                   `}
@@ -830,7 +842,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   className={`
                     relative flex items-center justify-center w-9 h-9 rounded-lg border-[1.5px] transition-all duration-150
                     ${accompCount > 0
-                      ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                      ? styleActif
                       : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
                     }
                   `}
@@ -913,7 +925,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 className={`
                   flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm
                   transition-all duration-150 border-[1.5px]
-                  ${isPlaying || countBeat > 0
+                  ${isPlaying || countBeat > 0 || visiteur
                     ? 'bg-[var(--accent)] border-[var(--accent)] text-white hover:bg-[#a83d25]'
                     : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
                   }
@@ -1322,8 +1334,10 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
         })}
       </div>
 
-      {/* Suivi micro (suivi de position + défilement) — bouton flottant */}
-      {instrumentId !== 'voice' && (
+      {/* Suivi micro (suivi de position + défilement) — bouton flottant.
+          Masqué au visiteur : il suppose un instrument en main et un micro
+          autorisé, et il concurrence le Play, qui doit rester seul en avant. */}
+      {instrumentId !== 'voice' && !visiteur && (
         <LiveChordFollow
           sequence={followSequence}
           onActiveRowsChange={setRecActiveRows}
