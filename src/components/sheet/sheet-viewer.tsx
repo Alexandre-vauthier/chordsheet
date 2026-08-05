@@ -24,10 +24,11 @@ import { useChordVariants } from '@/lib/use-chord-variants';
 import { playChord, playMetronomeTick, preloadInstrument } from '@/lib/chord-audio';
 import { transposeSections, transposeKey } from '@/lib/transpose';
 import { Link } from '@/i18n/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { useGenreLabel } from '@/lib/use-genre-labels';
 import { LiveChordFollow, type ActiveRow } from './live-chord-follow';
 import { useWakeLock } from '@/lib/use-wake-lock';
+import { traduireLibelle } from '@/lib/section-dictionary';
 import { cleMesure, deroulerStructure, positionCellule, positionMesure, structureUtile } from '@/lib/sheet-structure';
 
 const LS_KEY = 'chordsheet_instrument';
@@ -127,6 +128,9 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
 
   const t = useTranslations('SheetViewer');
   const tStruct = useTranslations('Structure');
+  // Les titres de section sont des données d'auteur : rien ne les traduisait, et
+  // une grille française affichait « Couplet » à un lecteur anglophone.
+  const locale = useLocale();
   const tGroove = useTranslations('GroovePatterns');
   const genreLabel = useGenreLabel();
   const translate = useChordNotation();
@@ -1149,7 +1153,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             {/* Header de section */}
             <div className="flex items-center gap-3 mb-3">
               <span className="text-sm font-semibold uppercase tracking-wider text-[var(--ink)]">
-                {bloc.label}
+                {traduireLibelle(bloc.label, locale)}
               </span>
               {bloc.repeat > 1 && !isLastSectionRepeat && (
                 /* Même traitement que la répétition de mesure : le compteur clignote
@@ -1163,7 +1167,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               )}
               {(isDuplicate || isDuplicateForPrint) && firstLabel && (
                 <span className="hidden print:inline text-sm text-[var(--ink-light)] italic">
-                  = {firstLabel}
+                  = {traduireLibelle(firstLabel, locale)}
                 </span>
               )}
               <button
