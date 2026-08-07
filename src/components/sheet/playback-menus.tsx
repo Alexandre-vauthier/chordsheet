@@ -1,23 +1,12 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { InstrumentId } from '@/types';
 import { INSTRUMENT_CONFIG } from '@/lib/chord-data';
 import { ACCOMPANIMENT_INSTRUMENTS, type PlayStyle } from '@/lib/use-playback';
 import { PATTERN_DEFS } from '@/lib/use-groove-box';
-
-function useClickOutside(onClose: () => void) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    function onClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
-    }
-    document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
-  }, [onClose]);
-  return ref;
-}
+import { useClickOutside } from '@/lib/use-click-outside';
 
 const musicIcon = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">

@@ -9,6 +9,7 @@ import { useChordNotation } from '@/lib/use-chord-notation';
 import { useChordColor } from '@/lib/use-chord-color';
 import { parseChordInput } from '@/lib/chord-data';
 import { CoachMark } from './coach-mark';
+import { useClickOutside } from '@/lib/use-click-outside';
 
 interface BeatCellProps {
   cell: Cell;
@@ -90,7 +91,7 @@ export function BeatCell({
     }
   };
   const inputRef = useRef<HTMLInputElement>(null);
-  const cellRef = useRef<HTMLDivElement>(null);
+  const cellRef = useClickOutside<HTMLDivElement>(() => setShowDiagram(false), showDiagram);
 
   useEffect(() => {
     if (!isEditing) setValue(cell.chord);
@@ -102,19 +103,6 @@ export function BeatCell({
       inputRef.current.select();
     }
   }, [isEditing]);
-
-  // Fermer le diagramme quand on clique ailleurs
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (cellRef.current && !cellRef.current.contains(e.target as Node)) {
-        setShowDiagram(false);
-      }
-    };
-    if (showDiagram) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showDiagram]);
 
   // Valeur canonique : normalise les vieilles données stockées en FR+xN, puis traduit
   // Pour la basse, affiche uniquement la fondamentale (ex: Cmaj7 → C)

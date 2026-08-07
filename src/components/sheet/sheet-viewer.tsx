@@ -29,6 +29,7 @@ import { useGenreLabel } from '@/lib/use-genre-labels';
 import { LiveChordFollow, type ActiveRow } from './live-chord-follow';
 import { useWakeLock } from '@/lib/use-wake-lock';
 import { traduireLibelle } from '@/lib/section-dictionary';
+import { useClickOutside } from '@/lib/use-click-outside';
 import { garderPourPlusTard } from '@/lib/pending-bookmark';
 import { cleMesure, deroulerStructure, positionCellule, positionMesure, structureUtile } from '@/lib/sheet-structure';
 
@@ -197,11 +198,11 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   // de la grille). undefined = automatique selon les genres.
   const [livePattern, setLivePattern] = useState<string | undefined>(sheet.groovePattern);
   const [grooveMenuOpen, setGrooveMenuOpen] = useState(false);
-  const grooveMenuRef = useRef<HTMLDivElement>(null);
+  const grooveMenuRef = useClickOutside<HTMLDivElement>(() => setGrooveMenuOpen(false), grooveMenuOpen);
   // Métronome et décompte de départ sont regroupés sous un seul bouton-menu :
   // deux réglages liés, qui n'agissent qu'au démarrage de la lecture.
   const [metroMenuOpen, setMetroMenuOpen] = useState(false);
-  const metroMenuRef = useRef<HTMLDivElement>(null);
+  const metroMenuRef = useClickOutside<HTMLDivElement>(() => setMetroMenuOpen(false), metroMenuOpen);
   // Prévisualisation d'un pattern : réutilise le même useGrooveBox (2 mesures puis stop).
   const [previewPattern, setPreviewPattern] = useState<string | null>(null);
   const previewTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -263,7 +264,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   }
 
   const [accompMenuOpen, setAccompMenuOpen] = useState(false);
-  const accompMenuRef = useRef<HTMLDivElement>(null);
+  const accompMenuRef = useClickOutside<HTMLDivElement>(() => setAccompMenuOpen(false), accompMenuOpen);
 
   const toggleAccompaniment = (inst: InstrumentId) => {
     setAccompaniment((prev) => {
@@ -284,16 +285,6 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
 
   // Précharger le son de chaque instrument d'accompagnement
   useEffect(() => { accompVoices.forEach((v) => preloadInstrument(v.id)); }, [accompVoices]);
-
-  // Fermer le menu au clic extérieur
-  useEffect(() => {
-    if (!accompMenuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (accompMenuRef.current && !accompMenuRef.current.contains(e.target as Node)) setAccompMenuOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [accompMenuOpen]);
 
   const [countInEnabled, setCountInEnabled] = useState(() => user?.defaultCountIn ?? false);
   const [countBeat, setCountBeat] = useState(0); // 0 = inactif, 1-4 = décompte
@@ -468,25 +459,6 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
 
   useEffect(() => () => { if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current); }, []);
   useEffect(() => { if (isPlaying) setPreviewPattern(null); }, [isPlaying]);
-  // Fermer le menu de pattern au clic extérieur
-  useEffect(() => {
-    if (!grooveMenuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (grooveMenuRef.current && !grooveMenuRef.current.contains(e.target as Node)) setGrooveMenuOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [grooveMenuOpen]);
-
-  useEffect(() => {
-    if (!metroMenuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (metroMenuRef.current && !metroMenuRef.current.contains(e.target as Node)) setMetroMenuOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [metroMenuOpen]);
-
   useGrooveBox({
     // Le même point de départ que les accords : sans lui, la batterie commençait
     // quand son effet s'exécutait, après le premier accord.

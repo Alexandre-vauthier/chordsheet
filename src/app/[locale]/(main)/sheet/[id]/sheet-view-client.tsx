@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { doc, getDoc, updateDoc, increment, deleteDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
@@ -18,6 +18,7 @@ import { RatingStars } from '@/components/sheet/rating-stars';
 
 import type { Sheet } from '@/types';
 import { Link, useRouter } from '@/i18n/navigation';
+import { useClickOutside } from '@/lib/use-click-outside';
 
 interface SheetViewClientProps {
   id: string;
@@ -113,7 +114,7 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
   const [commentInvite, setCommentInvite] = useState(false);
   const [pendingRating, setPendingRating] = useState<1 | 2 | 3 | 4 | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const menuRef = useClickOutside<HTMLDivElement>(() => setMenuOpen(false), menuOpen);
   const { openAddTo } = useAddToCollection();
   const comments = useSheetComments(sheet?.id, sheet?.ownerId, sheet?.title);
 
@@ -293,18 +294,6 @@ export function SheetViewClient({ id, initialSheet }: SheetViewClientProps) {
   }, [comments.hasCommented, pendingRating, applyRating]);
 
   const sheetIsBookmarked = sheet?.id ? isBookmarked(sheet.id) : false;
-
-  // Fermer le menu "..." au clic extérieur
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [menuOpen]);
 
   if (loading) {
     return (

@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useLiveSession } from '@/lib/live-session-context';
 import { useAuth } from '@/lib/auth-context';
 import { useSearchSuggestions } from '@/lib/use-search-suggestions';
+import { useClickOutside } from '@/lib/use-click-outside';
 
 export function LiveSessionBanner() {
   const t = useTranslations('LiveSession');
@@ -13,19 +14,10 @@ export function LiveSessionBanner() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
   const { sheets, sheetsByArtist, loading } = useSearchSuggestions(query);
-  const searchRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!searchOpen) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setSearchOpen(false);
-        setQuery('');
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [searchOpen]);
+  const searchRef = useClickOutside<HTMLDivElement>(() => {
+    setSearchOpen(false);
+    setQuery('');
+  }, searchOpen);
 
   if (!session) return null;
 

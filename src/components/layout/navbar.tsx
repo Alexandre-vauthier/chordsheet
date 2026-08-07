@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 
@@ -15,6 +15,7 @@ import { BrandLogo } from './brand-logo';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { LanguageSwitcher } from './language-switcher';
 import { NotificationBell } from './notification-bell';
+import { useClickOutside } from '@/lib/use-click-outside';
 
 type SearchResult =
   | { kind: 'sheet'; key: string; sheet: Sheet }
@@ -43,22 +44,12 @@ export function Navbar() {
   const [searchFocused, setSearchFocused] = useState(false);
   const [activeSuggestion, setActiveSuggestion] = useState(-1);
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const profileMenuRef = useRef<HTMLDivElement>(null);
+  const profileMenuRef = useClickOutside<HTMLDivElement>(() => setProfileMenuOpen(false), profileMenuOpen);
 
   const debouncedSearch = useDebouncedValue(searchValue);
   const { sheets: sheetMatches, artistNames: artistMatches } = useSearchSuggestions(debouncedSearch);
   const suggestions = toSearchResults(sheetMatches, artistMatches);
   const showSuggestions = searchFocused && debouncedSearch.trim().length >= 2;
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
-        setProfileMenuOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const handleSignOut = async () => {
     setProfileMenuOpen(false);

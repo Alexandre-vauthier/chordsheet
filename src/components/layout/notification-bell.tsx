@@ -1,25 +1,18 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { useNotifications, type AppNotification } from '@/lib/use-notifications';
+import { useClickOutside } from '@/lib/use-click-outside';
 
 export function NotificationBell() {
   const t = useTranslations('Notifications');
   const locale = useLocale();
   const { items, unreadCount, markRead, markAllRead } = useNotifications();
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
-
-  useEffect(() => {
-    function onClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener('mousedown', onClick);
-    return () => document.removeEventListener('mousedown', onClick);
-  }, []);
+  const ref = useClickOutside<HTMLDivElement>(() => setOpen(false), open);
 
   const openItem = (n: AppNotification) => {
     markRead(n.id);

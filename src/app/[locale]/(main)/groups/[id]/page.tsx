@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef, use } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useTranslations } from 'next-intl';
 import { useInstrumentLabel } from '@/lib/use-genre-labels';
 import { useAddToCollection } from '@/lib/add-to-collection-context';
@@ -19,6 +19,7 @@ import { useArtwork } from '@/lib/use-artwork';
 import { PhotoPicker } from '@/components/ui/photo-picker';
 import { groupPhotoPath } from '@/lib/upload-image';
 import type { Group, GroupRole, Sheet, NewSheet, Set, InstrumentId } from '@/types';
+import { useClickOutside } from '@/lib/use-click-outside';
 
 interface MemberInfo {
   id: string;
@@ -62,16 +63,7 @@ function SheetRow({
   const { artworkUrl } = useArtwork(sheet.artist, sheet.title);
   const { openAddTo } = useAddToCollection();
   const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [menuOpen]);
+  const menuRef = useClickOutside<HTMLDivElement>(() => setMenuOpen(false), menuOpen);
 
   return (
     <div className="flex items-center gap-3 px-3 py-2.5 bg-[var(--cell-bg)] border border-[var(--line)] rounded-lg">
