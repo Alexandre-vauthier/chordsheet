@@ -8,6 +8,7 @@ import { useTranslations } from 'next-intl';
 import { collection, query, where, getDocs, limit, deleteDoc, doc } from 'firebase/firestore';
 import { useAuth } from '@/lib/auth-context';
 import { sheetHasChord } from '@/lib/sheet-chords';
+import { accordsDeLUrl, jouablesAvec } from '@/lib/explore-shelves';
 import { getDb } from '@/lib/firebase';
 import { fromFirestore } from '@/lib/firestore-helpers';
 import { useBookmarks } from '@/lib/use-bookmarks';
@@ -29,6 +30,7 @@ const ADMIN_SHOW_PENDING_KEY = 'explore_admin_show_pending';
 export function ExploreClient({
   initialSheets,
   decouverte,
+  avecHero,
 }: {
   initialSheets: Sheet[];
   /**
@@ -40,6 +42,14 @@ export function ExploreClient({
    * côté navigateur, et la page serait redevenue vide pour les moteurs.
    */
   decouverte?: React.ReactNode;
+  /**
+   * Le hero occupe déjà le titre de premier niveau au-dessus.
+   *
+   * Deux `h1` sur une page brouillent le plan qu'en lisent les lecteurs d'écran
+   * et les moteurs. Quand la découverte est là, le catalogue n'est plus la page :
+   * c'en est une section, et il le dit.
+   */
+  avecHero?: boolean;
 }) {
   const t = useTranslations('Explore');
   const genreLabel = useGenreLabel();
@@ -77,6 +87,17 @@ export function ExploreClient({
   // Décennie : filtre volontairement ÉPHÉMÈRE (pas dans l'URL) — il ne doit pas
   // persister quand on revient sur Explore, contrairement au genre (liens externes).
   const [selectedDecade, setSelectedDecade] = useState<number | null>(null);
+  /**
+   * Les accords qu'on sait jouer, tels que le hero les a transmis.
+   *
+   * Lu dans l'URL et non porté par un état : c'est le hero qui décide, la page
+   * ne fait qu'obéir. Une seule source, donc pas de dérive possible entre ce que
+   * la question annonce et ce que le catalogue montre.
+   */
+  const accordsConnus = useMemo(
+    () => accordsDeLUrl(searchParams.get('chords') ?? undefined),
+    [searchParams],
+  );
   // Toggles admin : afficher/masquer les grilles publiques, privées et à valider (visible ⇒ true par défaut).
   // Défaut à true côté serveur pour éviter un écart d'hydratation ; la préférence
   // stockée est relue au montage juste après.
@@ -258,6 +279,12 @@ export function ExploreClient({
       );
     }
 
+    // Jouables avec les accords annoncés par le hero.
+    if (accordsConnus.length > 0) {
+      result = jouablesAvec(result.map((sheet) => ({ sheet, chords: sheet.chords })), accordsConnus)
+        .map((x) => x.sheet);
+    }
+
     // Filtre par accord (admin uniquement)
     if (isAdmin && chordQuery.trim()) {
       result = result.filter((sheet) => sheetHasChord(sheet, chordQuery));
@@ -332,7 +359,7 @@ export function ExploreClient({
     router.replace('/explore', { scroll: false });
   };
 
-  const hasActiveFilters = searchQuery || selectedGenre || selectedDifficulty || selectedDecade || sortBy !== 'recent' || !showPublic || !showPrivate || !showPending;
+  const hasActiveFilters = accordsConnus.length > 0 || searchQuery || selectedGenre || selectedDifficulty || selectedDecade || sortBy !== 'recent' || !showPublic || !showPrivate || !showPending;
 
   const handleRandom = () => {
     if (sheets.length === 0) return;
@@ -344,9 +371,17 @@ export function ExploreClient({
     <div className="max-w-[1270px] mx-auto px-4 sm:px-6 py-8">
       <WelcomeBanner />
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-[var(--ink)]">{t('title')}</h1>
+        {avecHero
+          ? (
+            <h2 className="text-2xl font-bold text-[var(--ink)]">
+              {/* Sous le hero, la section répond à sa question quand il en a posé
+                  une : l'annoncer « tout le catalogue » serait faux. */}
+              {accordsConnus.length > 0 ? t('catalogueFiltered') : t('catalogueTitle')}
+            </h2>
+          )
+          : <h1 className="text-2xl font-bold text-[var(--ink)]">{t('title')}</h1>}
         <p className="text-[var(--ink-light)] mt-1">
-          {t('subtitle')}
+          {!avecHero && t('subtitle')}
           {sheets.length > 0 && ` ${t('subtitleCount', { count: sheets.length })}`}
           {groupedResults.length > 0 && groupedResults.length < sheets.length && ` · ${t('subtitleUniqueTitles', { count: groupedResults.length })}`}
         </p>

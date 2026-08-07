@@ -360,7 +360,16 @@
       "thisWeek": "Added this week",
       "threeChords": "Three chords are enough",
       "noBarre": "No barre chords"
-    }
+    },
+    "heroTitle": "What can you play?",
+    "heroSubtitle": "Tick the chords you know, we tell you what you can already play.",
+    "heroPickOne": "Tick a chord to start.",
+    "heroPlayable": "{count, plural, =0 {No sheet with those {chords} chords} one {# sheet with your {chords} chords} other {# sheets with your {chords} chords}}",
+    "heroNext": "Learn {chord} and you unlock {count, plural, one {# more} other {# more}}.",
+    "heroSee": "See {count, plural, one {the sheet} other {all # sheets}}",
+    "chordFilter": "Playable with {chords}",
+    "catalogueTitle": "The whole catalogue",
+    "catalogueFiltered": "Sheets you can play"
   },
   "SheetViewer": {
     "pauseSample": "Pause preview",

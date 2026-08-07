@@ -360,7 +360,16 @@
       "thisWeek": "Arrivées cette semaine",
       "threeChords": "Trois accords suffisent",
       "noBarre": "Sans barré"
-    }
+    },
+    "heroTitle": "Que savez-vous jouer ?",
+    "heroSubtitle": "Cochez vos accords, on vous dit ce que vous pouvez déjà jouer.",
+    "heroPickOne": "Cochez un accord pour commencer.",
+    "heroPlayable": "{count, plural, =0 {Aucune grille avec ces {chords} accords} one {# grille avec vos {chords} accords} other {# grilles avec vos {chords} accords}}",
+    "heroNext": "Apprenez {chord} et vous en débloquez {count, plural, one {# de plus} other {# de plus}}.",
+    "heroSee": "Voir {count, plural, one {la grille} other {les # grilles}}",
+    "chordFilter": "Jouables avec {chords}",
+    "catalogueTitle": "Tout le catalogue",
+    "catalogueFiltered": "Les grilles que vous pouvez jouer"
   },
   "SheetViewer": {
     "pauseSample": "Pause l'extrait",

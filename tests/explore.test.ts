@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   jouablesAvec, prochainAccord, accordsLesPlusJoues,
   rayonsDe, portesDe, artistesDe,
-  TAILLE_RAYON, SEUIL_PORTE, ACCORDS_BARRES, filtreActif,
+  TAILLE_RAYON, SEUIL_PORTE, ACCORDS_BARRES, filtreActif, accordsDeLUrl,
 } from '@/lib/explore-shelves';
 import type { PublicSheetRef } from '@/lib/public-sheet-index';
 
@@ -282,4 +282,25 @@ test('un paramètre répété est lu quand même', () => {
 
 test('un paramètre étranger ne déclenche rien', () => {
   assert.equal(filtreActif({ utm_source: 'newsletter' }), false);
+});
+
+/**
+ * Le hero pose la question dont `?chords=` est la réponse : il doit rester à
+ * l'écran quand elle est posée, sinon on ne peut plus cocher un accord de plus.
+ * Les rayons, eux, s'effacent — on ne flâne plus une fois qu'on cherche.
+ */
+test('les accords effacent les rayons mais pas le hero', () => {
+  assert.equal(filtreActif({ chords: 'g,c,d' }), true, 'les rayons s’effacent');
+  assert.equal(filtreActif({ chords: 'g,c,d' }, { ignorerAccords: true }), false, 'le hero reste');
+});
+
+test('un autre filtre efface le hero, même avec des accords', () => {
+  assert.equal(filtreActif({ chords: 'g,c', genre: 'Rock' }, { ignorerAccords: true }), true);
+});
+
+test('les accords de l’URL se lisent dans leur forme comparable', () => {
+  assert.deepEqual(accordsDeLUrl('G, c ,Am'), ['g', 'c', 'am']);
+  assert.deepEqual(accordsDeLUrl(undefined), []);
+  assert.deepEqual(accordsDeLUrl(',,'), []);
+  assert.deepEqual(accordsDeLUrl(['g,c', 'd']), ['g', 'c'], 'un paramètre répété : le premier');
 });

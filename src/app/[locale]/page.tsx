@@ -9,6 +9,7 @@ import { useTranslations } from 'next-intl';
 import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
 import { useArtwork } from '@/lib/use-artwork';
+import { ColonneDefilante, type CouvertureMini } from '@/components/explore/artwork-wall';
 import { playPreviewAudio, stopPreviewAudio } from '@/lib/preview-audio';
 import { useCardTilt } from '@/lib/use-card-tilt';
 import { useAuth } from '@/lib/auth-context';
@@ -53,44 +54,23 @@ function WhenNear({ children }: { children: React.ReactNode }) {
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 
-interface MiniSheet { id: string; title: string; artist: string; }
+type MiniSheet = CouvertureMini;
+
+/**
+ * Où mène une pochette du mur.
+ *
+ * Les remplissages (`ph-…`) ne désignent aucune grille : ils renvoient à la
+ * découverte plutôt que vers une page qui n'existe pas.
+ */
+const lienDeCouverture = (sheet: MiniSheet) =>
+  sheet.id.startsWith('ph-') ? '/explore' : `/sheet/${sheet.id}`;
 
 /* ── Carte de fond ────────────────────────────────────────────────── */
+// La carte et la colonne défilantes vivent désormais dans
+// `@/components/explore/artwork-wall` : le hero de la découverte s'en sert
+// aussi, et deux versions du même mur auraient divergé au premier ajustement.
 // Les titres/artistes affichés (placeholders ou grilles réelles) sont du contenu
 // utilisateur — jamais traduits, quelle que soit la langue de l'interface.
-
-function LandingCard({ sheet }: { sheet: MiniSheet }) {
-  const { artworkUrl } = useArtwork(sheet.artist || undefined, sheet.title || undefined);
-  const isPlaceholder = sheet.id.startsWith('ph-');
-
-  return (
-    <Link
-      href={isPlaceholder ? '/explore' : `/sheet/${sheet.id}`}
-      className="relative block aspect-square rounded-2xl overflow-hidden mb-3 flex-shrink-0"
-    >
-      {artworkUrl ? (
-        <img src={artworkUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
-      ) : (
-        <div className="absolute inset-0 bg-white/[0.04] flex items-center justify-center">
-          <span className="text-white/10 text-5xl font-serif select-none">♪</span>
-        </div>
-      )}
-      <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/60 to-transparent" />
-      <div className="absolute bottom-0 left-0 right-0 px-2.5 pt-2 pb-2.5 overflow-hidden rounded-b-2xl">
-        {artworkUrl && (
-          <>
-            <img src={artworkUrl} aria-hidden="true" className="absolute inset-0 w-full h-full object-cover scale-150 blur-[15px] opacity-90 pointer-events-none select-none" />
-            <div className="absolute inset-0 bg-black/45 pointer-events-none" />
-          </>
-        )}
-        <div className="relative z-10">
-          <p className="text-white font-bold text-xs leading-tight line-clamp-2">{sheet.title || '—'}</p>
-          {sheet.artist && <p className="text-white/65 text-[10px] truncate mt-0.5">{sheet.artist}</p>}
-        </div>
-      </div>
-    </Link>
-  );
-}
 
 /* ── Tuile de fonctionnalité ──────────────────────────────────────── */
 
@@ -237,16 +217,6 @@ function BookRow({ title, artist, mine, tag }: { title: string; artist: string; 
   );
 }
 
-function ScrollColumn({ sheets, duration, offsetPx = 0 }: { sheets: MiniSheet[]; duration: number; offsetPx?: number }) {
-  const doubled = [...sheets, ...sheets];
-  return (
-    <div className="flex-1 overflow-hidden" style={{ paddingTop: `${offsetPx}px` }}>
-      <div style={{ animation: `scrollUp ${duration}s linear infinite` }}>
-        {doubled.map((s, i) => <LandingCard key={`${s.id}-${i}`} sheet={s} />)}
-      </div>
-    </div>
-  );
-}
 
 /* ── Navbar ───────────────────────────────────────────────────────── */
 
@@ -397,13 +367,13 @@ export default function Home() {
 
         {/* Grilles défilantes */}
         <div className="absolute inset-0 flex gap-3 px-3 select-none opacity-55">
-          <ScrollColumn sheets={cols[0]} duration={60} offsetPx={-80} />
-          <ScrollColumn sheets={cols[1]} duration={78} offsetPx={0} />
+          <ColonneDefilante sheets={cols[0]} duree={60} decalage={-80} libelle hrefDe={lienDeCouverture} />
+          <ColonneDefilante sheets={cols[1]} duree={78} decalage={0} libelle hrefDe={lienDeCouverture} />
           <div className="hidden sm:block flex-1 overflow-hidden" style={{ paddingTop: '-140px' }}>
-            <ScrollColumn sheets={cols[2]} duration={95} offsetPx={-140} />
+            <ColonneDefilante sheets={cols[2]} duree={95} decalage={-140} libelle hrefDe={lienDeCouverture} />
           </div>
           <div className="hidden md:block flex-1 overflow-hidden">
-            <ScrollColumn sheets={cols[3]} duration={68} offsetPx={-50} />
+            <ColonneDefilante sheets={cols[3]} duree={68} decalage={-50} libelle hrefDe={lienDeCouverture} />
           </div>
         </div>
 

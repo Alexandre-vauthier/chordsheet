@@ -253,6 +253,9 @@ export function fromFirestore(
     averageRating: (data.averageRating as number) ?? null,
     ratingCount: (data.ratingCount as number) || 0,
     bookmarkCount: (data.bookmarkCount as number) || 0,
+    // Déposé par `toFirestore` : on le relit tel quel plutôt que de refouiller
+    // les sections pour retrouver ce qui est déjà écrit à côté.
+    chords: Array.isArray(data.chords) ? (data.chords as string[]) : undefined,
     // V5 - Métrique globale
     beatsPerMeasure: (data.beatsPerMeasure as BeatsPerMeasure) || undefined,
     // V6 - Unité de tempo

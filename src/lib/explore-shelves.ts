@@ -28,13 +28,34 @@ import type { Sheet } from '@/types';
  * `sort=recent` ne compte pas : c'est l'ordre par défaut, et une URL qui le
  * nomme explicitement demande la même chose qu'une URL nue.
  */
-export function filtreActif(params: Record<string, string | string[] | undefined>): boolean {
+export function filtreActif(
+  params: Record<string, string | string[] | undefined>,
+  options?: {
+    /**
+     * Ne pas compter les accords.
+     *
+     * Le hero pose la question dont `?chords=` est la réponse : il doit rester à
+     * l'écran quand elle est posée, sinon on ne peut plus cocher un accord de
+     * plus pour voir ce qu'il ouvre. Les rayons, eux, s'effacent — on ne flâne
+     * plus une fois qu'on cherche.
+     */
+    ignorerAccords?: boolean;
+  },
+): boolean {
   const lire = (cle: string) => {
     const v = params[cle];
     return (Array.isArray(v) ? v[0] : v)?.trim() ?? '';
   };
   if (lire('sort') && lire('sort') !== 'recent') return true;
-  return ['q', 'genre', 'difficulty', 'decade', 'key'].some((cle) => lire(cle) !== '');
+  const cles = ['q', 'genre', 'difficulty', 'decade', 'key'];
+  if (!options?.ignorerAccords) cles.push('chords');
+  return cles.some((cle) => lire(cle) !== '');
+}
+
+/** Les accords transmis par l'URL, dans leur forme comparable. */
+export function accordsDeLUrl(valeur: string | string[] | undefined): string[] {
+  const brut = Array.isArray(valeur) ? valeur[0] : valeur;
+  return (brut ?? '').split(',').map((c) => c.trim().toLowerCase()).filter(Boolean);
 }
 
 /**
@@ -73,6 +94,8 @@ export function versGrilleDeCatalogue(r: PublicSheetRef): Sheet {
     averageRating: r.averageRating ?? null,
     ratingCount: r.ratingCount ?? 0,
     bookmarkCount: 0,
+    // Le catalogue filtre sur les accords quand le hero lui en transmet.
+    chords: r.chords ?? [],
   };
 }
 
@@ -123,8 +146,17 @@ export const ACCORDS_BARRES = new Set([
   'c#m', 'cm', 'gm', 'g#m', 'ab', 'eb', 'ebm', 'abm',
 ]);
 
+/**
+ * Ce qu'il faut savoir d'une grille pour dire si on peut la jouer.
+ *
+ * Le hero tourne dans le navigateur et n'a pas besoin de l'index complet : lui
+ * envoyer les titres, les vues et les genres pour compter des accords ferait
+ * voyager dix fois le nécessaire.
+ */
+export type GrilleAccords = { chords?: string[] };
+
 /** Les accords d'une grille, comparables : minuscules et sans espace superflu. */
-export function accordsDe(ref: PublicSheetRef): string[] {
+export function accordsDe(ref: GrilleAccords): string[] {
   return (ref.chords ?? []).map((c) => c.trim().toLowerCase()).filter(Boolean);
 }
 
@@ -138,7 +170,7 @@ export function accordsDe(ref: PublicSheetRef): string[] {
  * Une grille sans accord lu n'est jouable avec rien : elle est écartée, sans quoi
  * elle apparaîtrait dans toutes les sélections, y compris la sélection vide.
  */
-export function jouablesAvec(refs: PublicSheetRef[], connus: string[]): PublicSheetRef[] {
+export function jouablesAvec<T extends GrilleAccords>(refs: T[], connus: string[]): T[] {
   const socle = new Set(connus.map((c) => c.trim().toLowerCase()).filter(Boolean));
   if (socle.size === 0) return [];
   return refs.filter((r) => {
@@ -159,7 +191,7 @@ export function jouablesAvec(refs: PublicSheetRef[], connus: string[]): PublicSh
  * débloquerait rien.
  */
 export function prochainAccord(
-  refs: PublicSheetRef[],
+  refs: GrilleAccords[],
   connus: string[],
 ): { accord: string; debloque: number } | null {
   const socle = new Set(connus.map((c) => c.trim().toLowerCase()).filter(Boolean));
@@ -186,7 +218,7 @@ export function prochainAccord(
 }
 
 /** Les accords les plus employés du catalogue, du plus fréquent au moins. */
-export function accordsLesPlusJoues(refs: PublicSheetRef[], combien: number): string[] {
+export function accordsLesPlusJoues(refs: GrilleAccords[], combien: number): string[] {
   const freq = new Map<string, number>();
   for (const r of refs) for (const a of new Set(accordsDe(r))) freq.set(a, (freq.get(a) ?? 0) + 1);
   return [...freq.entries()]

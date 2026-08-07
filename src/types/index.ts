@@ -237,6 +237,18 @@ export interface Sheet {
   groupId?: string;
   // V11 - Réputation créateur
   bookmarkCount: number;
+  /**
+   * Les accords employés, à plat et en minuscules.
+   *
+   * Déposé par `toFirestore` à chaque sauvegarde et indexé par Firestore : c'est
+   * lui qui permet de retrouver les grilles d'un accord sans fouiller les
+   * sections. Il existait en base depuis longtemps sans figurer ici, si bien
+   * qu'aucun appelant ne pouvait s'en servir sans contourner le type.
+   *
+   * Optionnel : les grilles créées avant son introduction ne le portent pas.
+   */
+  chords?: string[];
+
   // V12 - Validation admin (grille en cours, non publique)
   pendingValidation?: boolean;
   // V13 - Boîte à rythme : pattern choisi explicitement (sinon déduit des genres)
