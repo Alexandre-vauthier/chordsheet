@@ -8,6 +8,7 @@ import { ChordEditorModal } from '@/components/chord/chord-editor-modal';
 import { ChordFinder } from '@/components/chord/chord-finder';
 import type { StringChord, PianoChord, InstrumentId } from '@/types';
 import { getChordsByInstrument, getAllExtendedChords } from '@/lib/chord-data';
+import { correspondAccord, normaliserRequete } from '@/lib/chord-search';
 import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
 import { useAuth } from '@/lib/auth-context';
 import { useInstrumentLabel } from '@/lib/use-genre-labels';
@@ -232,33 +233,46 @@ function ChordsPageContent() {
   // Tous les groupes de l'instrument (toutes catégories) pour la recherche
   const allGroups = useMemo(() => {
     if (!searchQuery.trim()) return [];
-    const q = searchQuery.trim().toLowerCase();
+    // Lecture par le début, et non n'importe où dans le nom : taper « D » ramenait
+    // Cadd9, Cdim et Cmadd9, où le d se trouve au milieu d'un suffixe. La règle et
+    // ses subtilités — une lettre seule ne prend pas les altérations, le français
+    // est accepté — vivent dans `chord-search`.
+    const q = normaliserRequete(searchQuery);
     type Group = { name: string; variants: (StringChord | PianoChord)[]; hasOverride: boolean; overrideDocId?: string; additionDocIds: string[]; additionStartIdx: number; };
-    const groups = new Map<string, Group>();
-    const allStatic = getChordsByInstrument(instrumentId);
-    const allExtended = getAllExtendedChords(instrumentId);
-    // Statiques d'abord, pour la même raison que dans la liste par onglet :
-    // le doigté du dictionnaire est celui qu'on montre en premier.
-    [...allStatic, ...allExtended].forEach((chord) => {
-      const nameLower = chord.name.trim().toLowerCase();
-      if (!nameLower.includes(q)) return;
-      const key = libraryKey(chord.name, instrumentId);
-      const ov = overrides.get(key);
-      if (!groups.has(nameLower)) groups.set(nameLower, { name: chord.name, variants: [], hasOverride: false, additionDocIds: [], additionStartIdx: 0 });
-      const g = groups.get(nameLower)!;
-      if (ov && !g.hasOverride) { g.variants.push(ov.chord); g.hasOverride = true; g.overrideDocId = ov.docId; }
-      else if (!ov) g.variants.push(chord);
-    });
-    additions.filter(a => a.instrumentId === instrumentId && a.chord.name.toLowerCase().includes(q)).forEach(a => {
-      const nameLower = a.chord.name.trim().toLowerCase();
-      if (!groups.has(nameLower)) groups.set(nameLower, { name: a.chord.name, variants: [], hasOverride: false, additionDocIds: [], additionStartIdx: 0 });
-      const g = groups.get(nameLower)!;
-      g.additionStartIdx = g.variants.length;
-      g.variants.push(a.chord);
-      g.additionDocIds.push(a.docId);
-    });
-    return Array.from(groups.values())
-      .filter(g => g.variants.length > 0)
+
+    const rassembler = (retient: (nom: string) => boolean): Group[] => {
+      const groups = new Map<string, Group>();
+      // Statiques d'abord, pour la même raison que dans la liste par onglet :
+      // le doigté du dictionnaire est celui qu'on montre en premier.
+      [...getChordsByInstrument(instrumentId), ...getAllExtendedChords(instrumentId)].forEach((chord) => {
+        const nameLower = chord.name.trim().toLowerCase();
+        if (!retient(nameLower)) return;
+        const key = libraryKey(chord.name, instrumentId);
+        const ov = overrides.get(key);
+        if (!groups.has(nameLower)) groups.set(nameLower, { name: chord.name, variants: [], hasOverride: false, additionDocIds: [], additionStartIdx: 0 });
+        const g = groups.get(nameLower)!;
+        if (ov && !g.hasOverride) { g.variants.push(ov.chord); g.hasOverride = true; g.overrideDocId = ov.docId; }
+        else if (!ov) g.variants.push(chord);
+      });
+      additions.filter(a => a.instrumentId === instrumentId && retient(a.chord.name.trim().toLowerCase())).forEach(a => {
+        const nameLower = a.chord.name.trim().toLowerCase();
+        if (!groups.has(nameLower)) groups.set(nameLower, { name: a.chord.name, variants: [], hasOverride: false, additionDocIds: [], additionStartIdx: 0 });
+        const g = groups.get(nameLower)!;
+        g.additionStartIdx = g.variants.length;
+        g.variants.push(a.chord);
+        g.additionDocIds.push(a.docId);
+      });
+      return Array.from(groups.values()).filter(g => g.variants.length > 0);
+    };
+
+    // Rien ne commence par « sus4 » ni par « maj7 », et pourtant les chercher ainsi
+    // est légitime : si la lecture par le début ne donne rien, on balaie les noms
+    // entiers. Le repli ne se déclenche qu'à ce moment, sinon il ramènerait le
+    // bruit qu'on vient de retirer.
+    const parLeDebut = rassembler((nom) => correspondAccord(nom, q));
+    const retenus = parLeDebut.length > 0 ? parLeDebut : rassembler((nom) => nom.includes(q));
+
+    return retenus
       .sort((a, b) => { const sa = chromaticRootSemi(a.name); const sb = chromaticRootSemi(b.name); return sa !== sb ? sa - sb : a.name.localeCompare(b.name); });
   }, [searchQuery, instrumentId, overrides, additions]);
 
