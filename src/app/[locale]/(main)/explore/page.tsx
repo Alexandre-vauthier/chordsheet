@@ -81,9 +81,15 @@ export default async function Page({
    * Ce que le hero reçoit : les accords les plus employés du catalogue pour ses
    * pastilles, et le catalogue réduit à sa seule colonne d'accords. Une dizaine
    * de kilo-octets, qui lui permettent de répondre sans aller-retour à chaque
-   * clic. Les cinq premiers sont cochés d'entrée, pour que la question ait déjà
-   * une réponse quand la page s'affiche.
+   * clic.
+   *
+   * Six accords cochés d'entrée, et non cinq. Le chiffre n'est pas rond par
+   * hasard : mesuré sur le catalogue, les cinq plus fréquents n'ouvrent que cinq
+   * grilles, le sixième en ouvre dix-neuf. C'est le seuil où un débutant cesse
+   * d'être devant une vitrine et se retrouve devant un répertoire — et cela tombe
+   * sur `G C Am F D Em`, exactement les six premiers accords qu'on apprend.
    */
+  const SOCLE_DEPART = 6;
   const accordsProposes = accordsLesPlusJoues(refs, 12);
   const indexAccords = refs.map((r) => ({ chords: r.chords ?? [] }));
   const couvertures = refs
@@ -101,7 +107,7 @@ export default async function Page({
         <div className="max-w-[1270px] mx-auto px-4 sm:px-6 pt-8">
           <ChordHero
             accordsProposes={accordsProposes}
-            accordsInitiaux={accordsChoisis.length > 0 ? accordsChoisis : accordsProposes.slice(0, 5)}
+            accordsInitiaux={accordsChoisis.length > 0 ? accordsChoisis : accordsProposes.slice(0, SOCLE_DEPART)}
             index={indexAccords}
             couvertures={couvertures}
           />
