@@ -1504,6 +1504,10 @@
       "whatToPlay": {
         "title": "I don't know what to play: find a song by ear",
         "description": "Skip through thirty-second previews and open the chord chart of the song that catches you. Guitar, piano, ukulele."
+      },
+      "chordFinder": {
+        "title": "Find a chord by its notes",
+        "description": "Place your fingers on the fretboard or the keys: Alviena names the matching chord, live, for seven instruments."
       }
     },
     "artist": {
@@ -1690,7 +1694,8 @@
     "noMatch": "No chord matches — try other positions",
     "start": "Click the fretboard to begin…",
     "listen": "Click to hear it",
-    "insert": "Insert “{chord}”"
+    "insert": "Insert “{chord}”",
+    "lead": "Click the frets or the keys: matching chords appear as you go."
   },
   "LiveFollow": {
     "listening": "Listening",

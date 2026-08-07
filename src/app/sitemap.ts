@@ -23,6 +23,7 @@ const PUBLIC_PATHS: { path: string; priority: number; changeFrequency: MetadataR
   { path: '/artists',                  priority: 0.8, changeFrequency: 'weekly' },
   { path: '/tuner',                    priority: 0.7, changeFrequency: 'monthly' },
   { path: '/chord-detect',             priority: 0.7, changeFrequency: 'monthly' },
+  { path: '/chord-finder',             priority: 0.7, changeFrequency: 'monthly' },
   { path: '/what-to-play',             priority: 0.7, changeFrequency: 'weekly' },
   { path: '/pricing',                  priority: 0.6, changeFrequency: 'monthly' },
   { path: '/about',                    priority: 0.5, changeFrequency: 'yearly' },

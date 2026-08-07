@@ -568,6 +568,31 @@
         "bands": "Playing in a band",
         "explore": "All the charts"
       }
+    },
+    "chordFinder": {
+      "how": {
+        "h2": "How it works",
+        "items": [
+          "Pick your instrument: guitar, ukulele, mandolin, banjo, bass or piano.",
+          "Click the frets, or the keys, to place your fingers.",
+          "Matching chords appear as you go, closest first.",
+          "Click a result to hear it, and check by ear what the screen claims."
+        ]
+      },
+      "naming": {
+        "h2": "Why one shape has several names",
+        "body": "One set of notes often goes by several names, depending on which one you treat as the root. C E G A is C6 if you start from C, and Am7 if you start from A: same four sounds, both names correct.",
+        "body2": "The song decides, not the shape. The ranking puts the most common reading first, but the others stay on screen: they are not mistakes."
+      },
+      "limits": {
+        "h2": "What it does not do",
+        "body": "It only searches the library shapes for the chosen instrument. An unusual position, musically sound, may return nothing: that does not mean it has no name.",
+        "body2": "It ignores inversions: a shape does not say which note is in the bass, while a slash chord like D/F# depends entirely on it."
+      },
+      "linksTitle": "Going further",
+      "linkLibrary": "Browse the chord library",
+      "linkDetect": "Identify a chord by mic",
+      "linkTuner": "Tune up before you play"
     }
   }
 }

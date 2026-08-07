@@ -33,11 +33,21 @@ const INSTRUMENTS: { id: InstrumentId }[] = [
 interface ChordFinderProps {
   initialInstrument?: InstrumentId;
   allChords: Record<InstrumentId, (StringChord | PianoChord)[]>;
-  onClose: () => void;
+  /** Absent en variante « page » : il n'y a rien à fermer. */
+  onClose?: () => void;
   onSelect?: (chordName: string) => void; // optionnel : insère le nom dans une case
+  /**
+   * Fenêtre par-dessus la bibliothèque, ou page à part entière.
+   *
+   * Le chercheur n'a longtemps existé que comme fenêtre, ce qui le privait
+   * d'adresse : rien à indexer, rien à partager, et un paramètre d'URL à
+   * bricoler pour l'ouvrir depuis un menu. Ses deux frères — l'accordeur et
+   * l'identification au micro — sont des pages depuis toujours.
+   */
+  variante?: 'fenetre' | 'page';
 }
 
-export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, onSelect }: ChordFinderProps) {
+export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, onSelect, variante = 'fenetre' }: ChordFinderProps) {
   const t = useTranslations('ChordFinder');
   const tInstrument = useTranslations('Instruments');
   const [instrumentId, setInstrumentId] = useState<InstrumentId>(initialInstrument);
@@ -155,28 +165,32 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, 
 
   const hasSelection = isPiano ? pianoNotes.length > 0 : fingers.length > 0;
 
-  // Bloquer le scroll du body pendant que le modal est ouvert
+  // Bloquer le défilement du corps pendant que la fenêtre est ouverte. En page,
+  // il n'y a rien à bloquer : c'est la page qui défile.
+  const enFenetre = variante === 'fenetre';
   useEffect(() => {
+    if (!enFenetre) return;
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
-  }, []);
+  }, [enFenetre]);
+
+  const entete = (
+    <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[var(--line)]">
+      <div>
+        {enFenetre
+          ? <h2 className="text-lg font-semibold text-[var(--ink)]">{t('title')}</h2>
+          : <h1 className="font-playfair text-2xl font-bold text-[var(--ink)]">{t('title')}</h1>}
+        <p className="text-xs text-[var(--ink-faint)] mt-0.5">{t('lead')}</p>
+      </div>
+      {enFenetre && (
+        <button onClick={onClose} className="cursor-pointer text-[var(--ink-faint)] hover:text-[var(--ink)] text-xl leading-none">×</button>
+      )}
+    </div>
+  );
 
   return (
-    <div className="finder-overlay fixed inset-0 z-50 flex items-start justify-center pt-8 px-4 backdrop-blur-md" onClick={onClose}>
-      <div
-        className="bg-[var(--paper)] rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[var(--line)]">
-          <div>
-            <h2 className="text-lg font-semibold text-[var(--ink)]">{t('title')}</h2>
-            <p className="text-xs text-[var(--ink-faint)] mt-0.5">
-              Cliquez sur les cases ou les notes — les accords correspondants s&apos;affichent en temps réel
-            </p>
-          </div>
-          <button onClick={onClose} className="cursor-pointer text-[var(--ink-faint)] hover:text-[var(--ink)] text-xl leading-none">×</button>
-        </div>
+    <Coque enFenetre={enFenetre} onClose={onClose}>
+        {entete}
 
         <div className="p-6 flex flex-col gap-6 md:flex-row md:items-start">
           {/* Panneau gauche : sélecteur + fretboard */}
@@ -277,11 +291,39 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, 
             </p>
             <div className="space-y-2">
               {matches.map(({ chord, score }) => (
-                <MatchCard key={chord.id} chord={chord} instrumentId={instrumentId} score={score} onSelect={onSelect ? (name) => { onSelect(name); onClose(); } : undefined} />
+                <MatchCard key={chord.id} chord={chord} instrumentId={instrumentId} score={score} onSelect={onSelect ? (name) => { onSelect(name); onClose?.(); } : undefined} />
               ))}
             </div>
           </div>
         </div>
+    </Coque>
+  );
+}
+
+/**
+ * L'enveloppe : fenêtre par-dessus la page, ou carte posée dans le flux.
+ *
+ * Tout ce qu'elle contient est identique dans les deux cas — c'est la condition
+ * pour que la page et la fenêtre ne divergent pas comme l'ont fait, ailleurs dans
+ * ce dépôt, deux rendus écrits côte à côte.
+ */
+function Coque({ enFenetre, onClose, children }: { enFenetre: boolean; onClose?: () => void; children: React.ReactNode }) {
+  if (!enFenetre) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
+        <div className="rounded-2xl border border-[var(--line)] bg-[var(--cell-bg)] overflow-hidden">
+          {children}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="finder-overlay fixed inset-0 z-50 flex items-start justify-center pt-8 px-4 backdrop-blur-md" onClick={onClose}>
+      <div
+        className="bg-[var(--cream)] rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
       </div>
     </div>
   );

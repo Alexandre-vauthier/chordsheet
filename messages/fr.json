@@ -1504,6 +1504,10 @@
       "whatToPlay": {
         "title": "Je ne sais pas quoi jouer : trouvez un morceau à l'oreille",
         "description": "Faites défiler des extraits de trente secondes et ouvrez la grille d'accords du morceau qui vous accroche. Guitare, piano, ukulélé."
+      },
+      "chordFinder": {
+        "title": "Trouver un accord par ses notes",
+        "description": "Posez vos doigts sur le manche ou le clavier : Alviena nomme l'accord correspondant, en temps réel et pour sept instruments."
       }
     },
     "artist": {
@@ -1690,7 +1694,8 @@
     "noMatch": "Aucun accord ne correspond — essaie d'autres positions",
     "start": "Clique sur le manche pour commencer…",
     "listen": "Cliquer pour écouter",
-    "insert": "Insérer « {chord} »"
+    "insert": "Insérer « {chord} »",
+    "lead": "Clique sur les cases ou les notes : les accords correspondants s'affichent en temps réel."
   },
   "LiveFollow": {
     "listening": "Écoute",

@@ -568,6 +568,31 @@
         "bands": "Jouer en groupe",
         "explore": "Toutes les grilles"
       }
+    },
+    "chordFinder": {
+      "how": {
+        "h2": "Comment ça marche",
+        "items": [
+          "Choisissez votre instrument : guitare, ukulélé, mandoline, banjo, basse ou piano.",
+          "Cliquez les cases du manche, ou les touches du clavier, pour poser vos doigts.",
+          "Les accords qui correspondent s'affichent au fur et à mesure, du plus proche au plus éloigné.",
+          "Cliquez un résultat pour l'entendre, et vérifier de l'oreille ce que l'écran affirme."
+        ]
+      },
+      "naming": {
+        "h2": "Pourquoi plusieurs noms pour la même position",
+        "body": "Un même ensemble de notes porte souvent plusieurs noms, selon la note qu'on tient pour fondamentale. Do mi sol la se nomme C6 si l'on part du do, et Am7 si l'on part du la : ce sont les mêmes quatre sons, et les deux noms sont justes.",
+        "body2": "C'est le contexte du morceau qui tranche, pas la position. Le classement propose d'abord la lecture la plus courante, mais les autres restent affichées : elles ne sont pas des erreurs."
+      },
+      "limits": {
+        "h2": "Ce qu'il ne fait pas",
+        "body": "Il ne cherche que parmi les doigtés de la bibliothèque de l'instrument choisi. Une position inhabituelle, valable musicalement, peut ne rien rendre : cela ne veut pas dire qu'elle ne s'appelle pas.",
+        "body2": "Il ne tient pas compte du renversement : une position ne dit pas quelle note est à la basse, alors qu'un accord slash comme D/F# en dépend entièrement."
+      },
+      "linksTitle": "Pour aller plus loin",
+      "linkLibrary": "Parcourir la bibliothèque d'accords",
+      "linkDetect": "Identifier un accord au micro",
+      "linkTuner": "S'accorder avant de jouer"
     }
   }
 }

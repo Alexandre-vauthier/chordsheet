@@ -21,7 +21,7 @@ import { NavigationHorsLigne } from '@/components/navigation-hors-ligne';
 // /about, /faq, /credits sont liées depuis le pied de page : les garder privées
 // envoyait les visiteurs sur /login depuis nos propres liens.
 const PUBLIC_EXACT = [
-  '/explore', '/chords', '/chord-detect', '/tuner', '/pricing', '/contact',
+  '/explore', '/chords', '/chord-detect', '/chord-finder', '/tuner', '/pricing', '/contact',
   '/about', '/faq', '/credits', '/artists',
   // Guides éditoriaux : pages publiques sans aucune donnée utilisateur.
   '/import-chords', '/transpose', '/sheet-photo', '/what-to-play',

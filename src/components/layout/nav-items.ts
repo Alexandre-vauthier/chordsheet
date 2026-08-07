@@ -153,9 +153,7 @@ export function buildToolsGroup(ctx: NavContext): NavGroup {
       labelKey: 'chords',
       entries: [
         { id: 'chordLibrary', href: '/chords', labelKey: 'chordLibrary', icon: 'chordLibrary', visibility: 'always' },
-        // La requête ouvre la fenêtre du chercheur : le chemin de correspondance
-        // doit rester `/chords`, que `usePathname()` seul ne saurait distinguer.
-        { id: 'chordByNotes', href: '/chords?finder=1', matchPaths: [], labelKey: 'chordByNotes', icon: 'chordByNotes', visibility: 'always' },
+        { id: 'chordByNotes', href: '/chord-finder', labelKey: 'chordByNotes', icon: 'chordByNotes', visibility: 'always' },
         { id: 'chordDetect', href: '/chord-detect', labelKey: 'chordDetect', icon: 'chordDetect', visibility: 'always' },
       ],
     },
