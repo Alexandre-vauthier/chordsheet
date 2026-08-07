@@ -353,7 +353,14 @@
     "adminTogglePending": "À valider",
     "adminTogglePendingTitle": "Afficher / masquer les grilles à valider",
     "adminChordSearchPlaceholder": "Accord…",
-    "adminChordSearchTitle": "Admin : ne garder que les grilles contenant cet accord. Correspondance exacte (« Am » ne remonte pas « Am7 »), notation française acceptée (« Lam »)."
+    "adminChordSearchTitle": "Admin : ne garder que les grilles contenant cet accord. Correspondance exacte (« Am » ne remonte pas « Am7 »), notation française acceptée (« Lam »).",
+    "shelfSeeAll": "Tout voir",
+    "shelf": {
+      "mostViewed": "Les plus jouées",
+      "thisWeek": "Arrivées cette semaine",
+      "threeChords": "Trois accords suffisent",
+      "noBarre": "Sans barré"
+    }
   },
   "SheetViewer": {
     "pauseSample": "Pause l'extrait",

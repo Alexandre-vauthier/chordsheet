@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { buildAlternates, buildOpenGraph } from '@/lib/seo';
 import { getPublicSheetIndex } from '@/lib/public-sheet-index';
-import { versGrilleDeCatalogue } from '@/lib/explore-shelves';
+import { filtreActif, versGrilleDeCatalogue } from '@/lib/explore-shelves';
+import { DiscoveryShelves } from '@/components/explore/discovery-shelves';
 import { ExploreClient } from './explore-client';
 import { ExploreEditorial } from './explore-editorial';
 
@@ -42,7 +43,13 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   };
 }
 
-export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
+export default async function Page({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { locale } = await params;
   setRequestLocale(locale);
 
@@ -55,13 +62,23 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
    * **tout** le catalogue et non deux cents documents tirés au hasard.
    */
   const refs = await getPublicSheetIndex();
+
+  /*
+   * Les rayons ne sont construits que s'ils seront montrés. Le client les efface
+   * dès qu'un filtre est actif ; les rendre quand même ferait faire au serveur
+   * quarante-huit vignettes pour rien, et les ferait voyager dans la charge utile.
+   */
+  const flane = !filtreActif(await searchParams);
   const initialSheets = [...refs]
     .sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0))
     .map(versGrilleDeCatalogue);
 
   return (
     <>
-      <ExploreClient initialSheets={initialSheets} />
+      <ExploreClient
+        initialSheets={initialSheets}
+        decouverte={flane ? <DiscoveryShelves refs={refs} locale={locale} /> : null}
+      />
       <ExploreEditorial locale={locale} />
     </>
   );

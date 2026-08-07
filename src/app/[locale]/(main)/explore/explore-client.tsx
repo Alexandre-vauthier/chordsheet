@@ -26,7 +26,21 @@ const ADMIN_SHOW_PUBLIC_KEY = 'explore_admin_show_public';
 const ADMIN_SHOW_PRIVATE_KEY = 'explore_admin_show_private';
 const ADMIN_SHOW_PENDING_KEY = 'explore_admin_show_pending';
 
-export function ExploreClient({ initialSheets }: { initialSheets: Sheet[] }) {
+export function ExploreClient({
+  initialSheets,
+  decouverte,
+}: {
+  initialSheets: Sheet[];
+  /**
+   * Les rayons, **déjà rendus par le serveur**.
+   *
+   * Ils arrivent en propriété plutôt que d'être construits ici : un composant
+   * serveur passé à un composant client le reste, si bien que les tuiles sont
+   * dans le HTML servi. Les construire dans ce fichier les aurait fait basculer
+   * côté navigateur, et la page serait redevenue vide pour les moteurs.
+   */
+  decouverte?: React.ReactNode;
+}) {
   const t = useTranslations('Explore');
   const genreLabel = useGenreLabel();
   const difficultyLabel = useDifficultyLabel();
@@ -337,6 +351,13 @@ export function ExploreClient({ initialSheets }: { initialSheets: Sheet[] }) {
           {groupedResults.length > 0 && groupedResults.length < sheets.length && ` · ${t('subtitleUniqueTitles', { count: groupedResults.length })}`}
         </p>
       </div>
+
+      {/*
+        La découverte s'efface dès qu'on filtre : à ce moment-là on cherche
+        quelque chose, et des rayons entre la recherche et ses résultats
+        n'apporteraient que de la distance.
+      */}
+      {!hasActiveFilters && decouverte}
 
       {/* Barre de recherche et filtres */}
       <div className="space-y-4 mb-8">

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   jouablesAvec, prochainAccord, accordsLesPlusJoues,
   rayonsDe, portesDe, artistesDe,
-  TAILLE_RAYON, SEUIL_PORTE, ACCORDS_BARRES,
+  TAILLE_RAYON, SEUIL_PORTE, ACCORDS_BARRES, filtreActif,
 } from '@/lib/explore-shelves';
 import type { PublicSheetRef } from '@/lib/public-sheet-index';
 
@@ -251,4 +251,35 @@ test('les artistes sont classés par nombre de grilles, puis par nom', () => {
 
 test('une grille sans artiste ne crée pas d’entrée vide', () => {
   assert.deepEqual(artistesDe([grille({ artist: '  ' })], 5), []);
+});
+
+/* ── L’URL demande-t-elle un sous-ensemble ? ─────────────────────────────── */
+
+test('une URL nue laisse flâner', () => {
+  assert.equal(filtreActif({}), false);
+});
+
+/** L'ordre par défaut nommé explicitement demande la même chose qu'une URL nue. */
+test('sort=recent n’est pas un filtre, les autres tris le sont', () => {
+  assert.equal(filtreActif({ sort: 'recent' }), false);
+  assert.equal(filtreActif({ sort: 'viewed' }), true);
+});
+
+test('chaque filtre du catalogue est reconnu', () => {
+  for (const cle of ['q', 'genre', 'difficulty', 'decade', 'key']) {
+    assert.equal(filtreActif({ [cle]: 'x' }), true, `${cle} devrait compter`);
+  }
+});
+
+test('un paramètre vide ou blanc ne filtre rien', () => {
+  assert.equal(filtreActif({ genre: '', q: '   ' }), false);
+});
+
+/** Next rend un paramètre répété sous forme de tableau. */
+test('un paramètre répété est lu quand même', () => {
+  assert.equal(filtreActif({ genre: ['Rock', 'Pop'] }), true);
+});
+
+test('un paramètre étranger ne déclenche rien', () => {
+  assert.equal(filtreActif({ utm_source: 'newsletter' }), false);
 });

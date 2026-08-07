@@ -353,7 +353,14 @@
     "adminTogglePending": "Pending",
     "adminTogglePendingTitle": "Show / hide sheets pending review",
     "adminChordSearchPlaceholder": "Chord…",
-    "adminChordSearchTitle": "Admin: keep only sheets containing this chord. Exact match (\"Am\" does not match \"Am7\"), French notation accepted (\"Lam\")."
+    "adminChordSearchTitle": "Admin: keep only sheets containing this chord. Exact match (\"Am\" does not match \"Am7\"), French notation accepted (\"Lam\").",
+    "shelfSeeAll": "See all",
+    "shelf": {
+      "mostViewed": "Most played",
+      "thisWeek": "Added this week",
+      "threeChords": "Three chords are enough",
+      "noBarre": "No barre chords"
+    }
   },
   "SheetViewer": {
     "pauseSample": "Pause preview",

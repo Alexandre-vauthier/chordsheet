@@ -19,6 +19,25 @@ import type { Sheet } from '@/types';
  */
 
 /**
+ * L'URL demande-t-elle un sous-ensemble du catalogue ?
+ *
+ * Sert au serveur à ne pas construire les rayons quand ils ne seront pas
+ * montrés : on cherche quelque chose, on ne flâne pas. Sans cette question, la
+ * page rendait quatre rayons de douze vignettes pour les jeter ensuite.
+ *
+ * `sort=recent` ne compte pas : c'est l'ordre par défaut, et une URL qui le
+ * nomme explicitement demande la même chose qu'une URL nue.
+ */
+export function filtreActif(params: Record<string, string | string[] | undefined>): boolean {
+  const lire = (cle: string) => {
+    const v = params[cle];
+    return (Array.isArray(v) ? v[0] : v)?.trim() ?? '';
+  };
+  if (lire('sort') && lire('sort') !== 'recent') return true;
+  return ['q', 'genre', 'difficulty', 'decade', 'key'].some((cle) => lire(cle) !== '');
+}
+
+/**
  * L'index public, sous la forme que le catalogue sait afficher.
  *
  * Le catalogue rend des `SheetCard`, qui attendent un `Sheet`. Or il n'en lit que
@@ -57,18 +76,19 @@ export function versGrilleDeCatalogue(r: PublicSheetRef): Sheet {
   };
 }
 
-/** Ce qu'une tuile a besoin de savoir. Rien de plus ne traverse jusqu'au client. */
-export interface SheetTile {
-  id: string;
-  title: string;
-  artist: string;
-  chords: string[];
-}
-
+/**
+ * Les tuiles portent la référence telle quelle.
+ *
+ * Une projection plus maigre serait tentante, mais la tuile d'un rayon est une
+ * `SheetCard` — la même que le catalogue — et elle attend une grille. Tant qu'on
+ * réemploie ce composant, réduire ici ne ferait qu'obliger à recomposer là-bas.
+ * Le jour où les rayons auront leur propre vignette sans JavaScript, avec sa
+ * pochette résolue par le serveur, c'est ce type-là qui rétrécira.
+ */
 export interface Shelf {
   /** Identité stable : clé de rendu, clé de test, et clé de traduction. */
   id: string;
-  tiles: SheetTile[];
+  tiles: PublicSheetRef[];
   /** Combien de grilles la tranche contient en tout, au-delà de ce qu'on montre. */
   total: number;
   /** Le filtre du catalogue vers lequel mène « tout voir », le cas échéant. */
@@ -102,13 +122,6 @@ export const ACCORDS_BARRES = new Set([
   'f#', 'f#m', 'f#m7',
   'c#m', 'cm', 'gm', 'g#m', 'ab', 'eb', 'ebm', 'abm',
 ]);
-
-const enTuile = (r: PublicSheetRef): SheetTile => ({
-  id: r.id,
-  title: r.title,
-  artist: r.artist,
-  chords: r.chords ?? [],
-});
 
 /** Les accords d'une grille, comparables : minuscules et sans espace superflu. */
 export function accordsDe(ref: PublicSheetRef): string[] {
@@ -183,7 +196,7 @@ export function accordsLesPlusJoues(refs: PublicSheetRef[], combien: number): st
 }
 
 function rayon(id: string, tranche: PublicSheetRef[], href?: string): Shelf {
-  return { id, tiles: tranche.slice(0, TAILLE_RAYON).map(enTuile), total: tranche.length, href };
+  return { id, tiles: tranche.slice(0, TAILLE_RAYON), total: tranche.length, href };
 }
 
 /**
@@ -228,7 +241,7 @@ export interface EntryTile {
   count: number;
   href: string;
   /** Quelques grilles de la tranche, pour la mosaïque de pochettes en fond. */
-  sample: SheetTile[];
+  sample: PublicSheetRef[];
 }
 
 export interface EntryGroup {
@@ -239,7 +252,7 @@ export interface EntryGroup {
 const MOSAIQUE = 4;
 
 function porte(id: string, label: string, tranche: PublicSheetRef[], href: string): EntryTile {
-  return { id, label, count: tranche.length, href, sample: tranche.slice(0, MOSAIQUE).map(enTuile) };
+  return { id, label, count: tranche.length, href, sample: tranche.slice(0, MOSAIQUE) };
 }
 
 /**
