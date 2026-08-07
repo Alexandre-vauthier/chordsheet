@@ -119,11 +119,16 @@ export function Navbar() {
             {!loading && user ? (
               <>
                 <NavSearch variante="barre" />
+                {/* Sous 1024 px, le bouton se réduit à son signe : son libellé
+                    coûte 47 px là où il en manque, et la loupe voisine est déjà
+                    une icône seule. */}
                 <Link
                   href="/sheet/new"
-                  className="flex items-center gap-1 px-3 py-1.5 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm rounded-lg font-medium transition-colors"
+                  title={t('newSheet')}
+                  className="flex items-center gap-1 px-2.5 lg:px-3 py-1.5 bg-[var(--accent)] hover:bg-[#a83d25] text-white text-sm rounded-lg font-medium transition-colors whitespace-nowrap"
                 >
-                  {t('newSheet')}
+                  <span aria-hidden="true">+</span>
+                  <span className="hidden lg:inline">{t('newSheetLabel')}</span>
                 </Link>
                 <div className="flex items-center gap-3 pl-3 border-l border-white/20">
                   <NotificationBell />

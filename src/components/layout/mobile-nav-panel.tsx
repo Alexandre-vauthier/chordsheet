@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { Link, useRouter, usePathname } from '@/i18n/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { useLiveSession } from '@/lib/live-session-context';
 import { isPro } from '@/lib/plan-limits';
 import { LanguageSwitcher } from './language-switcher';
 import { NavSearch } from './nav-search';
@@ -29,6 +30,7 @@ export function MobileNavPanel({ onClose }: { onClose: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isAdmin, signOut } = useAuth();
+  const { session } = useLiveSession();
 
   const ctx: NavContext = {
     signedIn: !!user,
@@ -49,7 +51,13 @@ export function MobileNavPanel({ onClose }: { onClose: () => void }) {
       }`}
     >
       {entree.icon && (
-        <span className={entree.id === 'live' ? 'text-red-500' : 'text-[var(--nav-text)]/50'}>
+        <span
+          className={
+            entree.id === 'live'
+              ? session ? 'text-red-500 animate-pulse' : 'text-[var(--nav-text)]/50'
+              : 'text-[var(--nav-text)]/50'
+          }
+        >
           <NavIcon name={entree.icon} />
         </span>
       )}

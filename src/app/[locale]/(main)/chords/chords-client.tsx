@@ -485,7 +485,13 @@ function ChordsPageContent() {
         <ChordFinder
           initialInstrument={instrumentId}
           allChords={finderChordPool}
-          onClose={() => setFinderOpen(false)}
+          onClose={() => {
+            setFinderOpen(false);
+            // Retirer le paramètre en fermant : sans cela l'adresse garde
+            // `?finder=1`, l'effet qui ouvre la fenêtre ne voit plus de
+            // changement, et recliquer l'entrée du menu ne fait plus rien.
+            if (finderParam) router.replace('/chords', { scroll: false });
+          }}
         />
       )}
 

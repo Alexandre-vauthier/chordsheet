@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/navigation';
 import { useAuth } from '@/lib/auth-context';
+import { useLiveSession } from '@/lib/live-session-context';
 import { isPro } from '@/lib/plan-limits';
 import { LevelBadge } from '@/components/reputation/level-badge';
 import { LanguageSwitcher } from './language-switcher';
@@ -25,6 +26,10 @@ export function AccountMenu() {
   const t = useTranslations('Navbar');
   const router = useRouter();
   const { user, isAdmin, signOut } = useAuth();
+  // Le point rouge était statique : il s'allumait pour tout le monde, tout le
+  // temps. Une pastille permanente est le meilleur moyen d'apprendre à ignorer
+  // les pastilles.
+  const { session } = useLiveSession();
 
   if (!user) return null;
 
@@ -75,7 +80,13 @@ export function AccountMenu() {
                   className="flex items-center gap-3 px-4 py-2.5 text-sm text-[var(--ink)] hover:bg-[var(--cell-hover)] transition-colors"
                 >
                   {entree.icon && (
-                    <span className={entree.id === 'live' ? 'text-red-500' : 'text-[var(--ink-faint)]'}>
+                    <span
+                      className={
+                        entree.id === 'live'
+                          ? session ? 'text-red-500 animate-pulse' : 'text-[var(--ink-faint)]'
+                          : 'text-[var(--ink-faint)]'
+                      }
+                    >
                       <NavIcon name={entree.icon} />
                     </span>
                   )}
