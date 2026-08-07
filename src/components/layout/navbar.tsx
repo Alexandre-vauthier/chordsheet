@@ -1,35 +1,17 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { LevelBadge } from '@/components/reputation/level-badge';
-import { SuggestionsDropdown } from '@/components/ui/suggestions-dropdown';
-import { useSearchSuggestions } from '@/lib/use-search-suggestions';
-import { useDebouncedValue } from '@/lib/use-debounced-value';
-import type { Sheet } from '@/types';
 import { BrandLogo } from './brand-logo';
 import { Link, usePathname, useRouter } from '@/i18n/navigation';
 import { LanguageSwitcher } from './language-switcher';
 import { NotificationBell } from './notification-bell';
+import { NavSearch } from './nav-search';
 import { useClickOutside } from '@/lib/use-click-outside';
-
-type SearchResult =
-  | { kind: 'sheet'; key: string; sheet: Sheet }
-  | { kind: 'artist'; key: string; name: string };
-
-// Deux sections : grilles dont le titre correspond, puis artistes dont le nom correspond
-// (cliquer un artiste mène à sa page, qui liste toutes ses grilles — pas besoin de
-// dupliquer les grilles d'un même artiste dans la section "Grilles"). Le filtrage se
-// fait côté Firestore (useSearchSuggestions) — ici on ne fait qu'assembler l'affichage.
-function toSearchResults(sheets: Sheet[], artistNames: string[]): SearchResult[] {
-  return [
-    ...sheets.map((sheet): SearchResult => ({ kind: 'sheet', key: `sheet-${sheet.id}`, sheet })),
-    ...artistNames.map((name): SearchResult => ({ kind: 'artist', key: `artist-${name}`, name })),
-  ];
-}
 
 export function Navbar() {
   const t = useTranslations('Navbar');
@@ -38,65 +20,12 @@ export function Navbar() {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [searchFocused, setSearchFocused] = useState(false);
-  const [activeSuggestion, setActiveSuggestion] = useState(-1);
-  const searchInputRef = useRef<HTMLInputElement>(null);
   const profileMenuRef = useClickOutside<HTMLDivElement>(() => setProfileMenuOpen(false), profileMenuOpen);
-
-  const debouncedSearch = useDebouncedValue(searchValue);
-  const { sheets: sheetMatches, artistNames: artistMatches } = useSearchSuggestions(debouncedSearch);
-  const suggestions = toSearchResults(sheetMatches, artistMatches);
-  const showSuggestions = searchFocused && debouncedSearch.trim().length >= 2;
 
   const handleSignOut = async () => {
     setProfileMenuOpen(false);
     await signOut();
     router.push('/login');
-  };
-
-  const performSearch = () => {
-    const q = searchValue.trim();
-    router.push(q ? `/explore?q=${encodeURIComponent(q)}` : '/explore');
-    setSearchValue('');
-    setActiveSuggestion(-1);
-    searchInputRef.current?.blur();
-  };
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    performSearch();
-  };
-
-  const handleSelectSuggestion = (result: SearchResult) => {
-    router.push(result.kind === 'sheet' ? `/sheet/${result.sheet.id}` : `/artist/${encodeURIComponent(result.name)}`);
-    setSearchValue('');
-    setActiveSuggestion(-1);
-    setSearchOpen(false);
-    setMobileMenuOpen(false);
-    searchInputRef.current?.blur();
-  };
-
-  // Navigation clavier dans le dropdown : le dernier index (== suggestions.length)
-  // représente la ligne "Voir tous les résultats", qui retombe sur handleSearch.
-  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Escape') {
-      setSearchOpen(false);
-      setActiveSuggestion(-1);
-      return;
-    }
-    if (!showSuggestions) return;
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setActiveSuggestion((i) => Math.min(i + 1, suggestions.length));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setActiveSuggestion((i) => Math.max(i - 1, 0));
-    } else if (e.key === 'Enter' && activeSuggestion >= 0 && activeSuggestion < suggestions.length) {
-      e.preventDefault();
-      handleSelectSuggestion(suggestions[activeSuggestion]);
-    }
   };
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
@@ -158,63 +87,7 @@ export function Navbar() {
           <div className="hidden sm:flex items-center gap-3 shrink-0">
             {!loading && user ? (
               <>
-                {/* Recherche — icône uniquement, s'ouvre au clic */}
-                {searchOpen ? (
-                  <form onSubmit={e => { handleSearch(e); setSearchOpen(false); }} className="relative">
-                    <input
-                      ref={searchInputRef}
-                      type="text"
-                      autoFocus
-                      value={searchValue}
-                      onChange={e => { setSearchValue(e.target.value); setActiveSuggestion(-1); }}
-                      onFocus={() => setSearchFocused(true)}
-                      onBlur={() => { setSearchFocused(false); if (!searchValue.trim()) setSearchOpen(false); }}
-                      onKeyDown={handleSearchKeyDown}
-                      placeholder={t('search')}
-                      className="w-64 pl-8 pr-3 py-1.5 rounded-lg text-sm bg-white/10 text-[var(--nav-text)] placeholder:text-[var(--nav-text)]/50 border border-white/15 outline-none focus:bg-white/15 focus:border-white/30 transition-all"
-                    />
-                    <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--nav-text)]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-                    </svg>
-                    {showSuggestions && (
-                      <SuggestionsDropdown
-                        items={suggestions}
-                        activeIndex={activeSuggestion}
-                        getKey={(r) => r.key}
-                        getSection={(r) => r.kind === 'sheet' ? t('sectionSheets') : t('sectionArtists')}
-                        onHover={setActiveSuggestion}
-                        onSelect={handleSelectSuggestion}
-                        renderItem={(r) => r.kind === 'sheet' ? (
-                          <>
-                            <p className="text-[var(--ink)] truncate">{r.sheet.title}</p>
-                            <p className="text-xs text-[var(--ink-faint)] truncate">{r.sheet.artist}</p>
-                          </>
-                        ) : (
-                          <p className="text-[var(--ink)] truncate">{r.name}</p>
-                        )}
-                        footer={
-                          <button
-                            type="button"
-                            onMouseDown={(e) => { e.preventDefault(); performSearch(); setSearchOpen(false); }}
-                            className="w-full text-left px-4 py-2.5 text-sm text-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors cursor-pointer"
-                          >
-                            {t('seeAllResults')}
-                          </button>
-                        }
-                      />
-                    )}
-                  </form>
-                ) : (
-                  <button
-                    onClick={() => setSearchOpen(true)}
-                    className="p-1.5 rounded-lg text-[var(--nav-text)]/70 hover:text-[var(--nav-text)] hover:bg-white/10 transition-colors"
-                    title={t('searchAction')}
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-                    </svg>
-                  </button>
-                )}
+                <NavSearch variante="barre" />
                 <NotificationBell />
                 <Link
                   href="/sheet/new"
@@ -396,49 +269,7 @@ export function Navbar() {
       {mobileMenuOpen && (
         <div className="sm:hidden bg-[var(--nav-bg)] border-t border-white/10">
           <div className="px-4 py-3 space-y-1">
-            {/* Recherche mobile */}
-            <form onSubmit={handleSearch} className="relative mb-2">
-              <input
-                type="text"
-                value={searchValue}
-                onChange={(e) => { setSearchValue(e.target.value); setActiveSuggestion(-1); }}
-                onFocus={() => setSearchFocused(true)}
-                onBlur={() => setSearchFocused(false)}
-                onKeyDown={handleSearchKeyDown}
-                placeholder={t('search')}
-                className="w-full pl-8 pr-3 py-2 rounded-lg text-sm bg-white/10 text-[var(--nav-text)] placeholder:text-[var(--nav-text)]/50 border border-white/15 outline-none focus:bg-white/15 focus:border-white/30 transition-all"
-              />
-              <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--nav-text)]/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-              </svg>
-              {showSuggestions && (
-                <SuggestionsDropdown
-                  items={suggestions}
-                  activeIndex={activeSuggestion}
-                  getKey={(r) => r.key}
-                  getSection={(r) => r.kind === 'sheet' ? t('sectionSheets') : t('sectionArtists')}
-                  onHover={setActiveSuggestion}
-                  onSelect={handleSelectSuggestion}
-                  renderItem={(r) => r.kind === 'sheet' ? (
-                    <>
-                      <p className="text-[var(--ink)] truncate">{r.sheet.title}</p>
-                      <p className="text-xs text-[var(--ink-faint)] truncate">{r.sheet.artist}</p>
-                    </>
-                  ) : (
-                    <p className="text-[var(--ink)] truncate">{r.name}</p>
-                  )}
-                  footer={
-                    <button
-                      type="button"
-                      onMouseDown={(e) => { e.preventDefault(); performSearch(); closeMobileMenu(); }}
-                      className="w-full text-left px-4 py-2.5 text-sm text-[var(--accent)] hover:bg-[var(--accent-soft)] transition-colors cursor-pointer"
-                    >
-                      {t('seeAllResults')}
-                    </button>
-                  }
-                />
-              )}
-            </form>
+            <NavSearch variante="panneau" onNavigate={closeMobileMenu} />
             {navLinks.filter((l) => l.href !== '/chords').map(({ href, label }) => (
               <Link
                 key={href}
