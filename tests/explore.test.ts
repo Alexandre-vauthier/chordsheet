@@ -195,6 +195,18 @@ const pourPortes = () => [
   ...Array.from({ length: 2 }, () => grille({ year: 1974, genres: ['Jazz'], difficulty: 3, key: 'Bb' })),
 ];
 
+/**
+ * Les genres et les niveaux sont stockés en français canonique et traduits à
+ * l'affichage. Un niveau rendu sous forme de chiffre ne correspondrait à aucune
+ * clé de traduction, et la tuile afficherait « 1 ».
+ */
+test('un niveau porte son libellé canonique, pas son chiffre', () => {
+  const refs = Array.from({ length: 3 }, () => grille({ difficulty: 2 }));
+  const niveaux = portesDe(refs).find((g) => g.id === 'levels')!;
+  assert.equal(niveaux.tiles[0].label, 'Intermédiaire');
+  assert.equal(niveaux.tiles[0].href, '/explore?difficulty=2');
+});
+
 test('les portes comptent juste et mènent au catalogue filtré', () => {
   const groupes = portesDe(pourPortes());
   const decennies = groupes.find((g) => g.id === 'decades')!;

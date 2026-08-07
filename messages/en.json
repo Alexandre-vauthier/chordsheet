@@ -369,7 +369,14 @@
     "heroSee": "See {count, plural, one {the sheet} other {all # sheets}}",
     "chordFilter": "Playable with {chords}",
     "catalogueTitle": "The whole catalogue",
-    "catalogueFiltered": "Sheets you can play"
+    "catalogueFiltered": "Sheets you can play",
+    "entries": {
+      "decades": "By decade",
+      "genres": "By genre",
+      "levels": "By level",
+      "keys": "By key",
+      "artists": "Artists"
+    }
   },
   "SheetViewer": {
     "pauseSample": "Pause preview",

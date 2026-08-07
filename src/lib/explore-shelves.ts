@@ -1,5 +1,5 @@
 import type { PublicSheetRef } from '@/lib/public-sheet-index';
-import type { Sheet } from '@/types';
+import { DIFFICULTY_LABELS, type Sheet } from '@/types';
 
 /**
  * Les tranches du catalogue qui composent la page de découverte.
@@ -328,7 +328,13 @@ export function portesDe(refs: PublicSheetRef[]): EntryGroup[] {
     },
     {
       id: 'levels',
-      tiles: trier(niveaux).map(([d, v]) => porte(`level-${d}`, String(d), v, `/explore?difficulty=${d}`)),
+      /*
+       * Le libellé canonique français, comme les genres : c'est par lui que le
+       * dépôt indexe ses traductions (`Difficulty` dans les messages), et le
+       * chiffre seul n'y correspondrait à rien.
+       */
+      tiles: trier(niveaux).map(([d, v]) =>
+        porte(`level-${d}`, DIFFICULTY_LABELS[d as 1 | 2 | 3] ?? String(d), v, `/explore?difficulty=${d}`)),
     },
     {
       id: 'keys',

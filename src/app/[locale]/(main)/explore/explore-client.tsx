@@ -78,15 +78,28 @@ export function ExploreClient({
   // Mettre à jour la recherche si le param URL change (nouvelle recherche depuis la navbar)
   useEffect(() => {
     setSearchQuery(searchParams.get('q') ?? '');
+    const d = searchParams.get('decade');
+    setSelectedDecade(d ? Number(d) : null);
   }, [searchParams]);
 
   // Filtres — initialisés depuis l'URL pour survivre au retour arrière
   const [sortBy, setSortBy] = useState<SortOption>(() => (searchParams.get('sort') as SortOption) ?? 'recent');
   const [selectedGenre, setSelectedGenre] = useState<string>(() => searchParams.get('genre') ?? '');
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | null>(() => { const d = searchParams.get('difficulty'); return d ? (Number(d) as Difficulty) : null; });
-  // Décennie : filtre volontairement ÉPHÉMÈRE (pas dans l'URL) — il ne doit pas
-  // persister quand on revient sur Explore, contrairement au genre (liens externes).
-  const [selectedDecade, setSelectedDecade] = useState<number | null>(null);
+  /**
+   * Décennie et tonalité, lues dans l'URL.
+   *
+   * La décennie était volontairement éphémère : rien n'y menait de l'extérieur,
+   * et la faire persister n'aurait servi qu'à surprendre au retour sur la page.
+   * Les tuiles thématiques y mènent désormais, comme les liens du bloc éditorial
+   * mènent aux genres — elle rejoint donc l'URL, sans quoi une tuile ouvrirait un
+   * catalogue non filtré.
+   */
+  const [selectedDecade, setSelectedDecade] = useState<number | null>(() => {
+    const d = searchParams.get('decade');
+    return d ? Number(d) : null;
+  });
+  const selectedKey = searchParams.get('key')?.trim() ?? '';
   /**
    * Les accords qu'on sait jouer, tels que le hero les a transmis.
    *
@@ -146,7 +159,9 @@ export function ExploreClient({
   const handleSortBy = (v: SortOption) => { setSortBy(v); updateUrl({ sort: v }); };
   const handleGenre = (v: string) => { setSelectedGenre(v); updateUrl({ genre: v }); };
   const handleDifficulty = (v: Difficulty | null) => { setSelectedDifficulty(v); updateUrl({ difficulty: v }); };
-  const handleDecade = (v: number | null) => setSelectedDecade(v);
+  // L'URL suit le sélecteur, comme pour le genre : une décennie choisie doit
+  // pouvoir se partager et survivre au retour arrière.
+  const handleDecade = (v: number | null) => { setSelectedDecade(v); updateUrl({ decade: v }); };
 
   // Mettre à jour le genre si le param URL change (ex: depuis la navbar)
   useEffect(() => {
@@ -302,6 +317,12 @@ export function ExploreClient({
       result = result.filter((sheet) => sheet.difficulty === selectedDifficulty);
     }
 
+    // Filtre par tonalité, posé par les tuiles thématiques.
+    if (selectedKey) {
+      const k = selectedKey.toLowerCase();
+      result = result.filter((sheet) => sheet.key.trim().toLowerCase() === k);
+    }
+
     // Filtre par décennie (année dans [decade, decade+10[)
     if (selectedDecade) {
       result = result.filter((sheet) => sheet.year != null && sheet.year >= selectedDecade && sheet.year < selectedDecade + 10);
@@ -327,7 +348,7 @@ export function ExploreClient({
     }
 
     return result;
-  }, [sheets, searchQuery, selectedGenre, selectedDifficulty, selectedDecade, sortBy, isAdmin, showPublic, showPrivate, showPending, chordQuery]);
+  }, [sheets, searchQuery, selectedGenre, selectedDifficulty, selectedDecade, selectedKey, sortBy, isAdmin, showPublic, showPrivate, showPending, chordQuery, accordsConnus]);
 
   // Décennies effectivement présentes dans les grilles (pour ne pas encombrer le menu)
   const availableDecades = useMemo(() => {
@@ -359,7 +380,7 @@ export function ExploreClient({
     router.replace('/explore', { scroll: false });
   };
 
-  const hasActiveFilters = accordsConnus.length > 0 || searchQuery || selectedGenre || selectedDifficulty || selectedDecade || sortBy !== 'recent' || !showPublic || !showPrivate || !showPending;
+  const hasActiveFilters = accordsConnus.length > 0 || selectedKey || searchQuery || selectedGenre || selectedDifficulty || selectedDecade || sortBy !== 'recent' || !showPublic || !showPrivate || !showPending;
 
   const handleRandom = () => {
     if (sheets.length === 0) return;

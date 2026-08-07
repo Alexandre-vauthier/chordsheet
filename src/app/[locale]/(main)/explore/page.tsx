@@ -5,6 +5,7 @@ import { getPublicSheetIndex } from '@/lib/public-sheet-index';
 import { accordsDeLUrl, accordsLesPlusJoues, filtreActif, versGrilleDeCatalogue } from '@/lib/explore-shelves';
 import { ChordHero } from '@/components/explore/chord-hero';
 import { DiscoveryShelves } from '@/components/explore/discovery-shelves';
+import { EntryTiles } from '@/components/explore/entry-tiles';
 import { ExploreClient } from './explore-client';
 import { ExploreEditorial } from './explore-editorial';
 
@@ -109,7 +110,12 @@ export default async function Page({
       <ExploreClient
         initialSheets={initialSheets}
         avecHero={heroVisible && accordsProposes.length > 0}
-        decouverte={flane ? <DiscoveryShelves refs={refs} locale={locale} /> : null}
+        decouverte={flane ? (
+          <>
+            <DiscoveryShelves refs={refs} locale={locale} />
+            <EntryTiles refs={refs} locale={locale} />
+          </>
+        ) : null}
       />
       <ExploreEditorial locale={locale} />
     </>

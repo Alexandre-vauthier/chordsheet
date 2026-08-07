@@ -369,7 +369,14 @@
     "heroSee": "Voir {count, plural, one {la grille} other {les # grilles}}",
     "chordFilter": "Jouables avec {chords}",
     "catalogueTitle": "Tout le catalogue",
-    "catalogueFiltered": "Les grilles que vous pouvez jouer"
+    "catalogueFiltered": "Les grilles que vous pouvez jouer",
+    "entries": {
+      "decades": "Par décennie",
+      "genres": "Par genre",
+      "levels": "Par niveau",
+      "keys": "Par tonalité",
+      "artists": "Les artistes"
+    }
   },
   "SheetViewer": {
     "pauseSample": "Pause l'extrait",
