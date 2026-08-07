@@ -150,21 +150,24 @@ const TEMPO_UNIT_FACTOR: Record<TempoUnit, number> = {
 /**
  * Le tempo de la boîte à rythme, déduit de celui de la grille.
  *
- * Deux corrections, dans cet ordre :
+ * Les motifs sont écrits en doubles croches sur deux mesures : une mesure de
+ * batterie doit donc durer exactement une mesure d'accords. D'où deux choses.
  *
- * - **l'unité de tempo.** Une grille notée à la croche fait battre les accords
- *   deux fois plus vite que son chiffre ne le dit. La boîte, elle, lisait le
- *   chiffre nu : elle jouait alors à la moitié de la vitesse des accords, et
- *   l'écart grandissait mesure après mesure. Les motifs sont écrits en doubles
- *   croches sur deux mesures, ils doivent battre sur le même temps ;
- * - **le demi-tempo au-delà de cent.** Choix de mai 2026 : au-dessus de cent
- *   battements, la boîte joue en half-time, ce qui évite la mitraille de
- *   charleston sur les morceaux rapides. Appliqué après l'unité, donc au tempo
- *   réellement entendu.
+ * **L'unité de tempo compte.** Une grille notée à la croche fait battre les
+ * accords deux fois plus vite que son chiffre ne le dit ; lire le chiffre nu
+ * faisait jouer la boîte à la moitié de leur vitesse.
+ *
+ * **Pas de demi-tempo.** Un demi-tempo appliqué à l'horloge ne donne pas un
+ * half-time : il double la durée de la mesure de batterie, si bien que la phrase
+ * de deux mesures du motif s'étale sur quatre mesures d'accords. Les cymbales, les
+ * charlestons ouverts de fin de phrase et les relances tombent alors de plus en
+ * plus loin de leur place. C'était la règle de mai 2026 pour les tempos rapides ;
+ * elle visait la mitraille de charleston, mais elle réglait une question de motif
+ * avec une horloge. Un motif trop dense se remplace par un motif plus aéré, pas
+ * par une horloge qui ralentit.
  */
 export function grooveBpmFor(tempo: string | undefined, tempoUnit: TempoUnit | undefined): number {
-  const reel = parseTempo(tempo) / TEMPO_UNIT_FACTOR[tempoUnit ?? 'quarter'];
-  return reel > 100 ? Math.round(reel / 2) : reel;
+  return parseTempo(tempo) / TEMPO_UNIT_FACTOR[tempoUnit ?? 'quarter'];
 }
 
 

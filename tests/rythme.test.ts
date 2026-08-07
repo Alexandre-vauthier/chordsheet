@@ -1,9 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { premierTempsAVenir } from '@/lib/use-groove-box';
-import { grooveBpmFor } from '@/lib/use-playback';
-
-const grooveBpmForSync = (tempo: string) => grooveBpmFor(tempo, 'quarter');
+import { grooveBpmFor, parseTempo } from '@/lib/use-playback';
 
 /**
  * Le calage de la boîte à rythme sur le départ des accords.
@@ -51,21 +49,31 @@ test('un pas nul ne fait pas tourner la boucle indéfiniment', () => {
  * batterie, et l'écart grandissait mesure après mesure.
  */
 test('une grille notée à la croche fait battre la boîte au bon temps', () => {
-  // 90 à la croche, ce sont 180 noires par minute : au-delà de cent, le
-  // demi-tempo choisi en mai s'applique, donc 90 battements de boîte.
-  assert.equal(grooveBpmFor('90 BPM', 'eighth'), 90);
-  // Le même chiffre à la noire reste sous la barre des cent : pas de demi-tempo.
+  // 90 à la croche, ce sont 180 noires par minute.
+  assert.equal(grooveBpmFor('90 BPM', 'eighth'), 180);
   assert.equal(grooveBpmFor('90 BPM', 'quarter'), 90);
-  // Sous la barre des cent des deux côtés, l'unité se voit directement : 40 à la
-  // croche, ce sont 80 noires. Le chiffre nu en donnait 40, moitié moins que les
-  // accords — c'est là que l'écart se creusait.
-  assert.equal(grooveBpmFor('40 BPM', 'eighth'), 80);
-  assert.equal(grooveBpmFor('40 BPM', 'quarter'), 40);
 });
 
-test('le demi-tempo au-delà de cent reste la règle', () => {
-  // Décision de mai 2026 : elle évite la mitraille de charleston sur les morceaux
-  // rapides. Ce test est là pour qu'on ne la supprime pas sans le vouloir.
-  assert.equal(grooveBpmForSync('120 BPM'), 60);
-  assert.equal(grooveBpmForSync('100 BPM'), 100);
+/**
+ * L'invariant qui manquait : une mesure de batterie dure une mesure d'accords.
+ *
+ * C'est lui qu'aucun test ne gardait, et c'est par là que le décalage passait. Un
+ * demi-tempo au-delà de cent battements — la règle de mai 2026 — donnait un rapport
+ * de deux : la phrase de deux mesures du motif s'étalait sur quatre mesures
+ * d'accords, et tout ce qui marque une fin de phrase tombait de plus en plus loin.
+ */
+test('une mesure de batterie dure exactement une mesure d’accords', () => {
+  const FACTEUR = { quarter: 1, eighth: 0.5 } as const;
+
+  for (const tempo of ['60 BPM', '90 BPM', '100 BPM', '120 BPM', '160 BPM', '200 BPM']) {
+    for (const unite of ['quarter', 'eighth'] as const) {
+      const beatS = (60 / parseTempo(tempo)) * FACTEUR[unite];
+      const mesureAccords = 4 * beatS;                     // span 1 = une mesure de quatre temps
+      const mesureBatterie = 16 * (15 / grooveBpmFor(tempo, unite)); // seize doubles croches
+      assert.ok(
+        Math.abs(mesureBatterie - mesureAccords) < 1e-9,
+        `${tempo} ${unite} : batterie ${mesureBatterie}s contre accords ${mesureAccords}s`,
+      );
+    }
+  }
 });
