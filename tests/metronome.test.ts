@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { construireBattements, buildSequence, type PlayStep } from '@/lib/use-playback';
+import { metriqueDeGrille, estTernaire } from '@/lib/sheet-meter';
 import { createEmptySection } from '@/types';
 import type { Section, Cell } from '@/types';
 
@@ -118,4 +119,31 @@ test('le déroulé d’une grille en trois temps ne contient aucune mesure en qu
   assert.ok(steps.length > 0);
   assert.deepEqual([...new Set(steps.map((s) => s.beatsPerMeasure))], [3]);
   assert.equal(construireBattements(steps, 0, BEAT_MS).length, 6);
+});
+
+/**
+ * La métrique de la grille, lue au même endroit par tout le monde.
+ *
+ * Trois grilles du catalogue — Wicked Games, Knockin on Heaven's Door,
+ * Kryptonite — sont en trois temps sans porter le champ au niveau du document :
+ * il n'était écrit que par la bascule de l'éditeur, jamais à la création. La
+ * bascule s'y affichait donc sur « binaire », et le badge « ternaire » manquait.
+ */
+const grille = (doc: 3 | 4 | undefined, sections: (3 | 4)[]) => ({
+  beatsPerMeasure: doc,
+  sections: sections.map((beatsPerMeasure) => ({ beatsPerMeasure })),
+});
+
+test('sans champ au niveau du document, la métrique vient des sections', () => {
+  assert.equal(metriqueDeGrille(grille(undefined, [3, 3])), 3);
+  assert.equal(estTernaire(grille(undefined, [3, 3])), true);
+});
+
+test('le champ du document a le dernier mot quand il est là', () => {
+  assert.equal(metriqueDeGrille(grille(4, [3, 3])), 4);
+});
+
+test('une grille sans section vaut quatre temps', () => {
+  assert.equal(metriqueDeGrille(grille(undefined, [])), 4);
+  assert.equal(estTernaire(grille(undefined, [])), false);
 });

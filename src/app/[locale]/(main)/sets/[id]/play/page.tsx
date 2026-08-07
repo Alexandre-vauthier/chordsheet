@@ -7,6 +7,7 @@ import { useSet } from '@/lib/use-sets';
 import { useConcertSession } from '@/lib/use-concert-session';
 import { useGroups } from '@/lib/use-groups';
 import { parseTempo } from '@/lib/use-playback';
+import { metriqueDeGrille } from '@/lib/sheet-meter';
 import { startScheduledMetronome } from '@/lib/chord-audio';
 import { SheetViewer } from '@/components/sheet/sheet-viewer';
 import { Button } from '@/components/ui/button';
@@ -161,7 +162,7 @@ export default function SetPlayPage({ params }: SetPlayPageProps) {
       setCountBeat(0);
       const finalBpm = parseTempo(currentSheet.tempo || '90');
       startAutoScroll(currentIndex, finalBpm);
-      const beatsPerMeasure = currentSheet.sections[0]?.beatsPerMeasure || 4;
+      const beatsPerMeasure = metriqueDeGrille(currentSheet);
       stopMetronome();
       metronomeRef.current = startScheduledMetronome(finalBpm, beatsPerMeasure);
     }, 8 * msPerBeat);

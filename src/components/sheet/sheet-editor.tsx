@@ -7,6 +7,7 @@ import { useTranslations } from 'next-intl';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
 import { computeDifficulty } from '@/lib/compute-difficulty';
+import { metriqueDeGrille } from '@/lib/sheet-meter';
 import type { Sheet, Section, NewSheet, StringChord, PianoChord, CustomChord, InstrumentId } from '@/types';
 import { createEmptySection, createEmptyRow, GENRES } from '@/types';
 import { SectionBlock } from './section-block';
@@ -268,6 +269,10 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
 
   const bpm = parseTempo(sheet.tempo);
   const grooveBpm = grooveBpmFor(sheet.tempo, sheet.tempoUnit);
+  /* La métrique de la grille, lue une fois pour tout le composant : la bascule,
+     l'aperçu de rythme, la batterie hors lecture et la création d'une section
+     s'appuyaient chacun sur sa propre règle. */
+  const metrique = metriqueDeGrille(sheet);
 
   // Prévisualisation d'un pattern (indépendante du Play général) : joue 2 mesures
   // du pattern sélectionné dans le menu déroulant, puis s'arrête toute seule.
@@ -280,11 +285,11 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
     setPreviewPattern((current) => {
       if (current === patternId) return null;
-      const measureSeconds = (60 / grooveBpm) * (sheet.beatsPerMeasure ?? 4);
+      const measureSeconds = (60 / grooveBpm) * metrique;
       previewTimeoutRef.current = setTimeout(() => setPreviewPattern(null), measureSeconds * 2 * 1000);
       return patternId;
     });
-  }, [grooveBpm, sheet.beatsPerMeasure]);
+  }, [grooveBpm, metrique]);
 
   useGrooveBox({
     // Même point de départ que les accords (voir la consultation).
@@ -294,8 +299,8 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     bpm: grooveBpm,
     // La métrique de la section jouée, et non celle du document : une grille qui
     // passe du ternaire au binaire changeait de mesure sans que la batterie le
-    // sache. Hors lecture, celle de la première section.
-    beatsPerMeasure: activeStep?.beatsPerMeasure ?? sheet.sections[0]?.beatsPerMeasure ?? 4,
+    // sache. Hors lecture, celle de la grille.
+    beatsPerMeasure: activeStep?.beatsPerMeasure ?? metrique,
     genres: sheet.genres ?? [],
     groovePattern: previewPattern ?? sheet.groovePattern,
   });
@@ -498,7 +503,6 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     // section ajoutée après coup naissait en quatre temps sur une grille en trois.
     // Le métronome la comptait alors fidèlement en quatre, et c'est ce qu'on
     // entendait — quatre grilles du catalogue en portent encore la trace.
-    const metrique = sheet.beatsPerMeasure ?? sheet.sections[0]?.beatsPerMeasure ?? 4;
     const newSection = createEmptySection(nextLabel, metrique);
 
     setSheet((prev) => ({
@@ -506,7 +510,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
       sections: [...prev.sections, newSection],
     }));
     setHasChanges(true);
-  }, [sheet.sections, sheet.beatsPerMeasure, tSection]);
+  }, [sheet.sections, metrique, tSection]);
 
   // Dupliquer une section
   const duplicateSection = useCallback((sectionId: string) => {
@@ -1104,7 +1108,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                   sections: sheet.sections.map(s => ({ ...s, beatsPerMeasure: 4 as const })),
                 })}
                 className={`cursor-pointer px-3 py-1 text-xs transition-colors ${
-                  (sheet.beatsPerMeasure ?? 4) === 4
+                  metrique === 4
                     ? 'bg-[var(--accent)] text-white'
                     : 'bg-[var(--cell-bg)] text-[var(--ink-light)] hover:bg-[var(--cell-hover)]'
                 }`}
@@ -1117,7 +1121,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                   sections: sheet.sections.map(s => ({ ...s, beatsPerMeasure: 3 as const })),
                 })}
                 className={`cursor-pointer px-3 py-1 text-xs border-l border-[var(--line)] transition-colors ${
-                  sheet.beatsPerMeasure === 3
+                  metrique === 3
                     ? 'bg-[var(--accent)] text-white'
                     : 'bg-[var(--cell-bg)] text-[var(--ink-light)] hover:bg-[var(--cell-hover)]'
                 }`}

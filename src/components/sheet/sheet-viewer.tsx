@@ -13,6 +13,7 @@ import { isPianoChord } from '@/types';
 import { useChordNotation } from '@/lib/use-chord-notation';
 import { useChordColor } from '@/lib/use-chord-color';
 import { transposeChord } from '@/lib/transpose';
+import { metriqueDeGrille, estTernaire } from '@/lib/sheet-meter';
 import { usePlayback, parseTempo, grooveBpmFor, buildChordSequence, ACCOMPANIMENT_INSTRUMENTS } from '@/lib/use-playback';
 import { useGrooveBox, PATTERN_DEFS } from '@/lib/use-groove-box';
 import type { PlayStep, PlayStyle, PlaybackVoice } from '@/lib/use-playback';
@@ -444,6 +445,11 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   }, [concertCellPath?.sectionIdx, concertCellPath?.rowIdx]);
 
   const grooveBpm = grooveBpmFor(localTempo, localTempoUnit);
+  /* La métrique de la grille, lue une fois pour tout le composant : la bascule,
+     l'aperçu de rythme, la batterie hors lecture et la création d'une section
+     s'appuyaient chacun sur sa propre règle. */
+  const metrique = metriqueDeGrille(sheet);
+  const ternaire = estTernaire(sheet);
 
   // Prévisualiser un pattern : l'entend 2 mesures puis s'arrête (dé-mute le temps
   // de l'aperçu). Recliquer le même pattern coupe l'aperçu.
@@ -451,11 +457,11 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
     if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current);
     setPreviewPattern((current) => {
       if (current === patternId) return null;
-      const measureSeconds = (60 / grooveBpm) * (sheet.beatsPerMeasure ?? 4);
+      const measureSeconds = (60 / grooveBpm) * metrique;
       previewTimeoutRef.current = setTimeout(() => setPreviewPattern(null), measureSeconds * 2 * 1000);
       return patternId;
     });
-  }, [grooveBpm, sheet.beatsPerMeasure]);
+  }, [grooveBpm, metrique]);
 
   useEffect(() => () => { if (previewTimeoutRef.current) clearTimeout(previewTimeoutRef.current); }, []);
   useEffect(() => { if (isPlaying) setPreviewPattern(null); }, [isPlaying]);
@@ -481,8 +487,8 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
     bpm: grooveBpm,
     // La métrique de la section jouée, et non celle du document : une grille qui
     // passe du ternaire au binaire changeait de mesure sans que la batterie le
-    // sache. Hors lecture, celle de la première section.
-    beatsPerMeasure: activeStep?.beatsPerMeasure ?? sheet.sections[0]?.beatsPerMeasure ?? 4,
+    // sache. Hors lecture, celle de la grille.
+    beatsPerMeasure: activeStep?.beatsPerMeasure ?? metrique,
     genres: sheet.genres ?? [],
     // L'aperçu prime, sinon le choix de session (livePattern).
     groovePattern: previewPattern ?? livePattern,
@@ -1001,7 +1007,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                   {t('capo', { n: sheet.capo })}
                 </button>
               ) : null}
-              {sheet.beatsPerMeasure === 3 && (
+              {ternaire && (
                 <span className="px-1.5 py-0.5 bg-[var(--cell-bg)] text-[var(--ink-light)] rounded text-xs border border-[var(--line)]">
                   {t('ternary')}
                 </span>
@@ -1033,7 +1039,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             {sheet.capo ? (
               <span className="text-sm text-[var(--ink-light)]">{t('capo', { n: sheet.capo })}</span>
             ) : null}
-            {sheet.beatsPerMeasure === 3 && (
+            {ternaire && (
               <span className="text-sm text-[var(--ink-light)]">{t('ternary')}</span>
             )}
           </div>
