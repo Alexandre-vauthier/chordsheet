@@ -57,7 +57,10 @@ export function NavDropdown({
       {ouvert && (
         <div
           role="menu"
-          className={`absolute top-full mt-2 z-[60] w-64 max-w-[calc(100vw-2rem)] max-h-[70vh] overflow-y-auto
+          /* w-72 et non w-64 : « Trouver un accord par ses notes » fait environ
+             280 px avec son icône, il passait à la ligne. La borne à la largeur de
+             fenêtre reste, elle est ce qui protège le petit écran. */
+          className={`absolute top-full mt-2 z-[60] w-72 max-w-[calc(100vw-2rem)] max-h-[70vh] overflow-y-auto
             rounded-xl border border-[var(--line)] bg-[var(--cell-bg)] shadow-xl py-1.5
             ${align === 'right' ? 'right-0' : 'left-0 sm:left-auto sm:right-0'}`}
         >
