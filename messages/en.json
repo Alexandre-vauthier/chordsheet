@@ -788,7 +788,8 @@
     "retry": "Try again",
     "reputationEmpty": "Publish a chart to open your reputation: it is worked out from your public charts.",
     "upgradeSuccess": "Welcome to Pro. Your subscription is active.",
-    "portalError": "The portal could not open. Try again in a moment."
+    "portalError": "The portal could not open. Try again in a moment.",
+    "previewLabel": "Preview"
   },
   "SectionLabels": {
     "Intro": "Intro",

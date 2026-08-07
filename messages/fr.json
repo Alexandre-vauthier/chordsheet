@@ -788,7 +788,8 @@
     "retry": "Réessayer",
     "reputationEmpty": "Publie une grille pour ouvrir ta réputation : elle se calcule à partir de tes grilles publiques.",
     "upgradeSuccess": "Bienvenue chez les Pro. Ton abonnement est actif.",
-    "portalError": "Le portail n'a pas pu s'ouvrir. Réessaie dans un instant."
+    "portalError": "Le portail n'a pas pu s'ouvrir. Réessaie dans un instant.",
+    "previewLabel": "Aperçu"
   },
   "SectionLabels": {
     "Intro": "Intro",

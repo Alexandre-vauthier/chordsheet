@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { PreferenceRow } from './preference-row';
 import { NotationChoice } from './notation-choice';
 import { ChordColorLegend } from './chord-color-legend';
+import { GridPreview } from './grid-preview';
 
 /**
  * Ce qu'on voit en ouvrant une grille.
@@ -17,6 +18,9 @@ export function DisplaySection() {
 
   return (
     <>
+      {/* L'aperçu d'abord : on voit ce qu'on règle avant de lire ce qu'on règle. */}
+      <GridPreview />
+
       <NotationChoice />
 
       <PreferenceRow cle="darkMode" label={t('darkModeTitle')} description={t('darkModeDesc')} />
