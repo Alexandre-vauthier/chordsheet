@@ -7,6 +7,7 @@ import { GridRow } from './grid-row';
 import { createEmptyRow } from '@/types';
 import { CoachMark } from './coach-mark';
 import { normaliserLibelle } from '@/lib/section-label';
+import type { Direction } from '@/lib/grid-navigation';
 
 // Accords en filigrane sur la première mesure d'une grille en cours de création :
 // ils montrent où se remplit la grille. Une section en 3/4 n'en affiche que trois.
@@ -50,7 +51,13 @@ function RepeatInput({ value, onChange, size = 'md' }: {
 interface SectionBlockProps {
   section: Section;
   instrumentId: InstrumentId;
-  onUpdate: (updates: Partial<Section>) => void;
+  /**
+   * Modifier la section. La forme fonctionnelle reçoit son état courant, et non
+   * celui du rendu où le gestionnaire a été créé : tout calcul dérivé de
+   * `section.rows` doit passer par elle, sinon il écrase les saisies faites entre
+   * les deux (voir `updateSection` dans l'éditeur).
+   */
+  onUpdate: (updates: Partial<Section> | ((section: Section) => Partial<Section>)) => void;
   onDelete: () => void;
   onDuplicate: () => void;
   onPlaySection?: () => void;
@@ -63,6 +70,8 @@ interface SectionBlockProps {
   dictationCellIndex?: number;
   activeDurationMs?: number;
   onNavigateToCell: (sectionId: string, rowIndex: number, cellIndex: number) => void;
+  /** Déplacement aux flèches, borné à cette section. */
+  onNavigateDirection?: (sectionId: string, rowIndex: number, cellIndex: number, direction: Direction) => void;
   onDragStart: () => void;
   onDragEnd: () => void;
   onDragOver: (e: React.DragEvent) => void;
@@ -103,6 +112,7 @@ export function SectionBlock({
   dictationCellIndex,
   activeDurationMs,
   onNavigateToCell,
+  onNavigateDirection,
   onDragStart,
   onDragEnd,
   onDragOver,
@@ -123,48 +133,54 @@ export function SectionBlock({
   const [isHovered, setIsHovered] = useState(false);
 
   const updateCell = (rowIndex: number, cellIndex: number, updates: Partial<Cell>) => {
-    const newRows = [...section.rows];
-    newRows[rowIndex] = [...newRows[rowIndex]];
-    newRows[rowIndex][cellIndex] = { ...newRows[rowIndex][cellIndex], ...updates };
-    onUpdate({ rows: newRows });
+    onUpdate((s) => {
+      const newRows = [...s.rows];
+      newRows[rowIndex] = [...newRows[rowIndex]];
+      newRows[rowIndex][cellIndex] = { ...newRows[rowIndex][cellIndex], ...updates };
+      return { rows: newRows };
+    });
   };
 
   const splitCell = (rowIndex: number, cellIndex: number) => {
-    const newRows = [...section.rows];
-    const row = [...newRows[rowIndex]];
-    const cell = row[cellIndex];
-    if (cell.span <= 0.25) return;
-    const half = cell.span / 2;
-    const spanA = (Math.ceil(half / 0.25) * 0.25) as CellSpan;
-    const spanB = (cell.span - spanA) as CellSpan;
-    if (spanB <= 0) return;
-    row.splice(cellIndex, 1,
-      { chord: cell.chord, span: spanA },
-      { chord: '', span: spanB }
-    );
-    newRows[rowIndex] = row;
-    onUpdate({ rows: newRows });
+    onUpdate((s) => {
+      const newRows = [...s.rows];
+      const row = [...newRows[rowIndex]];
+      const cell = row[cellIndex];
+      if (cell.span <= 0.25) return {};
+      const half = cell.span / 2;
+      const spanA = (Math.ceil(half / 0.25) * 0.25) as CellSpan;
+      const spanB = (cell.span - spanA) as CellSpan;
+      if (spanB <= 0) return {};
+      row.splice(cellIndex, 1,
+        { chord: cell.chord, span: spanA },
+        { chord: '', span: spanB }
+      );
+      newRows[rowIndex] = row;
+      return { rows: newRows };
+    });
   };
 
   const mergeCells = (rowIndex: number, cellIndex: number) => {
     if (cellIndex === 0) return;
-    const newRows = [...section.rows];
-    const row = [...newRows[rowIndex]];
-    const prevCell = row[cellIndex - 1];
-    const currentCell = row[cellIndex];
-    const newSpan = prevCell.span + currentCell.span;
-    if (newSpan > 4) return;
-    const chord = prevCell.chord || currentCell.chord;
-    row.splice(cellIndex - 1, 2, { chord, span: newSpan as CellSpan });
-    newRows[rowIndex] = row;
-    onUpdate({ rows: newRows });
+    onUpdate((s) => {
+      const newRows = [...s.rows];
+      const row = [...newRows[rowIndex]];
+      const prevCell = row[cellIndex - 1];
+      const currentCell = row[cellIndex];
+      const newSpan = prevCell.span + currentCell.span;
+      if (newSpan > 4) return {};
+      const chord = prevCell.chord || currentCell.chord;
+      row.splice(cellIndex - 1, 2, { chord, span: newSpan as CellSpan });
+      newRows[rowIndex] = row;
+      return { rows: newRows };
+    });
   };
 
   // La mesure suit la métrique de la section : 3 cellules en 3/4, 4 en 4/4.
   const newRow = () => createEmptyRow();
 
   const addRow = () => {
-    onUpdate({ rows: [...section.rows, newRow()] });
+    onUpdate((s) => ({ rows: [...s.rows, newRow()] }));
   };
 
   /**
@@ -174,22 +190,31 @@ export function SectionBlock({
    * d'où le report au macrotask suivant, une fois le rendu de React committé.
    */
   const appendRowAndNavigate = () => {
-    const rows = [...section.rows, newRow()];
-    onUpdate({ rows });
-    setTimeout(() => onNavigateToCell(section.id, rows.length - 1, 0), 0);
+    let rang = section.rows.length;
+    onUpdate((s) => {
+      // Le rang de la mesure créée se lit sur l'état courant : la cellule quittée
+      // vient peut-être d'ajouter la sienne, et viser un rang périmé ferait entrer
+      // dans une autre mesure que celle qu'on ajoute.
+      rang = s.rows.length;
+      return { rows: [...s.rows, newRow()] };
+    });
+    setTimeout(() => onNavigateToCell(section.id, rang, 0), 0);
   };
 
   const deleteRow = (rowIndex: number) => {
     if (section.rows.length <= 1) return;
-    const newRows = section.rows.filter((_, i) => i !== rowIndex);
-    const newRepeats = (section.rowRepeats || []).filter((_, i) => i !== rowIndex);
-    onUpdate({ rows: newRows, rowRepeats: newRepeats });
+    onUpdate((s) => (s.rows.length <= 1 ? {} : {
+      rows: s.rows.filter((_, i) => i !== rowIndex),
+      rowRepeats: (s.rowRepeats || []).filter((_, i) => i !== rowIndex),
+    }));
   };
 
   const setRowRepeat = (rowIndex: number, value: number) => {
-    const repeats = [...(section.rowRepeats || section.rows.map(() => 1))];
-    repeats[rowIndex] = Math.max(1, value);
-    onUpdate({ rowRepeats: repeats });
+    onUpdate((s) => {
+      const repeats = [...(s.rowRepeats || s.rows.map(() => 1))];
+      repeats[rowIndex] = Math.max(1, value);
+      return { rowRepeats: repeats };
+    });
   };
 
   // Contrôles header visibles si hovered OU première section (onboarding)
@@ -321,17 +346,23 @@ export function SectionBlock({
               instrumentId={instrumentId}
               onCellChange={(cellIndex, updates) => updateCell(rowIndex, cellIndex, updates)}
               onFillCells={(fromCellIndex, chord, count) => {
-                const newRows = [...section.rows];
-                newRows[rowIndex] = [...newRows[rowIndex]];
-                for (let i = fromCellIndex; i < Math.min(fromCellIndex + count, newRows[rowIndex].length); i++) {
-                  newRows[rowIndex][i] = { ...newRows[rowIndex][i], chord };
-                }
-                onUpdate({ rows: newRows });
+                onUpdate((s) => {
+                  const newRows = [...s.rows];
+                  newRows[rowIndex] = [...newRows[rowIndex]];
+                  for (let i = fromCellIndex; i < Math.min(fromCellIndex + count, newRows[rowIndex].length); i++) {
+                    newRows[rowIndex][i] = { ...newRows[rowIndex][i], chord };
+                  }
+                  return { rows: newRows };
+                });
               }}
               onSplit={(cellIndex) => splitCell(rowIndex, cellIndex)}
               onMerge={(cellIndex) => mergeCells(rowIndex, cellIndex)}
               onNavigateToCell={(nextRowIndex, cellIndex) =>
                 onNavigateToCell(section.id, nextRowIndex, cellIndex)
+              }
+              onNavigateDirection={
+                onNavigateDirection
+                && ((r, c, direction) => onNavigateDirection(section.id, r, c, direction))
               }
               onAppendRow={appendRowAndNavigate}
               totalRows={section.rows.length}

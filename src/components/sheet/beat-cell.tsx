@@ -10,6 +10,7 @@ import { useChordColor } from '@/lib/use-chord-color';
 import { parseChordInput } from '@/lib/chord-data';
 import { CoachMark } from './coach-mark';
 import { useClickOutside } from '@/lib/use-click-outside';
+import type { Direction } from '@/lib/grid-navigation';
 
 interface BeatCellProps {
   cell: Cell;
@@ -20,6 +21,8 @@ interface BeatCellProps {
   canSplit: boolean;
   onSplit: () => void;
   onNavigateNext: () => void;
+  /** Se déplacer d'une cellule dans la direction demandée (flèches). */
+  onNavigateDirection?: (direction: Direction) => void;
   isActive?: boolean;
   activeDurationMs?: number;
   /**
@@ -34,6 +37,14 @@ interface BeatCellProps {
   finderChordPool?: Record<InstrumentId, (StringChord | PianoChord)[]>;
 }
 
+/** Les quatre flèches, et le déplacement qu'elles demandent. */
+const FLECHES: Record<string, Direction | undefined> = {
+  ArrowUp: 'up',
+  ArrowDown: 'down',
+  ArrowLeft: 'left',
+  ArrowRight: 'right',
+};
+
 export function BeatCell({
   cell,
   cols,
@@ -43,6 +54,7 @@ export function BeatCell({
   canSplit,
   onSplit,
   onNavigateNext,
+  onNavigateDirection,
   isActive = false,
   activeDurationMs = 0,
   isDictationTarget = false,
@@ -144,11 +156,40 @@ export function BeatCell({
       // Différer la navigation pour que l'état (ex: onFillCells xN) soit propagé
       // avant que la case suivante n'entre en mode édition
       setTimeout(onNavigateNext, 0);
+      return;
     }
     if (e.key === 'Escape') {
       setValue(canonicalDisplay);
       setIsEditing(false);
+      return;
     }
+
+    /*
+     * Les flèches.
+     *
+     * Haut et bas changent toujours de mesure : il n'y a rien au-dessus ni en
+     * dessous dans un champ d'une seule ligne. Gauche et droite appartiennent
+     * d'abord au texte, et ne quittent la cellule que depuis le bord — sans quoi
+     * on ne pourrait plus corriger le milieu d'un accord. La sélection compte
+     * comme « pas au bord » : entrer dans une cellule sélectionne son contenu, et
+     * la première flèche doit alors simplement poser le curseur.
+     */
+    const fleche = FLECHES[e.key];
+    if (!fleche || !onNavigateDirection) return;
+    if (fleche === 'left' || fleche === 'right') {
+      const input = inputRef.current;
+      if (!input) return;
+      const debut = input.selectionStart ?? 0;
+      const fin = input.selectionEnd ?? 0;
+      if (debut !== fin) return;
+      if (fleche === 'left' && debut !== 0) return;
+      if (fleche === 'right' && fin !== value.length) return;
+    }
+    e.preventDefault();
+    handleBlur();
+    // Même report que Tab : la cellule quittée doit avoir écrit son accord avant
+    // que la suivante n'entre en édition.
+    setTimeout(() => onNavigateDirection(fleche), 0);
   };
 
   const toggleDiagram = (e: React.MouseEvent) => {

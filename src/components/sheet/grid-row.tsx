@@ -5,6 +5,7 @@ import type { Row, Cell, CellSpan, InstrumentId, StringChord, PianoChord } from 
 import { parseChordInput, isFrenchChordInput } from '@/lib/chord-data';
 import { BeatCell } from './beat-cell';
 import { CoachMark } from './coach-mark';
+import type { Direction } from '@/lib/grid-navigation';
 
 interface GridRowProps {
   row: Row;
@@ -17,6 +18,8 @@ interface GridRowProps {
   onSplit: (cellIndex: number) => void;
   onMerge: (cellIndex: number) => void;
   onNavigateToCell: (rowIndex: number, cellIndex: number) => void;
+  /** Déplacement aux flèches depuis une cellule de cette mesure. */
+  onNavigateDirection?: (rowIndex: number, cellIndex: number, direction: Direction) => void;
   /** Tab depuis la dernière cellule de la dernière mesure : crée la mesure suivante et y entre. */
   onAppendRow?: () => void;
   onFrenchDetected?: () => void;
@@ -44,6 +47,7 @@ export function GridRow({
   onSplit,
   onMerge,
   onNavigateToCell,
+  onNavigateDirection,
   onAppendRow,
   onFrenchDetected,
   totalRows,
@@ -105,6 +109,9 @@ export function GridRow({
               showSplitCoach={isFirstRow && cellIndex === 0 && canSplit}
               onDismissOnboarding={onDismissOnboarding}
               finderChordPool={finderChordPool}
+              onNavigateDirection={
+                onNavigateDirection && ((direction) => onNavigateDirection(rowIndex, cellIndex, direction))
+              }
               onNavigateNext={() => {
                 let nextCellIndex = cellIndex + 1;
                 let nextRowIndex = rowIndex;

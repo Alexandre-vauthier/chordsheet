@@ -7,6 +7,8 @@ import { useTranslations } from 'next-intl';
 import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { getDb } from '@/lib/firebase';
 import { computeDifficulty } from '@/lib/compute-difficulty';
+import { useHistorique } from '@/lib/history';
+import { deplacer, type Direction } from '@/lib/grid-navigation';
 import { metriqueDeGrille } from '@/lib/sheet-meter';
 import type { Sheet, Section, NewSheet, StringChord, PianoChord, CustomChord, InstrumentId } from '@/types';
 import { createEmptySection, createEmptyRow, GENRES } from '@/types';
@@ -163,7 +165,12 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     updateUser({ notationPreference: 'french' });
   }, [user, updateUser]);
 
-  const [sheet, setSheet] = useState<NewSheet | Sheet>(initialSheet);
+  /**
+   * La grille et ses états précédents. Tout passe par le même état, donc toute
+   * action — saisie, duplication, déplacement, suppression — s'annule de la même
+   * façon, sans avoir à décrire son inverse.
+   */
+  const [sheet, setSheet, historique] = useHistorique<NewSheet | Sheet>(initialSheet);
   const [hasChanges, setHasChanges] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -345,7 +352,9 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   // Recalculer la difficulté automatiquement à chaque changement de sections
   useEffect(() => {
     const auto = computeDifficulty(sheet.sections);
-    setSheet(prev => ({ ...prev, difficulty: auto }));
+    // Hors historique : la difficulté se déduit des sections, ce n'est pas une
+    // action. Empilée, elle ferait qu'un premier Ctrl+Z ne défasse rien de visible.
+    setSheet(prev => (prev.difficulty === auto ? prev : { ...prev, difficulty: auto }), { historique: false });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sheet.sections]);
 
@@ -469,11 +478,24 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   }, [deducedKey, suggestedKey, sheet.capo, sheet.key, updateSheet]);
 
   // Mettre à jour une section
-  const updateSection = useCallback((sectionId: string, updates: Partial<Section>) => {
+  /**
+   * Modifier une section, éventuellement à partir de son état courant.
+   *
+   * La forme fonctionnelle n'est pas un confort : sans elle, un gestionnaire qui
+   * calcule `rows` depuis la section qu'il a reçue en propriété écrase ce qui a été
+   * écrit entre son dernier rendu et son exécution. C'est ce qui se passait au Tab
+   * sur la dernière cellule d'une section — la cellule quittée écrivait son accord,
+   * puis l'ajout de mesure repartait des lignes d'avant et l'effaçait. Toute action
+   * de ligne déclenchée juste après une saisie perdait cette saisie.
+   */
+  const updateSection = useCallback((
+    sectionId: string,
+    updates: Partial<Section> | ((section: Section) => Partial<Section>),
+  ) => {
     setSheet((prev) => ({
       ...prev,
       sections: prev.sections.map((s) =>
-        s.id === sectionId ? { ...s, ...updates } : s
+        s.id === sectionId ? { ...s, ...(typeof updates === 'function' ? updates(s) : updates) } : s
       ),
     }));
     setHasChanges(true);
@@ -754,6 +776,57 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [dictation.listening]);
+
+  /* ── Annuler / refaire ────────────────────────────────────────────────────
+   *
+   * L'historique porte l'état entier de la grille : annuler défait indifféremment
+   * une saisie d'accord, une duplication de section, un déplacement ou une
+   * suppression. Voir `useHistorique`.
+   */
+  const { annuler: defaire, refaire: retablir, peutAnnuler, peutRefaire } = historique;
+  const annuler = useCallback(() => { defaire(); setHasChanges(true); }, [defaire]);
+  const refaire = useCallback(() => { retablir(); setHasChanges(true); }, [retablir]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!e.metaKey && !e.ctrlKey) return;
+      const touche = e.key.toLowerCase();
+      if (touche !== 'z' && touche !== 'y') return;
+      /*
+       * Dans un champ de texte, Ctrl+Z appartient au texte : c'est la frappe en
+       * cours qu'on veut défaire, pas la grille. Le laisser au navigateur est
+       * aussi la seule façon de retrouver ce qu'on vient d'effacer dans un champ,
+       * puisque l'historique ne voit que les valeurs validées.
+       */
+      const cible = e.target as HTMLElement | null;
+      if (cible && (cible.tagName === 'INPUT' || cible.tagName === 'TEXTAREA' || cible.isContentEditable)) return;
+
+      e.preventDefault();
+      // Ctrl+Y et Ctrl+Maj+Z refont : le premier vient de Windows, le second du
+      // reste. Les deux traînent dans les doigts, aucun ne coûte rien.
+      if (touche === 'y' || e.shiftKey) refaire();
+      else annuler();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [annuler, refaire]);
+
+  /**
+   * Se déplacer d'une cellule à l'autre aux flèches, dans la section courante.
+   *
+   * Le calcul vit dans `deplacer` ; ici on ne fait que lire les longueurs de
+   * lignes — inégales dès qu'on a coupé ou fusionné des mesures — et donner le
+   * focus à la cellule visée, comme le fait Tab.
+   */
+  const navigateInDirection = useCallback(
+    (sectionId: string, rowIndex: number, cellIndex: number, direction: Direction) => {
+      const section = sheet.sections.find((s) => s.id === sectionId);
+      if (!section) return;
+      const cible = deplacer(section.rows.map((r) => r.length), { rowIndex, cellIndex }, direction);
+      if (cible) navigateToCell(sectionId, cible.rowIndex, cible.cellIndex);
+    },
+    [sheet.sections, navigateToCell],
+  );
 
   // Ouvrir la modal pour éditer un accord
   const handleEditChord = useCallback((chordName: string, currentChord: StringChord | PianoChord | null) => {
@@ -1098,6 +1171,37 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
       <div className="mb-6 p-4 bg-[var(--cell-bg)] rounded-lg border border-[var(--line)] space-y-4">
         {/* Métrique, Capo & Difficulté */}
         <div className="flex flex-wrap items-center gap-6">
+          {/* Annuler / Rétablir. Le raccourci seul ne se découvre pas : personne
+              n'essaie Ctrl+Z sur une application web sans un signe que ça répond. */}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={annuler}
+              disabled={!peutAnnuler}
+              title={t('undoHint')}
+              aria-label={t('undo')}
+              className="cursor-pointer p-1.5 rounded text-[var(--ink-light)] transition-colors hover:bg-[var(--cell-hover)] hover:text-[var(--ink)] disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a5 5 0 010 10h-3" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 6l-4 4 4 4" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={refaire}
+              disabled={!peutRefaire}
+              title={t('redoHint')}
+              aria-label={t('redo')}
+              className="cursor-pointer p-1.5 rounded text-[var(--ink-light)] transition-colors hover:bg-[var(--cell-hover)] hover:text-[var(--ink)] disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 10H11a5 5 0 000 10h3" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 6l4 4-4 4" />
+              </svg>
+            </button>
+          </div>
+
           {/* Binaire / Ternaire */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-[var(--ink-light)]">{t('meter')}</span>
@@ -1328,6 +1432,12 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 reorderable={reordonnable}
                 instrumentId={sheet.instrumentId || 'guitar'}
                 onUpdate={(updates) => {
+                  // La forme fonctionnelle ne sert qu'aux mesures, qui appartiennent
+                  // bien à la section : rien à dérouter vers la structure.
+                  if (typeof updates === 'function') {
+                    updateSection(section.id, updates);
+                    return;
+                  }
                   // En déroulé, le nom et le nombre de passages appartiennent au
                   // passage, pas à la section.
                   const duPassage = vueEdition === 'flow'
@@ -1375,6 +1485,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 dictationRowIndex={dictationTarget?.sectionId === section.id ? dictationTarget.rowIndex : undefined}
                 dictationCellIndex={dictationTarget?.sectionId === section.id ? dictationTarget.cellIndex : undefined}
                 onNavigateToCell={navigateToCell}
+                onNavigateDirection={navigateInDirection}
                 onDragStart={() => handleDragStart(section.id)}
                 onDragEnd={handleDragEnd}
                 onDragOver={(e) => { e.preventDefault(); if (dragSectionIdRef.current !== section.id) handleDragOver(section.id); }}
