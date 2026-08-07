@@ -252,7 +252,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     [sheet.sections, sheet.structure, vueEdition],
   );
 
-  const { isPlaying, activeStep, playFromBloc, playRow, togglePlay, stop } = usePlayback({
+  const { isPlaying, activeStep, playFromBloc, playRow, togglePlay, stop, debutRef } = usePlayback({
     sections: sheet.sections,
     structure: vueEdition === 'flow' ? sheet.structure : undefined,
     tempo: sheet.tempo,
@@ -286,6 +286,8 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   }, [grooveBpm, sheet.beatsPerMeasure]);
 
   useGrooveBox({
+    // Même point de départ que les accords (voir la consultation).
+    debutRef,
     enabled: isPlaying || previewPattern !== null,
     muted: previewPattern !== null ? false : !grooveEnabled,
     bpm: grooveBpm,
