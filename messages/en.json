@@ -376,7 +376,8 @@
       "levels": "By level",
       "keys": "By key",
       "artists": "Artists"
-    }
+    },
+    "showMore": "Show {count, plural, one {the last sheet} other {# more sheets}}"
   },
   "SheetViewer": {
     "pauseSample": "Pause preview",

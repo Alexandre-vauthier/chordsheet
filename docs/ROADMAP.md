@@ -158,6 +158,23 @@ Consigné ici pour ne pas revenir le proposer.
 
 ## Dette connue, sans urgence
 
+- **Deux valeurs du champ `chords` ne sont pas des accords** : « à terminer »
+  (Emmenez-Moi) et « intro fingerstyle » (Under The Bridge), tapées dans des
+  cellules de grille et indexées comme le reste. Sans effet visible — elles
+  n'apparaissent ni dans les pastilles du hero, qui ne montrent que les douze
+  accords les plus employés, ni dans les rayons. Mais elles faussent tout calcul
+  fondé sur les accords : un socle glouton de départ les choisit en premier,
+  puisqu'une grille dont c'est le seul « accord » se trouve jouable avec lui
+  seul. Correctif : refuser à la saisie ce qui ne ressemble pas à un accord, ou
+  filtrer à l'indexation dans `indexedChords()`.
+- **`/explore` pèse 456 Ko de HTML**, dont environ 220 Ko de coque commune à
+  toutes les pages. Le catalogue ne rend plus que quarante-huit cartes d'entrée
+  (le reste au bouton), ce qui a déjà retiré 190 Ko ; les quarante-huit vignettes
+  des rayons en font autant. Le poste suivant serait de leur donner une vignette
+  propre, sans JavaScript et avec sa pochette résolue par le serveur, au lieu de
+  réemployer `SheetCard` qui traîne son survol 3D, son extrait audio et son menu.
+  À faire le jour où le catalogue aura doublé, pas avant.
+
 - **`ride.wav` du kit Classic** a une crête de 0,16 quand les autres sont à 1,0 :
   inaudible sur les rythmes jazz, qui reposent dessus. À remonter dans l'éditeur
   audio, ou à compenser par un gain.

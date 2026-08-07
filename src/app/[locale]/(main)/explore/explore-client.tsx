@@ -22,6 +22,9 @@ import { useRouter } from '@/i18n/navigation';
 
 type SortOption = 'recent' | 'rated' | 'viewed';
 
+/** Taille d'un lot de cartes du catalogue. */
+const LOT = 48;
+
 // Préférences de visibilité admin, conservées entre les visites de la page
 const ADMIN_SHOW_PUBLIC_KEY = 'explore_admin_show_public';
 const ADMIN_SHOW_PRIVATE_KEY = 'explore_admin_show_private';
@@ -383,6 +386,20 @@ export function ExploreClient({
   // deja diverge : celui-ci ignorait la meilleure note des versions.
   const groupedResults = useMemo(() => groupSheetsBySong(filteredSheets), [filteredSheets]);
 
+  /**
+   * Combien de cartes du catalogue sont rendues.
+   *
+   * Quarante-huit au premier affichage : de quoi remplir plusieurs écrans et
+   * donner aux moteurs de quoi lire, sans payer cent trente vignettes dont les
+   * dernières ne sont atteintes qu'après six défilements. Le reste est déjà en
+   * mémoire — dévoiler un lot ne demande rien au serveur.
+   */
+  const [montrees, setMontrees] = useState(LOT);
+
+  // Un nouveau résultat repart du premier lot : garder le compte d'avant ferait
+  // afficher cent cartes pour une recherche qui n'en rend que trois.
+  useEffect(() => { setMontrees(LOT); }, [groupedResults]);
+
   // Réinitialiser les filtres
   const clearFilters = () => {
     setSearchQuery('');
@@ -629,7 +646,7 @@ export function ExploreClient({
             </p>
           )}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {groupedResults.map(({ sheet, count, href, bestRating }) => (
+            {groupedResults.slice(0, montrees).map(({ sheet, count, href, bestRating }) => (
               <SheetCard
                 /* `songKey` et non une concaténation : « Fade — Away » et
                    « Fade Away — » donnaient la même clé, et React confondait
@@ -647,6 +664,27 @@ export function ExploreClient({
               />
             ))}
           </div>
+
+          {/*
+            Le catalogue se dévoile par lots.
+            Les cent trente cartes étaient rendues d'un bloc : le HTML servi
+            pesait 647 ko, dont l'essentiel pour des vignettes qu'on n'atteint
+            qu'après six écrans de défilement. Un premier lot suffit à ce qu'un
+            moteur voie des morceaux et à ce qu'un visiteur ait de quoi lire ;
+            la suite est déjà en mémoire et s'affiche sans rien redemander.
+          */}
+          {groupedResults.length > montrees && (
+            <div className="mt-8 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setMontrees((n) => n + LOT)}
+                className="cursor-pointer px-5 py-2.5 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)]
+                  text-sm text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+              >
+                {t('showMore', { count: groupedResults.length - montrees })}
+              </button>
+            </div>
+          )}
         </>
       ) : sheets.length > 0 ? (
         <div className="bg-[var(--cell-bg)] rounded-xl border border-[var(--line)] p-8 text-center">

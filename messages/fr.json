@@ -376,7 +376,8 @@
       "levels": "Par niveau",
       "keys": "Par tonalité",
       "artists": "Les artistes"
-    }
+    },
+    "showMore": "Voir {count, plural, one {la dernière grille} other {les # grilles suivantes}}"
   },
   "SheetViewer": {
     "pauseSample": "Pause l'extrait",
