@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 
 import { useAuth } from '@/lib/auth-context';
@@ -126,10 +125,12 @@ export function Navbar() {
   return (
     <nav className="bg-[var(--nav-bg)] text-[var(--nav-text)] sticky top-0 z-[60]">
       <div className="w-full px-5 sm:px-8">
-        <div className="flex items-center justify-between h-14">
+        {/* `overflow-hidden` sur la rangée : un libellé trop long tronque le groupe
+            le moins critique au lieu de faire défiler la page entière de côté. */}
+        <div className="flex items-center justify-between h-14 overflow-hidden">
 
           {/* GAUCHE : Logo + liens de navigation */}
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-6 min-w-0">
             <Link href={user ? '/explore' : '/'} className="flex items-center shrink-0" onClick={closeMobileMenu}>
               <BrandLogo />
             </Link>
@@ -154,7 +155,7 @@ export function Navbar() {
           </div>
 
           {/* DROITE : actions */}
-          <div className="hidden sm:flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-3 shrink-0">
             {!loading && user ? (
               <>
                 {/* Recherche — icône uniquement, s'ouvre au clic */}
@@ -251,7 +252,7 @@ export function Navbar() {
                           {user.displayName?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
                         </div>
                       )}
-                      <span className="hidden lg:inline">{user.displayName || user.email}</span>
+                      <span className="hidden lg:inline max-w-[10rem] truncate">{user.displayName || user.email}</span>
                       {user.reputation && user.reputation.level !== 'Découvreur' && (
                         <span className="hidden lg:inline"><LevelBadge level={user.reputation.level} /></span>
                       )}
@@ -415,7 +416,7 @@ export function Navbar() {
                   items={suggestions}
                   activeIndex={activeSuggestion}
                   getKey={(r) => r.key}
-                  getSection={(r) => r.kind === 'sheet' ? 'Grilles' : 'Artistes'}
+                  getSection={(r) => r.kind === 'sheet' ? t('sectionSheets') : t('sectionArtists')}
                   onHover={setActiveSuggestion}
                   onSelect={handleSelectSuggestion}
                   renderItem={(r) => r.kind === 'sheet' ? (
