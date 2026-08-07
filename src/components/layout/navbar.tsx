@@ -92,9 +92,12 @@ export function Navbar() {
   return (
     <nav className="bg-[var(--nav-bg)] sticky top-0 z-[60] print:hidden">
       <div className="w-full px-5 sm:px-8">
-        {/* `overflow-hidden` sur la rangée : un libellé trop long tronque le groupe
-            le moins critique au lieu de faire défiler la page entière de côté. */}
-        <div className="flex items-center justify-between h-14 overflow-hidden">
+        {/* Pas d'`overflow-hidden` ici, malgré la tentation de borner les
+            débordements : la rangée ne fait que 56 px de haut, et les menus
+            déroulants comme le panneau de notifications pendent en dessous — elle
+            les découperait. Le débordement est borné autrement, par `min-w-0` à
+            gauche, `shrink-0` à droite et la troncature du nom d'affichage. */}
+        <div className="flex items-center justify-between h-14">
 
           <div className="flex items-center gap-6 min-w-0">
             <Link
