@@ -8,10 +8,11 @@ export { songKey } from '@/lib/sheet-groups';
 /**
  * Index des grilles publiques, lu côté serveur.
  *
- * Volontairement réduit aux quatre champs dont le sitemap et les pages de
- * regroupement ont besoin : une grille complète pèse ses sections, ses accords
- * personnalisés et parfois ses paroles, et il n'y a aucune raison de charger tout
- * ça pour produire une liste d'URL.
+ * Volontairement réduit aux champs dont le sitemap, les pages de regroupement et
+ * la page de découverte ont besoin : une grille complète pèse ses sections, ses
+ * accords personnalisés et parfois ses paroles, et il n'y a aucune raison de
+ * charger tout ça pour produire une liste d'URL ou une vignette. Mesuré sur le
+ * catalogue : 780 ko pour les grilles entières, 12 ko pour cette projection.
  *
  * `cache()` mémorise le résultat pour la durée d'un rendu : la page sitemap le lit
  * une fois, quel que soit le nombre d'appels.
@@ -23,6 +24,8 @@ export interface PublicSheetRef {
   updatedAt: Date | null;
   /** Auteur de la grille : sert à déclarer les profils publics au sitemap. */
   ownerId: string;
+  /** Son nom d'affichage : la recherche du catalogue cherche aussi dedans. */
+  ownerName?: string;
   /**
    * Groupe propriétaire, le cas échéant. Une grille de groupe a pour `ownerId`
    * l'identifiant de son groupe : le sitemap doit pouvoir l'écarter des profils.
@@ -39,6 +42,25 @@ export interface PublicSheetRef {
    * accords les plus joués sans une seconde traversée du catalogue.
    */
   chords?: string[];
+  /**
+   * De quoi composer les rayons et les tuiles d'`/explore` sans seconde lecture.
+   *
+   * Ces champs sont renseignés sur la totalité du catalogue public (vérifié :
+   * 130/130 pour `viewCount`, `year`, `createdAt`, `capo` ; 128/130 pour `key`).
+   * Les ajouter au `select` ne coûte rien de plus qu'une lecture de document,
+   * alors que les obtenir autrement demanderait une requête par rayon — et des
+   * index composites qui n'existent pas.
+   *
+   * `viewCount` est un cumul depuis toujours, jamais fenêtré : il classe les
+   * grilles les plus vues, il ne dit rien d'une tendance.
+   */
+  viewCount?: number;
+  year?: number | null;
+  key?: string;
+  createdAt?: Date | null;
+  capo?: number | null;
+  averageRating?: number | null;
+  ratingCount?: number;
 }
 
 /**
@@ -53,7 +75,10 @@ export const getPublicSheetIndex = cache(async (): Promise<PublicSheetRef[]> => 
     const snap = await getAdminDb()
       .collection('sheets')
       .where('isPublic', '==', true)
-      .select('title', 'artist', 'updatedAt', 'ownerId', 'groupId', 'forkedFrom', 'genres', 'difficulty', 'chords')
+      .select(
+        'title', 'artist', 'updatedAt', 'ownerId', 'ownerName', 'groupId', 'forkedFrom', 'genres', 'difficulty', 'chords',
+        'viewCount', 'year', 'key', 'createdAt', 'capo', 'averageRating', 'ratingCount',
+      )
       .limit(MAX_SHEETS)
       .get();
 
@@ -70,17 +95,28 @@ export const getPublicSheetIndex = cache(async (): Promise<PublicSheetRef[]> => 
       }))
       .map((d) => {
         const data = d.data();
-        const updatedAt = data.updatedAt as { toDate?: () => Date } | undefined;
+        const enDate = (v: unknown) => {
+          const t = v as { toDate?: () => Date } | undefined;
+          return t?.toDate ? t.toDate() : null;
+        };
         return {
           id: d.id,
           title: typeof data.title === 'string' ? data.title : '',
           artist: typeof data.artist === 'string' ? data.artist : '',
-          updatedAt: updatedAt?.toDate ? updatedAt.toDate() : null,
+          updatedAt: enDate(data.updatedAt),
           ownerId: typeof data.ownerId === 'string' ? data.ownerId : '',
+          ownerName: typeof data.ownerName === 'string' ? data.ownerName : '',
           groupId: '',
           genres: Array.isArray(data.genres) ? (data.genres as string[]) : [],
           difficulty: typeof data.difficulty === 'number' ? data.difficulty : null,
           chords: Array.isArray(data.chords) ? (data.chords as string[]) : [],
+          viewCount: typeof data.viewCount === 'number' ? data.viewCount : 0,
+          year: typeof data.year === 'number' ? data.year : null,
+          key: typeof data.key === 'string' ? data.key : '',
+          createdAt: enDate(data.createdAt),
+          capo: typeof data.capo === 'number' ? data.capo : null,
+          averageRating: typeof data.averageRating === 'number' ? data.averageRating : null,
+          ratingCount: typeof data.ratingCount === 'number' ? data.ratingCount : 0,
         };
       });
   } catch {

@@ -26,7 +26,7 @@ const ADMIN_SHOW_PUBLIC_KEY = 'explore_admin_show_public';
 const ADMIN_SHOW_PRIVATE_KEY = 'explore_admin_show_private';
 const ADMIN_SHOW_PENDING_KEY = 'explore_admin_show_pending';
 
-export function ExploreClient() {
+export function ExploreClient({ initialSheets }: { initialSheets: Sheet[] }) {
   const t = useTranslations('Explore');
   const genreLabel = useGenreLabel();
   const difficultyLabel = useDifficultyLabel();
@@ -35,8 +35,20 @@ export function ExploreClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [sheets, setSheets] = useState<Sheet[]>([]);
-  const [loading, setLoading] = useState(true);
+  /**
+   * Le catalogue vient du serveur.
+   *
+   * Il venait d'un `getDocs` navigateur plafonné à 200 documents **sans
+   * `orderBy`** : Firestore rendait les 200 premiers par identifiant, un
+   * sous-ensemble arbitraire, et le tri « Récents » ne triait ensuite que
+   * celui-là. Le compteur affiché mentait de la même façon, et le HTML servi aux
+   * moteurs ne contenait aucune grille.
+   *
+   * L'administrateur charge en plus les grilles privées et à valider, que les
+   * règles Firestore réservent à son compte : c'est le seul cas qui reste client.
+   */
+  const [sheets, setSheets] = useState<Sheet[]>(initialSheets);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') ?? '');
 
   // Mettre à jour la recherche si le param URL change (nouvelle recherche depuis la navbar)
@@ -147,12 +159,27 @@ export function ExploreClient() {
     };
   }, [loading]);
 
-  useEffect(() => {
-    if (authLoading) return;
+  /**
+   * Le filet : l'administrateur, et le cas où le serveur n'a rien rendu.
+   *
+   * `getPublicSheetIndex` avale ses erreurs et rend un tableau vide quand Firebase
+   * Admin est indisponible — identifiants absents, quota. Sans ce repli, le
+   * catalogue serait alors **vide**, alors qu'il se lisait jusqu'ici depuis le
+   * navigateur avec les clés publiques. On garde donc l'ancien chemin comme
+   * secours : la page dégrade au lieu de disparaître.
+   */
+  const serveurMuet = initialSheets.length === 0;
 
+  useEffect(() => {
+    if (authLoading || (!isAdmin && !serveurMuet)) return;
+
+    setLoading(true);
     async function loadSheets() {
       try {
         const db = getDb();
+        // L'administrateur voit aussi les grilles privées et à valider ; le
+        // secours, lui, se limite au catalogue public comme n'importe quel
+        // visiteur.
         const q = isAdmin
           ? query(collection(db, 'sheets'), limit(500))
           : query(collection(db, 'sheets'), where('isPublic', '==', true), limit(200));
@@ -179,7 +206,7 @@ export function ExploreClient() {
     }
 
     loadSheets();
-  }, [isAdmin, authLoading]);
+  }, [isAdmin, authLoading, serveurMuet]);
 
   const handleAdminDelete = async (sheetId: string) => {
     if (!confirm(t('confirmDeleteSheet'))) return;
