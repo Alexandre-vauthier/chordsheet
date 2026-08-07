@@ -271,10 +271,17 @@ test('une URL nue laisse flâner', () => {
   assert.equal(filtreActif({}), false);
 });
 
-/** L'ordre par défaut nommé explicitement demande la même chose qu'une URL nue. */
-test('sort=recent n’est pas un filtre, les autres tris le sont', () => {
+/**
+ * Le tri règle l'affichage, il ne réduit pas le catalogue.
+ *
+ * Il comptait comme un filtre, et cliquer « Plus consultées » faisait donc
+ * disparaître d'un coup les rayons et les tuiles, sans qu'aucun filtre visible ne
+ * l'explique à l'écran.
+ */
+test('aucun tri ne compte comme un filtre', () => {
   assert.equal(filtreActif({ sort: 'recent' }), false);
-  assert.equal(filtreActif({ sort: 'viewed' }), true);
+  assert.equal(filtreActif({ sort: 'viewed' }), false);
+  assert.equal(filtreActif({ sort: 'rated' }), false);
 });
 
 test('chaque filtre du catalogue est reconnu', () => {
@@ -294,20 +301,6 @@ test('un paramètre répété est lu quand même', () => {
 
 test('un paramètre étranger ne déclenche rien', () => {
   assert.equal(filtreActif({ utm_source: 'newsletter' }), false);
-});
-
-/**
- * Le hero pose la question dont `?chords=` est la réponse : il doit rester à
- * l'écran quand elle est posée, sinon on ne peut plus cocher un accord de plus.
- * Les rayons, eux, s'effacent — on ne flâne plus une fois qu'on cherche.
- */
-test('les accords effacent les rayons mais pas le hero', () => {
-  assert.equal(filtreActif({ chords: 'g,c,d' }), true, 'les rayons s’effacent');
-  assert.equal(filtreActif({ chords: 'g,c,d' }, { ignorerAccords: true }), false, 'le hero reste');
-});
-
-test('un autre filtre efface le hero, même avec des accords', () => {
-  assert.equal(filtreActif({ chords: 'g,c', genre: 'Rock' }, { ignorerAccords: true }), true);
 });
 
 test('les accords de l’URL se lisent dans leur forme comparable', () => {

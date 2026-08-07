@@ -19,37 +19,26 @@ import { DIFFICULTY_LABELS, type Sheet } from '@/types';
  */
 
 /**
- * L'URL demande-t-elle un sous-ensemble du catalogue ?
+ * L'URL **réduit-elle** le catalogue ?
  *
  * Sert au serveur à ne pas construire les rayons quand ils ne seront pas
  * montrés : on cherche quelque chose, on ne flâne pas. Sans cette question, la
  * page rendait quatre rayons de douze vignettes pour les jeter ensuite.
  *
- * `sort=recent` ne compte pas : c'est l'ordre par défaut, et une URL qui le
- * nomme explicitement demande la même chose qu'une URL nue.
+ * Réduire, et non régler l'affichage : le tri n'entre pas dans le compte.
+ * Réordonner le catalogue ne le rétrécit pas, et faire disparaître toute la
+ * découverte parce qu'on a cliqué « Plus consultées » n'a pas de sens. Le client
+ * applique la même règle sous le nom `rechercheEnCours`.
  */
-export function filtreActif(
-  params: Record<string, string | string[] | undefined>,
-  options?: {
-    /**
-     * Ne pas compter les accords.
-     *
-     * Le hero pose la question dont `?chords=` est la réponse : il doit rester à
-     * l'écran quand elle est posée, sinon on ne peut plus cocher un accord de
-     * plus pour voir ce qu'il ouvre. Les rayons, eux, s'effacent — on ne flâne
-     * plus une fois qu'on cherche.
-     */
-    ignorerAccords?: boolean;
-  },
-): boolean {
+export function filtreActif(params: Record<string, string | string[] | undefined>): boolean {
   const lire = (cle: string) => {
     const v = params[cle];
     return (Array.isArray(v) ? v[0] : v)?.trim() ?? '';
   };
-  if (lire('sort') && lire('sort') !== 'recent') return true;
-  const cles = ['q', 'genre', 'difficulty', 'decade', 'key'];
-  if (!options?.ignorerAccords) cles.push('chords');
-  return cles.some((cle) => lire(cle) !== '');
+  // Le tri ne compte pas : réordonner le catalogue n'est pas le réduire, et la
+  // découverte reste utile au-dessus. Voir `rechercheEnCours` côté client, qui
+  // applique la même règle.
+  return ['q', 'genre', 'difficulty', 'decade', 'key', 'chords'].some((cle) => lire(cle) !== '');
 }
 
 /** Les accords transmis par l'URL, dans leur forme comparable. */

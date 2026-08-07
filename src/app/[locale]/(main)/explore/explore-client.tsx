@@ -410,7 +410,27 @@ export function ExploreClient({
     router.replace('/explore', { scroll: false });
   };
 
-  const hasActiveFilters = accordsConnus.length > 0 || selectedKey || searchQuery || selectedGenre || selectedDifficulty || selectedDecade || sortBy !== 'recent' || !showPublic || !showPrivate || !showPending;
+  /**
+   * Deux notions, longtemps confondues sous un seul nom.
+   *
+   * **Chercher**, c'est réduire le catalogue à ce qu'on veut : un mot, un genre,
+   * un niveau, une décennie, une tonalité, des accords. Là, la découverte n'a
+   * plus lieu d'être — on ne flâne plus.
+   *
+   * **Régler l'affichage**, c'est autre chose : changer l'ordre de tri, ou, pour
+   * un administrateur, masquer les grilles privées le temps d'une revue. Cela ne
+   * réduit rien de ce qu'on cherche, et cela ne devrait donc rien cacher.
+   *
+   * Les deux étaient mêlées, et les bascules d'administration sont mémorisées
+   * dans `localStorage` : un administrateur qui avait décoché « à valider » une
+   * fois ne revoyait plus jamais ni les rayons ni les tuiles, sans qu'aucun
+   * filtre ne soit visible à l'écran pour l'expliquer.
+   */
+  const rechercheEnCours = Boolean(
+    accordsConnus.length > 0 || selectedKey || searchQuery || selectedGenre || selectedDifficulty || selectedDecade,
+  );
+  /** Y a-t-il quoi que ce soit à réinitialiser ? Le tri et les bascules comptent ici. */
+  const hasActiveFilters = rechercheEnCours || sortBy !== 'recent' || !showPublic || !showPrivate || !showPending;
 
   const handleRandom = () => {
     if (sheets.length === 0) return;
@@ -435,7 +455,7 @@ export function ExploreClient({
         quelque chose, et des rayons entre la recherche et ses résultats
         n'apporteraient que de la distance.
       */}
-      {!hasActiveFilters && decouverte}
+      {!rechercheEnCours && decouverte}
 
       {/* Barre de recherche et filtres */}
       <div className="space-y-4 mb-8">
