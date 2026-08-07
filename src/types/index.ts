@@ -316,7 +316,44 @@ export interface UserWithStats extends Omit<User, 'createdAt' | 'updatedAt'> {
   lastVisitAt: Date | null;
 }
 
-export interface User {
+/**
+ * Les réglages qu'un utilisateur peut changer, en une seule liste.
+ *
+ * Ils étaient déclarés quatre fois : ici, dans l'interface du contexte
+ * d'authentification, dans la signature de `updateUser`, et une fois de plus au
+ * moment de les relire depuis Firestore. Quatre listes à tenir à jour, c'est trois
+ * de trop, et les oublis étaient là — `showChordSummaryByDefault` n'était pas
+ * relue au chargement, donc le réglage ne survivait pas à un rechargement.
+ *
+ * Les défauts et la lecture vivent dans `@/lib/user-preferences`, qui a besoin de
+ * ce type : le type reste donc ici, où le reste de l'application le trouve sans
+ * créer de cycle d'imports.
+ */
+export interface UserPreferences {
+  /** Instrument des diagrammes, des sons et de la bibliothèque. Absent : pas encore choisi. */
+  preferredInstrument?: InstrumentId;
+  notationPreference: NotationPreference;
+  chordColorCoding: boolean;
+  showInlineDiagram: boolean;
+  darkMode: boolean;
+  minimizeRepeatedSections: boolean;
+  printMinimizeRepeatedSections: boolean;
+  printChordDiagrams: boolean;
+  /** Sur grand écran, ouvrir « Accords utilisés » au chargement d'une grille. */
+  showChordSummaryByDefault: boolean;
+  defaultMetronome: boolean;
+  defaultGrooveBox: boolean;
+  defaultChordsAudio: boolean;
+  defaultCountIn: boolean;
+}
+
+/**
+ * Les préférences restent facultatives sur `User` : un utilisateur lu ailleurs que
+ * dans le contexte d'authentification (un profil public, par exemple) n'en porte
+ * aucune. C'est le contexte qui garantit qu'elles sont toutes remplies pour la
+ * personne connectée, en les relisant par `readPreferences`.
+ */
+export interface User extends Partial<UserPreferences> {
   id: string;
   displayName: string;
   email: string;
@@ -325,21 +362,6 @@ export interface User {
   createdAt: Date;
   updatedAt: Date;
   subscription?: Subscription;
-  // V3 - Préférences d'accords
-  preferredInstrument?: InstrumentId;
-  notationPreference?: NotationPreference;
-  chordColorCoding?: boolean;
-  showInlineDiagram?: boolean;
-  darkMode?: boolean;
-  minimizeRepeatedSections?: boolean;
-  printMinimizeRepeatedSections?: boolean;
-  printChordDiagrams?: boolean;
-  showChordSummaryByDefault?: boolean; // desktop : afficher les accords au chargement (défaut true)
-  // Préférences de lecture
-  defaultMetronome?: boolean;
-  defaultGrooveBox?: boolean;
-  defaultChordsAudio?: boolean;
-  defaultCountIn?: boolean;
   // Profil public : présentation et liens affichés sur /user/[id]. Visibles
   // seulement à partir d'une grille publiée, pour que le profil ne serve pas de
   // dépôt de liens.

@@ -15,7 +15,23 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, getDocs, deleteDoc, collection, query, where, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { getAuth, getDb } from './firebase';
-import type { User, UserRole, NotationPreference, InstrumentId } from '@/types';
+import type { User, UserRole, UserPreferences, CreatorReputation } from '@/types';
+import { readPreferences } from './user-preferences';
+
+/**
+ * Ce qu'on peut modifier sur un utilisateur.
+ *
+ * Une seule déclaration, employée par l'interface du contexte comme par
+ * l'implémentation : les deux avaient divergé, l'une connaissant
+ * `showChordSummaryByDefault` et l'autre non.
+ */
+type UserUpdate = Partial<UserPreferences> & {
+  displayName?: string;
+  photoURL?: string | null;
+  bio?: string;
+  links?: { url: string }[];
+  reputation?: CreatorReputation;
+};
 import { isAdminEmail } from '@/types';
 import * as Sentry from '@sentry/nextjs';
 
@@ -32,7 +48,7 @@ interface AuthContextType {
   deleteAccount: () => Promise<void>;
   resendVerificationEmail: () => Promise<void>;
   refreshEmailVerification: () => Promise<boolean>;
-  updateUser: (updates: { displayName?: string; photoURL?: string | null; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean; printMinimizeRepeatedSections?: boolean; printChordDiagrams?: boolean; showChordSummaryByDefault?: boolean; defaultMetronome?: boolean; defaultGrooveBox?: boolean; defaultChordsAudio?: boolean; defaultCountIn?: boolean; bio?: string; links?: { url: string }[]; reputation?: import('@/types').CreatorReputation }) => Promise<void>;
+  updateUser: (updates: UserUpdate) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -172,23 +188,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             role,
             subscription,
             reputation,
-            notationPreference: userData.notationPreference || 'american',
-            // Activée par défaut. Le champ n'est absent que pour les comptes créés
-            // avant que ce défaut existe : un refus explicite est stocké en `false`
-            // par updateUser (setDoc merge), il n'est donc jamais écrasé ici.
-            chordColorCoding: userData.chordColorCoding ?? true,
-            showInlineDiagram: userData.showInlineDiagram ?? false,
-            darkMode: userData.darkMode ?? true,
-            preferredInstrument: userData.preferredInstrument,
+            // Toutes les préférences d'un coup, par une boucle : les énumérer ici
+            // avait fini par en oublier une — `showChordSummaryByDefault` était
+            // écrite en base mais jamais relue, si bien que le réglage ne
+            // survivait pas à un rechargement.
+            ...readPreferences(userData as Record<string, unknown>),
             bio: userData.bio,
             links: Array.isArray(userData.links) ? userData.links : undefined,
-            minimizeRepeatedSections: userData.minimizeRepeatedSections ?? false,
-            printMinimizeRepeatedSections: userData.printMinimizeRepeatedSections ?? false,
-            printChordDiagrams: userData.printChordDiagrams ?? false,
-            defaultMetronome: userData.defaultMetronome ?? false,
-            defaultGrooveBox: userData.defaultGrooveBox ?? false,
-            defaultChordsAudio: userData.defaultChordsAudio ?? true,
-            defaultCountIn: userData.defaultCountIn ?? false,
             createdAt: userData.createdAt?.toDate() || new Date(),
             updatedAt: userData.updatedAt?.toDate() || new Date(),
           });
@@ -379,7 +385,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // Mettre à jour le profil utilisateur
-  const updateUser = async (updates: { displayName?: string; photoURL?: string | null; notationPreference?: NotationPreference; chordColorCoding?: boolean; showInlineDiagram?: boolean; darkMode?: boolean; preferredInstrument?: InstrumentId; minimizeRepeatedSections?: boolean; printMinimizeRepeatedSections?: boolean; printChordDiagrams?: boolean; defaultMetronome?: boolean; defaultGrooveBox?: boolean; defaultChordsAudio?: boolean; defaultCountIn?: boolean; bio?: string; links?: { url: string }[]; reputation?: import('@/types').CreatorReputation }) => {
+  const updateUser = async (updates: UserUpdate) => {
     const auth = getAuth();
     const db = getDb();
     const currentUser = auth.currentUser;
@@ -388,14 +394,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error('User not authenticated');
     }
 
-    // Mettre à jour Firebase Auth (ne supporte que displayName et photoURL)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { notationPreference: _np, chordColorCoding: _cc, showInlineDiagram: _sid, darkMode: _dm, preferredInstrument: _pi, minimizeRepeatedSections: _mrs, printMinimizeRepeatedSections: _pmrs, printChordDiagrams: _pcd, bio: _bio, links: _links, ...authUpdates } = updates;
     // Appliquer le thème immédiatement si changé
     if (updates.darkMode !== undefined) {
       document.documentElement.setAttribute('data-theme', updates.darkMode ? 'dark' : 'light');
     }
-    await updateProfile(currentUser, authUpdates);
+
+    /**
+     * Firebase Auth n'accepte que le nom et la photo : on **choisit** ces deux
+     * champs au lieu de retirer les autres un à un.
+     *
+     * Le tri par omission laissait passer cinq préférences — celles ajoutées après
+     * l'écriture de la liste — vers une API qui n'en veut pas. Et l'appel partait à
+     * chaque basculement d'interrupteur, pour un objet vide : un aller-retour
+     * réseau par réglage, pour rien. On ne l'appelle plus que s'il y a quelque
+     * chose à dire.
+     */
+    const authUpdates: { displayName?: string; photoURL?: string | null } = {};
+    if (updates.displayName !== undefined) authUpdates.displayName = updates.displayName;
+    if (updates.photoURL !== undefined) authUpdates.photoURL = updates.photoURL;
+    if (Object.keys(authUpdates).length > 0) {
+      await updateProfile(currentUser, authUpdates);
+    }
 
     // Mettre à jour Firestore user doc
     await setDoc(doc(db, 'users', currentUser.uid), {
