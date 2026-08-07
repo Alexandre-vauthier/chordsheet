@@ -161,7 +161,7 @@ export function SectionBlock({
   };
 
   // La mesure suit la métrique de la section : 3 cellules en 3/4, 4 en 4/4.
-  const newRow = () => createEmptyRow(section.beatsPerMeasure || 4);
+  const newRow = () => createEmptyRow();
 
   const addRow = () => {
     onUpdate({ rows: [...section.rows, newRow()] });

@@ -167,3 +167,28 @@ test('toFirestore ne laisse pas passer un nom de passage indéfini', async () =>
   // Et la casse suit la même règle que les libellés de section, qu'il côtoie.
   assert.equal(ecrit[1].label, 'Refrain');
 });
+
+/**
+ * Une ligne de grille fait quatre mesures, quelle que soit la métrique.
+ *
+ * `createEmptyRow` en créait autant qu'il y a de temps dans une mesure : quatre en
+ * 4/4, ce qui tombait juste par coïncidence, et **trois en 3/4**, ce qui laissait
+ * un quart de la ligne vide sans que rien ne l'explique. `span` compte des
+ * mesures, pas des temps — c'est cette confusion qui produisait le défaut.
+ */
+test('une ligne vide fait quatre mesures, en binaire comme en ternaire', async () => {
+  const { createEmptyRow, createEmptySection, MESURES_PAR_LIGNE } = await import('@/types');
+
+  assert.equal(createEmptyRow().length, MESURES_PAR_LIGNE);
+  // La somme des durées remplit la ligne : c'est elle que la grille met en colonnes.
+  assert.equal(createEmptyRow().reduce((t, c) => t + c.span, 0), MESURES_PAR_LIGNE);
+
+  for (const metrique of [3, 4] as const) {
+    const section = createEmptySection('Couplet', metrique);
+    assert.equal(
+      section.rows[0].length,
+      MESURES_PAR_LIGNE,
+      `en ${metrique}/4, la ligne devrait compter ${MESURES_PAR_LIGNE} mesures`,
+    );
+  }
+});

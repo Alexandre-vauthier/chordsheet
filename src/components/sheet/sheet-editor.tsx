@@ -674,7 +674,6 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
         section.rows,
         { rowIndex: at.rowIndex, cellIndex: at.cellIndex },
         chord,
-        section.beatsPerMeasure || 4,
         createEmptyRow,
       );
       if (!result) return null;

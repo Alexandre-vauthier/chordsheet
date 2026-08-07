@@ -1,4 +1,4 @@
-import type { Row, Cell, BeatsPerMeasure } from '@/types';
+import type { Row, Cell } from '@/types';
 
 /**
  * Machine à états de la dictée d'accords au micro.
@@ -123,8 +123,7 @@ export function applyDictatedChord(
   rows: Row[],
   at: CellPosition,
   chord: string,
-  beatsPerMeasure: BeatsPerMeasure,
-  makeRow: (beats: BeatsPerMeasure) => Row,
+  makeRow: () => Row,
 ): DictationWrite | null {
   const row = rows[at.rowIndex];
   if (!row || !row[at.cellIndex]) return null;
@@ -139,7 +138,7 @@ export function applyDictatedChord(
     rowIndex += 1;
   }
   if (rowIndex >= next.length) {
-    next.push(makeRow(beatsPerMeasure));
+    next.push(makeRow());
   }
 
   return { rows: next, next: { rowIndex, cellIndex } };

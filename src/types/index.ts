@@ -495,9 +495,28 @@ export const createEmptyCell = (span: CellSpan = 1): Cell => ({
   span,
 });
 
-export const createEmptyRow = (beatsPerMeasure: BeatsPerMeasure = 4): Row => {
+/**
+ * Mesures affichées sur une ligne de grille.
+ *
+ * La grille compte seize colonnes et une mesure en occupe quatre : une ligne
+ * pleine, c'est donc quatre mesures, **quelle que soit la métrique**. Le nombre de
+ * temps par mesure change la durée d'une mesure, pas le nombre de mesures par
+ * ligne.
+ */
+export const MESURES_PAR_LIGNE = 4;
+
+/**
+ * Une ligne vide : quatre mesures d'une durée chacune.
+ *
+ * Elle en créait autrefois autant qu'il y a de temps dans une mesure. En 4/4 cela
+ * tombait juste par coïncidence ; en 3/4 la ligne naissait avec trois mesures et
+ * laissait un quart de la ligne vide, sans que rien ne l'explique à l'écran.
+ * `span` compte des mesures, pas des temps — c'est la confusion qui a produit le
+ * défaut.
+ */
+export const createEmptyRow = (): Row => {
   const cells: Cell[] = [];
-  for (let i = 0; i < beatsPerMeasure; i++) {
+  for (let i = 0; i < MESURES_PAR_LIGNE; i++) {
     cells.push(createEmptyCell());
   }
   return cells;
@@ -508,7 +527,7 @@ export const createEmptySection = (label: string = 'Section', beatsPerMeasure: B
   label,
   repeat: 1,
   beatsPerMeasure,
-  rows: [createEmptyRow(beatsPerMeasure)],
+  rows: [createEmptyRow()],
 });
 
 export const createEmptySheet = (ownerId: string, ownerName: string): NewSheet => ({
