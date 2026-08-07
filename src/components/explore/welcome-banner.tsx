@@ -11,15 +11,25 @@ export function WelcomeBanner() {
   const [visible, setVisible] = useState(false);
   const [isNew, setIsNew] = useState(false);
 
+  /**
+   * Elle ne s'ouvre plus que pour un compte qui vient d'être créé.
+   *
+   * Elle s'affichait à **toute** première visite, y compris à un visiteur arrivé
+   * d'un moteur de recherche sur une page publique : un voile plein écran par
+   * dessus le contenu qu'on venait chercher. C'est exactement ce que Google
+   * appelle un interstitiel intrusif, et c'est aussi la première impression que
+   * laisse le site à qui le découvre.
+   *
+   * Le drapeau posé à l'inscription suffit à distinguer les deux cas : on
+   * accueille quelqu'un qu'on vient d'accueillir, pas un passant.
+   */
   useEffect(() => {
     const dismissed = localStorage.getItem(LS_KEY);
     const showWelcome = localStorage.getItem(LS_NEW);
-    if (!dismissed) {
+    if (!dismissed && showWelcome) {
       setVisible(true);
-      if (showWelcome) {
-        setIsNew(true);
-        localStorage.removeItem(LS_NEW);
-      }
+      setIsNew(true);
+      localStorage.removeItem(LS_NEW);
     }
   }, []);
 

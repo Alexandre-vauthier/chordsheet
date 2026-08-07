@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { groupSheetsBySong } from '@/lib/sheet-groups';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { groupSheetsBySong, songKey } from '@/lib/sheet-groups';
 import { sansCopiesDeGroupe } from '@/lib/sheet-catalogue';
 import { useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -78,27 +78,27 @@ export function ExploreClient({
   // Mettre à jour la recherche si le param URL change (nouvelle recherche depuis la navbar)
   useEffect(() => {
     setSearchQuery(searchParams.get('q') ?? '');
-    const d = searchParams.get('decade');
-    setSelectedDecade(d ? Number(d) : null);
   }, [searchParams]);
+
 
   // Filtres — initialisés depuis l'URL pour survivre au retour arrière
   const [sortBy, setSortBy] = useState<SortOption>(() => (searchParams.get('sort') as SortOption) ?? 'recent');
   const [selectedGenre, setSelectedGenre] = useState<string>(() => searchParams.get('genre') ?? '');
   const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | null>(() => { const d = searchParams.get('difficulty'); return d ? (Number(d) as Difficulty) : null; });
   /**
-   * Décennie et tonalité, lues dans l'URL.
+   * Décennie et tonalité : **lues** dans l'URL, jamais recopiées dans un état.
    *
-   * La décennie était volontairement éphémère : rien n'y menait de l'extérieur,
-   * et la faire persister n'aurait servi qu'à surprendre au retour sur la page.
+   * La décennie était volontairement éphémère, rien n'y menant de l'extérieur.
    * Les tuiles thématiques y mènent désormais, comme les liens du bloc éditorial
-   * mènent aux genres — elle rejoint donc l'URL, sans quoi une tuile ouvrirait un
+   * mènent aux genres : elle rejoint donc l'URL, sans quoi une tuile ouvrirait un
    * catalogue non filtré.
+   *
+   * Dérivées et non dupliquées : un état recopié depuis l'URL demande un effet
+   * pour se resynchroniser, et cet effet est précisément l'endroit où les deux
+   * finissent par diverger. Ici l'URL est la seule source, et le sélecteur ne
+   * fait que l'écrire.
    */
-  const [selectedDecade, setSelectedDecade] = useState<number | null>(() => {
-    const d = searchParams.get('decade');
-    return d ? Number(d) : null;
-  });
+  const selectedDecade = Number(searchParams.get('decade')) || null;
   const selectedKey = searchParams.get('key')?.trim() ?? '';
   /**
    * Les accords qu'on sait jouer, tels que le hero les a transmis.
@@ -156,12 +156,33 @@ export function ExploreClient({
     router.replace(`/explore?${p.toString()}`, { scroll: false });
   };
 
+  /**
+   * La recherche tapée finit dans l'URL, mais pas à chaque frappe.
+   *
+   * Elle n'y allait pas du tout : une recherche faite sur la page n'était ni
+   * partageable ni conservée au retour arrière, alors que la barre de navigation
+   * promet le contraire en envoyant sur `/explore?q=…`. Le filtrage reste
+   * immédiat — il travaille sur le catalogue déjà en mémoire — et seule
+   * l'adresse attend que la frappe s'arrête. Sans cette attente, chaque lettre
+   * déclencherait un rendu serveur, la page étant dynamique.
+   */
+  const rechercheEcrite = useRef(searchParams.get('q') ?? '');
+  useEffect(() => {
+    if (searchQuery === rechercheEcrite.current) return;
+    const minuteur = setTimeout(() => {
+      rechercheEcrite.current = searchQuery;
+      updateUrl({ q: searchQuery });
+    }, 400);
+    return () => clearTimeout(minuteur);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery]);
+
   const handleSortBy = (v: SortOption) => { setSortBy(v); updateUrl({ sort: v }); };
   const handleGenre = (v: string) => { setSelectedGenre(v); updateUrl({ genre: v }); };
   const handleDifficulty = (v: Difficulty | null) => { setSelectedDifficulty(v); updateUrl({ difficulty: v }); };
   // L'URL suit le sélecteur, comme pour le genre : une décennie choisie doit
   // pouvoir se partager et survivre au retour arrière.
-  const handleDecade = (v: number | null) => { setSelectedDecade(v); updateUrl({ decade: v }); };
+  const handleDecade = (v: number | null) => updateUrl({ decade: v });
 
   // Mettre à jour le genre si le param URL change (ex: depuis la navbar)
   useEffect(() => {
@@ -367,7 +388,8 @@ export function ExploreClient({
     setSearchQuery('');
     setSelectedGenre('');
     setSelectedDifficulty(null);
-    setSelectedDecade(null);
+    // La décennie, la tonalité et les accords vivent dans l'URL : c'est le
+    // `router.replace` de fin qui les efface, pas un setter.
     setSortBy('recent');
     setShowPublic(true);
     setShowPrivate(true);
@@ -609,7 +631,10 @@ export function ExploreClient({
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {groupedResults.map(({ sheet, count, href, bestRating }) => (
               <SheetCard
-                key={`${sheet.title}-${sheet.artist}`}
+                /* `songKey` et non une concaténation : « Fade — Away » et
+                   « Fade Away — » donnaient la même clé, et React confondait
+                   alors deux morceaux distincts. */
+                key={songKey(sheet.title, sheet.artist)}
                 sheet={sheet}
                 showOwner
                 showPublicBadge={isAdmin}
