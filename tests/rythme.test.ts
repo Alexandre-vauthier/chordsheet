@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { premierTempsAVenir } from '@/lib/use-groove-box';
+import { grooveBpmFor } from '@/lib/use-playback';
+
+const grooveBpmForSync = (tempo: string) => grooveBpmFor(tempo, 'quarter');
 
 /**
  * Le calage de la boîte à rythme sur le départ des accords.
@@ -38,4 +41,31 @@ test('un pas nul ne fait pas tourner la boucle indéfiniment', () => {
   assert.deepEqual(premierTempsAVenir(1, 5, 0, CYCLE), { instant: 5, pas: 0 });
   assert.deepEqual(premierTempsAVenir(1, 5, -1, CYCLE), { instant: 5, pas: 0 });
   assert.deepEqual(premierTempsAVenir(1, 5, PAS, 0), { instant: 5, pas: 0 });
+});
+
+/**
+ * Le tempo de la boîte à rythme.
+ *
+ * Il se déduisait du chiffre nu de la grille, sans l'unité de tempo : une grille
+ * notée à la croche faisait battre les accords deux fois plus vite que la
+ * batterie, et l'écart grandissait mesure après mesure.
+ */
+test('une grille notée à la croche fait battre la boîte au bon temps', () => {
+  // 90 à la croche, ce sont 180 noires par minute : au-delà de cent, le
+  // demi-tempo choisi en mai s'applique, donc 90 battements de boîte.
+  assert.equal(grooveBpmFor('90 BPM', 'eighth'), 90);
+  // Le même chiffre à la noire reste sous la barre des cent : pas de demi-tempo.
+  assert.equal(grooveBpmFor('90 BPM', 'quarter'), 90);
+  // Sous la barre des cent des deux côtés, l'unité se voit directement : 40 à la
+  // croche, ce sont 80 noires. Le chiffre nu en donnait 40, moitié moins que les
+  // accords — c'est là que l'écart se creusait.
+  assert.equal(grooveBpmFor('40 BPM', 'eighth'), 80);
+  assert.equal(grooveBpmFor('40 BPM', 'quarter'), 40);
+});
+
+test('le demi-tempo au-delà de cent reste la règle', () => {
+  // Décision de mai 2026 : elle évite la mitraille de charleston sur les morceaux
+  // rapides. Ce test est là pour qu'on ne la supprime pas sans le vouloir.
+  assert.equal(grooveBpmForSync('120 BPM'), 60);
+  assert.equal(grooveBpmForSync('100 BPM'), 100);
 });

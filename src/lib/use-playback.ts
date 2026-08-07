@@ -147,6 +147,26 @@ const TEMPO_UNIT_FACTOR: Record<TempoUnit, number> = {
   eighth: 0.5,
 };
 
+/**
+ * Le tempo de la boîte à rythme, déduit de celui de la grille.
+ *
+ * Deux corrections, dans cet ordre :
+ *
+ * - **l'unité de tempo.** Une grille notée à la croche fait battre les accords
+ *   deux fois plus vite que son chiffre ne le dit. La boîte, elle, lisait le
+ *   chiffre nu : elle jouait alors à la moitié de la vitesse des accords, et
+ *   l'écart grandissait mesure après mesure. Les motifs sont écrits en doubles
+ *   croches sur deux mesures, ils doivent battre sur le même temps ;
+ * - **le demi-tempo au-delà de cent.** Choix de mai 2026 : au-dessus de cent
+ *   battements, la boîte joue en half-time, ce qui évite la mitraille de
+ *   charleston sur les morceaux rapides. Appliqué après l'unité, donc au tempo
+ *   réellement entendu.
+ */
+export function grooveBpmFor(tempo: string | undefined, tempoUnit: TempoUnit | undefined): number {
+  const reel = parseTempo(tempo) / TEMPO_UNIT_FACTOR[tempoUnit ?? 'quarter'];
+  return reel > 100 ? Math.round(reel / 2) : reel;
+}
+
 
 export interface PlaybackVoice {
   id: InstrumentId;

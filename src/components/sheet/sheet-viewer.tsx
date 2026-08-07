@@ -13,7 +13,7 @@ import { isPianoChord } from '@/types';
 import { useChordNotation } from '@/lib/use-chord-notation';
 import { useChordColor } from '@/lib/use-chord-color';
 import { transposeChord } from '@/lib/transpose';
-import { usePlayback, parseTempo, buildChordSequence, ACCOMPANIMENT_INSTRUMENTS } from '@/lib/use-playback';
+import { usePlayback, parseTempo, grooveBpmFor, buildChordSequence, ACCOMPANIMENT_INSTRUMENTS } from '@/lib/use-playback';
 import { useGrooveBox, PATTERN_DEFS } from '@/lib/use-groove-box';
 import type { PlayStep, PlayStyle, PlaybackVoice } from '@/lib/use-playback';
 import { useArtwork } from '@/lib/use-artwork';
@@ -452,7 +452,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [concertCellPath?.sectionIdx, concertCellPath?.rowIdx]);
 
-  const grooveBpm = (() => { const b = parseTempo(localTempo); return b > 100 ? Math.round(b / 2) : b; })();
+  const grooveBpm = grooveBpmFor(localTempo, localTempoUnit);
 
   // Prévisualiser un pattern : l'entend 2 mesures puis s'arrête (dé-mute le temps
   // de l'aperçu). Recliquer le même pattern coupe l'aperçu.

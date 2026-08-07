@@ -13,7 +13,7 @@ import { SectionBlock } from './section-block';
 import { Button } from '@/components/ui/button';
 import { InstrumentSelector, ChordSummary, ChordEditorModal } from '@/components/chord';
 import type { CustomChordMap } from '@/components/chord';
-import { usePlayback, parseTempo, ACCOMPANIMENT_INSTRUMENTS, type PlayStyle, type PlaybackVoice } from '@/lib/use-playback';
+import { usePlayback, parseTempo, grooveBpmFor, ACCOMPANIMENT_INSTRUMENTS, type PlayStyle, type PlaybackVoice } from '@/lib/use-playback';
 import { useGrooveBox } from '@/lib/use-groove-box';
 import { PlaybackInstrumentsMenu, GrooveBoxMenu } from './playback-menus';
 import { stopPreviewAudio } from '@/lib/preview-audio';
@@ -266,7 +266,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
   });
 
   const bpm = parseTempo(sheet.tempo);
-  const grooveBpm = bpm > 100 ? Math.round(bpm / 2) : bpm;
+  const grooveBpm = grooveBpmFor(sheet.tempo, sheet.tempoUnit);
 
   // Prévisualisation d'un pattern (indépendante du Play général) : joue 2 mesures
   // du pattern sélectionné dans le menu déroulant, puis s'arrête toute seule.
