@@ -25,6 +25,7 @@ const PUBLIC_PATHS: { path: string; priority: number; changeFrequency: MetadataR
   { path: '/chord-detect',             priority: 0.7, changeFrequency: 'monthly' },
   { path: '/chord-finder',             priority: 0.7, changeFrequency: 'monthly' },
   { path: '/what-to-play',             priority: 0.7, changeFrequency: 'weekly' },
+  { path: '/what-can-i-play',          priority: 0.7, changeFrequency: 'weekly' },
   { path: '/pricing',                  priority: 0.6, changeFrequency: 'monthly' },
   { path: '/about',                    priority: 0.5, changeFrequency: 'yearly' },
   { path: '/faq',                      priority: 0.6, changeFrequency: 'monthly' },

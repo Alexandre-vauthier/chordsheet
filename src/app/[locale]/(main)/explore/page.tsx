@@ -2,8 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { buildAlternates, buildOpenGraph } from '@/lib/seo';
 import { getPublicSheetIndex } from '@/lib/public-sheet-index';
-import { accordsDeLUrl, accordsLesPlusJoues, filtreActif, versGrilleDeCatalogue } from '@/lib/explore-shelves';
-import { ChordHero } from '@/components/explore/chord-hero';
+import { filtreActif, versGrilleDeCatalogue } from '@/lib/explore-shelves';
 import { DiscoveryShelves } from '@/components/explore/discovery-shelves';
 import { EntryTiles } from '@/components/explore/entry-tiles';
 import { ExploreClient } from './explore-client';
@@ -72,50 +71,16 @@ export default async function Page({
    */
   const sp = await searchParams;
   const flane = !filtreActif(sp);
-  // Le hero survit à sa propre question : on doit pouvoir cocher un accord de
-  // plus après avoir vu le résultat.
-  const heroVisible = !filtreActif(sp, { ignorerAccords: true });
-  const accordsChoisis = accordsDeLUrl(sp.chords);
 
-  /*
-   * Ce que le hero reçoit : les accords les plus employés du catalogue pour ses
-   * pastilles, et le catalogue réduit à sa seule colonne d'accords. Une dizaine
-   * de kilo-octets, qui lui permettent de répondre sans aller-retour à chaque
-   * clic.
-   *
-   * Six accords cochés d'entrée, et non cinq. Le chiffre n'est pas rond par
-   * hasard : mesuré sur le catalogue, les cinq plus fréquents n'ouvrent que cinq
-   * grilles, le sixième en ouvre dix-neuf. C'est le seuil où un débutant cesse
-   * d'être devant une vitrine et se retrouve devant un répertoire — et cela tombe
-   * sur `G C Am F D Em`, exactement les six premiers accords qu'on apprend.
-   */
-  const SOCLE_DEPART = 6;
-  const accordsProposes = accordsLesPlusJoues(refs, 12);
-  const indexAccords = refs.map((r) => ({ chords: r.chords ?? [] }));
-  const couvertures = refs
-    .slice()
-    .sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0))
-    .slice(0, 24)
-    .map((r) => ({ id: r.id, title: r.title, artist: r.artist }));
+
   const initialSheets = [...refs]
     .sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0))
     .map(versGrilleDeCatalogue);
 
   return (
     <>
-      {heroVisible && accordsProposes.length > 0 && (
-        <div className="max-w-[1270px] mx-auto px-4 sm:px-6 pt-8">
-          <ChordHero
-            accordsProposes={accordsProposes}
-            accordsInitiaux={accordsChoisis.length > 0 ? accordsChoisis : accordsProposes.slice(0, SOCLE_DEPART)}
-            index={indexAccords}
-            couvertures={couvertures}
-          />
-        </div>
-      )}
       <ExploreClient
         initialSheets={initialSheets}
-        avecHero={heroVisible && accordsProposes.length > 0}
         decouverte={flane ? (
           <>
             <DiscoveryShelves refs={refs} locale={locale} />

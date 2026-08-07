@@ -163,6 +163,7 @@ export function buildToolsGroup(ctx: NavContext): NavGroup {
       entries: [
         { id: 'tuner', href: '/tuner', labelKey: 'tuner', icon: 'tuner', visibility: 'always' },
         { id: 'whatToPlay', href: '/what-to-play', labelKey: 'whatToPlay', icon: 'whatToPlay', visibility: 'always' },
+        { id: 'whatCanIPlay', href: '/what-can-i-play', labelKey: 'whatCanIPlay', icon: 'chordLibrary', visibility: 'always' },
       ],
     },
     {

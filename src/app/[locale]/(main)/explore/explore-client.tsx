@@ -33,7 +33,6 @@ const ADMIN_SHOW_PENDING_KEY = 'explore_admin_show_pending';
 export function ExploreClient({
   initialSheets,
   decouverte,
-  avecHero,
 }: {
   initialSheets: Sheet[];
   /**
@@ -45,14 +44,6 @@ export function ExploreClient({
    * côté navigateur, et la page serait redevenue vide pour les moteurs.
    */
   decouverte?: React.ReactNode;
-  /**
-   * Le hero occupe déjà le titre de premier niveau au-dessus.
-   *
-   * Deux `h1` sur une page brouillent le plan qu'en lisent les lecteurs d'écran
-   * et les moteurs. Quand la découverte est là, le catalogue n'est plus la page :
-   * c'en est une section, et il le dit.
-   */
-  avecHero?: boolean;
 }) {
   const t = useTranslations('Explore');
   const genreLabel = useGenreLabel();
@@ -431,17 +422,9 @@ export function ExploreClient({
     <div className="max-w-[1270px] mx-auto px-4 sm:px-6 py-8">
       <WelcomeBanner />
       <div className="mb-8">
-        {avecHero
-          ? (
-            <h2 className="text-2xl font-bold text-[var(--ink)]">
-              {/* Sous le hero, la section répond à sa question quand il en a posé
-                  une : l'annoncer « tout le catalogue » serait faux. */}
-              {accordsConnus.length > 0 ? t('catalogueFiltered') : t('catalogueTitle')}
-            </h2>
-          )
-          : <h1 className="text-2xl font-bold text-[var(--ink)]">{t('title')}</h1>}
+        <h1 className="text-2xl font-bold text-[var(--ink)]">{t('title')}</h1>
         <p className="text-[var(--ink-light)] mt-1">
-          {!avecHero && t('subtitle')}
+          {t('subtitle')}
           {sheets.length > 0 && ` ${t('subtitleCount', { count: sheets.length })}`}
           {groupedResults.length > 0 && groupedResults.length < sheets.length && ` · ${t('subtitleUniqueTitles', { count: groupedResults.length })}`}
         </p>

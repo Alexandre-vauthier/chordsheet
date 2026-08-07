@@ -38,7 +38,8 @@
     "grooveBox": "Boîte à rythme",
     "pricing": "Tarifs",
     "goPro": "Passer à Pro",
-    "newSheetLabel": "Grille"
+    "newSheetLabel": "Grille",
+    "whatCanIPlay": "Que puis-je jouer ?"
   },
   "Footer": {
     "credits": "Crédits",
@@ -361,15 +362,6 @@
       "threeChords": "Trois accords suffisent",
       "noBarre": "Sans barré"
     },
-    "heroTitle": "Que savez-vous jouer ?",
-    "heroSubtitle": "Cochez vos accords, on vous dit ce que vous pouvez déjà jouer.",
-    "heroPickOne": "Cochez un accord pour commencer.",
-    "heroPlayable": "{count, plural, =0 {Aucune grille avec ces {chords} accords} one {# grille avec vos {chords} accords} other {# grilles avec vos {chords} accords}}",
-    "heroNext": "Apprenez {chord} et vous en débloquez {count, plural, one {# de plus} other {# de plus}}.",
-    "heroSee": "Voir {count, plural, one {la grille} other {les # grilles}}",
-    "chordFilter": "Jouables avec {chords}",
-    "catalogueTitle": "Tout le catalogue",
-    "catalogueFiltered": "Les grilles que vous pouvez jouer",
     "entries": {
       "decades": "Par décennie",
       "genres": "Par genre",
@@ -1536,6 +1528,10 @@
       "chordFinder": {
         "title": "Trouver un accord par ses notes",
         "description": "Posez vos doigts sur le manche ou le clavier : Alviena nomme l'accord correspondant, en temps réel et pour sept instruments."
+      },
+      "whatCanIPlay": {
+        "title": "Que jouer avec les accords que je connais",
+        "description": "Cochez les accords que vous savez jouer et découvrez les morceaux que vous pouvez interpréter du début à la fin, sans en apprendre un seul de plus."
       }
     },
     "artist": {
@@ -2009,5 +2005,15 @@
     "preview": "Aperçu du déroulé",
     "passName": "Nom de ce passage",
     "passNameHint": "Laisse vide pour garder le nom de la section. À remplir quand les mêmes accords s'appellent autrement ici (« Refrain » alors que la section s'appelle « Intro »)."
+  },
+  "WhatCanIPlay": {
+    "title": "Que savez-vous jouer ?",
+    "subtitle": "Cochez vos accords, on vous montre les grilles que vous pouvez déjà jouer d’un bout à l’autre.",
+    "pickOne": "Cochez un accord pour commencer.",
+    "playable": "{count, plural, =0 {Aucune grille avec ces {chords} accords} one {# grille avec vos {chords} accords} other {# grilles avec vos {chords} accords}}",
+    "next": "Apprenez {chord} et vous en débloquez {count, plural, one {# de plus} other {# de plus}}.",
+    "showMore": "Voir {count, plural, one {la dernière} other {les # suivantes}}",
+    "empty": "Aucune grille ne se joue entièrement avec ces accords. Cochez-en un de plus.",
+    "browseAll": "Parcourir tout le catalogue"
   }
 }

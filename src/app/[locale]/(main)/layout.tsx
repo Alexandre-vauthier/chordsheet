@@ -24,7 +24,7 @@ const PUBLIC_EXACT = [
   '/explore', '/chords', '/chord-detect', '/chord-finder', '/tuner', '/pricing', '/contact',
   '/about', '/faq', '/credits', '/artists',
   // Guides éditoriaux : pages publiques sans aucune donnée utilisateur.
-  '/import-chords', '/transpose', '/sheet-photo', '/what-to-play',
+  '/import-chords', '/transpose', '/sheet-photo', '/what-to-play', '/what-can-i-play',
   '/bands', '/stage-mode', '/audio-to-chords', '/editor', '/print',
 ];
 const PUBLIC_PREFIXES = ['/legal', '/chords/'];
