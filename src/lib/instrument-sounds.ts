@@ -100,9 +100,11 @@ export function playSampledNote(
   midiNote: number,
   atTime: number,
   duration: number,
-): (() => void) | null {
+): ((at?: number) => void) | null {
   const instance = instances.get(instrumentId);
   if (!instance || !readyInstruments.has(instrumentId)) return null;
   const stop = instance.start({ note: midiNote, time: atTime, duration });
-  return () => stop();
+  // L'instant de coupure est transmis : couper « maintenant » un son programmé
+  // pour plus tard le tuerait avant qu'il ne commence.
+  return (at?: number) => stop(at);
 }

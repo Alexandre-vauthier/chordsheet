@@ -367,7 +367,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   })();
 
   // Playback
-  const { isPlaying, activeStep, playFromBloc, play, togglePlay, stop } = usePlayback({
+  const { isPlaying, activeStep, playFromBloc, play, togglePlay, stop, debutRef } = usePlayback({
     sections: displaySections,
     // En vue « grille harmonique », la lecture suit l'écran et non la structure.
     structure: vue === 'grid' ? undefined : sheet.structure,
@@ -488,6 +488,9 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   }, [metroMenuOpen]);
 
   useGrooveBox({
+    // Le même point de départ que les accords : sans lui, la batterie commençait
+    // quand son effet s'exécutait, après le premier accord.
+    debutRef,
     // Un visiteur entend une vraie batterie, pas la boîte de synthèse : c'est au
     // premier Play qu'il juge le produit. Le choix n'est pas mémorisé, il ne
     // s'imposera pas le jour où il se crée un compte.

@@ -15,6 +15,15 @@ import { playChord, playArpeggio, playMetronomeTick, getAudioContext } from '@/l
  * secondes de retard ne s'expliquent que par une horloge figee.
  */
 const SUSPENSION_THRESHOLD_S = 2;
+
+/**
+ * De combien le minuteur se réveille avant l'instant qu'il vise.
+ *
+ * Assez pour absorber son propre retard, assez peu pour qu'un arrêt reste
+ * immédiat à l'oreille. La boîte à rythme regarde 100 ms devant elle, on se tient
+ * dans le même ordre de grandeur.
+ */
+const AVANCE_S = 0.06;
 import { useLibraryChords } from '@/lib/library-chords-context';
 import { deroulerStructure, positionCellule, positionMesure, type Bloc } from '@/lib/sheet-structure';
 
@@ -176,6 +185,16 @@ export function usePlayback({ sections, structure, tempo, tempoUnit, instrumentI
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeStep, setActiveStep] = useState<PlayStep | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Le minuteur du surlignage, décalé de l'avance pour tomber avec le son. */
+  const visuelRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /**
+   * L'instant, sur l'horloge audio, où la lecture en cours a commencé.
+   *
+   * Partagé avec la boîte à rythme : elle se cale dessus au lieu de démarrer
+   * quand son effet React s'exécute, ce qui arrivait après le premier accord,
+   * d'un écart qui changeait à chaque lecture.
+   */
+  const debutRef = useRef<number | null>(null);
   const metronomeRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // Refs pour que le useEffect métronome accède aux valeurs courantes
   const factor = TEMPO_UNIT_FACTOR[tempoUnit ?? 'quarter'];
@@ -244,6 +263,11 @@ export function usePlayback({ sections, structure, tempo, tempoUnit, instrumentI
   const stop = useCallback(() => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = null;
+    // Le surlignage programmé pour l'instant à venir : sans cela il se posait
+    // après l'arrêt, sur une case qui ne sonnera jamais.
+    if (visuelRef.current) clearTimeout(visuelRef.current);
+    visuelRef.current = null;
+    debutRef.current = null;
     setIsPlaying(false);
     setActiveStep(null);
   }, []);
@@ -282,13 +306,22 @@ export function usePlayback({ sections, structure, tempo, tempoUnit, instrumentI
 
   const runSteps = useCallback((steps: PlayStep[], getCellFn: (step: PlayStep) => Cell | undefined) => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (visuelRef.current) clearTimeout(visuelRef.current);
     if (!steps.length) return;
     setIsPlaying(true);
-    // Ligne de temps sur l'horloge audio (comme la boîte à rythme) : chaque pas
-    // vise un instant absolu, et le délai du setTimeout est recalculé à partir de
-    // ctx.currentTime → la dérive du setTimeout est corrigée à chaque pas, donc
-    // les accords ne glissent plus par rapport à la batterie.
-    let nextTime = getAudioContext().currentTime;
+    /**
+     * Ligne de temps sur l'horloge audio, et son avance.
+     *
+     * Chaque pas vise un instant absolu, recalculé depuis `ctx.currentTime` : la
+     * dérive ne s'accumule pas. Mais viser ne suffisait pas — l'accord était
+     * *joué* au réveil du minuteur, donc avec son retard. Le minuteur se réveille
+     * maintenant en avance et **programme** l'accord à l'instant exact, comme la
+     * boîte à rythme. Le surlignage, lui, attend l'instant : il ne doit pas
+     * devancer ce qu'on entend.
+     */
+    const debut = getAudioContext().currentTime + AVANCE_S;
+    debutRef.current = debut;
+    let nextTime = debut;
     let i = 0;
     const advance = () => {
       if (i >= steps.length) { setIsPlaying(false); setActiveStep(null); return; }
@@ -311,9 +344,16 @@ export function usePlayback({ sections, structure, tempo, tempoUnit, instrumentI
       if (retard > SUSPENSION_THRESHOLD_S) nextTime = ctx.currentTime;
 
       const step = steps[i];
-      setActiveStep(step);
-      // Premier pas : tick beat 1 synchronisé exactement avec le premier accord
-      if (i === 0 && metronomeEnabledRef.current) playMetronomeTick(true);
+      const instant = nextTime;
+
+      // Le surlignage à l'instant du son, pas à celui du réveil.
+      if (visuelRef.current) clearTimeout(visuelRef.current);
+      const attente = Math.max(0, (instant - ctx.currentTime) * 1000);
+      if (attente < 4) setActiveStep(step);
+      else visuelRef.current = setTimeout(() => setActiveStep(step), attente);
+
+      // Premier pas : tick beat 1 posé sur le même instant que le premier accord.
+      if (i === 0 && metronomeEnabledRef.current) playMetronomeTick(true, instant);
       const cell = getCellFn(step);
       if (cell?.chord && chordsEnabledRef.current) {
         // Jouer l'accord sur chaque voix d'accompagnement (voix indépendantes),
@@ -324,16 +364,17 @@ export function usePlayback({ sections, structure, tempo, tempoUnit, instrumentI
           if (!chordData) continue;
           if (voice.style === 'arpeggio') {
             const steps = Math.max(1, Math.round(step.durationMs / eighthMs));
-            playArpeggio(chordData, voice.id, capo, eighthMs, steps);
+            playArpeggio(chordData, voice.id, capo, eighthMs, steps, instant);
           } else {
-            playChord(chordData, voice.id, capo);
+            playChord(chordData, voice.id, capo, instant);
           }
         }
       }
       i++;
       // Prochain pas calé sur l'horloge audio, avec correction de la dérive.
       nextTime += step.durationMs / 1000;
-      const delayMs = Math.max(0, (nextTime - ctx.currentTime) * 1000);
+      // Réveil en avance : il faut le temps de programmer, pas de jouer.
+      const delayMs = Math.max(0, (nextTime - AVANCE_S - ctx.currentTime) * 1000);
       timeoutRef.current = setTimeout(advance, delayMs);
     };
     advance();
@@ -394,5 +435,5 @@ export function usePlayback({ sections, structure, tempo, tempoUnit, instrumentI
     if (isPlaying) stop(); else play();
   }, [isPlaying, stop, play]);
 
-  return { isPlaying, activeStep, play, stop, playFromBloc, playRow, togglePlay, blocs };
+  return { isPlaying, activeStep, play, stop, playFromBloc, playRow, togglePlay, blocs, debutRef };
 }
