@@ -27,7 +27,17 @@
     "signOut": "Se déconnecter",
     "login": "Connexion",
     "register": "Inscription",
-    "menu": "Menu"
+    "menu": "Menu",
+    "tools": "Outils",
+    "toolsPlay": "Jouer",
+    "toolsInternal": "Interne",
+    "chordLibrary": "Bibliothèque d'accords",
+    "chordByNotes": "Trouver un accord par ses notes",
+    "chordDetect": "Identifier un accord au micro",
+    "whatToPlay": "Je ne sais pas quoi jouer",
+    "grooveBox": "Boîte à rythme",
+    "pricing": "Tarifs",
+    "goPro": "Passer à Pro"
   },
   "Footer": {
     "credits": "Crédits",

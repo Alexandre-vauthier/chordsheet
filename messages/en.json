@@ -27,7 +27,17 @@
     "signOut": "Sign out",
     "login": "Log in",
     "register": "Sign up",
-    "menu": "Menu"
+    "menu": "Menu",
+    "tools": "Tools",
+    "toolsPlay": "Play",
+    "toolsInternal": "Internal",
+    "chordLibrary": "Chord library",
+    "chordByNotes": "Find a chord by its notes",
+    "chordDetect": "Identify a chord by mic",
+    "whatToPlay": "I don't know what to play",
+    "grooveBox": "Drum machine",
+    "pricing": "Pricing",
+    "goPro": "Upgrade to Pro"
   },
   "Footer": {
     "credits": "Credits",
