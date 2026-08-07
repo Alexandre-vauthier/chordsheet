@@ -19,12 +19,21 @@ export function Switch({
   onChange,
   ariaLabel,
   disabled = false,
+  ton = 'accent',
 }: {
   checked: boolean;
   onChange: (next: boolean) => void;
   /** Ce que dit un lecteur d'écran. Obligatoire : un interrupteur sans nom ne se comprend pas. */
   ariaLabel: string;
   disabled?: boolean;
+  /**
+   * Couleur de l'état allumé.
+   *
+   * `ambre` sert au seul cas qui ne relève pas de l'accent : « à valider », dans
+   * l'éditeur, où le libellé est déjà en ambre. Deux tons, pas davantage — au-delà
+   * ce ne serait plus un interrupteur mais une palette.
+   */
+  ton?: 'accent' | 'ambre';
 }) {
   return (
     <button
@@ -36,7 +45,7 @@ export function Switch({
       onClick={() => onChange(!checked)}
       className={`relative shrink-0 w-11 h-6 rounded-full transition-colors cursor-pointer
         disabled:opacity-50 disabled:cursor-default
-        ${checked ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'}`}
+        ${checked ? (ton === 'ambre' ? 'bg-amber-500' : 'bg-[var(--accent)]') : 'bg-[var(--line)]'}`}
     >
       {/* `left-1` explicite : sans lui le curseur se cale sur sa position statique,
           que les navigateurs centrent (les <button> ont text-align: center par

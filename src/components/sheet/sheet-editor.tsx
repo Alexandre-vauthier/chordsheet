@@ -33,6 +33,7 @@ import { useChordDictation } from '@/lib/use-chord-dictation';
 import { applyDictatedChord, undoDictatedChord } from '@/lib/chord-dictation';
 import { DictationBar } from './dictation-bar';
 import { StructurePanel } from '@/components/sheet/structure-panel';
+import { Switch } from '@/components/ui/toggle';
 import { deroulerStructure, structureUtile } from '@/lib/sheet-structure';
 
 // Filtre local pour les grilles privées de l'utilisateur (petit lot déjà chargé,
@@ -1180,9 +1181,10 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
         {/* Visibilité */}
         <div className="flex items-center justify-between pt-2 border-t border-[var(--line)]">
           <span className="text-sm text-[var(--ink-light)]">{t('publicSheetLabel')}</span>
-          <button
-            onClick={() => {
-              const goingPublic = !sheet.isPublic;
+          <Switch
+            checked={!!sheet.isPublic}
+            ariaLabel={t('publicSheetLabel')}
+            onChange={(goingPublic) => {
               if (goingPublic && 'forkedFrom' in sheet && sheet.forkedFrom) {
                 const confirmed = confirm(t('confirmForkPublic'));
                 if (!confirmed) return;
@@ -1194,12 +1196,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
                 updateSheet({ isPublic: true, pendingValidation: false });
               }
             }}
-            className={`relative w-11 h-6 rounded-full transition-colors ${
-              sheet.isPublic ? 'bg-[var(--accent)]' : 'bg-[var(--line)]'
-            }`}
-          >
-            <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${sheet.isPublic ? 'translate-x-5' : ''}`} />
-          </button>
+          />
         </div>
 
         {/* À valider — admin uniquement */}
@@ -1209,17 +1206,12 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
               <span className="text-sm text-amber-500 font-medium">{t('pendingValidation')}</span>
               <p className="text-xs text-[var(--ink-faint)] mt-0.5">{t('pendingValidationDesc')}</p>
             </div>
-            <button
-              onClick={() => {
-                const next = !sheet.pendingValidation;
-                updateSheet({ pendingValidation: next, ...(next ? { isPublic: false } : {}) });
-              }}
-              className={`relative w-11 h-6 rounded-full transition-colors ${
-                sheet.pendingValidation ? 'bg-amber-500' : 'bg-[var(--line)]'
-              }`}
-            >
-              <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${sheet.pendingValidation ? 'translate-x-5' : ''}`} />
-            </button>
+            <Switch
+              checked={!!sheet.pendingValidation}
+              ariaLabel={t('pendingValidation')}
+              ton="ambre"
+              onChange={(next) => updateSheet({ pendingValidation: next, ...(next ? { isPublic: false } : {}) })}
+            />
           </div>
         )}
       </div>
