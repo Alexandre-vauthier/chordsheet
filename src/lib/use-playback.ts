@@ -41,6 +41,14 @@ export interface PlayStep {
   durationMs: number;
   rowRepeatIndex: number;
   /**
+   * Temps par mesure de la section jouée.
+   *
+   * Le métronome le lisait sur la **première** section de la grille et le gardait
+   * pour tout le morceau : sur une grille qui change de métrique en cours de
+   * route, il continuait de compter en trois là où la musique était en quatre.
+   */
+  beatsPerMeasure: number;
+  /**
    * Passage en cours dans la répétition de la section (0 pour le premier).
    *
    * La mesure avait son compteur, pas la section : rien ne permettait de dire à la
@@ -82,6 +90,7 @@ export function buildSequence(blocs: Bloc[], beatMs: number): PlayStep[] {
               rowIndex: r,
               cellIndex: c,
               durationMs: row[c].span * bpm * beatMs,
+              beatsPerMeasure: bpm,
               rowRepeatIndex: rr,
               sectionRepeatIndex: rep,
             });
@@ -223,6 +232,13 @@ export function usePlayback({ sections, structure, tempo, tempoUnit, instrumentI
   const factor = TEMPO_UNIT_FACTOR[tempoUnit ?? 'quarter'];
   const beatMsRef = useRef<number>((60 / parseTempo(tempo)) * 1000 * factor);
   const bpMeasureRef = useRef<number>(sections[0]?.beatsPerMeasure || 4);
+  /**
+   * Le décompte doit repartir de un quand la métrique change.
+   *
+   * Sans cela, passer d'une section en trois à une section en quatre laisserait
+   * l'accent tomber au milieu de la mesure suivante, et il y resterait.
+   */
+  const remettreBeatRef = useRef(false);
   const chordsEnabledRef = useRef(chordsEnabled);
   // Voix d'accompagnement, lues sans redémarrer la lecture en cours.
   const playbackVoicesRef = useRef<PlaybackVoice[]>(playbackInstruments ?? [{ id: instrumentId, style: 'block' }]);
@@ -234,6 +250,8 @@ export function usePlayback({ sections, structure, tempo, tempoUnit, instrumentI
   useEffect(() => {
     beatMsRef.current = (60 / parseTempo(tempo)) * 1000 * TEMPO_UNIT_FACTOR[tempoUnit ?? 'quarter'];
   }, [tempo, tempoUnit]);
+  // Point de départ seulement : ensuite c'est la section jouée qui commande, pas
+  // la première de la grille.
   useEffect(() => {
     bpMeasureRef.current = sections[0]?.beatsPerMeasure || 4;
   }, [sections]);
@@ -267,6 +285,7 @@ export function usePlayback({ sections, structure, tempo, tempoUnit, instrumentI
 
         const beatSec = beatMsRef.current / 1000;
         while (nextBeat < ctx.currentTime + 0.1) {
+          if (remettreBeatRef.current) { beat = 0; remettreBeatRef.current = false; }
           if (metronomeEnabledRef.current) playMetronomeTick(beat === 0, nextBeat);
           beat = (beat + 1) % bpMeasureRef.current;
           nextBeat += beatSec;
@@ -369,6 +388,13 @@ export function usePlayback({ sections, structure, tempo, tempoUnit, instrumentI
       const step = steps[i];
       const instant = nextTime;
 
+      // La métrique de la section qu'on entre. Changer de section change le
+      // décompte : on le remet à un plutôt que de laisser l'accent glisser.
+      if (step.beatsPerMeasure !== bpMeasureRef.current) {
+        bpMeasureRef.current = step.beatsPerMeasure;
+        remettreBeatRef.current = true;
+      }
+
       // Le surlignage à l'instant du son, pas à celui du réveil.
       if (visuelRef.current) clearTimeout(visuelRef.current);
       const attente = Math.max(0, (instant - ctx.currentTime) * 1000);
@@ -433,7 +459,7 @@ export function usePlayback({ sections, structure, tempo, tempoUnit, instrumentI
       for (let c = 0; c <= lastNonEmpty; c++) {
         // Lecture d'une seule mesure : la section n'est pas répétée, on est donc
         // toujours au premier passage.
-        steps.push({ sectionId, occurrence, rowIndex, cellIndex: c, durationMs: row[c].span * bpmeasure * beatMs, rowRepeatIndex: rr, sectionRepeatIndex: 0 });
+        steps.push({ sectionId, occurrence, rowIndex, cellIndex: c, durationMs: row[c].span * bpmeasure * beatMs, beatsPerMeasure: bpmeasure, rowRepeatIndex: rr, sectionRepeatIndex: 0 });
       }
     }
     runSteps(steps, (step) => section.rows[step.rowIndex]?.[step.cellIndex]);

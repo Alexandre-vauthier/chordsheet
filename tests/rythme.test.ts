@@ -77,3 +77,26 @@ test('une mesure de batterie dure exactement une mesure d’accords', () => {
     }
   }
 });
+
+/**
+ * La métrique suit la section, pas la première de la grille.
+ *
+ * Le métronome lisait `sections[0].beatsPerMeasure` et le gardait pour tout le
+ * morceau : sur une grille qui passe du ternaire au binaire, il continuait de
+ * compter en trois là où la musique était en quatre. Le pas de lecture transporte
+ * désormais la métrique de sa propre section.
+ */
+test('chaque pas porte la métrique de sa section', async () => {
+  const { buildSequence } = await import('@/lib/use-playback');
+  const { deroulerStructure } = await import('@/lib/sheet-structure');
+
+  const ternaire = { id: 't', label: 'Intro', repeat: 1, beatsPerMeasure: 3 as const, rows: [[{ chord: 'C', span: 1 }]] };
+  const binaire = { id: 'b', label: 'Couplet', repeat: 1, beatsPerMeasure: 4 as const, rows: [[{ chord: 'G', span: 1 }]] };
+
+  const pas = buildSequence(deroulerStructure([ternaire, binaire]), 500);
+  assert.deepEqual(pas.map((p) => p.beatsPerMeasure), [3, 4]);
+
+  // Et la durée suit la métrique : une mesure de trois temps dure trois temps.
+  assert.equal(pas[0].durationMs, 3 * 500);
+  assert.equal(pas[1].durationMs, 4 * 500);
+});
