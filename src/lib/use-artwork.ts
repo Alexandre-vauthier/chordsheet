@@ -19,9 +19,29 @@ const MEM_CACHE = new Map<string, ArtworkData>();
  *   revenait sans lien, et la page affichait « via iTunes » au lieu du lien —
  *   d'autant plus visible que ce sont les morceaux les plus vus qui étaient en
  *   cache. Rien à reprendre côté serveur : nous ne stockons pas ces données.
+ * - v12 : la recherche interroge iTunes par artiste puis titre, et vérifie que le
+ *   résultat retenu est du bon artiste. Les entrées d'avant portent donc parfois
+ *   la pochette d'une reprise, pour une clé qui n'est plus composée pareil.
  */
-const LS_PREFIX = 'artwork11_';
+const LS_PREFIX = 'artwork12_';
 const TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+/**
+ * Les entrées des versions précédentes, effacées une fois par session.
+ *
+ * Changer de préfixe périme, mais n'efface pas : les anciennes entrées restaient
+ * dans le stockage jusqu'à saturation du quota, et la clé change ici de
+ * composition — aucune ne sera jamais relue.
+ */
+let purge = false;
+function purgerAnciennesVersions() {
+  if (purge) return;
+  purge = true;
+  try {
+    const morts = Object.keys(localStorage).filter((k) => k.startsWith('artwork') && !k.startsWith(LS_PREFIX));
+    for (const k of morts) localStorage.removeItem(k);
+  } catch { /* stockage indisponible */ }
+}
 
 // Requêtes en vol — évite de tirer deux fois la même clé simultanément
 const IN_FLIGHT = new Map<string, Array<(r: ArtworkData) => void>>();
@@ -44,9 +64,14 @@ function lsSet(key: string, data: ArtworkData) {
   } catch { /* quota dépassé */ }
 }
 
-async function fetchArtwork(query: string): Promise<ArtworkData> {
+async function fetchArtwork(artist: string | undefined, title: string | undefined): Promise<ArtworkData> {
+  const params = new URLSearchParams();
+  if (artist) params.set('artist', artist);
+  if (title) params.set('title', title);
   try {
-    const res = await fetch(`/api/artwork?q=${encodeURIComponent(query)}`);
+    // Les deux champs séparément, et non la clé concaténée : c'est ce qui permet
+    // au serveur de vérifier que le résultat retenu est bien du bon artiste.
+    const res = await fetch(`/api/artwork?${params}`);
     if (!res.ok) return { artworkUrl: null, previewUrl: null, trackUrl: null, year: null, genre: null };
     return await res.json();
   } catch {
@@ -61,7 +86,10 @@ async function fetchArtwork(query: string): Promise<ArtworkData> {
  * décrit, sans avoir à deviner la règle de composition.
  */
 export function artworkKey(artist: string | undefined, title: string | undefined): string {
-  return [title, artist].filter(Boolean).join(' ').trim();
+  // L'artiste d'abord. Mesuré sur 28 grilles du catalogue : cet ordre ne perd
+  // jamais contre l'inverse, et redresse les morceaux qu'une reprise a rendus plus
+  // célèbres que l'original — « La Vie En Rose » ramenait Louis Armstrong.
+  return [artist, title].filter(Boolean).join(' ').trim();
 }
 
 export function useArtwork(artist: string | undefined, title: string | undefined) {
@@ -124,6 +152,7 @@ export function useArtwork(artist: string | undefined, title: string | undefined
     }
 
     // 2. Cache localStorage
+    purgerAnciennesVersions();
     const cached = lsGet(query);
     if (cached !== undefined) {
       MEM_CACHE.set(query, cached);
@@ -145,7 +174,7 @@ export function useArtwork(artist: string | undefined, title: string | undefined
     // 4. Nouvelle requête via l'API route (pas de JSONP, pas de rate limit client)
     IN_FLIGHT.set(query, []);
 
-    fetchArtwork(query).then((result) => {
+    fetchArtwork(artist, title).then((result) => {
       MEM_CACHE.set(query, result);
       lsSet(query, result);
 
