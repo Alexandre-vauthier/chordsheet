@@ -768,7 +768,27 @@
       "tooMany": "{max} liens au maximum.",
       "saved": "Enregistré",
       "saveError": "L'enregistrement a échoué, réessaie."
-    }
+    },
+    "navAccount": "Mon compte",
+    "navPublic": "Mon profil public",
+    "navInstrument": "Mon instrument",
+    "navDisplay": "Affichage des grilles",
+    "navPlayback": "Lecture & son",
+    "navPrint": "Impression & PDF",
+    "navSubscription": "Abonnement",
+    "introAccount": "Ton identité sur le site, ce que contient ta bibliothèque, et la sortie.",
+    "introPublic": "Ce que voient les autres quand ils arrivent sur une de tes grilles.",
+    "introInstrument": "Il commande le reste : les diagrammes affichés, les sons de la lecture et la bibliothèque d'accords.",
+    "introDisplay": "Ce que tu vois en ouvrant une grille. L'aperçu suit tes choix.",
+    "introPlayback": "Ce qui démarre avec la lecture, sans avoir à le rallumer sur chaque grille.",
+    "introPrint": "Ce que donne une grille sur le papier, et dans un PDF exporté.",
+    "introSubscription": "Ton plan, ce qu'il inclut, et où le modifier.",
+    "backToSettings": "Tous les réglages",
+    "saveFailed": "Non enregistré.",
+    "retry": "Réessayer",
+    "reputationEmpty": "Publie une grille pour ouvrir ta réputation : elle se calcule à partir de tes grilles publiques.",
+    "upgradeSuccess": "Bienvenue chez les Pro. Ton abonnement est actif.",
+    "portalError": "Le portail n'a pas pu s'ouvrir. Réessaie dans un instant."
   },
   "SectionLabels": {
     "Intro": "Intro",

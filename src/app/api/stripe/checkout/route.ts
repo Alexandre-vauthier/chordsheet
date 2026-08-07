@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
       customer_email: userEmail,
       client_reference_id: userId,
       metadata: { userId },
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/profile?upgrade=success`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/profile?r=abonnement&upgrade=success`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/pricing`,
       locale: 'fr',
     });

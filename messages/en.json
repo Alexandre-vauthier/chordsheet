@@ -768,7 +768,27 @@
       "tooMany": "{max} links at most.",
       "saved": "Saved",
       "saveError": "Saving failed, please try again."
-    }
+    },
+    "navAccount": "My account",
+    "navPublic": "My public profile",
+    "navInstrument": "My instrument",
+    "navDisplay": "Chart display",
+    "navPlayback": "Playback & sound",
+    "navPrint": "Printing & PDF",
+    "navSubscription": "Subscription",
+    "introAccount": "Who you are on the site, what your library holds, and the way out.",
+    "introPublic": "What other people see when they land on one of your charts.",
+    "introInstrument": "It drives the rest: the diagrams shown, the playback sounds and the chord library.",
+    "introDisplay": "What you see when a chart opens. The preview follows your choices.",
+    "introPlayback": "What starts along with playback, without switching it on for every chart.",
+    "introPrint": "What a chart looks like on paper, and in an exported PDF.",
+    "introSubscription": "Your plan, what it includes, and where to change it.",
+    "backToSettings": "All settings",
+    "saveFailed": "Not saved.",
+    "retry": "Try again",
+    "reputationEmpty": "Publish a chart to open your reputation: it is worked out from your public charts.",
+    "upgradeSuccess": "Welcome to Pro. Your subscription is active.",
+    "portalError": "The portal could not open. Try again in a moment."
   },
   "SectionLabels": {
     "Intro": "Intro",

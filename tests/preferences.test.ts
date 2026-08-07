@@ -22,10 +22,10 @@ test('toutes les préférences sont relues, sans exception', () => {
   // relire fera tomber ce test.
   const contraire: Record<string, unknown> = {};
   for (const key of PREFERENCE_KEYS) {
-    const defaut = (USER_PREFERENCE_DEFAULTS as Record<string, unknown>)[key];
+    const defaut = (USER_PREFERENCE_DEFAULTS as unknown as Record<string, unknown>)[key];
     if (typeof defaut === 'boolean') contraire[key] = !defaut;
   }
-  const lu = readPreferences(contraire) as Record<string, unknown>;
+  const lu = readPreferences(contraire) as unknown as Record<string, unknown>;
   for (const [key, valeur] of Object.entries(contraire)) {
     assert.equal(lu[key], valeur, `${key} n'est pas relue`);
   }
