@@ -479,7 +479,10 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
     enabled: isPlaying || previewPattern !== null,
     muted: previewPattern !== null ? false : !grooveEnabled,
     bpm: grooveBpm,
-    beatsPerMeasure: sheet.beatsPerMeasure ?? 4,
+    // La métrique de la section jouée, et non celle du document : une grille qui
+    // passe du ternaire au binaire changeait de mesure sans que la batterie le
+    // sache. Hors lecture, celle de la première section.
+    beatsPerMeasure: activeStep?.beatsPerMeasure ?? sheet.sections[0]?.beatsPerMeasure ?? 4,
     genres: sheet.genres ?? [],
     // L'aperçu prime, sinon le choix de session (livePattern).
     groovePattern: previewPattern ?? livePattern,

@@ -114,9 +114,16 @@ function playVoiceFallback(ctx: AudioContext, dest: AudioNode, voice: Voice, t: 
   // les échantillons ne sont pas prêts (quelques centaines de ms au premier play).
 }
 
-// ─── Patterns (32 pas = 2 mesures en 4/4 ; pas 0-15 = mesure 1, 16-31 = mesure 2) ───
-// Grooves écrits sur 2 mesures : la 2e varie (turnaround, ghosts, clave) pour éviter
-// la boucle d'1 mesure. En 3/4, seul le début du motif est lu (approximation).
+// ─── Motifs ──────────────────────────────────────────────────────────────────
+//
+// Trente-deux pas en 4/4 : deux mesures de seize doubles croches, la seconde
+// variant (turnaround, ghosts, clave) pour éviter la boucle d'une mesure.
+//
+// En 3/4, une mesure ne fait plus que douze pas et le cycle vingt-quatre : les
+// motifs binaires n'y entraient pas. On n'en lisait donc que le début, et tout ce
+// qui est écrit au-delà — le dernier contretemps, la moitié du backbeat — ne
+// sonnait jamais. Ce n'était pas un groove en trois temps, c'était un groove en
+// quatre amputé. Les motifs ternaires sont écrits plus bas, pour de bon.
 
 type Pattern = Partial<Record<Voice, number[]>>;
 
@@ -135,6 +142,52 @@ const EIGHTHS = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30];  //
 const EIGHTHS_NO_LAST = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28];
 const SIXTEENTHS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31];
 const SHUFFLE = [0, 3, 4, 7, 8, 11, 12, 15, 16, 19, 20, 23, 24, 27, 28, 31];  // feel ternaire (1 · a)
+
+// Repères de pas sur 2 mesures de 3/4 (12 pas par mesure, la seconde à partir de 12)
+const BEATS3 = [0, 4, 8, 12, 16, 20];                                // les 6 temps
+const AFTER_ONE3 = [4, 8, 16, 20];                                   // temps 2 et 3
+const EIGHTHS3 = [0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22];        // croches
+const DOWNBEATS3 = [0, 12];                                          // premier temps de chaque mesure
+
+/**
+ * Motifs à trois temps.
+ *
+ * Une valse ne se déduit pas d'un rock en lui coupant un temps : la fonction des
+ * appuis change. Le premier temps porte la basse, les deux suivants la réponse —
+ * c'est le « oum-pa-pa », et aucun découpage automatique ne l'aurait trouvé.
+ *
+ * Quatre familles suffisent : au-delà, on prétendrait qu'il existe une samba ou un
+ * trap à trois temps.
+ */
+const PATTERNS_TERNAIRES: Record<string, Pattern> = {
+  // La valse ordinaire : basse sur un, caisse claire sur deux et trois.
+  valse: { kick: DOWNBEATS3, snare: AFTER_ONE3, hihatClosed: BEATS3 },
+  // Plus douce : baguette sur le cercle, croches au charleston.
+  valseBallade: { kick: DOWNBEATS3, rimshot: AFTER_ONE3, hihatClosed: EIGHTHS3 },
+  // Valse jazz : la ride tient le tempo, le charleston au pied marque deux et trois.
+  valseJazz: {
+    ride: [0, 4, 6, 8, 10, 12, 16, 18, 20, 22],
+    hihatClosed: AFTER_ONE3,
+    kick: DOWNBEATS3,
+    snareGhost: [10, 22],
+  },
+  // Valse folk : basse alternée sur un, accord sur deux et trois.
+  valseFolk: { kick: [0, 12], rimshot: AFTER_ONE3, hihatClosed: EIGHTHS3, snareGhost: [18] },
+};
+
+/**
+ * Le motif ternaire qui répond à chaque motif binaire.
+ *
+ * Le reggae, la bossa, la samba, le funk et le trap n'existent pas à trois temps :
+ * ils retombent sur la valse ordinaire plutôt que sur une imitation qui n'aurait
+ * de leur genre que le nom.
+ */
+const TERNAIRE_DE: Record<string, string> = {
+  rock: 'valse', rockDriving: 'valse', pop: 'valse',
+  popBallad: 'valseBallade',
+  jazz: 'valseJazz', jazzBrush: 'valseJazz', blues: 'valseJazz', bluesShuffle: 'valseJazz',
+  country: 'valseFolk', countryTrain: 'valseFolk',
+};
 
 export const PATTERN_DEFS: PatternDef[] = [
   // ── Rock / Pop ──
@@ -208,9 +261,14 @@ function pickPatternId(genres: string[]): string {
   return 'rock';
 }
 
-function resolvePattern(groovePattern: string | undefined, genres: string[]): Pattern {
-  if (groovePattern && PATTERNS[groovePattern]) return PATTERNS[groovePattern];
-  return PATTERNS[pickPatternId(genres)];
+export function resolvePattern(groovePattern: string | undefined, genres: string[], beatsPerMeasure = 4): Pattern {
+  const id = groovePattern && PATTERNS[groovePattern] ? groovePattern : pickPatternId(genres);
+  if (beatsPerMeasure === 3) {
+    // Le nom choisi désigne une famille, pas une suite de pas : « Rock » en trois
+    // temps donne une valse, ce qui est ce qu'on veut entendre.
+    return PATTERNS_TERNAIRES[TERNAIRE_DE[id] ?? 'valse'];
+  }
+  return PATTERNS[id];
 }
 
 // ─── Instrument échantillonné partagé (chargé une seule fois, sur le même
@@ -364,7 +422,7 @@ export function useGrooveBox({
 
   const bpmRef = useRef(bpm);
   const bpmPerMeasureRef = useRef(beatsPerMeasure);
-  const patternRef = useRef(resolvePattern(groovePattern, genres));
+  const patternRef = useRef(resolvePattern(groovePattern, genres, beatsPerMeasure));
   const mutedRef = useRef(muted);
 
   /**
@@ -401,8 +459,21 @@ export function useGrooveBox({
   }, [kitDefaut]);
 
   useEffect(() => { bpmRef.current = bpm; }, [bpm]);
-  useEffect(() => { bpmPerMeasureRef.current = beatsPerMeasure; }, [beatsPerMeasure]);
-  useEffect(() => { patternRef.current = resolvePattern(groovePattern, genres); }, [genres, groovePattern]);
+  /**
+   * Le cycle repart du premier temps quand la métrique change.
+   *
+   * Une mesure de trois temps ne fait pas la même longueur qu'une mesure de
+   * quatre : garder le rang du pas ferait tomber le motif au milieu de la mesure
+   * suivante, et il y resterait. Même raison que la remise à un du métronome.
+   */
+  useEffect(() => {
+    if (bpmPerMeasureRef.current === beatsPerMeasure) return;
+    bpmPerMeasureRef.current = beatsPerMeasure;
+    stepRef.current = 0;
+  }, [beatsPerMeasure]);
+  useEffect(() => {
+    patternRef.current = resolvePattern(groovePattern, genres, beatsPerMeasure);
+  }, [genres, groovePattern, beatsPerMeasure]);
   useEffect(() => { mutedRef.current = muted; }, [muted]);
 
   useEffect(() => {

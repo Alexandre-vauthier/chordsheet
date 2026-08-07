@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { premierTempsAVenir } from '@/lib/use-groove-box';
 import { grooveBpmFor, parseTempo } from '@/lib/use-playback';
+import type { Section } from '@/types';
 
 /**
  * Le calage de la boîte à rythme sur le départ des accords.
@@ -90,8 +91,8 @@ test('chaque pas porte la métrique de sa section', async () => {
   const { buildSequence } = await import('@/lib/use-playback');
   const { deroulerStructure } = await import('@/lib/sheet-structure');
 
-  const ternaire = { id: 't', label: 'Intro', repeat: 1, beatsPerMeasure: 3 as const, rows: [[{ chord: 'C', span: 1 }]] };
-  const binaire = { id: 'b', label: 'Couplet', repeat: 1, beatsPerMeasure: 4 as const, rows: [[{ chord: 'G', span: 1 }]] };
+  const ternaire = { id: 't', label: 'Intro', repeat: 1, beatsPerMeasure: 3, rows: [[{ chord: 'C', span: 1 }]] } as Section;
+  const binaire = { id: 'b', label: 'Couplet', repeat: 1, beatsPerMeasure: 4, rows: [[{ chord: 'G', span: 1 }]] } as Section;
 
   const pas = buildSequence(deroulerStructure([ternaire, binaire]), 500);
   assert.deepEqual(pas.map((p) => p.beatsPerMeasure), [3, 4]);
@@ -99,4 +100,44 @@ test('chaque pas porte la métrique de sa section', async () => {
   // Et la durée suit la métrique : une mesure de trois temps dure trois temps.
   assert.equal(pas[0].durationMs, 3 * 500);
   assert.equal(pas[1].durationMs, 4 * 500);
+});
+
+/**
+ * Les motifs à trois temps.
+ *
+ * Les motifs sont écrits sur deux mesures de quatre temps, soit trente-deux pas.
+ * En 3/4, le cycle n'en fait que vingt-quatre : tout ce qui était écrit au-delà ne
+ * sonnait jamais — le dernier contretemps, la moitié du backbeat. Ce n'était pas
+ * un groove à trois temps, c'était un groove à quatre amputé.
+ */
+test('un motif ternaire tient dans le cycle de trois temps', async () => {
+  const { resolvePattern } = await import('@/lib/use-groove-box');
+  const CYCLE3 = 3 * 4 * 2; // deux mesures de trois temps, en doubles croches
+
+  for (const famille of ['rock', 'pop', 'jazz', 'blues', 'country', 'popBallad', 'funk', 'trap']) {
+    const motif = resolvePattern(famille, [], 3);
+    const pas = Object.values(motif).flat() as number[];
+    assert.ok(pas.length > 0, `${famille} rend un motif vide en ternaire`);
+    for (const p of pas) {
+      assert.ok(p < CYCLE3, `${famille} : le pas ${p} tombe hors du cycle de ${CYCLE3}`);
+    }
+  }
+});
+
+test('le motif binaire, lui, occupe ses trente-deux pas', async () => {
+  // Contre-épreuve : sans elle, un motif ternaire rendu partout passerait le test
+  // précédent sans rien prouver.
+  const { resolvePattern } = await import('@/lib/use-groove-box');
+  const rock = resolvePattern('rock', [], 4);
+  const pas = Object.values(rock).flat() as number[];
+  assert.ok(Math.max(...pas) >= 24, 'un motif binaire doit écrire au-delà du cycle ternaire');
+});
+
+test('la valse pose la basse sur le premier temps, la réponse sur les autres', async () => {
+  // C'est ce qu'aucun découpage automatique n'aurait trouvé : la fonction des
+  // appuis change, elle ne se déduit pas du motif à quatre temps.
+  const { resolvePattern } = await import('@/lib/use-groove-box');
+  const valse = resolvePattern('rock', [], 3);
+  assert.deepEqual(valse.kick, [0, 12]);
+  assert.deepEqual(valse.snare, [4, 8, 16, 20]);
 });
