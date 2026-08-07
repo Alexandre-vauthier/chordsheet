@@ -275,21 +275,8 @@ export function playChord(
   chord: StringChord | PianoChord,
   instrumentId: InstrumentId,
   capo = 0,
-  /**
-   * Instant d'attaque sur l'horloge audio. Par défaut : maintenant.
-   *
-   * La lecture d'une grille s'en sert pour poser l'accord à l'instant exact du
-   * temps, et non au réveil de son minuteur. Un `setTimeout` se réveille avec
-   * quelques millisecondes de retard, variables : contre une batterie programmée
-   * à l'échantillon près, cela s'entend comme un décalage qui bouge à chaque
-   * mesure.
-   */
-  when?: number,
 ): void {
   const ctx = getAudioContext();
-  // Un instant déjà passé (minuteur en retard) vaut « tout de suite » : le
-  // programmer tel quel ferait sonner l'accord sans son enveloppe.
-  const depart = Math.max(when ?? ctx.currentTime, ctx.currentTime);
   const isPiano = instrumentId === 'piano';
 
   // Couper l'accord précédent DE CET INSTRUMENT uniquement (les autres continuent)
@@ -305,7 +292,7 @@ export function playChord(
 
   if (isInstrumentSoundReady(instrumentId)) {
     const stopFns = freqs
-      .map((freq, i) => playSampledNote(instrumentId, freqToMidi(freq), depart + i * strumDelay, decay))
+      .map((freq, i) => playSampledNote(instrumentId, freqToMidi(freq), ctx.currentTime + i * strumDelay, decay))
       .filter((stop): stop is () => void => stop !== null);
     activeByInstrument.set(instrumentId, { nodes: [], stopFns });
     return;
@@ -314,7 +301,7 @@ export function playChord(
   const nodes: { osc: OscillatorNode; gain: GainNode }[] = [];
 
   freqs.forEach((freq, i) => {
-    const t = depart + i * strumDelay;
+    const t = ctx.currentTime + i * strumDelay;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
 
@@ -354,11 +341,8 @@ export function playArpeggio(
   capo = 0,
   stepMs = 250,
   steps = 8,
-  /** Instant de la première note, sur l'horloge audio. Par défaut : maintenant. */
-  when?: number,
 ): void {
   const ctx = getAudioContext();
-  const depart = Math.max(when ?? ctx.currentTime, ctx.currentTime);
   const isPiano = instrumentId === 'piano';
 
   stopActiveChord(instrumentId);
@@ -377,7 +361,7 @@ export function playArpeggio(
   const stopFns: (() => void)[] = [];
 
   for (let k = 0; k < steps; k++) {
-    const t = depart + (k * stepMs) / 1000;
+    const t = ctx.currentTime + (k * stepMs) / 1000;
     const freq = freqs[order[k % order.length]];
 
     if (sampled) {

@@ -298,34 +298,6 @@ export function kitCharge(): boolean {
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
-/**
- * Le premier temps à venir, à partir d'un départ éventuellement déjà passé.
- *
- * La boîte à rythme se cale sur le départ des accords, mais son effet React
- * s'exécute après eux : ce départ est souvent derrière nous. On avance alors pas à
- * pas jusqu'au premier temps futur, en comptant les pas sautés — c'est la phase
- * qu'il faut préserver, pas la date. Rattraper les temps passés d'un coup les
- * jouerait tous ensemble, en paquet.
- */
-export function premierTempsAVenir(
-  depart: number,
-  maintenant: number,
-  pasS: number,
-  cycle: number,
-): { instant: number; pas: number } {
-  // Un pas nul ou négatif ne peut venir que d'un tempo absurde : la boucle ne
-  // s'arrêterait jamais, on rend le départ tel quel.
-  if (!(pasS > 0) || !(cycle > 0)) return { instant: Math.max(depart, maintenant), pas: 0 };
-
-  let instant = depart;
-  let pas = 0;
-  while (instant < maintenant) {
-    instant += pasS;
-    pas = (pas + 1) % cycle;
-  }
-  return { instant, pas };
-}
-
 export function useGrooveBox({
   enabled,
   muted,
@@ -334,7 +306,6 @@ export function useGrooveBox({
   genres,
   groovePattern,
   kitDefaut,
-  debutRef,
 }: {
   enabled: boolean;  // lifecycle : suit isPlaying
   muted: boolean;    // mute/unmute sans relancer la programmation
@@ -349,15 +320,6 @@ export function useGrooveBox({
    * batterie plutôt que la boîte à rythmes de synthèse.
    */
   kitDefaut?: string;
-  /**
-   * L'instant où la lecture des accords a commencé, sur l'horloge audio.
-   *
-   * La boîte à rythme démarrait quand son effet React s'exécutait, soit quelques
-   * dizaines de millisecondes après le premier accord, et l'écart variait d'une
-   * lecture à l'autre. En se calant sur le même point de départ, les deux tombent
-   * ensemble sur le premier temps.
-   */
-  debutRef?: { current: number | null };
 }) {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const stepRef = useRef(0);
@@ -415,20 +377,8 @@ export function useGrooveBox({
 
     const ctx = getAudioContext();
     const dest = ensureAudioGraph(ctx);
-
-    // Le point de départ des accords s'il y en a un, sinon le nôtre. Un instant
-    // déjà passé — l'effet s'exécute après le premier accord — est avancé pas à
-    // pas jusqu'au premier temps à venir : c'est la phase qu'on préserve, pas la
-    // date. Rattraper les temps passés d'un coup les jouerait tous ensemble.
-    const cale = premierTempsAVenir(
-      debutRef?.current ?? ctx.currentTime + 0.05,
-      ctx.currentTime,
-      15 / bpmRef.current,
-      bpmPerMeasureRef.current * 4 * 2,
-    );
-
-    stepRef.current = cale.pas;
-    nextTimeRef.current = cale.instant;
+    stepRef.current = 0;
+    nextTimeRef.current = ctx.currentTime + 0.05;
 
     const tick = () => {
       const s16 = 15 / bpmRef.current;
