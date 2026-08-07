@@ -493,14 +493,20 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
     const sectionLabels = ['Intro', 'Couplet', 'Refrain', 'Bridge', 'Pré-refrain', 'Outro', 'Solo'].map((l) => tSection(l));
     const usedLabels = sheet.sections.map((s) => s.label);
     const nextLabel = sectionLabels.find((l) => !usedLabels.includes(l)) || tSection('Section');
-    const newSection = createEmptySection(nextLabel);
+    // La métrique de la grille, et non le défaut du modèle : la bascule
+    // binaire/ternaire ne touche que les sections **existantes**, si bien qu'une
+    // section ajoutée après coup naissait en quatre temps sur une grille en trois.
+    // Le métronome la comptait alors fidèlement en quatre, et c'est ce qu'on
+    // entendait — quatre grilles du catalogue en portent encore la trace.
+    const metrique = sheet.beatsPerMeasure ?? sheet.sections[0]?.beatsPerMeasure ?? 4;
+    const newSection = createEmptySection(nextLabel, metrique);
 
     setSheet((prev) => ({
       ...prev,
       sections: [...prev.sections, newSection],
     }));
     setHasChanges(true);
-  }, [sheet.sections, tSection]);
+  }, [sheet.sections, sheet.beatsPerMeasure, tSection]);
 
   // Dupliquer une section
   const duplicateSection = useCallback((sectionId: string) => {

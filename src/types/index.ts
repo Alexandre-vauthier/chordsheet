@@ -522,7 +522,17 @@ export const createEmptyRow = (): Row => {
   return cells;
 };
 
-export const createEmptySection = (label: string = 'Section', beatsPerMeasure: BeatsPerMeasure = 4): Section => ({
+/**
+ * La métrique est exigée, sans valeur par défaut.
+ *
+ * Elle en avait une (quatre), et l'éditeur l'a longtemps laissée jouer : la
+ * bascule binaire/ternaire ne réécrit que les sections **existantes**, si bien
+ * qu'une section ajoutée ensuite sur une grille en trois temps naissait en
+ * quatre. Le métronome la comptait alors fidèlement en quatre. Quatre grilles du
+ * catalogue en portaient la trace. Exiger l'argument fait de l'oubli une erreur
+ * de compilation plutôt qu'un défaut qu'on n'entend qu'à la lecture.
+ */
+export const createEmptySection = (label: string, beatsPerMeasure: BeatsPerMeasure): Section => ({
   id: crypto.randomUUID(),
   label,
   repeat: 1,
@@ -538,7 +548,8 @@ export const createEmptySheet = (ownerId: string, ownerName: string): NewSheet =
   ownerId,
   ownerName,
   isPublic: false,
-  sections: [createEmptySection('Intro')],
+  beatsPerMeasure: 4,
+  sections: [createEmptySection('Intro', 4)],
   tags: [],
   genres: [],
   difficulty: null,

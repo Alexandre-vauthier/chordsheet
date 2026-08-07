@@ -57,6 +57,47 @@ export interface PlayStep {
   sectionRepeatIndex: number;
 }
 
+/** Un temps du métronome : son instant sur l'horloge audio, et s'il ouvre la mesure. */
+export interface Battement {
+  instant: number;
+  premier: boolean;
+}
+
+/**
+ * Le calendrier des temps, déduit des mesures qu'on va jouer.
+ *
+ * Une mesure, ici, est une instance de ligne : la même ligne répétée deux fois en
+ * compte deux. On additionne les durées de ses cellules, on en déduit combien de
+ * temps elle dure, et on pose son premier temps sur son propre instant de départ.
+ *
+ * C'est ce ré-ancrage à chaque mesure qui rend le décompte juste sans qu'aucun
+ * compteur n'ait à connaître la métrique : une section en trois donne des mesures
+ * de trois temps, la suivante en quatre en donne de quatre, et l'accent tombe à
+ * chaque fois sur le premier temps parce qu'il est calculé depuis lui.
+ */
+export function construireBattements(steps: PlayStep[], debut: number, beatMs: number): Battement[] {
+  if (beatMs <= 0) return [];
+  const cle = (s: PlayStep) =>
+    `${s.sectionId}|${s.occurrence}|${s.sectionRepeatIndex}|${s.rowIndex}|${s.rowRepeatIndex}`;
+
+  const battements: Battement[] = [];
+  let instant = debut;
+  let i = 0;
+  while (i < steps.length) {
+    const courante = cle(steps[i]);
+    let dureeMs = 0;
+    while (i < steps.length && cle(steps[i]) === courante) dureeMs += steps[i++].durationMs;
+    // Au moins un temps : une mesure dont les cellules ne remplissent pas la
+    // métrique garde son premier temps plutôt que de disparaître du décompte.
+    const nombre = Math.max(1, Math.round(dureeMs / beatMs));
+    for (let b = 0; b < nombre; b++) {
+      battements.push({ instant: instant + (b * beatMs) / 1000, premier: b === 0 });
+    }
+    instant += dureeMs / 1000;
+  }
+  return battements;
+}
+
 export function parseTempo(tempoStr: string | undefined): number {
   if (!tempoStr) return 90;
   const match = tempoStr.match(/(\d+)/);
@@ -231,14 +272,27 @@ export function usePlayback({ sections, structure, tempo, tempoUnit, instrumentI
   // Refs pour que le useEffect métronome accède aux valeurs courantes
   const factor = TEMPO_UNIT_FACTOR[tempoUnit ?? 'quarter'];
   const beatMsRef = useRef<number>((60 / parseTempo(tempo)) * 1000 * factor);
-  const bpMeasureRef = useRef<number>(sections[0]?.beatsPerMeasure || 4);
   /**
-   * Le décompte doit repartir de un quand la métrique change.
+   * Les temps du métronome, déduits des mesures elles-mêmes (voir
+   * `construireBattements`), et le rang du prochain à programmer.
    *
-   * Sans cela, passer d'une section en trois à une section en quatre laisserait
-   * l'accent tomber au milieu de la mesure suivante, et il y resterait.
+   * Le métronome comptait auparavant pour son compte : un `beat` incrémenté
+   * modulo une métrique tenue à jour à part, et une ligne de temps ancrée à
+   * l'instant où son effet React s'exécutait — donc quelques dizaines de
+   * millisecondes après le premier accord, d'un écart qui changeait à chaque
+   * lecture. Il ne pouvait pas non plus suivre un changement de métrique : le
+   * drapeau qui demandait de repartir à un était posé soixante millisecondes
+   * avant le son, alors que la boucle programmait cent millisecondes à l'avance,
+   * si bien que la remise à un tombait un temps trop tard une fois sur deux.
+   *
+   * Il ne compte plus. Chaque mesure porte l'instant de son premier temps, et le
+   * métronome ne fait que jouer ce calendrier : même horloge et même source que
+   * les accords, ré-ancré à chaque mesure, juste en trois comme en quatre.
    */
-  const remettreBeatRef = useRef(false);
+  const battementsRef = useRef<Battement[]>([]);
+  const battementRef = useRef(0);
+  /** Décalage accumulé par les reprises après suspension du contexte audio. */
+  const decalageRef = useRef(0);
   const chordsEnabledRef = useRef(chordsEnabled);
   // Voix d'accompagnement, lues sans redémarrer la lecture en cours.
   const playbackVoicesRef = useRef<PlaybackVoice[]>(playbackInstruments ?? [{ id: instrumentId, style: 'block' }]);
@@ -250,11 +304,6 @@ export function usePlayback({ sections, structure, tempo, tempoUnit, instrumentI
   useEffect(() => {
     beatMsRef.current = (60 / parseTempo(tempo)) * 1000 * TEMPO_UNIT_FACTOR[tempoUnit ?? 'quarter'];
   }, [tempo, tempoUnit]);
-  // Point de départ seulement : ensuite c'est la section jouée qui commande, pas
-  // la première de la grille.
-  useEffect(() => {
-    bpMeasureRef.current = sections[0]?.beatsPerMeasure || 4;
-  }, [sections]);
 
   // Refs pour que les ticks accèdent aux flags sans redémarrer
   const metronomeEnabledRef = useRef(metronomeEnabled ?? false);
@@ -266,29 +315,30 @@ export function usePlayback({ sections, structure, tempo, tempoUnit, instrumentI
   }, [chordsEnabled]);
 
   // Le métronome tourne dès que isPlaying — le toggle ne fait que mute/unmute.
-  // Beat 0 est joué directement dans advance() pour être synchronisé avec le premier accord.
-  // Planifié sur l'horloge audio (comme la boîte à rythme et les accords) pour
-  // ne pas dériver : chaque beat vise un instant absolu, look-ahead de 100 ms.
+  // Il ne connaît ni tempo ni métrique : il programme les instants que
+  // `runSteps` a posés, avec le même look-ahead de 100 ms que la boîte à rythme.
   useEffect(() => {
     if (metronomeRef.current) {
       clearInterval(metronomeRef.current);
       metronomeRef.current = null;
     }
     if (isPlaying) {
-      let beat = 1;                                  // beat 0 déjà joué dans advance()
-      let nextBeat = getAudioContext().currentTime + beatMsRef.current / 1000;
       const tick = () => {
         // Contexte redemande a chaque tick, pour la meme raison que la lecture :
         // suspendu, son horloge se fige et la boucle ne planifierait plus rien.
         const ctx = getAudioContext();
-        if (nextBeat - ctx.currentTime > SUSPENSION_THRESHOLD_S) nextBeat = ctx.currentTime;
-
-        const beatSec = beatMsRef.current / 1000;
-        while (nextBeat < ctx.currentTime + 0.1) {
-          if (remettreBeatRef.current) { beat = 0; remettreBeatRef.current = false; }
-          if (metronomeEnabledRef.current) playMetronomeTick(beat === 0, nextBeat);
-          beat = (beat + 1) % bpMeasureRef.current;
-          nextBeat += beatSec;
+        const liste = battementsRef.current;
+        while (battementRef.current < liste.length) {
+          const battement = liste[battementRef.current];
+          const instant = battement.instant + decalageRef.current;
+          if (instant > ctx.currentTime + 0.1) break;
+          // Un temps dépassé de plus d'un demi-temps ne se rattrape pas : le
+          // jouer en retard s'entendrait plus que son absence.
+          const retard = ctx.currentTime - instant;
+          if (metronomeEnabledRef.current && retard < beatMsRef.current / 2000) {
+            playMetronomeTick(battement.premier, Math.max(instant, ctx.currentTime));
+          }
+          battementRef.current++;
         }
       };
       tick();
@@ -363,6 +413,12 @@ export function usePlayback({ sections, structure, tempo, tempoUnit, instrumentI
      */
     const debut = getAudioContext().currentTime + AVANCE_S;
     debutRef.current = debut;
+    // Le calendrier du métronome, posé avant que sa boucle ne tourne. Remis à
+    // zéro ici et non dans son effet : lancer une autre section pendant qu'on
+    // lit ne change pas `isPlaying`, l'effet ne se rejouerait donc pas.
+    battementsRef.current = construireBattements(steps, debut, beatMsRef.current);
+    battementRef.current = 0;
+    decalageRef.current = 0;
     let nextTime = debut;
     let i = 0;
     const advance = () => {
@@ -383,17 +439,15 @@ export function usePlayback({ sections, structure, tempo, tempoUnit, instrumentI
       // suspendu. On rattache la ligne de temps a l'horloge plutot que de rattraper
       // un retard qui prendrait autant de temps que la pause elle-meme.
       const retard = nextTime - ctx.currentTime;
-      if (retard > SUSPENSION_THRESHOLD_S) nextTime = ctx.currentTime;
+      if (retard > SUSPENSION_THRESHOLD_S) {
+        // Le métronome suit le même saut, sans quoi il rejouerait d'un coup tous
+        // les temps de la pause — ou les tairait, ce qui revient au même.
+        decalageRef.current += ctx.currentTime - nextTime;
+        nextTime = ctx.currentTime;
+      }
 
       const step = steps[i];
       const instant = nextTime;
-
-      // La métrique de la section qu'on entre. Changer de section change le
-      // décompte : on le remet à un plutôt que de laisser l'accent glisser.
-      if (step.beatsPerMeasure !== bpMeasureRef.current) {
-        bpMeasureRef.current = step.beatsPerMeasure;
-        remettreBeatRef.current = true;
-      }
 
       // Le surlignage à l'instant du son, pas à celui du réveil.
       if (visuelRef.current) clearTimeout(visuelRef.current);
@@ -401,8 +455,6 @@ export function usePlayback({ sections, structure, tempo, tempoUnit, instrumentI
       if (attente < 4) setActiveStep(step);
       else visuelRef.current = setTimeout(() => setActiveStep(step), attente);
 
-      // Premier pas : tick beat 1 posé sur le même instant que le premier accord.
-      if (i === 0 && metronomeEnabledRef.current) playMetronomeTick(true, instant);
       const cell = getCellFn(step);
       if (cell?.chord && chordsEnabledRef.current) {
         // Jouer l'accord sur chaque voix d'accompagnement (voix indépendantes),
