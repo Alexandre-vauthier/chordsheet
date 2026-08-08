@@ -60,6 +60,29 @@ const DUREE_MINIMALE_MS = 1500;
  */
 const MAX_SAUTS = 10;
 
+/**
+ * Passer au morceau suivant, ou revenir au précédent.
+ *
+ * Les deux boutons étaient écrits deux fois, à un chemin SVG près. Ici la
+ * direction est un paramètre : le tracé se retourne, le reste ne bouge pas.
+ */
+function Fleche({ sens, onClick, etiquette }: { sens: -1 | 1; onClick: () => void; etiquette: string }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={etiquette}
+      title={etiquette}
+      className="shrink-0 w-11 h-11 rounded-full border border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink)]
+        flex items-center justify-center hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors cursor-pointer"
+    >
+      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+        <path d={sens === -1 ? 'M6 6h2v12H6zm3 6l9 6V6z' : 'M16 6h2v12h-2zM6 18l9-6-9-6z'} />
+      </svg>
+    </button>
+  );
+}
+
 export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
   const t = useTranslations('WhatToPlay');
   const genreLabel = useGenreLabel();
@@ -254,9 +277,13 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
   }
 
   return (
-    <div className="max-w-xl mx-auto px-4 sm:px-6 py-10">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
       <div className="text-center">
         <h1 className="font-playfair text-3xl sm:text-4xl font-bold text-[var(--ink)]">{t('title')}</h1>
+        {/* Plus large que la colonne : la phrase tenait sur deux lignes dans les
+            576 px du conteneur, et chaque ligne gagnée ici rapproche le bouton
+            « Voir la grille » de la ligne de flottaison. Elle repasse à deux
+            lignes sur téléphone, où aucune largeur ne la sauverait. */}
         <p className="mt-2 text-sm text-[var(--ink-light)] leading-relaxed">{t('subtitle')}</p>
       </div>
 
@@ -300,6 +327,13 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
         )}
       </div>
 
+      {/* Passer et revenir encadrent la pochette plutôt que de la suivre : la
+          rangée qu'ils occupaient plus bas repoussait « Voir la grille » sous la
+          ligne de flottaison, et leur place naturelle est de part et d'autre de
+          ce qu'ils font défiler. */}
+      <div className="mt-6 flex items-center justify-center gap-2 sm:gap-4">
+        <Fleche sens={-1} onClick={() => aller(-1, true)} etiquette={t('previous')} />
+
       {/* La pochette reste le repère visuel : on reconnaît souvent un disque avant
           d'en reconnaître les premières notes. */}
       <button
@@ -307,7 +341,7 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
         onClick={() => (enLecture ? arreter() : lire())}
         disabled={!previewUrl || !pret}
         aria-label={enLecture ? t('stop') : t('play')}
-        className="group relative block mx-auto mt-8 w-64 h-64 sm:w-72 sm:h-72 rounded-2xl overflow-hidden
+        className="group relative block shrink-0 w-56 h-56 sm:w-64 sm:h-64 rounded-2xl overflow-hidden
           bg-[var(--cell-bg)] border border-[var(--line)] shadow-xl enabled:cursor-pointer disabled:cursor-default"
       >
         {artworkUrl ? (
@@ -340,7 +374,14 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
         )}
       </button>
 
-      <div className="mt-6 text-center">
+        <Fleche sens={1} onClick={() => aller(1, true)} etiquette={t('next')} />
+      </div>
+
+      <p className="mt-2 text-center text-xs text-[var(--ink-faint)] tabular-nums">
+        {index + 1} / {file.length}
+      </p>
+
+      <div className="mt-3 text-center">
         <p className="font-playfair text-2xl font-bold text-[var(--ink)] leading-tight">{courant.title}</p>
         <p className="text-[var(--ink-light)] mt-1">{courant.artist}{year ? ` · ${year}` : ''}</p>
 
@@ -348,10 +389,6 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
         {pret && !previewUrl && (
           <p className="mt-2 text-xs text-[var(--ink-faint)]">{t('noPreview')}</p>
         )}
-        {!continu && previewUrl && (
-          <p className="mt-2 text-xs text-[var(--ink-faint)]">{t('tapToStart')}</p>
-        )}
-
         {/* Sous la pochette, comme sur la page d'une grille : les conditions de
             l'API iTunes autorisent pochette et extrait pour **promouvoir** le
             catalogue, ce qui suppose d'y renvoyer. Un crédit se lit près de ce
@@ -369,39 +406,9 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
         )}
       </div>
 
-      <div className="mt-6 flex items-center justify-center gap-3">
-        <button
-          type="button"
-          onClick={() => aller(-1, true)}
-          aria-label={t('previous')}
-          className="w-11 h-11 rounded-full border border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink)]
-            flex items-center justify-center hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors cursor-pointer"
-        >
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-            <path d="M6 6h2v12H6zm3 6l9 6V6z" />
-          </svg>
-        </button>
-
-        <span className="text-xs text-[var(--ink-faint)] tabular-nums w-20 text-center">
-          {index + 1} / {file.length}
-        </span>
-
-        <button
-          type="button"
-          onClick={() => aller(1, true)}
-          aria-label={t('next')}
-          className="w-11 h-11 rounded-full border border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink)]
-            flex items-center justify-center hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors cursor-pointer"
-        >
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
-            <path d="M16 6h2v12h-2zM6 18l9-6-9-6z" />
-          </svg>
-        </button>
-      </div>
-
       <Link
         href={`/sheet/${courant.id}`}
-        className="mt-8 block w-full text-center px-6 py-3 rounded-lg bg-[var(--accent)] hover:bg-[#a83d25]
+        className="mt-6 mx-auto block w-full max-w-xl text-center px-6 py-3 rounded-lg bg-[var(--accent)] hover:bg-[#a83d25]
           text-white font-medium transition-colors"
       >
         {t('openSheet')}
@@ -411,7 +418,7 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
           Le picto est celui, au trait près, du bouton d'accompagnement du lecteur
           (cf. sheet-viewer) : recopier le glyphe permet de le reconnaître une fois
           sur place, là où une icône approchante ferait chercher. */}
-      <div className="mt-8 flex items-start gap-3 rounded-xl border border-[var(--line)] bg-[var(--cell-bg)] px-4 py-3">
+      <div className="mt-6 mx-auto max-w-xl flex items-start gap-3 rounded-xl border border-[var(--line)] bg-[var(--cell-bg)] px-4 py-3">
         <span className="w-9 h-9 shrink-0 rounded-lg bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5" aria-hidden>
             <path d="M9 18V5l12-2v13" strokeLinecap="round" strokeLinejoin="round" />
