@@ -42,8 +42,24 @@ const getPublicSheet = cache(async (id: string): Promise<{ sheet: Sheet; unliste
   }
 });
 
-/** Revalidation horaire : une modification apparaît au plus tard une heure après. */
-export const revalidate = 3600;
+/*
+ * Pas de `revalidate` ici, et c'est délibéré.
+ *
+ * Il y en avait un — `export const revalidate = 3600` — et il ne servait à rien :
+ * `next build` classe cette route `ƒ Dynamic — server-rendered on demand`, elle est
+ * donc rendue à chaque requête et aucune durée de cache ne s'y applique. La
+ * déclaration laissait croire à une mise en cache qui n'existait pas, ce qui est
+ * pire que son absence : on raisonne faux sur la fraîcheur des données, et on
+ * ajoute des invalidations pour un cache imaginaire.
+ *
+ * Conséquence utile à connaître : une modification de grille est visible tout de
+ * suite, sans rien invalider. Ce qui l'est moins : chaque visite coûte une lecture
+ * Firestore, sur les pages les plus vues du site.
+ *
+ * Ce qui rend la route dynamique est en amont, dans l'arbre de mise en page — pas
+ * ici. Le jour où l'on voudra vraiment mettre ces pages en cache, c'est là qu'il
+ * faudra chercher, et `revalidate` reviendra alors avec un effet réel.
+ */
 
 interface ViewSheetPageProps {
   params: Promise<{ locale: string; id: string }>;
