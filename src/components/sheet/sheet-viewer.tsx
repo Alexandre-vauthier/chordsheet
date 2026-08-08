@@ -33,6 +33,7 @@ import { traduireLibelle } from '@/lib/section-dictionary';
 import { useClickOutside } from '@/lib/use-click-outside';
 import { garderPourPlusTard } from '@/lib/pending-bookmark';
 import { cleMesure, deroulerStructure, positionCellule, positionMesure, structureUtile } from '@/lib/sheet-structure';
+import { InstrumentIcon } from '@/components/chord/instrument-icon';
 
 const LS_KEY = 'chordsheet_instrument';
 
@@ -889,6 +890,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                                 </svg>
                               )}
                             </span>
+                            <InstrumentIcon id={inst} className="w-5 h-5" />
                             <span className="truncate">{INSTRUMENT_CONFIG[inst]?.label ?? inst}</span>
                           </button>
                           {checked && (

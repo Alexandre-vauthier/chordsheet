@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { usePitchDetect } from '@/lib/use-pitch-detect';
 import { TUNINGS, GUITAR_TUNINGS, guitarTuning, analyzeFreq, matchString, type TunerInstrument } from '@/lib/tuner-data';
+import { InstrumentIcon } from '@/components/chord/instrument-icon';
 
 type Mode = TunerInstrument | 'chromatic';
 
@@ -64,12 +65,15 @@ export function TunerClient() {
           <button
             key={m}
             onClick={() => { setMode(m); if (m !== 'guitar') setAccordage('standard'); }}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
               mode === m
                 ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
                 : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
             }`}
           >
+            {/* « Chromatique » n'est pas un instrument : il n'a pas de dessin, et
+                lui en inventer un dirait quelque chose de faux. */}
+            {m !== 'chromatic' && <InstrumentIcon id={m} className="w-5 h-5" />}
             {modeLabel(m)}
           </button>
         ))}

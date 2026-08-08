@@ -13,6 +13,7 @@ import { useLibraryChords, libraryKey } from '@/lib/library-chords-context';
 import { useAuth } from '@/lib/auth-context';
 import { useInstrumentLabel } from '@/lib/use-genre-labels';
 import { useRouter, Link } from '@/i18n/navigation';
+import { InstrumentIcon } from '@/components/chord/instrument-icon';
 
 // Catégories étendues (correspondent aux catégories de chord-data.ts)
 type CategoryGroup = 'major' | 'minor' | 'dom7' | 'maj7' | 'min7' | 'dim' | 'aug' | 'sus' | 'other';
@@ -421,12 +422,13 @@ function ChordsPageContent() {
           <button
             key={id}
             onClick={() => handleInstrumentChange(id)}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium border transition-colors ${
               instrumentId === id
                 ? 'bg-[var(--nav-bg)] text-white border-[var(--ink)]'
                 : 'bg-[var(--cell-bg)] text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--ink-faint)]'
             }`}
           >
+            <InstrumentIcon id={id} className="w-5 h-5" />
             {instrumentLabel(id)}
           </button>
         ))}

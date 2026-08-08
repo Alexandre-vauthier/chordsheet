@@ -7,6 +7,7 @@ import { INSTRUMENT_CONFIG } from '@/lib/chord-data';
 import { ACCOMPANIMENT_INSTRUMENTS, type PlayStyle } from '@/lib/use-playback';
 import { PATTERN_DEFS } from '@/lib/use-groove-box';
 import { useClickOutside } from '@/lib/use-click-outside';
+import { InstrumentIcon } from '@/components/chord/instrument-icon';
 
 const musicIcon = (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
@@ -113,6 +114,7 @@ export function PlaybackInstrumentsMenu({
                       </svg>
                     )}
                   </span>
+                  <InstrumentIcon id={inst} className="w-5 h-5" />
                   <span className="truncate">{INSTRUMENT_CONFIG[inst]?.label ?? inst}</span>
                 </button>
                 {checked && (

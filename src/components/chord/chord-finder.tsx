@@ -7,6 +7,7 @@ import { playChord, playNote, OPEN_FREQS, noteNameToFreq, preloadInstrument } fr
 import { selectionToPitchClasses, pianoPitchClasses, findMatchingChords, type ChordMatch } from '@/lib/chord-finder';
 import { ChordDiagram } from './chord-diagram';
 import { PianoKeyboard } from './piano-keyboard';
+import { InstrumentIcon } from './instrument-icon';
 
 const INSTRUMENT_CONFIG: Record<Exclude<InstrumentId, 'piano' | 'voice' | 'percussion'>, { strings: number; frets: number }> = {
   guitar:   { strings: 6, frets: 5 },
@@ -203,12 +204,13 @@ export function ChordFinder({ initialInstrument = 'guitar', allChords, onClose, 
                   <button
                     key={id}
                     onClick={() => handleInstrumentChange(id)}
-                    className={`cursor-pointer px-2.5 py-1 text-xs rounded-lg border transition-colors ${
+                    className={`cursor-pointer flex items-center gap-1 px-2.5 py-1 text-xs rounded-lg border transition-colors ${
                       instrumentId === id
                         ? 'bg-[var(--accent)] text-white border-[var(--accent)]'
                         : 'bg-[var(--cell-bg)] text-[var(--ink-light)] border-[var(--line)] hover:border-[var(--accent)]'
                     }`}
                   >
+                    <InstrumentIcon id={id} className="w-4 h-4" />
                     {tInstrument(id)}
                   </button>
                 ))}
