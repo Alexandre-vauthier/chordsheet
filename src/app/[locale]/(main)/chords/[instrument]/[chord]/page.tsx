@@ -42,27 +42,49 @@ interface PageProps {
  * les autres instruments. Rien n'est rédigé accord par accord, donc rien ne peut
  * contredire ce que l'application affiche.
  *
- * Pas de `generateStaticParams` : 443 accords × 2 langues feraient 886 pages
- * pré-rendues à chaque déploiement, pour un trafic qui se concentrera sur quelques
- * dizaines d'entre elles.
+ * **Rendue à la demande, puis mise en cache.** C'était l'intention d'origine, et
+ * elle n'était pas tenue : sans `generateStaticParams`, `next build` classait la
+ * route `ƒ Dynamic — server-rendered on demand`, chaque requête était rendue, rien
+ * n'était gardé, et le `revalidate` déclaré ici n'avait aucun effet — la réponse
+ * portait `cache-control: no-store` et deux requêtes de suite ne rendaient pas le
+ * même HTML.
  *
- * **Mais « rendu à la demande puis mis en cache » était faux**, et c'est ce que la
- * phrase promettait ici. Sans `generateStaticParams`, `next build` classe la route
- * `ƒ Dynamic — server-rendered on demand` : chaque requête est rendue, rien n'est
- * gardé. Mesuré en production — la réponse porte `cache-control: no-store` et deux
- * requêtes de suite ne rendent pas le même HTML. Le `revalidate = 86400` qui
- * accompagnait ce commentaire était donc sans effet, et il a été retiré.
+ * Ce n'était pas une API dynamique : avec `dynamic = 'error'`, la page se rend
+ * statiquement sans broncher. C'était la seule absence de `generateStaticParams`
+ * sur un segment dynamique, qui suffit à faire basculer Next en rendu par requête.
  *
- * Ce n'est pas une API dynamique qui l'impose : avec `dynamic = 'error'`, la page se
- * rend statiquement sans broncher. C'est bien la seule absence de
- * `generateStaticParams`.
- *
- * **Le levier, mesuré.** Ajouter `generateStaticParams() { return [] }` fait passer
- * la route de `ƒ` à `●` : aucune page n'est pré-rendue à la construction, mais les
- * pages demandées sont alors mises en cache et `revalidate` reprend son effet.
- * C'est exactement l'intention d'origine, en une fonction — et c'est par là qu'il
- * faudra passer le jour où le trafic sur ces pages justifiera de les cacher.
+ * D'où la fonction ci-dessous, et son tableau vide. Elle ne pré-rend rien — les
+ * 443 accords × 2 langues feraient 886 pages à chaque déploiement, pour un trafic
+ * concentré sur quelques dizaines — mais elle suffit à faire entrer la route dans
+ * le régime statique : les pages demandées y sont rendues une fois, puis servies
+ * depuis le cache jusqu'à la revalidation. Vérifié à l'en-tête `x-nextjs-cache` :
+ * `MISS` sur la première requête, `HIT` sur la suivante.
  */
+
+/**
+ * Aucune page pré-rendue, mais un cache à l'exécution.
+ *
+ * Le tableau vide n'est pas un oubli : c'est lui qui distingue « je ne connais pas
+ * les chemins d'avance » de « ne cache rien ». Avec `dynamicParams` à sa valeur par
+ * défaut, tout accord demandé est rendu à sa première visite, puis conservé.
+ *
+ * Y mettre la liste des accords les plus visités reste possible plus tard : cela
+ * ne changerait que ce qui est prêt avant la première visite, pas le mécanisme.
+ */
+export function generateStaticParams(): { locale: string; instrument: string; chord: string }[] {
+  return [];
+}
+
+/**
+ * Un jour, et non l'éternité.
+ *
+ * Sans cette ligne, une route statique est gardée jusqu'au prochain déploiement —
+ * mesuré : `Cache-Control: s-maxage=31536000`, un an. Or ces pages sont dérivées de
+ * la bibliothèque d'accords, que l'administration peut corriger à tout moment : un
+ * doigté rectifié ne serait jamais servi. Un jour est le compromis d'origine, et il
+ * a maintenant l'effet qu'il annonce.
+ */
+export const revalidate = 86400;
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale, instrument, chord: slug } = await params;
