@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import { useGroups } from '@/lib/use-groups';
+import { useGroupCards, type FicheGroupe as Fiche } from '@/lib/use-group-cards';
 import { useSets } from '@/lib/use-sets';
 import { useAuth } from '@/lib/auth-context';
 import { isPro } from '@/lib/plan-limits';
@@ -28,11 +29,60 @@ function groupInitials(name: string): string {
   return (words[0][0] + words[1][0]).toUpperCase();
 }
 
-function GroupCard({ group, setsCount }: { group: Group; setsCount: number }) {
+/**
+ * Les visages des membres, empilés.
+ *
+ * « 3 membres » ne dit pas qui. Quelques visages, si.
+ *
+ * Décoratifs : les noms sont déjà portés par le `title` du groupe et par sa page,
+ * et les lire à voix haute avant même le nom du groupe mettrait la charrue devant
+ * les bœufs. D'où `aria-hidden` sur la pile, et le compte qui, lui, reste écrit.
+ */
+function Visages({ membres, total }: { membres: Fiche['membres']; total: number }) {
+  if (membres.length === 0) return null;
+  const restants = total - membres.length;
+
+  return (
+    <div className="flex items-center -space-x-2" aria-hidden="true">
+      {membres.map((m) => (
+        <span
+          key={m.id}
+          title={m.displayName}
+          className="w-7 h-7 rounded-full overflow-hidden ring-2 ring-[var(--cell-bg)] shrink-0
+            flex items-center justify-center text-[10px] font-semibold text-white select-none"
+          style={{ backgroundColor: m.photoURL ? undefined : groupColor(m.id) }}
+        >
+          {m.photoURL ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={m.photoURL} alt="" className="w-full h-full object-cover" />
+          ) : (
+            groupInitials(m.displayName || '?')
+          )}
+        </span>
+      ))}
+      {restants > 0 && (
+        <span className="w-7 h-7 rounded-full ring-2 ring-[var(--cell-bg)] shrink-0 bg-[var(--line)]
+          flex items-center justify-center text-[10px] font-semibold text-[var(--ink-light)] select-none">
+          +{restants}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function GroupCard({ group, setsCount, fiche }: { group: Group; setsCount: number; fiche?: Fiche }) {
   const t = useTranslations('Groups');
   const color = groupColor(group.id || group.name);
   const initials = groupInitials(group.name);
-  const sheetCount = group.linkedSheetIds.length;
+  /*
+   * Le compte vient de la fiche, qui réunit les grilles possédées et les grilles
+   * liées. `linkedSheetIds.length` seul ignorait tout ce que le groupe possède :
+   * un groupe annoncé à 5 grilles en montrait 15 sur sa page.
+   *
+   * Tant que la fiche n'est pas revenue, on montre l'ancien nombre plutôt qu'un
+   * vide : il est incomplet, il n'est pas absurde.
+   */
+  const sheetCount = fiche?.grilles ?? group.linkedSheetIds.length;
 
   return (
     <Link
@@ -62,6 +112,7 @@ function GroupCard({ group, setsCount }: { group: Group; setsCount: number }) {
           <p className="text-sm text-[var(--ink-light)] line-clamp-2">{group.description}</p>
         )}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[var(--ink-faint)] mt-0.5">
+          {fiche && <Visages membres={fiche.membres} total={group.memberIds.length} />}
           <span>{t('membersCount', { count: group.memberIds.length })}</span>
           <span aria-hidden>·</span>
           <span>{t('sheetsCount', { count: sheetCount })}</span>
@@ -147,6 +198,7 @@ export default function GroupsPage() {
   const tSession = useTranslations('LiveSession');
   const { user } = useAuth();
   const { groups, loading } = useGroups();
+  const { fiches } = useGroupCards(groups);
   const { sets } = useSets(user?.id);
   const userIsPro = isPro(user?.subscription);
 
@@ -217,6 +269,7 @@ export default function GroupsPage() {
               key={group.id}
               group={group}
               setsCount={setsCountByGroup[group.id!] || 0}
+              fiche={fiches[group.id!]}
             />
           ))}
         </div>
