@@ -356,97 +356,6 @@ export function LandingClient({ chiffres, enAvant }: {
           </div>
         </section>
 
-        {/* ── Jouer ensemble ──────────────────────────────────────── */}
-        {/*
-          Remonté de la quatrième à la deuxième place, et débadgé.
-          C'est ce qu'aucun concurrent direct ne sait faire : ceux qui synchronisent
-          un groupe sont des applications à installer, et le plus proche de nous en
-          est encore à une liste d'attente. Le présenter en quatrième position
-          derrière un badge « Premium » revenait à cacher notre meilleur argument
-          derrière un péage.
-        */}
-        <section id="ensemble" className="px-6 py-16 sm:py-24 border-t border-white/5">
-          <div className="max-w-5xl mx-auto">
-
-            <div className="text-center mb-14">
-              <p className="text-[var(--accent)] text-xs font-semibold tracking-widest uppercase mb-4">
-                {t('bands.eyebrow')}
-              </p>
-              <h2 className="font-playfair text-4xl font-bold text-[var(--nav-text)] mb-4 leading-tight">
-                {t('bands.title')}<br />{t('bands.titleBreak')}
-              </h2>
-              <p className="text-[var(--nav-text)]/50 text-base max-w-xl mx-auto">
-                {t('bands.subtitle')}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-
-              {/* Le concert synchronisé */}
-              <div className="rounded-2xl border border-white/8 bg-white/4 p-7 flex flex-col gap-5">
-                <div className="w-11 h-11 rounded-xl bg-[var(--accent)]/15 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-[var(--nav-text)] font-bold text-xl mb-2">{t('bands.concertTitle')}</h3>
-                  <p className="text-[var(--nav-text)]/55 text-sm leading-relaxed">{t('bands.concertText')}</p>
-                </div>
-                <ul className="space-y-2.5">
-                  {[t('bands.concertItem1'), t('bands.concertItem2'), t('bands.concertItem3')].map(item => (
-                    <li key={item} className="flex items-start gap-2.5 text-sm text-[var(--nav-text)]/55">
-                      <svg className="w-4 h-4 text-[var(--accent)]/70 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
-                      </svg>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* La session ouverte */}
-              <div className="rounded-2xl border border-white/8 bg-white/4 p-7 flex flex-col gap-5">
-                <div className="w-11 h-11 rounded-xl bg-[var(--accent)]/15 flex items-center justify-center">
-                  <svg className="w-5 h-5 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 4h4v4H3zM17 4h4v4h-4zM3 16h4v4H3zM13 13h3v3h-3zM19 19h2v2h-2zM13 19h3v2h-3zM19 13h2v3h-2z"/>
-                  </svg>
-                </div>
-                <div>
-                  <h3 className="text-[var(--nav-text)] font-bold text-xl mb-2">{t('bands.sessionTitle')}</h3>
-                  <p className="text-[var(--nav-text)]/55 text-sm leading-relaxed">{t('bands.sessionText')}</p>
-                </div>
-                <ul className="space-y-2.5">
-                  {[t('bands.sessionItem1'), t('bands.sessionItem2'), t('bands.sessionItem3')].map(item => (
-                    <li key={item} className="flex items-start gap-2.5 text-sm text-[var(--nav-text)]/55">
-                      <svg className="w-4 h-4 text-[var(--accent)]/70 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
-                      </svg>
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-            </div>
-
-            {/* La vérité du tarif, dite une fois, sans badge : rejoindre ne coûte rien. */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-5 rounded-2xl border border-white/10 bg-white/4 px-7 py-5">
-              <div>
-                <p className="text-[var(--nav-text)]/85 font-semibold text-sm">{t('bands.pricingText')}</p>
-                <p className="text-[var(--nav-text)]/40 text-xs mt-0.5">{t('bands.pricingSubtext')}</p>
-              </div>
-              <Link
-                href={user ? '/groups' : '/register'}
-                className={`shrink-0 px-6 py-2.5 bg-[var(--accent)] text-white rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity whitespace-nowrap ${ctaFade(authLoading)}`}
-              >
-                {user ? t('bands.ctaLoggedIn') : t('bands.cta')}
-              </Link>
-            </div>
-
-          </div>
-        </section>
-
         {/* ── Le Book ─────────────────────────────────────────────── */}
         <section id="book" className="px-6 py-16 sm:py-24 border-t border-white/5">
           <div className="max-w-5xl mx-auto">
@@ -549,6 +458,101 @@ export function LandingClient({ chiffres, enAvant }: {
                 ),
               })}
             </p>
+          </div>
+        </section>
+
+        {/* ── Jouer ensemble ──────────────────────────────────────── */}
+        {/*
+          Débadgé, et posé après le book et le bac à sable.
+          C'est ce qu'aucun concurrent direct ne sait faire : ceux qui synchronisent
+          un groupe sont des applications à installer, et le plus proche de nous en
+          est encore à une liste d'attente. Le badge « Premium » qu'il portait
+          cachait ce meilleur argument derrière un péage — il est retiré.
+
+          Mais il vient après, et non avant : on arrive ici seul, par une recherche
+          d'accord, et on n'a pas de groupe à qui penser tant qu'on n'a pas compris
+          ce qu'est une grille. Le collectif se propose à quelqu'un qui a déjà vu
+          l'outil, pas à quelqu'un qui découvre.
+        */}
+        <section id="ensemble" className="px-6 py-16 sm:py-24 border-t border-white/5">
+          <div className="max-w-5xl mx-auto">
+
+            <div className="text-center mb-14">
+              <p className="text-[var(--accent)] text-xs font-semibold tracking-widest uppercase mb-4">
+                {t('bands.eyebrow')}
+              </p>
+              <h2 className="font-playfair text-4xl font-bold text-[var(--nav-text)] mb-4 leading-tight">
+                {t('bands.title')}<br />{t('bands.titleBreak')}
+              </h2>
+              <p className="text-[var(--nav-text)]/50 text-base max-w-xl mx-auto">
+                {t('bands.subtitle')}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+
+              {/* Le concert synchronisé */}
+              <div className="rounded-2xl border border-white/8 bg-white/4 p-7 flex flex-col gap-5">
+                <div className="w-11 h-11 rounded-xl bg-[var(--accent)]/15 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-[var(--nav-text)] font-bold text-xl mb-2">{t('bands.concertTitle')}</h3>
+                  <p className="text-[var(--nav-text)]/55 text-sm leading-relaxed">{t('bands.concertText')}</p>
+                </div>
+                <ul className="space-y-2.5">
+                  {[t('bands.concertItem1'), t('bands.concertItem2'), t('bands.concertItem3')].map(item => (
+                    <li key={item} className="flex items-start gap-2.5 text-sm text-[var(--nav-text)]/55">
+                      <svg className="w-4 h-4 text-[var(--accent)]/70 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
+                      </svg>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* La session ouverte */}
+              <div className="rounded-2xl border border-white/8 bg-white/4 p-7 flex flex-col gap-5">
+                <div className="w-11 h-11 rounded-xl bg-[var(--accent)]/15 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-[var(--accent)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 4h4v4H3zM17 4h4v4h-4zM3 16h4v4H3zM13 13h3v3h-3zM19 19h2v2h-2zM13 19h3v2h-3zM19 13h2v3h-2z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-[var(--nav-text)] font-bold text-xl mb-2">{t('bands.sessionTitle')}</h3>
+                  <p className="text-[var(--nav-text)]/55 text-sm leading-relaxed">{t('bands.sessionText')}</p>
+                </div>
+                <ul className="space-y-2.5">
+                  {[t('bands.sessionItem1'), t('bands.sessionItem2'), t('bands.sessionItem3')].map(item => (
+                    <li key={item} className="flex items-start gap-2.5 text-sm text-[var(--nav-text)]/55">
+                      <svg className="w-4 h-4 text-[var(--accent)]/70 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7"/>
+                      </svg>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+            </div>
+
+            {/* La vérité du tarif, dite une fois, sans badge : rejoindre ne coûte rien. */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-5 rounded-2xl border border-white/10 bg-white/4 px-7 py-5">
+              <div>
+                <p className="text-[var(--nav-text)]/85 font-semibold text-sm">{t('bands.pricingText')}</p>
+                <p className="text-[var(--nav-text)]/40 text-xs mt-0.5">{t('bands.pricingSubtext')}</p>
+              </div>
+              <Link
+                href={user ? '/groups' : '/register'}
+                className={`shrink-0 px-6 py-2.5 bg-[var(--accent)] text-white rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity whitespace-nowrap ${ctaFade(authLoading)}`}
+              >
+                {user ? t('bands.ctaLoggedIn') : t('bands.cta')}
+              </Link>
+            </div>
+
           </div>
         </section>
 

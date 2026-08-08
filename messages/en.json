@@ -84,8 +84,8 @@
   },
   "Landing": {
     "hero": {
-      "title": "Your book of charts, and the band to go with it.",
-      "subtitle": "Write your chord charts, keep them in one place, and play them together — everyone on their own phone, all on the same bar.",
+      "title": "Chords where they actually land.",
+      "subtitle": "A chart in bars, with the fingering right in each cell — for seven instruments, mandolin and banjo included. Click a cell and you hear it.",
       "cta": "Start my book, free",
       "ctaNote": "Free, no card required.",
       "bookLoggedIn": "Open my book",
