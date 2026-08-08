@@ -1501,7 +1501,7 @@
       },
       "chord": {
         "title": "{chord} chord {instrumentAt}: diagram, notes and shape",
-        "description": "How to play the {chord} chord {instrumentAt}: diagram, notes ({notes}) and the shape in detail. Plus the chord charts on the site that use it.",
+        "description": "How to play the {chord} chord {instrumentAt}: diagram, notes ({notes}) and the shape in detail, string by string.",
         "neighboursHeading": "Which chords go with {chord}",
         "neighboursLead": "Across the sheets in the catalogue, {chord} most often appears alongside these chords. Learn them together and you can play a whole song."
       },

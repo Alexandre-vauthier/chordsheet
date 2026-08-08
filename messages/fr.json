@@ -1500,8 +1500,8 @@
         "description": "Les {count} accords {instrumentOf} d'Alviena. Pour chacun : le diagramme, les notes, le détail de la position et les grilles qui l'utilisent."
       },
       "chord": {
-        "title": "Accord {chord} {instrumentLower} : diagramme, notes et position",
-        "description": "Comment jouer l'accord {chord} {instrumentAt} : diagramme, notes ({notes}) et détail de la position. Et les grilles d'accords du site qui l'utilisent.",
+        "title": "Accord {chord} ({frenchChord}) {instrumentAt} : comment le jouer",
+        "description": "Comment jouer l'accord {chord} {instrumentAt} : diagramme, doigté et notes ({notes}). En notation française, {chord} s'écrit {frenchChord} et se lit {frenchNotes}.",
         "neighboursHeading": "Avec quels accords {chord} se joue",
         "neighboursLead": "Dans les grilles du catalogue, {chord} revient le plus souvent aux côtés de ces accords. Les apprendre ensemble, c’est pouvoir jouer un morceau entier."
       },

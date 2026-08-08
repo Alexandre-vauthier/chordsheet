@@ -99,8 +99,29 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const path = `/chords/${instrument}/${slug}`;
   const notes = notesOf(name, instrument);
 
-  const title = t('title', { ...forms, chord: name });
-  const description = t('description', { ...forms, chord: name, notes: notes.join(', ') });
+  /*
+   * Le nom français dans le titre et la correspondance dans la description.
+   *
+   * Mesuré sur une semaine de Search Console : les requêtes françaises se classent
+   * en position 34 quand les anglaises sont à 51 — la concurrence francophone est
+   * bien plus faible. Et sur ces requêtes-là, plusieurs pages sont déjà en première
+   * page après une semaine : « fm accord » en 4, « db7 guitare » en 9, « bm accord
+   * guitare » en 10. Pourtant **zéro clic sur 283 impressions** : ce n'est pas le
+   * classement qui manquait, c'est une raison de cliquer.
+   *
+   * « dm correspondance accord francais » — treize impressions, position 8, aucun
+   * clic — dit exactement ce qui manquait : la correspondance entre les deux
+   * notations, que le site possède et qu'il n'annonçait nulle part.
+   */
+  const frenchChord = translateChordName(name, 'french');
+  const title = t('title', { ...forms, chord: name, frenchChord });
+  const description = t('description', {
+    ...forms,
+    chord: name,
+    notes: notes.join(', '),
+    frenchChord,
+    frenchNotes: notes.map((n) => translateChordName(n, 'french')).join(', '),
+  });
 
   return {
     title,
