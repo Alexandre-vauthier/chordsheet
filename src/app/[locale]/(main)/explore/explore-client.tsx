@@ -20,11 +20,11 @@ import { GENRES, DIFFICULTY_OPTIONS, type Difficulty } from '@/types';
 import type { Sheet } from '@/types';
 import { useRouter } from '@/i18n/navigation';
 import { sheetPath } from '@/lib/sheet-url';
+import { PREMIER_LOT, prochainSeuil } from '@/lib/liste-progressive';
 
 type SortOption = 'recent' | 'rated' | 'viewed';
 
 /** Taille d'un lot de cartes du catalogue. */
-const LOT = 48;
 
 // Préférences de visibilité admin, conservées entre les visites de la page
 const ADMIN_SHOW_PUBLIC_KEY = 'explore_admin_show_public';
@@ -410,11 +410,11 @@ export function ExploreClient({
    * dernières ne sont atteintes qu'après six défilements. Le reste est déjà en
    * mémoire — dévoiler un lot ne demande rien au serveur.
    */
-  const [montrees, setMontrees] = useState(LOT);
+  const [montrees, setMontrees] = useState(PREMIER_LOT);
 
   // Un nouveau résultat repart du premier lot : garder le compte d'avant ferait
   // afficher cent cartes pour une recherche qui n'en rend que trois.
-  useEffect(() => { setMontrees(LOT); }, [groupedResults]);
+  useEffect(() => { setMontrees(PREMIER_LOT); }, [groupedResults]);
 
   // Réinitialiser les filtres
   const clearFilters = () => {
@@ -708,7 +708,7 @@ export function ExploreClient({
             <div className="mt-8 flex justify-center">
               <button
                 type="button"
-                onClick={() => setMontrees((n) => n + LOT)}
+                onClick={() => setMontrees(prochainSeuil)}
                 className="cursor-pointer px-5 py-2.5 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)]
                   text-sm text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
               >

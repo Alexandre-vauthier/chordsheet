@@ -8,6 +8,7 @@ import { useChordNotation } from '@/lib/use-chord-notation';
 import { SheetCard } from '@/components/explore/sheet-card';
 import { ArtworkWall, type CouvertureMini } from '@/components/explore/artwork-wall';
 import type { Sheet } from '@/types';
+import { PREMIER_LOT, prochainSeuil } from '@/lib/liste-progressive';
 
 /**
  * « Que puis-je jouer avec mes accords ? »
@@ -41,7 +42,7 @@ export function WhatCanIPlayClient({
   const t = useTranslations('WhatCanIPlay');
   const traduire = useChordNotation();
   const [connus, setConnus] = useState<string[]>(accordsInitiaux);
-  const [montrees, setMontrees] = useState(24);
+  const [montrees, setMontrees] = useState(PREMIER_LOT);
 
   const { jouables, suivant } = useMemo(() => ({
     jouables: jouablesAvec(grilles, connus),
@@ -49,7 +50,7 @@ export function WhatCanIPlayClient({
   }), [grilles, connus]);
 
   const basculer = (accord: string) => {
-    setMontrees(24);
+    setMontrees(PREMIER_LOT);
     setConnus((actuels) =>
       actuels.includes(accord) ? actuels.filter((a) => a !== accord) : [...actuels, accord],
     );
@@ -121,7 +122,7 @@ export function WhatCanIPlayClient({
             <div className="mt-8 flex justify-center">
               <button
                 type="button"
-                onClick={() => setMontrees((n) => n + 24)}
+                onClick={() => setMontrees(prochainSeuil)}
                 className="cursor-pointer px-5 py-2.5 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)]
                   text-sm text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
               >

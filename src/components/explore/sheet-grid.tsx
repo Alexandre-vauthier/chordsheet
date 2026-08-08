@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { SheetCard } from '@/components/explore/sheet-card';
 import type { Sheet } from '@/types';
+import { PREMIER_LOT, prochainSeuil } from '@/lib/liste-progressive';
 
 /**
  * Une liste de grilles, dévoilée par lots.
@@ -13,15 +14,18 @@ import type { Sheet } from '@/types';
  * filtrer : la réponse est déjà calculée par le serveur, il ne reste qu'à la
  * montrer.
  *
- * Par lots parce qu'une page qui rend cent trente vignettes d'un coup paie six
- * écrans de défilement que personne n'atteint. Les données sont déjà en mémoire :
- * dévoiler un lot ne demande rien au serveur.
+ * Par lots, mais des lots larges : ce composant montrait vingt-quatre vignettes
+ * quand le catalogue d'Explorer en montrait quarante-huit, si bien que le bouton
+ * « Voir les N grilles suivantes » revenait d'autant plus souvent qu'on était sur
+ * la page la moins fournie. Le seuil est désormais commun aux trois listes, et il
+ * se multiplie au lieu de s'incrémenter — voir `liste-progressive`.
+ *
+ * Les données sont déjà en mémoire : dévoiler un lot ne demande rien au serveur.
  */
-const LOT = 24;
 
 export function SheetGrid({ sheets }: { sheets: Sheet[] }) {
   const t = useTranslations('Explore');
-  const [montrees, setMontrees] = useState(LOT);
+  const [montrees, setMontrees] = useState(PREMIER_LOT);
 
   if (sheets.length === 0) return null;
 
@@ -36,7 +40,7 @@ export function SheetGrid({ sheets }: { sheets: Sheet[] }) {
         <div className="mt-8 flex justify-center">
           <button
             type="button"
-            onClick={() => setMontrees((n) => n + LOT)}
+            onClick={() => setMontrees(prochainSeuil)}
             className="cursor-pointer px-5 py-2.5 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)]
               text-sm text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
           >
