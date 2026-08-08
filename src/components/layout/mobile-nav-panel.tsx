@@ -117,6 +117,16 @@ export function MobileNavPanel({ onClose }: { onClose: () => void }) {
         ) : (
           <>
             <div className="border-t border-white/10 my-2" />
+            {/* Le pendant du bouton de la barre : sur petit écran il n'y a pas de
+                bloc droit, tout se joue ici. Contour d'accent, l'aplat restant à
+                l'inscription juste dessous. */}
+            <Link
+              href={`/register?next=${encodeURIComponent('/sheet/new')}`}
+              onClick={onClose}
+              className="block px-3 py-2 rounded-lg text-sm text-center font-medium border border-[var(--accent)]/70 text-[var(--accent)] hover:bg-[var(--accent)]/10 transition-colors"
+            >
+              {t('newSheetFull')}
+            </Link>
             <Link
               href="/login"
               onClick={onClose}

@@ -43,8 +43,16 @@ export interface NavEntry {
   labelKey: string;
   icon?: NavIconName;
   visibility: NavVisibility;
-  /** Sans compte, l'entrée passe par la connexion au lieu de disparaître. */
-  authWall?: boolean;
+  /**
+   * Sans compte, l'entrée passe par cette porte au lieu de disparaître.
+   *
+   * La porte est nommée parce que les deux ne disent pas la même chose. `login`
+   * convient à qui revient chercher quelque chose qu'il a déjà ; `register` à une
+   * entrée qui **annonce** une fonctionnalité à quelqu'un qui n'a rien encore.
+   * Envoyer ce dernier vers un formulaire de connexion lui demanderait de se
+   * souvenir d'un compte qu'il n'a jamais créé.
+   */
+  authWall?: 'login' | 'register';
 }
 
 export interface NavSection {
@@ -91,7 +99,7 @@ export function resolveHref(entry: NavEntry, ctx: NavContext): string {
   // compléter ici évite de faire dépendre toute la structure d'un identifiant.
   if (entry.id === 'publicProfile') return ctx.userId ? `/user/${ctx.userId}` : '/user';
   if (entry.authWall && !ctx.signedIn) {
-    return `/login?next=${encodeURIComponent(entry.href)}`;
+    return `/${entry.authWall}?next=${encodeURIComponent(entry.href)}`;
   }
   return entry.href;
 }
@@ -114,23 +122,33 @@ export function isActive(entry: NavEntry, pathname: string): boolean {
  * qu'on fait autre chose ; leur donner le même rang que « Mon book » revenait à
  * dire qu'on vient sur le site pour accorder sa guitare.
  *
- * Sans compte, on ne montre que ce qui s'ouvre vraiment. La barre affichait « Mon
- * book » et « Groupes », qui menaient à un formulaire de connexion : une entrée
- * qui ne tient pas sa promesse coûte plus qu'une entrée absente.
+ * **Sans compte, la barre dit ce qu'est le produit.** Elle a longtemps fait le
+ * contraire : « Mon book » et « Groupes » en étaient retirés au motif qu'ils ne
+ * s'ouvraient pas vraiment, et « Tarifs » y figurait. Un visiteur lisait donc
+ * *Explorer · Outils · Tarifs*, c'est-à-dire un catalogue à consulter et une
+ * facture au bout — alors que l'essentiel est gratuit, et qu'on vient ici pour
+ * **écrire** ses grilles et les garder.
+ *
+ * D'où les deux corrections. « Tarifs » sort : le pied de page le porte, et la
+ * proposition payante se présente là où elle a un sens, quand on bute sur ce
+ * qu'elle débloque. « Mon book » revient, cette fois vers l'inscription et non
+ * vers une connexion : il n'ouvre rien à l'instant, mais il **annonce** que le
+ * produit a un book, ce que son absence taisait. Une entrée qui ne tient pas sa
+ * promesse coûte cher, c'est vrai — mais une entrée absente ne promet rien, et
+ * c'est plus cher encore quand la promesse est la raison de s'inscrire.
+ *
+ * « Groupes » ne revient pas : c'est une fonctionnalité de groupe constitué, pas
+ * un argument d'entrée.
  */
 export function buildPrimaryNav(ctx: NavContext): (NavEntry | NavGroup)[] {
   const entrees: NavEntry[] = [
-    { id: 'book', href: '/dashboard', labelKey: 'book', icon: 'book', visibility: 'signedIn' },
+    { id: 'book', href: '/dashboard', labelKey: 'book', icon: 'book', visibility: 'always', authWall: 'register' },
     { id: 'explore', href: '/explore', labelKey: 'explore', icon: 'explore', visibility: 'always' },
     { id: 'groups', href: '/groups', labelKey: 'bands', icon: 'bands', visibility: 'signedIn' },
   ];
 
   const sortie: (NavEntry | NavGroup)[] = entrees.filter((e) => visible(e.visibility, ctx));
   sortie.push(buildToolsGroup(ctx));
-
-  if (!ctx.signedIn) {
-    sortie.push({ id: 'pricing', href: '/pricing', labelKey: 'pricing', visibility: 'signedOut' });
-  }
   return sortie;
 }
 

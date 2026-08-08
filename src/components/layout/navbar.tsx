@@ -141,6 +141,31 @@ export function Navbar() {
             ) : !loading ? (
               <>
                 <LanguageSwitcher />
+                {/* Ce que le produit sait faire, avant ce qu'il demande.
+                    Sans ce bouton, la barre d'un visiteur n'offrait aucune action :
+                    on pouvait explorer le catalogue et payer, pas écrire une
+                    grille — l'inverse de ce pour quoi le site existe.
+                    Le libellé est écrit en entier, là où un compte connu lit
+                    « + Grille » : ce raccourci ne s'entend que de quelqu'un qui l'a
+                    déjà fait. Contour d'accent et non aplat, pour que l'orange
+                    plein reste au seul bouton d'inscription. */}
+                {/* Pas de `Button` ici, comme pour son jumeau d'un compte connu :
+                    la variante `ghost` pose `border-[var(--line)]`, et une classe
+                    de bordure passée en `className` ne la remplace pas — même
+                    spécificité, c'est l'ordre de la feuille générée qui tranche.
+                    Le bouton sortait donc identique à « Connexion ». */}
+                {/* À partir de 1024 px seulement : en dessous, la barre porte déjà
+                    trois entrées à gauche et trois éléments à droite, et ce bouton
+                    venait chevaucher « Outils » de neuf pixels. Le même seuil que
+                    celui où le bouton d'un compte connu renonce à son libellé. */}
+                <Link
+                  href={`/register?next=${encodeURIComponent('/sheet/new')}`}
+                  className="hidden lg:inline-flex items-center rounded-lg px-3 py-1.5 text-sm font-medium
+                    border border-[var(--accent)] text-[var(--accent)]
+                    hover:bg-[var(--accent)] hover:text-white transition-colors whitespace-nowrap"
+                >
+                  {t('newSheetFull')}
+                </Link>
                 <Link href="/login">
                   <Button variant="ghost" size="sm" className="border-white/25 text-[var(--nav-text)]">
                     {t('login')}

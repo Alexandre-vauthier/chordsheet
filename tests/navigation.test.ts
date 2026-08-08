@@ -71,13 +71,41 @@ test('les identifiants sont uniques', () => {
   assert.equal(new Set(ids).size, ids.length, `doublon parmi : ${ids.join(', ')}`);
 });
 
-test('un visiteur ne voit rien qui exige un compte', () => {
-  const hrefs = collectHrefs(buildPrimaryNav(CONTEXTES.visiteur));
-  for (const prive of ['/dashboard', '/groups', '/sets', '/profile', '/session']) {
-    assert.ok(!hrefs.includes(prive), `${prive} ne devrait pas être proposé à un visiteur`);
+/**
+ * La règle a changé, et c'est un renversement assumé.
+ *
+ * Elle disait : un visiteur ne voit rien qui exige un compte. « Mon book » était
+ * donc retiré de sa barre, qui affichait *Explorer · Outils · Tarifs* — un
+ * catalogue et une facture, alors que l'essentiel du produit est gratuit et qu'on
+ * vient ici pour écrire ses grilles.
+ *
+ * Elle dit maintenant : un visiteur peut voir une entrée qui exige un compte, à
+ * condition qu'elle **mène à l'inscription** et non à une page fermée. Ce qui
+ * compte n'est plus la présence de l'entrée, c'est l'adresse où elle dépose.
+ */
+const PRIVES = ['/dashboard', '/groups', '/sets', '/profile', '/session'];
+
+test('un visiteur n’est jamais déposé sur une page qui exige un compte', () => {
+  for (const entree of toutesLesEntrees(CONTEXTES.visiteur)) {
+    const cible = resolveHref(entree, CONTEXTES.visiteur);
+    assert.ok(!PRIVES.includes(cible), `${entree.id} dépose le visiteur sur ${cible}`);
   }
   // Et son menu « moi » est vide : il n'a pas de compte.
   assert.deepEqual(buildAccountNav(CONTEXTES.visiteur), []);
+});
+
+/**
+ * « Mon book » n'ouvre rien à l'instant où on le voit sans compte : il annonce que
+ * le produit en a un. C'est pour cela qu'il mène à l'inscription et non à la
+ * connexion — demander à quelqu'un qui n'a jamais rien créé de se souvenir d'un
+ * mot de passe est une porte fermée déguisée en porte.
+ */
+test('sans compte, « Mon book » invite à s’inscrire', () => {
+  const book = buildPrimaryNav(CONTEXTES.visiteur)
+    .find((n): n is NavEntry => 'href' in n && n.id === 'book');
+  assert.ok(book, 'l’entrée doit être visible d’un visiteur');
+  assert.equal(resolveHref(book, CONTEXTES.visiteur), '/register?next=%2Fdashboard');
+  assert.equal(resolveHref(book, CONTEXTES.gratuit), '/dashboard');
 });
 
 test('la boîte à rythme ne sort jamais hors administration', () => {
@@ -93,14 +121,29 @@ test('la boîte à rythme ne sort jamais hors administration', () => {
 test("l'offre payante n'est proposée qu'à qui n'y est pas", () => {
   assert.ok(collectHrefs(buildAccountNav(CONTEXTES.gratuit)).includes('/pricing'));
   assert.ok(!collectHrefs(buildAccountNav(CONTEXTES.pro)).includes('/pricing'));
-  // Un visiteur la voit dans la barre, pas dans un menu de compte qu'il n'a pas.
-  assert.ok(collectHrefs(buildPrimaryNav(CONTEXTES.visiteur)).includes('/pricing'));
+});
+
+/**
+ * Elle y était, en troisième position, et c'est ce qu'un visiteur lisait en
+ * dernier : « Tarifs » annonçait un service payant à quelqu'un qui n'avait encore
+ * rien essayé, alors que l'essentiel du produit est gratuit. Le pied de page la
+ * porte toujours, et les pages qui butent sur une limite y renvoient au moment où
+ * la question se pose vraiment.
+ */
+test('la barre d’un visiteur ne parle pas d’argent', () => {
+  assert.ok(!collectHrefs(buildPrimaryNav(CONTEXTES.visiteur)).includes('/pricing'));
 });
 
 test('une entrée à mur d’authentification retient sa destination', () => {
-  const entree: NavEntry = { id: 'x', href: '/dashboard', labelKey: 'book', visibility: 'signedIn', authWall: true };
-  assert.equal(resolveHref(entree, CONTEXTES.visiteur), '/login?next=%2Fdashboard');
-  assert.equal(resolveHref(entree, CONTEXTES.gratuit), '/dashboard');
+  const base = { id: 'x', href: '/dashboard', labelKey: 'book' } as const;
+  const versConnexion: NavEntry = { ...base, visibility: 'signedIn', authWall: 'login' };
+  const versInscription: NavEntry = { ...base, visibility: 'signedIn', authWall: 'register' };
+
+  // La porte est nommée, et les deux ne s'adressent pas à la même personne : on
+  // revient se connecter, on ne « revient » pas s'inscrire.
+  assert.equal(resolveHref(versConnexion, CONTEXTES.visiteur), '/login?next=%2Fdashboard');
+  assert.equal(resolveHref(versInscription, CONTEXTES.visiteur), '/register?next=%2Fdashboard');
+  assert.equal(resolveHref(versConnexion, CONTEXTES.gratuit), '/dashboard');
 });
 
 test('l’entrée active se reconnaît, requête comprise', () => {
