@@ -29,6 +29,7 @@ import { isPianoChord } from '@/types';
 import type { InstrumentId, StringChord } from '@/types';
 import { getInstrumentNames } from '@/lib/instrument-names';
 import { sheetPath } from '@/lib/sheet-url';
+import { accordsVoisins } from '@/lib/chord-neighbours';
 
 interface PageProps {
   params: Promise<{ locale: string; instrument: string; chord: string }>;
@@ -109,6 +110,19 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
+/**
+ * Le nom lisible d'un accord stocké en minuscules.
+ *
+ * `bb` s'écrit `Bb`, `f#m` s'écrit `F#m` : seule la fondamentale prend la majuscule,
+ * le reste est déjà dans la bonne casse.
+ */
+function nomAffiche(accord: string): string {
+  return accord.charAt(0).toUpperCase() + accord.slice(1);
+}
+
+/** Combien de grilles la page liste, sur l'échantillon qu'elle lit. */
+const GRILLES_AFFICHEES = 12;
+
 export default async function ChordPage({ params }: PageProps) {
   const { locale, instrument, chord: slug } = await params;
   if (!isChordPageInstrument(instrument)) notFound();
@@ -128,7 +142,15 @@ export default async function ChordPage({ params }: PageProps) {
       forms: await getInstrumentNames(locale, other.instrumentId),
     })),
   );
-  const sheets = await getSheetsWithChord(normalizeChord(name));
+  /*
+   * Un seul échantillon, deux usages : les quelques grilles qu'on affiche, et le
+   * voisinage calculé sur l'ensemble. Le plafond de cent est ce qui rend la page
+   * tenable quand le catalogue grossit — la lecture est bornée par une constante,
+   * jamais par la taille du catalogue.
+   */
+  const echantillon = await getSheetsWithChord(normalizeChord(name));
+  const sheets = echantillon.slice(0, GRILLES_AFFICHEES);
+  const voisins = accordsVoisins(echantillon, normalizeChord(name));
 
   // Nom français : « Am » se dit « Lam », et ses notes « La, Do, Mi ». C'est du
   // contenu que les sites anglophones n'ont pas, sur des requêtes réellement tapées.
@@ -192,6 +214,41 @@ export default async function ChordPage({ params }: PageProps) {
                   {sheet.title}
                 </Link>
                 {sheet.artist && <span className="text-sm text-[var(--ink-faint)]"> — {sheet.artist}</span>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/*
+        Avec quoi cet accord se joue vraiment.
+        La seule matière qui distingue une page d'accord d'une autre sans que
+        personne l'écrive : elle se déduit des grilles, se met à jour toute seule,
+        et aucun site d'accords ne l'a — il faut un catalogue derrière.
+
+        Un ordre, pas des chiffres : le calcul travaille sur un échantillon borné,
+        et annoncer « quarante-neuf fois » deviendrait faux le jour où le plafond
+        mord. L'ordre, lui, reste juste.
+      */}
+      {voisins.length > 0 && (
+        <section className="mb-10">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-[var(--ink-light)] mb-3">
+            {t('neighboursHeading', { ...forms, chord: name })}
+          </h2>
+          <p className="text-sm text-[var(--ink-light)] leading-relaxed mb-3">
+            {t('neighboursLead', { ...forms, chord: name })}
+          </p>
+          <ul className="flex flex-wrap gap-2">
+            {voisins.map((voisin) => (
+              <li key={voisin}>
+                <Link
+                  href={`/chords/${instrument}/${chordSlug(voisin)}`}
+                  className="inline-block px-3 py-1.5 rounded-lg text-sm font-mono border
+                    border-[var(--line)] bg-[var(--cell-bg)] text-[var(--ink)]
+                    hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+                >
+                  {nomAffiche(voisin)}
+                </Link>
               </li>
             ))}
           </ul>

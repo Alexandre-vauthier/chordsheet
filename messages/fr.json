@@ -1501,7 +1501,9 @@
       },
       "chord": {
         "title": "Accord {chord} {instrumentLower} : diagramme, notes et position",
-        "description": "Comment jouer l'accord {chord} {instrumentAt} : diagramme, notes ({notes}) et détail de la position. Et les grilles d'accords du site qui l'utilisent."
+        "description": "Comment jouer l'accord {chord} {instrumentAt} : diagramme, notes ({notes}) et détail de la position. Et les grilles d'accords du site qui l'utilisent.",
+        "neighboursHeading": "Avec quels accords {chord} se joue",
+        "neighboursLead": "Dans les grilles du catalogue, {chord} revient le plus souvent aux côtés de ces accords. Les apprendre ensemble, c’est pouvoir jouer un morceau entier."
       },
       "sheet": {
         "title": "{title} — {artist}",

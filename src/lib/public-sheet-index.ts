@@ -179,7 +179,21 @@ export const getArtistSheetRefs = cache(async (artist: string): Promise<PublicSh
  * parcourir toutes les grilles et fouiller leurs sections à chaque page d'accord.
  * L'accord attendu est sous sa forme canonique, celle que produit `normalizeChord`.
  */
-export const getSheetsWithChord = cache(async (chord: string, max = 12): Promise<PublicSheetRef[]> => {
+/**
+ * Combien de grilles au plus une page d'accord lit.
+ *
+ * C'est ce plafond qui rend le voisinage d'accords tenable quand le catalogue
+ * grossit : la lecture est **bornée par une constante**, jamais par la taille du
+ * catalogue. Cent trente grilles ou dix mille, une page d'accord lit au plus cent
+ * documents, et une fois par jour puisqu'elle est mise en cache.
+ *
+ * Cent, et pas douze comme avant : les cinq voisins les plus fréquents se dégagent
+ * mal sur un échantillon de douze. Et pas mille : au-delà de la centaine, l'ordre
+ * ne bouge plus et on ne paierait que des lectures.
+ */
+export const MAX_GRILLES_PAR_ACCORD = 100;
+
+export const getSheetsWithChord = cache(async (chord: string, max = MAX_GRILLES_PAR_ACCORD): Promise<PublicSheetRef[]> => {
   if (!chord) return [];
 
   try {
@@ -187,7 +201,9 @@ export const getSheetsWithChord = cache(async (chord: string, max = 12): Promise
       .collection('sheets')
       .where('isPublic', '==', true)
       .where('chords', 'array-contains', chord)
-      .select('title', 'artist', 'updatedAt', 'ownerId')
+      // `chords` en plus : c'est lui qui porte le voisinage. Le demander dans la
+      // même requête évite d'en faire une seconde pour les mêmes documents.
+      .select('title', 'artist', 'updatedAt', 'ownerId', 'chords')
       .limit(max)
       .get();
 
@@ -208,6 +224,7 @@ export const getSheetsWithChord = cache(async (chord: string, max = 12): Promise
           artist: typeof data.artist === 'string' ? data.artist : '',
           updatedAt: updatedAt?.toDate ? updatedAt.toDate() : null,
           ownerId: typeof data.ownerId === 'string' ? data.ownerId : '',
+          chords: Array.isArray(data.chords) ? (data.chords as string[]) : [],
         };
       });
   } catch {
