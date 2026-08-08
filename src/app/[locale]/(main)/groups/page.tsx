@@ -30,9 +30,14 @@ function groupInitials(name: string): string {
 }
 
 /**
- * Les visages des membres, empilés.
+ * Les visages des membres, côte à côte.
  *
  * « 3 membres » ne dit pas qui. Quelques visages, si.
+ *
+ * Alignés et non empilés : le chevauchement est une convention d'économie de
+ * place, et il coupe chaque visage. Ici la ligne en accueille quatre sans se
+ * serrer, autant les montrer entiers. Le liseré qui séparait les pastilles
+ * superposées disparaît avec, il n'a plus rien à séparer.
  *
  * Décoratifs : les noms sont déjà portés par le `title` du groupe et par sa page,
  * et les lire à voix haute avant même le nom du groupe mettrait la charrue devant
@@ -43,12 +48,12 @@ function Visages({ membres, total }: { membres: Fiche['membres']; total: number 
   const restants = total - membres.length;
 
   return (
-    <div className="flex items-center -space-x-2" aria-hidden="true">
+    <div className="flex items-center gap-1" aria-hidden="true">
       {membres.map((m) => (
         <span
           key={m.id}
           title={m.displayName}
-          className="w-7 h-7 rounded-full overflow-hidden ring-2 ring-[var(--cell-bg)] shrink-0
+          className="w-7 h-7 rounded-full overflow-hidden shrink-0
             flex items-center justify-center text-[10px] font-semibold text-white select-none"
           style={{ backgroundColor: m.photoURL ? undefined : groupColor(m.id) }}
         >
@@ -61,7 +66,7 @@ function Visages({ membres, total }: { membres: Fiche['membres']; total: number 
         </span>
       ))}
       {restants > 0 && (
-        <span className="w-7 h-7 rounded-full ring-2 ring-[var(--cell-bg)] shrink-0 bg-[var(--line)]
+        <span className="w-7 h-7 rounded-full shrink-0 bg-[var(--line)]
           flex items-center justify-center text-[10px] font-semibold text-[var(--ink-light)] select-none">
           +{restants}
         </span>
