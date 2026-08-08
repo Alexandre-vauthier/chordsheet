@@ -104,3 +104,43 @@ export function sheetIdFromSegment(segment: string): string {
   const dernier = decode.slice(decode.lastIndexOf('-') + 1);
   return IDENTIFIANT.test(dernier) ? dernier : decode;
 }
+
+/**
+ * Les chemins à invalider quand une grille change.
+ *
+ * Trois formes, dans chaque langue, et chacune pour une raison précise.
+ *
+ * - **L'identifiant nu.** C'est la page qui doit se mettre à rediriger le jour où
+ *   la grille devient lisible par le serveur. Sans l'invalider, une grille passée
+ *   de privée à publique garderait une heure sa page en cache, sans redirection.
+ * - **Le nouveau segment.** Il n'a peut-être jamais été rendu ; l'invalider ne
+ *   coûte rien et garantit qu'il servira le titre à jour.
+ * - **L'ancien segment**, quand le titre ou l'artiste ont changé. C'est lui qui,
+ *   sinon, continuerait à servir un 200 avec l'ancien titre là où il doit
+ *   désormais rediriger vers le nouveau slug. C'est le cas qu'on oublie, et le
+ *   seul qui demande de connaître l'état d'avant.
+ *
+ * Sans doublon : quand rien n'a été renommé, les trois formes se réduisent souvent
+ * à deux.
+ */
+export function sheetRevalidationPaths(
+  locales: readonly string[],
+  sheet: {
+    id?: string;
+    title?: string | null;
+    artist?: string | null;
+    previousTitle?: string | null;
+    previousArtist?: string | null;
+  },
+): string[] {
+  const id = sheet.id;
+  if (!id) return [];
+
+  const segments = new Set([
+    id,
+    sheetSegment(id, sheet.title, sheet.artist),
+    sheetSegment(id, sheet.previousTitle ?? sheet.title, sheet.previousArtist ?? sheet.artist),
+  ]);
+
+  return locales.flatMap((l) => [...segments].map((s) => `/${l}/sheet/${s}`));
+}

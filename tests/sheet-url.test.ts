@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { sheetIdFromSegment, sheetPath, sheetSegment, sheetSlug } from '@/lib/sheet-url';
+import { sheetIdFromSegment, sheetPath, sheetRevalidationPaths, sheetSegment, sheetSlug } from '@/lib/sheet-url';
 
 /**
  * L'adresse d'une grille : un slug lisible, puis son identifiant.
@@ -121,4 +121,35 @@ test('toute adresse produite se relit sur son identifiant', () => {
     const segment = sheetSegment(ID, titre, artiste);
     assert.equal(sheetIdFromSegment(segment), ID, `« ${titre} / ${artiste} » → ${segment}`);
   }
+});
+
+/* ── Ce qu'il faut régénérer quand une grille change ─────────────────────── */
+
+test('les trois formes d’une grille sont invalidées, dans chaque langue', () => {
+  const chemins = sheetRevalidationPaths(['fr', 'en'], {
+    id: ID, title: 'Champagne Supernova', artist: 'Oasis',
+    previousTitle: 'Wonderwall', previousArtist: 'Oasis',
+  });
+  assert.deepEqual(chemins, [
+    `/fr/sheet/${ID}`,
+    `/fr/sheet/champagne-supernova-oasis-${ID}`,
+    `/fr/sheet/wonderwall-oasis-${ID}`,
+    `/en/sheet/${ID}`,
+    `/en/sheet/champagne-supernova-oasis-${ID}`,
+    `/en/sheet/wonderwall-oasis-${ID}`,
+  ]);
+});
+
+/**
+ * L'ancien slug est le cas qu'on oublie : c'est la seule des trois formes qui ne se
+ * déduise pas de l'état nouveau. Sans lui, un morceau renommé garderait son ancienne
+ * adresse comme canonique.
+ */
+test('sans renommage, il n’y a pas de troisième forme à invalider', () => {
+  const chemins = sheetRevalidationPaths(['fr'], { id: ID, title: 'Wonderwall', artist: 'Oasis' });
+  assert.deepEqual(chemins, [`/fr/sheet/${ID}`, `/fr/sheet/wonderwall-oasis-${ID}`]);
+});
+
+test('une grille sans identifiant n’invalide rien', () => {
+  assert.deepEqual(sheetRevalidationPaths(['fr'], {}), []);
 });

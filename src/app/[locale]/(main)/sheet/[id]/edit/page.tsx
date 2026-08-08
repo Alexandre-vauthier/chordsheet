@@ -12,6 +12,7 @@ import { SheetEditor } from '@/components/sheet/sheet-editor';
 import type { Sheet, NewSheet } from '@/types';
 import { useRouter } from '@/i18n/navigation';
 import { sheetIdFromSegment } from '@/lib/sheet-url';
+import { revalidateSheet } from '@/lib/revalidate-sheet';
 
 interface EditSheetPageProps {
   params: Promise<{ id: string }>;
@@ -74,6 +75,16 @@ export default function EditSheetPage({ params }: EditSheetPageProps) {
   const handleSave = async (updatedSheet: Sheet | NewSheet) => {
     setIsSaving(true);
 
+    /*
+     * Le titre et l'artiste **d'avant**, relevés avant d'écrire.
+     *
+     * Ce sont eux qui composent l'ancien slug, et l'ancien slug est la seule des
+     * trois adresses à régénérer qui ne se déduise pas de l'état nouveau. Sans
+     * lui, un morceau renommé continuerait une heure à servir son ancienne adresse
+     * comme canonique au lieu de rediriger.
+     */
+    const avant = { title: sheet?.title, artist: sheet?.artist };
+
     try {
       const db = getDb();
       const docRef = doc(db, 'sheets', id);
@@ -90,6 +101,17 @@ export default function EditSheetPage({ params }: EditSheetPageProps) {
       // Le serveur relit la grille et prévient l'équipe si elle emploie un accord que
       // la bibliothèque ne sait pas dessiner. Sans attente : l'enregistrement est fait.
       reportUnknownChords(id);
+
+      // La page de la grille se régénère tout de suite, au lieu d'attendre l'heure
+      // de sa revalidation : c'est ce qui rend la redirection et le slug justes dès
+      // la sauvegarde.
+      revalidateSheet({
+        id,
+        title: updatedSheet.title,
+        artist: updatedSheet.artist,
+        previousTitle: avant.title,
+        previousArtist: avant.artist,
+      });
     } catch (error) {
       console.error('Error saving sheet:', error);
       alert(t('saveError'));
