@@ -9,11 +9,10 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
-  deleteUser as firebaseDeleteUser,
   updateProfile,
   reload,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, getDocs, deleteDoc, collection, query, where, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, getDocs, collection, query, where, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { getAuth, getDb } from './firebase';
 import type { User, UserRole, UserPreferences, CreatorReputation } from '@/types';
 import { readPreferences } from './user-preferences';
@@ -338,50 +337,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await firebaseSignOut(auth);
   };
 
-  // Suppression du compte (données Firestore + compte Auth)
+  /**
+   * Suppression du compte, déléguée au serveur.
+   *
+   * Tout ce ménage se faisait ici, dans le navigateur, avec les droits de la
+   * personne. Il ne le pouvait pas :
+   *
+   * - `ratings` n'a **aucune règle de suppression**, et le reste passait dans un
+   *   seul `writeBatch` : ajouter les notes au lot aurait fait échouer la
+   *   suppression entière, grilles et setlists comprises ;
+   * - `deleteUser` exige une connexion récente, et il était appelé **après** la
+   *   destruction des données : sur une session un peu ancienne, les données
+   *   partaient, l'erreur tombait, et le compte survivait — vide ;
+   * - un lot Firestore plafonne à 500 écritures, sans découpage nulle part.
+   *
+   * `/api/account/delete` fait le travail avec le SDK Admin, qui ignore les règles,
+   * découpe en lots, et supprime le compte en dernier sans réauthentification. La
+   * protection des comptes administrateurs y est reprise, et elle y est cette fois
+   * hors de portée du navigateur.
+   */
   const deleteAccount = async () => {
-    const auth = getAuth();
-    const db = getDb();
-    const currentUser = auth.currentUser;
+    const currentUser = getAuth().currentUser;
     if (!currentUser) throw new Error('User not authenticated');
 
-    // Protection : les comptes admin ne peuvent pas être supprimés
-    if (isAdminEmail(currentUser.email || '')) {
-      throw new Error('Les comptes administrateurs ne peuvent pas être supprimés');
-    }
-
-    const uid = currentUser.uid;
-    const batch = writeBatch(db);
-
-    // Anonymiser les grilles publiques, supprimer les privées
-    const sheetsSnap = await getDocs(query(collection(db, 'sheets'), where('ownerId', '==', uid)));
-    sheetsSnap.docs.forEach(d => {
-      if (d.data().isPublic) {
-        batch.update(d.ref, { ownerId: 'deleted', ownerName: 'Utilisateur supprimé' });
-      } else {
-        batch.delete(d.ref);
-      }
+    const reponse = await fetch('/api/account/delete', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${await currentUser.getIdToken()}` },
     });
 
-    // Supprimer les sets
-    const setsSnap = await getDocs(query(collection(db, 'sets'), where('ownerId', '==', uid)));
-    setsSnap.docs.forEach(d => batch.delete(d.ref));
+    if (!reponse.ok) {
+      const { error } = await reponse.json().catch(() => ({ error: null }));
+      throw new Error(error ?? 'La suppression a échoué.');
+    }
 
-    // Supprimer les favoris (grilles)
-    const bookmarksSnap = await getDocs(query(collection(db, 'bookmarks'), where('userId', '==', uid)));
-    bookmarksSnap.docs.forEach(d => batch.delete(d.ref));
-
-    // Supprimer les favoris (sets)
-    const setBookmarksSnap = await getDocs(query(collection(db, 'setBookmarks'), where('userId', '==', uid)));
-    setBookmarksSnap.docs.forEach(d => batch.delete(d.ref));
-
-    // Supprimer le doc utilisateur
-    batch.delete(doc(db, 'users', uid));
-
-    await batch.commit();
-
-    // Supprimer le compte Firebase Auth
-    await firebaseDeleteUser(currentUser);
+    // Le compte n'existe plus côté Firebase, mais la session du navigateur en garde
+    // la trace : sans cela l'application continue de se croire connectée jusqu'au
+    // prochain rafraîchissement du jeton.
+    await firebaseSignOut(getAuth());
   };
 
   // Mettre à jour le profil utilisateur
