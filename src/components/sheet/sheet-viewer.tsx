@@ -35,6 +35,8 @@ import { garderPourPlusTard } from '@/lib/pending-bookmark';
 import { cleMesure, deroulerStructure, positionCellule, positionMesure, structureUtile } from '@/lib/sheet-structure';
 import { InstrumentIcon } from '@/components/chord/instrument-icon';
 import { artistPath } from '@/lib/artist-url';
+import { controlesBarreAccords } from '@/lib/viewer-chord-bar';
+import { usePreferenceOuSession } from '@/lib/use-preference';
 
 const LS_KEY = 'chordsheet_instrument';
 
@@ -139,9 +141,15 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
    * l'affichage, et toute la grille descendrait sous les yeux du visiteur — le
    * défaut de mise en page que Google mesure justement sur les pages d'atterrissage.
    * On part donc de ce que voit le visiteur, et la préférence d'un utilisateur
-   * connu s'applique ensuite.
+   * connu s'applique ensuite : c'est exactement le contrat de
+   * `usePreferenceOuSession`, à qui l'on passe ce défaut-là.
+   *
+   * Le bouton n'écrivait rien, jusqu'ici : il basculait un état local que le profil
+   * réinitialisait à la grille suivante, pendant que « Minimiser », son voisin
+   * immédiat, enregistrait à chaque clic. Deux boutons collés, deux comportements.
    */
-  const [showInlineDiagram, setShowInlineDiagram] = useState(true);
+  const diagrammes = usePreferenceOuSession('showInlineDiagram', true);
+  const showInlineDiagram = diagrammes.valeur;
   const [showChordSummary, setShowChordSummary] = useState(false);
 
   /**
@@ -229,7 +237,6 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
       // cases, là où ils servent à jouer. Rien n'est retiré : « Accords utilisés »
       // s'ouvre toujours d'un clic.
       setShowChordSummary(false);
-      setShowInlineDiagram(true);
       setInviteLecture(true);
       // Et de quoi entendre le morceau : la boîte à rythmes, dont le motif se
       // déduit déjà des genres de la grille, et l'ensemble au lieu d'un seul
@@ -238,13 +245,14 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
       setAccompaniment(initialAccompaniment(instrumentId, false, true));
       return;
     }
-    setShowInlineDiagram(user?.showInlineDiagram ?? false);
+    // Les diagrammes dans les cases ne sont plus posés ici : `usePreferenceOuSession`
+    // les lit en continu, ce qui les tient à jour si la préférence change ailleurs.
     if (window.innerWidth >= 640) {
       setShowChordSummary(user?.showChordSummaryByDefault ?? true);
     }
     // Mobile : reste false (replié par défaut)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visiteur, user?.showChordSummaryByDefault, user?.showInlineDiagram]);
+  }, [visiteur, user?.showChordSummaryByDefault]);
 
   // Changement de grille (navigation, et setlist en mode concert où le viewer n'est
   // pas remonté) : on repart du sélecteur. Ajustement d'état pendant le rendu — le
@@ -304,7 +312,15 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
   // contient du texte (ex. « 120 BPM »), d'où l'usage de parseTempo dès l'init.
   const [localTempo, setLocalTempo] = useState<string>(String(parseTempo(sheet.tempo) || 90));
   const [localTempoUnit, setLocalTempoUnit] = useState<'quarter' | 'eighth'>(sheet.tempoUnit ?? 'quarter');
-  const [minimizeRepeated, setMinimizeRepeated] = useState(() => user?.minimizeRepeatedSections ?? false);
+  /*
+   * La minimisation lisait le profil une seule fois, à l'initialisation : une
+   * valeur arrivant après l'hydratation de l'authentification — le cas normal —
+   * était ignorée. Et l'écriture se faisait en `catch { silent }`, l'anti-patron
+   * que `usePreference` a justement été écrit pour supprimer : réseau coupé,
+   * l'interrupteur restait basculé et rien n'était enregistré.
+   */
+  const minimisation = usePreferenceOuSession('minimizeRepeatedSections', false);
+  const minimizeRepeated = minimisation.valeur;
 
   const displaySections = transposeSections(sheet.sections, transpose);
 
@@ -359,6 +375,23 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
     }
     return false;
   })();
+
+  /*
+   * Qui s'affiche dans les deux barres de réglages. Les règles vivent à part
+   * (`viewer-chord-bar.ts`) parce qu'un contrôle qui disparaît ne lève aucune
+   * erreur : il manque, et personne ne le voit avant de le chercher.
+   *
+   * Le `useMemo` n'est pas là pour la vitesse — quatre booléens ne coûtent rien —
+   * mais parce que sans lui le compilateur React renonce à optimiser tout le
+   * composant (`preserve-manual-memoization`), l'appel opaque l'empêchant de
+   * conserver les mémoïsations déjà écrites plus bas.
+   */
+  const controles = useMemo(
+    () => controlesBarreAccords({
+      instrumentId, concertMode: !!concertMode, aUneStructure, hasRepeatedSections,
+    }),
+    [instrumentId, concertMode, aUneStructure, hasRepeatedSections],
+  );
 
   // Playback
   const { isPlaying, activeStep, playFromBloc, play, togglePlay, stop, debutRef } = usePlayback({
@@ -824,12 +857,11 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 )}
               </div>
 
-              {/* Sélecteur d'instrument : remonté ici, il pilote aussi la voix jouée. */}
-              <InstrumentSelector
-                value={instrumentId}
-                onChange={handleInstrumentChange}
-                exclude={lyrics ? [] : ['voice']}
-              />
+              {/* Le sélecteur d'instrument était ici, et il y était mal placé : il
+                  choisit les *diagrammes*, quand tout ce qui l'entourait choisit
+                  les *sons* — jusqu'au menu ci-dessous, « Instruments joués », qui
+                  parle d'instruments sans parler de la même chose. Il est descendu
+                  dans le bandeau des accords, au-dessus de la grille. */}
 
               {/* Lecture des accords — menu des instruments d'accompagnement */}
               <div className="relative" ref={accompMenuRef}>
@@ -1049,44 +1081,32 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
         </div>
       </div>
 
-      {/* Barre instrument + diagrammes */}
+      {/*
+        Le bandeau des accords : pour quel instrument, et où l'on veut voir les
+        diagrammes. Trois contrôles qui répondent à une seule question, là où ils
+        étaient répartis entre la barre de lecture et un dépliant.
+
+        Les deux bascules ne sont plus des enfants du dépliant. C'était le défaut le
+        plus coûteux de l'ancienne barre : replier « Accords utilisés » emportait
+        avec lui le bouton qui allume les diagrammes *dans les cases*, sans que rien
+        n'indique où il était passé.
+      */}
       <div className="mb-6 print:hidden">
-        <div className="flex items-center justify-between mb-3">
-          {instrumentId !== 'voice' && (
-            <button
-              onClick={() => setShowChordSummary(v => !v)}
-              className="flex items-center gap-1.5 text-sm font-medium text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors"
-            >
-              {t('chordsUsed')}
-              <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${showChordSummary ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
-              </svg>
-            </button>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-3">
+          {controles.instrument && (
+            <InstrumentSelector
+              value={instrumentId}
+              onChange={handleInstrumentChange}
+              exclude={lyrics ? [] : ['voice']}
+              /* Les dessins sont neufs : le nom les fait apprendre. Le bandeau a la
+                 place que la barre de lecture n'avait pas. */
+              avecLibelle
+            />
           )}
-          <div className={`flex items-center gap-3 ${instrumentId === 'voice' ? 'ml-auto' : ''}`}>
-            {showChordSummary && instrumentId !== 'voice' && hasRepeatedSections && (
+          <div className="flex items-center gap-3 sm:ml-auto">
+            {controles.diagrammes && (
               <button
-                onClick={() => {
-                  const next = !minimizeRepeated;
-                  setMinimizeRepeated(next);
-                  updateUser({ minimizeRepeatedSections: next }).catch(() => {/* silent */});
-                }}
-                title={t('hideRepeatedSectionsTitle')}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs border transition-colors ${
-                  minimizeRepeated
-                    ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
-                    : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)]'
-                }`}
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
-                  <path d="M4 6h16M4 12h10M4 18h7" strokeLinecap="round"/>
-                </svg>
-                {t('minimize')}
-              </button>
-            )}
-            {showChordSummary && instrumentId !== 'voice' && (
-              <button
-                onClick={() => setShowInlineDiagram(v => !v)}
+                onClick={diagrammes.basculer}
                 title={showInlineDiagram ? t('hideInlineDiagrams') : t('showInlineDiagrams')}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs border transition-colors ${
                   showInlineDiagram
@@ -1106,9 +1126,23 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
                 {t('diagrams')}
               </button>
             )}
+            {controles.recapitulatif && (
+              /* Un dépliant, et non une troisième bascule : le chevron annonce un
+                 contenu qui pousse la page, ce qu'une bascule ne dit pas. */
+              <button
+                onClick={() => setShowChordSummary(v => !v)}
+                aria-expanded={showChordSummary}
+                className="flex items-center gap-1.5 text-sm font-medium text-[var(--ink-light)] hover:text-[var(--ink)] transition-colors"
+              >
+                {t('chordsUsed')}
+                <svg className={`w-3.5 h-3.5 transition-transform duration-200 ${showChordSummary ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/>
+                </svg>
+              </button>
+            )}
           </div>
         </div>
-        {showChordSummary && instrumentId !== 'voice' && (
+        {showChordSummary && controles.recapitulatif && (
           <ChordSummary
             sections={displaySections}
             instrumentId={instrumentId}
@@ -1142,13 +1176,21 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
         </div>
       )}
 
-      {/* Bascule entre les sections distinctes et le morceau déroulé.
-          Affichée seulement si la structure dit autre chose que l'ordre naturel :
-          sinon les deux vues montreraient la même chose. À l'impression, jamais —
-          un PDF est linéaire, et c'est le déroulé qu'on imprime. */}
-      {aUneStructure && instrumentId !== 'voice' && (
+      {/*
+        Comment la grille est disposée. Deux contrôles, aux conditions indépendantes :
+        la rangée doit donc tenir avec l'un, avec l'autre, ou avec les deux.
+
+        « Minimiser » arrive du bandeau des accords, où il n'avait rien à faire : son
+        infobulle parle d'accords, mais ce qu'il replie, ce sont des *sections*. Sa
+        place est ici, à côté de la bascule qui choisit comment ces mêmes sections
+        sont présentées.
+
+        À l'impression, jamais — un PDF est linéaire, c'est le déroulé qu'on imprime,
+        et la minimisation à l'impression a son propre réglage de profil.
+      */}
+      {controles.rangeeStructure && (
         <div className="flex items-center gap-2 mb-4 print:hidden">
-          {([['flow', tStruct('viewFlow')], ['grid', tStruct('viewGrid')]] as const).map(([mode, libelle]) => (
+          {controles.vue && ([['flow', tStruct('viewFlow')], ['grid', tStruct('viewGrid')]] as const).map(([mode, libelle]) => (
             <button
               key={mode}
               type="button"
@@ -1164,6 +1206,24 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
               {libelle}
             </button>
           ))}
+          {controles.minimiser && (
+            <button
+              type="button"
+              onClick={minimisation.basculer}
+              aria-pressed={minimizeRepeated}
+              title={t('hideRepeatedSectionsTitle')}
+              className={`flex items-center gap-1.5 ml-auto px-2.5 py-1 rounded-lg text-xs border transition-colors ${
+                minimizeRepeated
+                  ? 'bg-[var(--accent)] border-[var(--accent)] text-white'
+                  : 'bg-[var(--cell-bg)] border-[var(--line)] text-[var(--ink-light)] hover:border-[var(--ink-faint)]'
+              }`}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.8">
+                <path d="M4 6h16M4 12h10M4 18h7" strokeLinecap="round"/>
+              </svg>
+              {t('minimize')}
+            </button>
+          )}
         </div>
       )}
 

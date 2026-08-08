@@ -103,3 +103,48 @@ export function usePreference<K extends keyof UserPreferences>(key: K) {
     }, [enregistre]),
   };
 }
+
+/** Les préférences qui sont des interrupteurs, seules à pouvoir se basculer. */
+// Le `-?` n'est pas décoratif : `preferredInstrument` est facultative, et sans lui
+// la projection rendrait ses clés facultatives à leur tour, donc l'union porterait
+// un `undefined` que `usePreference` refuse.
+type CleBooleenne = {
+  [K in keyof UserPreferences]-?: UserPreferences[K] extends boolean ? K : never;
+}[keyof UserPreferences];
+
+/**
+ * Un interrupteur de réglage utilisable **aussi par un visiteur non connecté**.
+ *
+ * Les barres d'une grille consultée portent des réglages d'affichage, et cette
+ * page est la plus visitée sans compte du site : elle est l'entrée par les moteurs
+ * de recherche. `usePreference` seul n'y suffit pas, pour deux raisons.
+ *
+ * **Personne où écrire.** Sans compte, il n'y a pas de document utilisateur ;
+ * l'écriture échouerait, et l'interrupteur reviendrait en arrière sous les yeux du
+ * visiteur. Il lui faut donc un réglage de session, qui ne prétend rien enregistrer.
+ *
+ * **Le défaut n'est pas le même.** Un visiteur voit les diagrammes dans les cases,
+ * là où un utilisateur connu part de sa préférence — et c'est aussi la valeur du
+ * rendu serveur, choisie pour que la grille ne grandisse pas sous ses yeux une
+ * demi-seconde après l'affichage. `defautVisiteur` porte cette valeur, et elle vaut
+ * **tant que l'authentification ne s'est pas prononcée** : sans quoi le défaut de
+ * la table s'afficherait d'abord, et la mise en page sauterait à la connexion.
+ */
+export function usePreferenceOuSession(cle: CleBooleenne, defautVisiteur: boolean) {
+  const { user, loading } = useAuth();
+  const { valeur: enregistree, definir, echec, reessayer } = usePreference(cle);
+  const [session, setSession] = useState(defautVisiteur);
+
+  const connecte = !loading && !!user;
+  const valeur = connecte ? (enregistree as boolean) : session;
+
+  // Les dépendances sont les valeurs, pas l'objet que `usePreference` retourne : il
+  // est neuf à chaque rendu, et le prendre en dépendance rendrait ce rappel neuf lui
+  // aussi, ce qui casse la mémoïsation du composant appelant.
+  const basculer = useCallback(() => {
+    if (connecte) void definir(!(enregistree as boolean));
+    else setSession((v) => !v);
+  }, [connecte, definir, enregistree]);
+
+  return { valeur, basculer, echec, reessayer };
+}

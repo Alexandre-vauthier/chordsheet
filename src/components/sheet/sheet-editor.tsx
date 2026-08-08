@@ -927,11 +927,11 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
               caret-[var(--accent)] placeholder:text-[var(--ink-faint)]"
           />
           <div className="flex-shrink-0 flex items-center gap-2 flex-wrap justify-end">
-            {/* Instrument des diagrammes (comme la consultation, en haut) */}
-            <InstrumentSelector
-              value={sheet.instrumentId || 'guitar'}
-              onChange={(instrumentId) => updateSheet({ instrumentId })}
-            />
+            {/* Le sélecteur d'instrument était en tête de cette barre, au milieu de
+                contrôles qui ne parlent que de son. Il est descendu dans la carte de
+                métadonnées : ici il écrit `sheet.instrumentId`, une propriété de la
+                grille au même titre que le capo ou la métrique — et non, comme en
+                consultation, une préférence du lecteur. */}
             {/* Toggle métronome */}
             <button
               onClick={() => setMetronomeEnabled(v => !v)}
@@ -1235,6 +1235,19 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
               </button>
             </div>
           </div>
+          {/* Instrument de la grille : il décide quelle bibliothèque de doigtés
+              s'applique, et il indexe les accords personnalisés. Sa place est donc
+              parmi les propriétés de la grille, pas dans la barre de lecture.
+              Pictogrammes sans libellé : le libellé texte est déjà à gauche, comme
+              pour Capo et Métrique. */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-[var(--ink-light)]">{t('instrument')}</span>
+            <InstrumentSelector
+              value={sheet.instrumentId || 'guitar'}
+              onChange={(instrumentId) => updateSheet({ instrumentId })}
+            />
+          </div>
+
           {/* Capo */}
           <div className="flex items-center gap-2">
             <span className="text-sm text-[var(--ink-light)]">{t('capo')}</span>
