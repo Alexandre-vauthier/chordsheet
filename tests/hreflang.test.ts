@@ -55,3 +55,20 @@ test('la racine du site reste préfixée elle aussi', () => {
     assert.match(new URL(url).pathname, /^\/(fr|en)$/, `${url} devrait être /fr ou /en`);
   }
 });
+
+/**
+ * Une seule source d'annonces de langue.
+ *
+ * next-intl en posait un second jeu dans un en-tête HTTP `Link:`, et les deux ne
+ * disaient pas la même chose : le `x-default` de l'en-tête pointait vers l'adresse
+ * **sans préfixe** — `/explore` plutôt que `/fr/explore` — c'est-à-dire vers une URL
+ * qui redirige. Google accepte trois méthodes mais attend qu'on en tienne une, et
+ * deux valeurs contradictoires peuvent le faire ignorer l'ensemble.
+ */
+test('les annonces de langue ne sont pas dupliquées en en-tête HTTP', () => {
+  assert.equal(
+    routing.alternateLinks,
+    false,
+    'l’en-tête Link réapparaîtrait, avec un x-default sans préfixe de langue',
+  );
+});
