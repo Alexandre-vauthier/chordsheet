@@ -34,12 +34,26 @@ export function localeUrl(locale: string, path = ''): string {
  * À n'appeler que sur des pages réellement bilingues : annoncer `hreflang="en"` sur du
  * texte français est un signal négatif.
  */
-export function buildAlternates(locale: string, path = ''): Metadata['alternates'] {
+/**
+ * Les adresses équivalentes d'une page, dans toutes les langues.
+ *
+ * Une seule fonction pour les deux endroits qui en ont besoin — le `<head>` d'une
+ * page et le sitemap. Ils la calculaient chacun de leur côté, et avaient divergé :
+ * le sitemap omettait `x-default` sur ses 1974 entrées, alors que le `<head>` le
+ * portait. Google lit les deux et attend le même jeu d'annonces.
+ *
+ * `x-default` désigne la version servie à qui ne demande aucune de nos langues :
+ * le français, puisque c'est la langue par défaut du routage.
+ */
+export function alternateLanguages(path = ''): Record<string, string> {
   const languages: Record<string, string> = {};
   for (const l of routing.locales) languages[l] = localeUrl(l, path);
   languages['x-default'] = localeUrl(routing.defaultLocale, path);
+  return languages;
+}
 
-  return { canonical: localeUrl(locale, path), languages };
+export function buildAlternates(locale: string, path = ''): Metadata['alternates'] {
+  return { canonical: localeUrl(locale, path), languages: alternateLanguages(path) };
 }
 
 /** Bloc Open Graph commun, avec la locale correcte et les autres langues déclarées. */

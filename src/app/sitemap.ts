@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { routing } from '@/i18n/routing';
-import { localeUrl } from '@/lib/seo';
+import { alternateLanguages, localeUrl } from '@/lib/seo';
 import { getPublicBands, getPublicSheetIndex, songKey } from '@/lib/public-sheet-index';
 import { CHORD_PAGE_INSTRUMENTS, chordNamesFor, chordSlug, isCommonChord } from '@/lib/chord-page';
 
@@ -54,7 +54,9 @@ function entriesFor(
   changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'],
   priority: number,
 ): MetadataRoute.Sitemap {
-  const languages = Object.fromEntries(routing.locales.map(l => [l, localeUrl(l, path)]));
+  // Le même jeu d'annonces que le `<head>` des pages, `x-default` compris : il
+  // manquait ici, et Google lit les deux sources.
+  const languages = alternateLanguages(path);
 
   return routing.locales.map(locale => ({
     url: localeUrl(locale, path),
