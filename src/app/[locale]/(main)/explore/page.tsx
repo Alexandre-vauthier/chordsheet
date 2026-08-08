@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { buildAlternates, buildOpenGraph } from '@/lib/seo';
 import { getPublicSheetIndex } from '@/lib/public-sheet-index';
 import { filtreActif, versGrilleDeCatalogue } from '@/lib/explore-shelves';
+import { instantDuRendu } from '@/lib/render-clock';
 import { DiscoveryShelves } from '@/components/explore/discovery-shelves';
 import { EntryTiles } from '@/components/explore/entry-tiles';
 import { ExploreClient } from './explore-client';
@@ -81,6 +82,7 @@ export default async function Page({
     <>
       <ExploreClient
         initialSheets={initialSheets}
+        maintenant={instantDuRendu()}
         decouverte={flane ? (
           <>
             <DiscoveryShelves refs={refs} locale={locale} />

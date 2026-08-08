@@ -1,22 +1,9 @@
-import { cache } from 'react';
 import { getTranslations } from 'next-intl/server';
+import { instantDuRendu } from '@/lib/render-clock';
 import type { PublicSheetRef } from '@/lib/public-sheet-index';
 import { rayonsDe, versGrilleDeCatalogue } from '@/lib/explore-shelves';
 import { SheetCard } from '@/components/explore/sheet-card';
 import { Shelf, ShelfItem } from './shelf';
-
-/**
- * L'instant du rendu, lu une seule fois.
- *
- * Lire l'horloge pendant un rendu n'est pas anodin : deux appels dans la même
- * passe peuvent rendre deux valeurs, et la frontière des sept jours du rayon des
- * nouveautés tomberait alors différemment d'un rayon à l'autre. `cache()` fige la
- * valeur pour la durée du rendu.
- *
- * Il est passé en argument aux fonctions de découpage plutôt que lu par elles :
- * une fonction qui interroge l'horloge ne se teste pas deux fois de la même façon.
- */
-const maintenant = cache(() => Date.now());
 
 /**
  * Les rayons de la page de découverte.
@@ -36,7 +23,7 @@ const maintenant = cache(() => Date.now());
  */
 export async function DiscoveryShelves({ refs, locale }: { refs: PublicSheetRef[]; locale: string }) {
   const t = await getTranslations({ locale, namespace: 'Explore' });
-  const rayons = rayonsDe(refs, maintenant());
+  const rayons = rayonsDe(refs, instantDuRendu());
   if (rayons.length === 0) return null;
 
   return (

@@ -33,6 +33,7 @@ const ADMIN_SHOW_PENDING_KEY = 'explore_admin_show_pending';
 export function ExploreClient({
   initialSheets,
   decouverte,
+  maintenant,
 }: {
   initialSheets: Sheet[];
   /**
@@ -44,6 +45,14 @@ export function ExploreClient({
    * côté navigateur, et la page serait redevenue vide pour les moteurs.
    */
   decouverte?: React.ReactNode;
+  /**
+   * L'instant du rendu, descendu du serveur.
+   *
+   * La fenêtre de fraîcheur a besoin d'une origine, et lire l'horloge pendant un
+   * rendu React n'est pas permis : deux passes donneraient deux frontières. Le
+   * serveur la lit une fois, la page la transmet.
+   */
+  maintenant: number;
 }) {
   const t = useTranslations('Explore');
   const genreLabel = useGenreLabel();
@@ -94,6 +103,15 @@ export function ExploreClient({
    */
   const selectedDecade = Number(searchParams.get('decade')) || null;
   const selectedKey = searchParams.get('key')?.trim() ?? '';
+  /**
+   * Fenêtre de fraîcheur, en jours.
+   *
+   * C'est la destination du « tout voir » du rayon des nouveautés. Sans elle, ce
+   * bouton n'aurait mené qu'au catalogue trié par date : les plus récentes en
+   * haut, certes, mais mêlées à tout le reste, alors que le rayon promettait une
+   * tranche précise.
+   */
+  const depuisJours = Number(searchParams.get('since')) || null;
   /**
    * Les accords qu'on sait jouer, tels que le hero les a transmis.
    *
@@ -332,6 +350,12 @@ export function ExploreClient({
       result = result.filter((sheet) => sheet.difficulty === selectedDifficulty);
     }
 
+    // Fenêtre de fraîcheur.
+    if (depuisJours) {
+      const limite = maintenant - depuisJours * 86_400_000;
+      result = result.filter((sheet) => sheet.createdAt.getTime() >= limite);
+    }
+
     // Filtre par tonalité, posé par les tuiles thématiques.
     if (selectedKey) {
       const k = selectedKey.toLowerCase();
@@ -363,7 +387,7 @@ export function ExploreClient({
     }
 
     return result;
-  }, [sheets, searchQuery, selectedGenre, selectedDifficulty, selectedDecade, selectedKey, sortBy, isAdmin, showPublic, showPrivate, showPending, chordQuery, accordsConnus]);
+  }, [sheets, searchQuery, selectedGenre, selectedDifficulty, selectedDecade, selectedKey, depuisJours, maintenant, sortBy, isAdmin, showPublic, showPrivate, showPending, chordQuery, accordsConnus]);
 
   // Décennies effectivement présentes dans les grilles (pour ne pas encombrer le menu)
   const availableDecades = useMemo(() => {
@@ -427,7 +451,7 @@ export function ExploreClient({
    * filtre ne soit visible à l'écran pour l'expliquer.
    */
   const rechercheEnCours = Boolean(
-    accordsConnus.length > 0 || selectedKey || searchQuery || selectedGenre || selectedDifficulty || selectedDecade,
+    accordsConnus.length > 0 || selectedKey || depuisJours || searchQuery || selectedGenre || selectedDifficulty || selectedDecade,
   );
   /** Y a-t-il quoi que ce soit à réinitialiser ? Le tri et les bascules comptent ici. */
   const hasActiveFilters = rechercheEnCours || sortBy !== 'recent' || !showPublic || !showPrivate || !showPending;
@@ -627,7 +651,10 @@ export function ExploreClient({
         </div>
       </div>
 
-      {/* Résultats */}
+      {/* Résultats. L'ancre est la destination des « tout voir » des rayons :
+          sans elle, le bouton changeait le tri et laissait le lecteur en haut de
+          page, devant les mêmes vignettes. */}
+      <div id="catalogue" className="scroll-mt-20" />
       {loading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) => (

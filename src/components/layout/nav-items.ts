@@ -164,6 +164,8 @@ export function buildToolsGroup(ctx: NavContext): NavGroup {
         { id: 'tuner', href: '/tuner', labelKey: 'tuner', icon: 'tuner', visibility: 'always' },
         { id: 'whatToPlay', href: '/what-to-play', labelKey: 'whatToPlay', icon: 'whatToPlay', visibility: 'always' },
         { id: 'whatCanIPlay', href: '/what-can-i-play', labelKey: 'whatCanIPlay', icon: 'chordLibrary', visibility: 'always' },
+        { id: 'threeChordSongs', href: '/three-chord-songs', labelKey: 'threeChordSongs', icon: 'chordByNotes', visibility: 'always' },
+        { id: 'noBarreSongs', href: '/no-barre-songs', labelKey: 'noBarreSongs', icon: 'whatToPlay', visibility: 'always' },
       ],
     },
     {

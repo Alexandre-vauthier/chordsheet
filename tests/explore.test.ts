@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   jouablesAvec, prochainAccord, accordsLesPlusJoues,
-  rayonsDe, portesDe, artistesDe,
+  rayonsDe, portesDe, artistesDe, troisAccords, sansBarre,
   TAILLE_RAYON, SEUIL_PORTE, ACCORDS_BARRES, filtreActif, accordsDeLUrl,
 } from '@/lib/explore-shelves';
 import type { PublicSheetRef } from '@/lib/public-sheet-index';
@@ -124,20 +124,22 @@ test('« cette semaine » ne retient que les sept derniers jours', () => {
   assert.deepEqual(r?.tiles.map((t) => t.id), ['hier']);
 });
 
-test('« trois accords suffisent » n’en accepte pas une à quatre', () => {
+/* Les deux tranches suivantes ont quitté les rayons pour devenir des outils :
+   ce sont des questions qu'on se pose, pas des rubriques qu'on parcourt. La
+   règle, elle, n'a pas bougé. */
+
+test('« trois accords » n’en accepte pas une à quatre', () => {
   const refs = [
     grille({ id: 'trois', chords: ['g', 'c', 'd'] }),
     grille({ id: 'quatre', chords: ['g', 'c', 'd', 'em'] }),
   ];
-  const r = rayonsDe(refs, MAINTENANT).find((x) => x.id === 'threeChords');
-  assert.deepEqual(r?.tiles.map((t) => t.id), ['trois']);
+  assert.deepEqual(troisAccords(refs).map((r) => r.id), ['trois']);
 });
 
 /** Le doublon compte pour un : trois cellules de G ne font pas trois accords. */
 test('« trois accords » compte les accords distincts', () => {
-  const refs = [grille({ id: 'ok', chords: ['g', 'g', 'c', 'd'] })];
-  const r = rayonsDe(refs, MAINTENANT).find((x) => x.id === 'threeChords');
-  assert.deepEqual(r?.tiles.map((t) => t.id), ['ok']);
+  assert.equal(troisAccords([grille({ chords: ['g', 'g', 'c', 'd'] })]).length, 1);
+  assert.equal(troisAccords([grille({ chords: [] })]).length, 0, 'une grille sans accord n’en a pas trois');
 });
 
 test('« sans barré » écarte les grilles qui en contiennent un', () => {
@@ -145,19 +147,34 @@ test('« sans barré » écarte les grilles qui en contiennent un', () => {
     grille({ id: 'libre', chords: ['g', 'c', 'em'] }),
     grille({ id: 'barre', chords: ['g', 'f'] }),
   ];
-  const r = rayonsDe(refs, MAINTENANT).find((x) => x.id === 'noBarre');
-  assert.deepEqual(r?.tiles.map((t) => t.id), ['libre']);
+  assert.deepEqual(sansBarre(refs).map((r) => r.id), ['libre']);
   assert.ok(ACCORDS_BARRES.has('f') && !ACCORDS_BARRES.has('em'));
 });
 
-/** Mieux vaut quatre rayons pleins qu'un cinquième qui annonce et ne montre rien. */
+test('les deux outils classent par vues décroissantes', () => {
+  const refs = [grille({ id: 'peu', viewCount: 3 }), grille({ id: 'beaucoup', viewCount: 90 })];
+  assert.deepEqual(troisAccords(refs).map((r) => r.id), ['beaucoup', 'peu']);
+  assert.deepEqual(sansBarre(refs).map((r) => r.id), ['beaucoup', 'peu']);
+});
+
+/** Mieux vaut un rayon plein qu'un second qui annonce et ne montre rien. */
 test('un rayon vide n’est pas rendu', () => {
-  const refs = [grille({ chords: ['g', 'c', 'd', 'em', 'f'], createdAt: new Date(MAINTENANT - 90 * JOUR) })];
-  const ids = rayonsDe(refs, MAINTENANT).map((r) => r.id);
-  assert.ok(!ids.includes('thisWeek'), 'aucune nouveauté');
-  assert.ok(!ids.includes('threeChords'), 'cinq accords');
-  assert.ok(!ids.includes('noBarre'), 'contient un fa');
-  assert.deepEqual(ids, ['mostViewed']);
+  const refs = [grille({ createdAt: new Date(MAINTENANT - 90 * JOUR) })];
+  assert.deepEqual(rayonsDe(refs, MAINTENANT).map((r) => r.id), ['mostViewed']);
+});
+
+/**
+ * Le « tout voir » des rayons doit mener quelque part. Il changeait le tri et
+ * laissait le lecteur en haut de page, devant les mêmes vignettes.
+ */
+test('chaque rayon dit où voir sa tranche entière', () => {
+  const refs = [
+    grille({ createdAt: new Date(MAINTENANT - 1 * JOUR) }),
+    grille({ createdAt: new Date(MAINTENANT - 90 * JOUR) }),
+  ];
+  const rayons = rayonsDe(refs, MAINTENANT);
+  assert.equal(rayons.find((r) => r.id === 'mostViewed')?.href, '/explore?sort=viewed#catalogue');
+  assert.equal(rayons.find((r) => r.id === 'thisWeek')?.href, '/explore?since=7#catalogue');
 });
 
 test('un rayon ne montre pas plus que sa taille, mais dit son total', () => {
@@ -196,15 +213,13 @@ const pourPortes = () => [
 ];
 
 /**
- * Les genres et les niveaux sont stockés en français canonique et traduits à
- * l'affichage. Un niveau rendu sous forme de chiffre ne correspondrait à aucune
- * clé de traduction, et la tuile afficherait « 1 ».
+ * Deux portes ont été retirées : le niveau ne discrimine pas (quatre grilles sur
+ * cinq sont « faciles ») et la tonalité intéresse le chanteur qui cherche sa
+ * tessiture, pas celui qui découvre le catalogue.
  */
-test('un niveau porte son libellé canonique, pas son chiffre', () => {
-  const refs = Array.from({ length: 3 }, () => grille({ difficulty: 2 }));
-  const niveaux = portesDe(refs).find((g) => g.id === 'levels')!;
-  assert.equal(niveaux.tiles[0].label, 'Intermédiaire');
-  assert.equal(niveaux.tiles[0].href, '/explore?difficulty=2');
+test('il ne reste que les décennies et les genres', () => {
+  const groupes = portesDe(pourPortes()).map((g) => g.id);
+  assert.deepEqual(groupes, ['decades', 'genres']);
 });
 
 test('les portes comptent juste et mènent au catalogue filtré', () => {
@@ -285,7 +300,7 @@ test('aucun tri ne compte comme un filtre', () => {
 });
 
 test('chaque filtre du catalogue est reconnu', () => {
-  for (const cle of ['q', 'genre', 'difficulty', 'decade', 'key']) {
+  for (const cle of ['q', 'genre', 'difficulty', 'decade', 'key', 'chords', 'since']) {
     assert.equal(filtreActif({ [cle]: 'x' }), true, `${cle} devrait compter`);
   }
 });

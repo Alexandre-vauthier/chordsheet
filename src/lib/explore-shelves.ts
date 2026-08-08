@@ -1,5 +1,5 @@
 import type { PublicSheetRef } from '@/lib/public-sheet-index';
-import { DIFFICULTY_LABELS, type Sheet } from '@/types';
+import type { Sheet } from '@/types';
 
 /**
  * Les tranches du catalogue qui composent la page de découverte.
@@ -38,7 +38,7 @@ export function filtreActif(params: Record<string, string | string[] | undefined
   // Le tri ne compte pas : réordonner le catalogue n'est pas le réduire, et la
   // découverte reste utile au-dessus. Voir `rechercheEnCours` côté client, qui
   // applique la même règle.
-  return ['q', 'genre', 'difficulty', 'decade', 'key', 'chords'].some((cle) => lire(cle) !== '');
+  return ['q', 'genre', 'difficulty', 'decade', 'key', 'chords', 'since'].some((cle) => lire(cle) !== '');
 }
 
 /** Les accords transmis par l'URL, dans leur forme comparable. */
@@ -234,24 +234,42 @@ export function rayonsDe(refs: PublicSheetRef[], maintenant: number): Shelf[] {
     .filter((r) => r.createdAt && (maintenant - r.createdAt.getTime()) / 86_400_000 <= JOURS_NOUVEAUTES)
     .sort((a, b) => (b.createdAt?.getTime() ?? 0) - (a.createdAt?.getTime() ?? 0));
 
-  const simples = parVues.filter((r) => {
-    const n = new Set(accordsDe(r)).size;
-    return n > 0 && n <= 3;
-  });
-
-  const sansBarre = parVues.filter((r) => {
-    const accords = accordsDe(r);
-    return accords.length > 0 && !accords.some((a) => ACCORDS_BARRES.has(a));
-  });
-
-  // Un rayon vide ne s'affiche pas : mieux vaut quatre rayons pleins qu'un
-  // cinquième qui annonce une catégorie et ne montre rien.
+  // Deux rayons. « Trois accords » et « sans barré » ont quitté la page : ce sont
+  // des questions qu'on se pose (« qu'est-ce que je peux jouer ? »), pas des
+  // rubriques qu'on parcourt, et elles ont chacune leur outil.
+  //
+  // Un rayon vide ne s'affiche pas : mieux vaut un rayon plein qu'un second qui
+  // annonce une catégorie et ne montre rien.
   return [
-    rayon('mostViewed', parVues, '/explore?sort=viewed'),
-    rayon('thisWeek', recentes, '/explore?sort=recent'),
-    rayon('threeChords', simples),
-    rayon('noBarre', sansBarre),
+    rayon('mostViewed', parVues, '/explore?sort=viewed#catalogue'),
+    rayon('thisWeek', recentes, `/explore?since=${JOURS_NOUVEAUTES}#catalogue`),
   ].filter((r) => r.total > 0);
+}
+
+/**
+ * Les grilles qu'on joue avec trois accords ou moins.
+ *
+ * Trois est le seuil des chansons qu'on apprend en premier, et « chanson 3
+ * accords » est une recherche à part entière : cette tranche mérite sa page
+ * plutôt qu'un rayon dans lequel on tombe par hasard.
+ */
+export function troisAccords(refs: PublicSheetRef[], maximum = 3): PublicSheetRef[] {
+  return [...refs]
+    .filter((r) => {
+      const n = new Set(accordsDe(r)).size;
+      return n > 0 && n <= maximum;
+    })
+    .sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0));
+}
+
+/** Les grilles qui ne demandent aucun accord barré. */
+export function sansBarre(refs: PublicSheetRef[]): PublicSheetRef[] {
+  return [...refs]
+    .filter((r) => {
+      const accords = accordsDe(r);
+      return accords.length > 0 && !accords.some((a) => ACCORDS_BARRES.has(a));
+    })
+    .sort((a, b) => (b.viewCount ?? 0) - (a.viewCount ?? 0));
 }
 
 /** Une porte d'entrée thématique : un libellé, un compte, un filtre du catalogue. */
@@ -300,8 +318,7 @@ export function portesDe(refs: PublicSheetRef[]): EntryGroup[] {
 
   const decennies = grouper((r) => (r.year && r.year > 1900 ? [Math.floor(r.year / 10) * 10] : []));
   const genres = grouper((r) => r.genres ?? []);
-  const tonalites = grouper((r) => (r.key?.trim() ? [r.key.trim()] : []));
-  const niveaux = grouper((r) => (r.difficulty ? [r.difficulty] : []));
+
 
   const trier = <T>(m: Map<T, PublicSheetRef[]>) =>
     [...m.entries()].filter(([, v]) => v.length >= SEUIL_PORTE).sort((a, b) => b[1].length - a[1].length);
@@ -314,20 +331,6 @@ export function portesDe(refs: PublicSheetRef[]): EntryGroup[] {
     {
       id: 'genres',
       tiles: trier(genres).map(([g, v]) => porte(`genre-${g}`, g, v, `/explore?genre=${encodeURIComponent(g)}`)),
-    },
-    {
-      id: 'levels',
-      /*
-       * Le libellé canonique français, comme les genres : c'est par lui que le
-       * dépôt indexe ses traductions (`Difficulty` dans les messages), et le
-       * chiffre seul n'y correspondrait à rien.
-       */
-      tiles: trier(niveaux).map(([d, v]) =>
-        porte(`level-${d}`, DIFFICULTY_LABELS[d as 1 | 2 | 3] ?? String(d), v, `/explore?difficulty=${d}`)),
-    },
-    {
-      id: 'keys',
-      tiles: trier(tonalites).map(([k, v]) => porte(`key-${k}`, k, v, `/explore?key=${encodeURIComponent(k)}`)),
     },
   ].filter((groupe) => groupe.tiles.length > 0);
 }

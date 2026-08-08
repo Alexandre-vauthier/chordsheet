@@ -3,9 +3,10 @@ import { Link } from '@/i18n/navigation';
 import type { PublicSheetRef } from '@/lib/public-sheet-index';
 import { artistesDe, portesDe, type EntryTile } from '@/lib/explore-shelves';
 import { CoverMosaic } from './cover-mosaic';
+import { ShelfScroller } from './shelf-scroller';
 
 /**
- * Les portes d'entrée thématiques : décennie, genre, niveau, tonalité, artistes.
+ * Les portes d'entrée thématiques : décennie, genre, et les artistes.
  *
  * Ce sont des **tuiles de navigation**, pas des listes de morceaux, et c'est tout
  * l'intérêt : avec cent trente grilles publiques, un cinquième et un sixième rayon
@@ -18,14 +19,19 @@ import { CoverMosaic } from './cover-mosaic';
  *
  * Les tranches trop maigres n'ont pas de tuile (`SEUIL_PORTE`) : promettre un
  * rayon « Jazz » et livrer une grille dessert la page plus qu'un genre absent.
+ *
+ * Le niveau et la tonalité en sont sortis : le premier ne discrimine pas (quatre
+ * grilles sur cinq sont « faciles »), la seconde intéresse le chanteur qui cherche
+ * sa tessiture, pas celui qui découvre le catalogue.
  */
 
 /** Une tuile : un libellé, un compte, une mosaïque, une destination. */
 function Tuile({ tuile, libelle }: { tuile: EntryTile; libelle: string }) {
   return (
+    <li className="snap-start shrink-0 w-[38vw] max-w-[190px] sm:w-[176px]">
     <Link
       href={tuile.href}
-      className="group relative block aspect-[4/3] sm:aspect-[3/2] rounded-xl overflow-hidden
+      className="group relative block aspect-[3/2] rounded-xl overflow-hidden
         border border-[var(--line)] hover:border-[var(--accent)] transition-colors"
     >
       <CoverMosaic sheets={tuile.sample} />
@@ -38,14 +44,27 @@ function Tuile({ tuile, libelle }: { tuile: EntryTile; libelle: string }) {
         <span className="mt-0.5 text-[11px] text-white/70">{tuile.count}</span>
       </div>
     </Link>
+    </li>
   );
 }
 
+/**
+ * Une rangée de tuiles, sur une seule ligne qui défile.
+ *
+ * Et non une grille qui passe à la ligne : le nombre de tuiles n'est pas fixe et
+ * n'a aucune raison de le rester. Sept décennies aujourd'hui, huit dans quatre
+ * ans, et une grille en aurait fait deux rangées inégales dont la seconde
+ * n'aurait porté qu'une tuile. Le défilement absorbe la croissance sans que la
+ * page change de forme.
+ *
+ * C'est le même défileur que les rayons : mêmes flèches, même comportement au
+ * clavier, et les tuiles restent rendues par le serveur.
+ */
 function Groupe({ titre, children }: { titre: string; children: React.ReactNode }) {
   return (
     <section aria-label={titre} className="mb-8">
       <h2 className="font-playfair text-lg font-bold text-[var(--ink)] mb-3">{titre}</h2>
-      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3">{children}</div>
+      <ShelfScroller etiquette={titre}>{children}</ShelfScroller>
     </section>
   );
 }
@@ -53,7 +72,6 @@ function Groupe({ titre, children }: { titre: string; children: React.ReactNode 
 export async function EntryTiles({ refs, locale }: { refs: PublicSheetRef[]; locale: string }) {
   const t = await getTranslations({ locale, namespace: 'Explore' });
   const tGenre = await getTranslations({ locale, namespace: 'Genres' });
-  const tNiveau = await getTranslations({ locale, namespace: 'Difficulty' });
 
   const groupes = portesDe(refs);
   // Douze : de quoi montrer les artistes fournis sans transformer la page en
@@ -64,16 +82,13 @@ export async function EntryTiles({ refs, locale }: { refs: PublicSheetRef[]; loc
   /**
    * Le libellé d'une tuile.
    *
-   * Les genres et les niveaux sont **stockés en français canonique** et traduits
-   * seulement à l'affichage : c'est la convention du dépôt, et la contourner ici
-   * ferait entrer de l'anglais dans la base au premier filtre posé depuis `/en`.
-   * Les décennies et les tonalités, elles, se lisent pareil dans les deux langues.
+   * Les genres sont **stockés en français canonique** et traduits seulement à
+   * l'affichage : c'est la convention du dépôt, et la contourner ici ferait
+   * entrer de l'anglais dans la base au premier filtre posé depuis `/en`. Les
+   * décennies, elles, se lisent pareil dans les deux langues.
    */
-  const libelleDe = (groupeId: string, tuile: EntryTile) => {
-    if (groupeId === 'genres') return tGenre(tuile.label);
-    if (groupeId === 'levels') return tNiveau(tuile.label);
-    return tuile.label;
-  };
+  const libelleDe = (groupeId: string, tuile: EntryTile) =>
+    (groupeId === 'genres' ? tGenre(tuile.label) : tuile.label);
 
   return (
     <div className="mb-10">

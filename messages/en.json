@@ -39,7 +39,9 @@
     "pricing": "Pricing",
     "goPro": "Upgrade to Pro",
     "newSheetLabel": "Chart",
-    "whatCanIPlay": "What can I play?"
+    "whatCanIPlay": "What can I play?",
+    "threeChordSongs": "Three chords",
+    "noBarreSongs": "No barre chords"
   },
   "Footer": {
     "credits": "Credits",
@@ -358,15 +360,11 @@
     "shelfSeeAll": "See all",
     "shelf": {
       "mostViewed": "Most played",
-      "thisWeek": "Added this week",
-      "threeChords": "Three chords are enough",
-      "noBarre": "No barre chords"
+      "thisWeek": "Added this week"
     },
     "entries": {
       "decades": "By decade",
       "genres": "By genre",
-      "levels": "By level",
-      "keys": "By key",
       "artists": "Artists"
     },
     "showMore": "Show {count, plural, one {the last sheet} other {# more sheets}}"
@@ -1532,6 +1530,14 @@
       "whatCanIPlay": {
         "title": "What can I play with the chords I know",
         "description": "Tick the chords you can play and find the songs you can perform from start to finish, without learning a single new one."
+      },
+      "threeChordSongs": {
+        "title": "3-chord songs",
+        "description": "Every chord sheet you can play with three chords or fewer: the beginner repertoire, ready to play."
+      },
+      "noBarreSongs": {
+        "title": "Songs with no barre chords",
+        "description": "Chord sheets that need no barre chord, so you can play without getting stuck on F."
       }
     },
     "artist": {
@@ -2015,5 +2021,15 @@
     "showMore": "Show {count, plural, one {the last one} other {# more}}",
     "empty": "No sheet plays entirely with those chords. Tick one more.",
     "browseAll": "Browse the whole catalogue"
+  },
+  "ThreeChordSongs": {
+    "title": "Three chords are enough",
+    "subtitle": "Every sheet in the catalogue you can play from start to finish with three chords or fewer. Enough to carry an evening with a first week of practice.",
+    "count": "{count, plural, =0 {No sheet yet} one {# sheet} other {# sheets}}"
+  },
+  "NoBarreSongs": {
+    "title": "No barre chords",
+    "subtitle": "Songs that need no barre chord at all. The barre stops more beginners than any musical difficulty.",
+    "count": "{count, plural, =0 {No sheet yet} one {# sheet} other {# sheets}}"
   }
 }

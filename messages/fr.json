@@ -39,7 +39,9 @@
     "pricing": "Tarifs",
     "goPro": "Passer à Pro",
     "newSheetLabel": "Grille",
-    "whatCanIPlay": "Que puis-je jouer ?"
+    "whatCanIPlay": "Que puis-je jouer ?",
+    "threeChordSongs": "Trois accords suffisent",
+    "noBarreSongs": "Sans barré"
   },
   "Footer": {
     "credits": "Crédits",
@@ -358,15 +360,11 @@
     "shelfSeeAll": "Tout voir",
     "shelf": {
       "mostViewed": "Les plus jouées",
-      "thisWeek": "Arrivées cette semaine",
-      "threeChords": "Trois accords suffisent",
-      "noBarre": "Sans barré"
+      "thisWeek": "Arrivées cette semaine"
     },
     "entries": {
       "decades": "Par décennie",
       "genres": "Par genre",
-      "levels": "Par niveau",
-      "keys": "Par tonalité",
       "artists": "Les artistes"
     },
     "showMore": "Voir {count, plural, one {la dernière grille} other {les # grilles suivantes}}"
@@ -1532,6 +1530,14 @@
       "whatCanIPlay": {
         "title": "Que jouer avec les accords que je connais",
         "description": "Cochez les accords que vous savez jouer et découvrez les morceaux que vous pouvez interpréter du début à la fin, sans en apprendre un seul de plus."
+      },
+      "threeChordSongs": {
+        "title": "Chansons à 3 accords",
+        "description": "Toutes les grilles d’accords qui se jouent avec trois accords ou moins : le répertoire du débutant, prêt à jouer."
+      },
+      "noBarreSongs": {
+        "title": "Chansons sans barré",
+        "description": "Les grilles d’accords qui ne demandent aucun accord barré, pour jouer sans buter sur le fa."
       }
     },
     "artist": {
@@ -2015,5 +2021,15 @@
     "showMore": "Voir {count, plural, one {la dernière} other {les # suivantes}}",
     "empty": "Aucune grille ne se joue entièrement avec ces accords. Cochez-en un de plus.",
     "browseAll": "Parcourir tout le catalogue"
+  },
+  "ThreeChordSongs": {
+    "title": "Trois accords suffisent",
+    "subtitle": "Les morceaux du catalogue qui se jouent entièrement avec trois accords ou moins. De quoi accompagner une soirée avec ce qu’on apprend la première semaine.",
+    "count": "{count, plural, =0 {Aucune grille pour l’instant} one {# grille} other {# grilles}}"
+  },
+  "NoBarreSongs": {
+    "title": "Sans barré",
+    "subtitle": "Les morceaux qui ne demandent aucun accord barré. Le barré est l’obstacle qui arrête le plus de débutants, bien avant la difficulté musicale.",
+    "count": "{count, plural, =0 {Aucune grille pour l’instant} one {# grille} other {# grilles}}"
   }
 }
