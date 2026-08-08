@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { getArtistSheetRefs, songKey, type PublicSheetRef } from '@/lib/public-sheet-index';
 import { sheetPath } from '@/lib/sheet-url';
+import { artistPath } from '@/lib/artist-url';
 
 /**
  * Bloc de maillage interne sous une grille : les autres versions du même morceau,
@@ -78,7 +79,7 @@ export async function RelatedSheets({
             </ul>
             <p className="mt-3">
               <Link
-                href={`/artist/${encodeURIComponent(artist)}`}
+                href={artistPath(artist)}
                 className="text-xs text-[var(--accent)] hover:underline"
               >
                 {t('allByArtist', { artist })}

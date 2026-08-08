@@ -12,6 +12,7 @@ import { Link } from '@/i18n/navigation';
 import { playPreviewAudio, stopPreviewAudio } from '@/lib/preview-audio';
 import { useCardTilt } from '@/lib/use-card-tilt';
 import { sheetPath } from '@/lib/sheet-url';
+import { artistPath } from '@/lib/artist-url';
 
 // Réexporté : plusieurs écrans l'importaient d'ici avant que la lecture ait son
 // propre module.
@@ -288,7 +289,7 @@ export function SheetCard({
             <div className="flex items-center gap-1.5 mt-0.5">
               {sheet.artist ? (
                 <Link
-                  href={`/artist/${encodeURIComponent(sheet.artist)}`}
+                  href={artistPath(sheet.artist)}
                   onClick={e => e.stopPropagation()}
                   className={`text-xs truncate hover:text-[var(--accent)] transition-colors ${artworkUrl ? 'text-white/75' : 'text-[var(--ink-light)]'}`}
                 >

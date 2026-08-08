@@ -10,6 +10,7 @@ import { buildAlternates, buildOpenGraph, NO_INDEX, SITE_NAME } from '@/lib/seo'
 import { JsonLd } from '@/components/seo/json-ld';
 import { musicCompositionSchema, breadcrumbSchema } from '@/lib/seo-schema';
 import { SongVersionsClient } from './song-versions-client';
+import { artistPath } from '@/lib/artist-url';
 
 interface SongPageProps {
   params: Promise<{ locale: string; title: string; artist: string }>;
@@ -119,7 +120,7 @@ export default async function SongPage({ params }: SongPageProps) {
             breadcrumbSchema(
               [
                 { name: SITE_NAME, path: '' },
-                { name: artist, path: `/artist/${rawArtist}` },
+                { name: artist, path: artistPath(artist) },
                 { name: title, path: `/song/${rawTitle}/${rawArtist}` },
               ],
               locale,

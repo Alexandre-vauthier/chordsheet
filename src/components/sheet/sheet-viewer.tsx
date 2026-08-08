@@ -34,6 +34,7 @@ import { useClickOutside } from '@/lib/use-click-outside';
 import { garderPourPlusTard } from '@/lib/pending-bookmark';
 import { cleMesure, deroulerStructure, positionCellule, positionMesure, structureUtile } from '@/lib/sheet-structure';
 import { InstrumentIcon } from '@/components/chord/instrument-icon';
+import { artistPath } from '@/lib/artist-url';
 
 const LS_KEY = 'chordsheet_instrument';
 
@@ -610,7 +611,7 @@ export function SheetViewer({ sheet, isBookmarked, onToggleBookmark, isTogglingB
             </div>
             {sheet.artist && (
               <Link
-                href={`/artist/${encodeURIComponent(sheet.artist)}`}
+                href={artistPath(sheet.artist)}
                 className="text-lg text-[var(--ink-light)] mt-1 block hover:text-[var(--accent)] transition-colors print:text-[var(--ink-light)]"
               >
                 {sheet.artist}

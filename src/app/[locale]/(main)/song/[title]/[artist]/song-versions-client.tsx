@@ -14,6 +14,7 @@ import type { Sheet, Difficulty } from '@/types';
 import { DIFFICULTY_LABELS } from '@/types';
 import { Link } from '@/i18n/navigation';
 import { sheetPath } from '@/lib/sheet-url';
+import { artistPath } from '@/lib/artist-url';
 
 interface SongVersionsClientProps {
   title: string;
@@ -205,7 +206,7 @@ export function SongVersionsClient({ title, artist, initialSheets }: SongVersion
         <div>
           <h1 className="font-playfair text-2xl font-bold text-[var(--ink)]">{title}</h1>
           <Link
-            href={`/artist/${encodeURIComponent(artist)}`}
+            href={artistPath(artist)}
             className="text-[var(--ink-light)] hover:text-[var(--accent)] transition-colors"
           >
             {artist}

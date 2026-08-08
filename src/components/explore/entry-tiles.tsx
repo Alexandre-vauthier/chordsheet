@@ -4,6 +4,7 @@ import type { PublicSheetRef } from '@/lib/public-sheet-index';
 import { artistesDe, portesDe, type EntryTile } from '@/lib/explore-shelves';
 import { CoverMosaic } from './cover-mosaic';
 import { ShelfScroller } from './shelf-scroller';
+import { artistPath } from '@/lib/artist-url';
 
 /**
  * Les portes d'entrée thématiques : décennie, genre, et les artistes.
@@ -123,7 +124,7 @@ export async function EntryTiles({ refs, locale }: { refs: PublicSheetRef[]; loc
             {artistes.map((a) => (
               <li key={a.name}>
                 <Link
-                  href={`/artist/${encodeURIComponent(a.name)}`}
+                  href={artistPath(a.name)}
                   className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm
                     bg-[var(--cell-bg)] border border-[var(--line)] text-[var(--ink)]
                     hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"

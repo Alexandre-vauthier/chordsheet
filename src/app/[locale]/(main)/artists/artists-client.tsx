@@ -11,6 +11,7 @@ import { useGenreLabel } from '@/lib/use-genre-labels';
 import { Input } from '@/components/ui/input';
 import type { Sheet } from '@/types';
 import { Link } from '@/i18n/navigation';
+import { artistPath } from '@/lib/artist-url';
 
 interface ArtistEntry {
   name: string;
@@ -235,7 +236,7 @@ function ArtistCard({ artist }: { artist: ArtistEntry }) {
 
   return (
     <Link
-      href={`/artist/${encodeURIComponent(artist.name)}`}
+      href={artistPath(artist.name)}
       className="group flex items-center gap-3 px-3 py-3 rounded-xl border border-[var(--line)]
         bg-[var(--cell-bg)] hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] transition-all"
     >

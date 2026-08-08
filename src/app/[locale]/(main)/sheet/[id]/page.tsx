@@ -11,6 +11,7 @@ import { musicCompositionSchema, breadcrumbSchema } from '@/lib/seo-schema';
 import { RelatedSheets } from '@/components/seo/related-sheets';
 import { sheetIdFromSegment, sheetSegment } from '@/lib/sheet-url';
 import { SheetViewClient } from './sheet-view-client';
+import { artistPath } from '@/lib/artist-url';
 
 /**
  * Grille lue côté serveur, uniquement si elle est publique ou non répertoriée.
@@ -156,7 +157,7 @@ export default async function ViewSheetPage({ params }: ViewSheetPageProps) {
             breadcrumbSchema(
               [
                 { name: SITE_NAME, path: '' },
-                { name: sheet.artist, path: `/artist/${encodeURIComponent(sheet.artist)}` },
+                { name: sheet.artist, path: artistPath(sheet.artist) },
                 { name: sheet.title, path: `/sheet/${sheetSegment(id, sheet.title, sheet.artist)}` },
               ],
               locale,

@@ -8,6 +8,7 @@ import { useSearchSuggestions } from '@/lib/use-search-suggestions';
 import { useDebouncedValue } from '@/lib/use-debounced-value';
 import type { Sheet } from '@/types';
 import { sheetPath } from '@/lib/sheet-url';
+import { artistPath } from '@/lib/artist-url';
 
 type SearchResult =
   | { kind: 'sheet'; key: string; sheet: Sheet }
@@ -78,7 +79,7 @@ export function NavSearch({
   };
 
   const choisir = (r: SearchResult) => {
-    router.push(r.kind === 'sheet' ? sheetPath(r.sheet) : `/artist/${encodeURIComponent(r.name)}`);
+    router.push(r.kind === 'sheet' ? sheetPath(r.sheet) : artistPath(r.name));
     terminer();
   };
 

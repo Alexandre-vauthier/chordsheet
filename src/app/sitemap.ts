@@ -4,6 +4,7 @@ import { alternateLanguages, localeUrl } from '@/lib/seo';
 import { sheetPath } from '@/lib/sheet-url';
 import { getPublicBands, getPublicSheetIndex, songKey } from '@/lib/public-sheet-index';
 import { CHORD_PAGE_INSTRUMENTS, chordNamesFor, chordSlug, isCommonChord } from '@/lib/chord-page';
+import { artistPath } from '@/lib/artist-url';
 
 export const revalidate = 86400;
 
@@ -157,8 +158,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entriesFor(`/user/${ownerId}`, date, 'weekly', 0.4),
   );
 
-  const artistEntries = [...artistDates].flatMap(([artist, date]) =>
-    entriesFor(`/artist/${encodeURIComponent(artist)}`, date, 'weekly', 0.5),
+  /*
+   * Une entrée par **slug**, et non par orthographe.
+   *
+   * « Francis Cabrel » et « Françis Cabrel » — une faute de frappe du catalogue — se
+   * ramènent au même slug, et la page réunit leurs grilles. En déclarer deux ferait
+   * explorer deux fois la même page. On garde la date la plus récente des deux.
+   */
+  const parSlug = new Map<string, { artist: string; date: Date }>();
+  for (const [artist, date] of artistDates) {
+    const slug = artistPath(artist);
+    const vu = parSlug.get(slug);
+    if (!vu || date > vu.date) parSlug.set(slug, { artist, date });
+  }
+
+  const artistEntries = [...parSlug.values()].flatMap(({ artist, date }) =>
+    entriesFor(artistPath(artist), date, 'weekly', 0.5),
   );
 
   // Une seule version d'un morceau : la page /song ne ferait que rediriger le

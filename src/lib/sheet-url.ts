@@ -15,6 +15,8 @@
  * l'identifiant, sans ambiguïté possible avec le slug qui le précède.
  */
 
+import { slugify } from './slug';
+
 /** Un identifiant Firestore automatique : vingt caractères alphanumériques. */
 const IDENTIFIANT = /^[A-Za-z0-9]{20}$/;
 
@@ -39,32 +41,7 @@ const LONGUEUR_MAX = 80;
  */
 export function sheetSlug(title?: string | null, artist?: string | null): string {
   const brut = [title, artist].map((v) => (v ?? '').trim()).filter(Boolean).join(' ');
-  if (!brut) return '';
-
-  const slug = brut
-    .toLowerCase()
-    // Les ligatures d'abord : `NFD` ne les décompose pas, et sans cette étape
-    // « cœur » deviendrait `c-ur`.
-    .replace(/œ/g, 'oe')
-    .replace(/æ/g, 'ae')
-    .replace(/ß/g, 'ss')
-    .replace(/ø/g, 'o')
-    .replace(/ł/g, 'l')
-    .replace(/đ|ð/g, 'd')
-    .replace(/þ/g, 'th')
-    // Puis les accents : on sépare la lettre de son signe, et on jette le signe.
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    // Tout ce qui n'est ni lettre ni chiffre devient un tiret, les tirets multiples
-    // se compactent, et les bords se nettoient.
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-
-  if (slug.length <= LONGUEUR_MAX) return slug;
-  const coupe = slug.slice(0, LONGUEUR_MAX);
-  const frontiere = coupe.lastIndexOf('-');
-  return (frontiere > 0 ? coupe.slice(0, frontiere) : coupe).replace(/-$/, '');
+  return slugify(brut, LONGUEUR_MAX);
 }
 
 /**
