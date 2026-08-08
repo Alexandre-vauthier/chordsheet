@@ -170,7 +170,9 @@ test('les deux langues portent exactement les mêmes clés', () => {
   const aplatir = (o: unknown, prefixe = '', sortie: string[] = []): string[] => {
     if (o && typeof o === 'object') {
       for (const [k, v] of Object.entries(o as Record<string, unknown>)) {
-        typeof v === 'string' ? sortie.push(prefixe ? `${prefixe}.${k}` : k) : aplatir(v, prefixe ? `${prefixe}.${k}` : k, sortie);
+        const chemin = prefixe ? `${prefixe}.${k}` : k;
+        if (typeof v === 'string') sortie.push(chemin);
+        else aplatir(v, chemin, sortie);
       }
     }
     return sortie;
