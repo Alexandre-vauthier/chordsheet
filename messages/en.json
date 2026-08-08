@@ -83,27 +83,13 @@
     "linkWhatToPlay": "I don't know what to play"
   },
   "Landing": {
-    "nav": {
-      "book": "My Book",
-      "bands": "Bands",
-      "features": "Features",
-      "how": "How it works",
-      "login": "Log in",
-      "register": "Sign up",
-      "myBook": "My Book",
-      "explore": "Explore",
-      "try": "Try it"
-    },
     "hero": {
-      "eyebrow": "The chord sheet library",
-      "tagline": "Alviena, the tool to create, share and play your chord charts.",
-      "subtitle": "The tool that was missing to organize your repertoire, rehearse and get on stage.",
-      "cta": "Create a free account",
-      "login": "Log in",
-      "sheetCount": "{count}+ sheets shared by the community",
-      "bookLoggedIn": "My Book",
-      "exploreLoggedIn": "Explore",
-      "scrollToFeatures": "See the features"
+      "title": "Your book of charts, and the band to go with it.",
+      "subtitle": "Write your chord charts, keep them in one place, and play them together — everyone on their own phone, all on the same bar.",
+      "cta": "Start my book, free",
+      "ctaNote": "Free, no card required.",
+      "bookLoggedIn": "Open my book",
+      "catalogue": "{grilles} public charts · {artistes} artists, shared by the musicians here"
     },
     "book": {
       "eyebrow": "The heart of Alviena",
@@ -124,37 +110,31 @@
       "ctaLoggedIn": "Open my Book →"
     },
     "bands": {
-      "badge": "Premium",
-      "title": "Play together.",
-      "titleBreak": "Learn together.",
-      "subtitle": "Create a band, invite by link. Share your sheets with every member instantly — whether they're on stage or in class.",
-      "musicTitle": "Bands",
-      "musicText": "The whole band plays the same version. Share a common repertoire, rehearse with the same chords, get on stage in sync.",
-      "musicItem1": "One shared repertoire for every member",
-      "musicItem2": "Everyone gets the sheets in their own book",
-      "musicItem3": "Shared setlists for gigs",
-      "musicItem4": "Synced concert mode to play together",
-      "teachersTitle": "Teachers",
-      "teachersText": "You create a sheet, the whole class gets it in their book. By class, by level, by instrument — no more printing or links lost in emails.",
-      "teachersItem1": "Distribute a sheet to a whole class in one click",
-      "teachersItem2": "Organize your students into separate groups",
-      "teachersItem3": "Every student has access without searching",
-      "teachersItem4": "Students can transpose and play on their own",
-      "pricingText": "One subscription for the whole band.",
-      "pricingSubtext": "Teacher, students, musicians — one shared license, not one per head.",
-      "cta": "Create my band →",
-      "ctaLoggedIn": "View my bands →"
+      "eyebrow": "Playing together",
+      "title": "Everyone on the same bar.",
+      "titleBreak": "Nothing to install.",
+      "subtitle": "A web page, a link, a QR code. Your bandmates join from their own phone, and nobody downloads a thing.",
+      "concertTitle": "Concert mode",
+      "concertText": "One member starts the song, and the chart scrolls at the same pace on every screen. Clocks are aligned with each other: the highlighted bar is the same everywhere, to the instant.",
+      "concertItem1": "Count-in and metronome for everyone at once",
+      "concertItem2": "Band setlists, in the order you play them",
+      "concertItem3": "Screens stay awake while you play",
+      "sessionTitle": "Open session",
+      "sessionText": "For a jam, a rehearsal, a lesson: share a six-character code or a QR code, and everyone follows the current chart on their own screen.",
+      "sessionItem1": "Joining doesn't even need an account",
+      "sessionItem2": "Anyone can put the next song up",
+      "sessionItem3": "Nothing to install, it runs in the browser",
+      "pricingText": "One Pro account covers the whole band.",
+      "pricingSubtext": "Whoever creates the band subscribes; everyone else joins for free, with the same tools.",
+      "cta": "Create my band",
+      "ctaLoggedIn": "My bands"
     },
     "features": {
-      "title": "Everything you need to play.",
-      "subtitle": "From creation to the stage, without friction.",
+      "title": "And everything else, to play.",
+      "subtitle": "The essentials below; the Tools menu holds the rest.",
       "editor": {
         "title": "Visual editor",
         "text": "Build your sheet in minutes. Import from a tab site or enter it cell by cell."
-      },
-      "concert": {
-        "title": "Concert mode",
-        "text": "Full-screen auto-scroll, adjustable BPM. Play without ever looking away."
       },
       "transpose": {
         "title": "Transposition",
@@ -164,10 +144,6 @@
         "title": "Every instrument",
         "text": "Guitar, piano, ukulele, bass, mandolin — chord diagrams generated automatically."
       },
-      "sharing": {
-        "title": "Sharing & setlists",
-        "text": "Publish your sheets, share by link, organize your sets for gigs."
-      },
       "print": {
         "title": "Clean printing",
         "text": "Optimized A4 layout with diagrams, repeats and sections — ready in one click."
@@ -176,43 +152,12 @@
         "title": "AI recognition",
         "text": "Snap a photo of sheet music or a paper chord chart — AI recognizes the chords and builds your sheet automatically."
       },
-      "dictionary": {
-        "title": "Chord library",
-        "text": "Guitar, piano, ukulele, mandolin and bass: 625 diagrams, and a page per chord with its notes and shapes."
-      },
       "learnMore": "Learn more",
       "import": {
         "title": "Text import",
         "text": "Paste a chart copied from a tab site: the parser finds the bars and durations on its own."
       },
-      "audio": {
-        "title": "Chords from audio",
-        "text": "A link or a file, and the chords are pulled from the sound. A draft to correct, not a miracle."
-      },
-      "tuner": {
-        "title": "Online tuner",
-        "text": "Guitar, bass, ukulele, mandolin and banjo, through the mic. Chromatic mode and cent readout."
-      },
-      "detect": {
-        "title": "Mic recognition",
-        "text": "Play a chord and it is named. And while you play, the chart highlights the current chord and scrolls along."
-      }
-    },
-    "how": {
-      "title": "Simple from the start.",
-      "subtitle": "Three steps from zero to the stage.",
-      "step1": {
-        "title": "Create or import",
-        "text": "Enter it visually, paste chords copied from a tab site, or snap a photo of sheet music — AI handles the rest."
-      },
-      "step2": {
-        "title": "Organize and share",
-        "text": "Store it in your book, build setlists, transpose. Share with your band or hand it to a whole class in one click."
-      },
-      "step3": {
-        "title": "Get on stage",
-        "text": "Turn on concert mode: full screen, BPM-synced scroll, drum machine. Keep the whole band in sync in real time."
-      }
+      "more": "See all the tools"
     },
     "finalCta": {
       "title": "Ready to organize",
@@ -222,11 +167,32 @@
       "browse": "Browse sheets",
       "ctaLoggedIn": "Create a sheet"
     },
-    "footer": {
-      "terms": "Terms of use",
-      "privacy": "Privacy",
-      "legalNotice": "Legal notice",
-      "copyright": "© {year} Alviena"
+    "showcase": {
+      "title": "Knockin' on Heaven's Door",
+      "artist": "Bob Dylan",
+      "key": "G",
+      "sectionA": "Verse",
+      "sectionB": "Chorus"
+    },
+    "who": {
+      "title": "You'll recognise yourself somewhere.",
+      "subtitle": "Four ways to use it, all free to start.",
+      "solo": {
+        "title": "On your own",
+        "text": "The notebook where you write down what you can play, and find it again six months later without hunting."
+      },
+      "band": {
+        "title": "In a covers band",
+        "text": "One shared repertoire, setlists in gig order, and the same version for everyone."
+      },
+      "teacher": {
+        "title": "Teaching",
+        "text": "You write the chart, your student has it the same evening. No more photocopies or links lost in email."
+      },
+      "choir": {
+        "title": "Choir or worship",
+        "text": "Transpose to the voice that's singing, print cleanly, or put the same chart in front of everyone."
+      }
     }
   },
   "Genres": {

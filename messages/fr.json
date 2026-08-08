@@ -83,27 +83,13 @@
     "linkWhatToPlay": "Je ne sais pas quoi jouer"
   },
   "Landing": {
-    "nav": {
-      "book": "Mon Book",
-      "bands": "Groupes",
-      "features": "Fonctionnalités",
-      "how": "Comment ça marche",
-      "login": "Se connecter",
-      "register": "Créer un compte",
-      "myBook": "Mon Book",
-      "explore": "Explorer",
-      "try": "Essayer"
-    },
     "hero": {
-      "eyebrow": "La librairie de grilles d'accords",
-      "tagline": "Alviena, l'outil pour créer, partager et jouer tes grilles d'accords.",
-      "subtitle": "L'outil qu'il manquait pour organiser ton répertoire, répéter et monter sur scène.",
-      "cta": "Créer un compte gratuit",
-      "login": "Se connecter",
-      "sheetCount": "{count}+ grilles partagées par la communauté",
-      "bookLoggedIn": "Mon Book",
-      "exploreLoggedIn": "Explorer",
-      "scrollToFeatures": "Voir les fonctionnalités"
+      "title": "Ton book de grilles, et le groupe qui va avec.",
+      "subtitle": "Écris tes grilles d'accords, garde-les au même endroit, et joue-les à plusieurs — chacun sur son téléphone, tous sur la même mesure.",
+      "cta": "Créer mon book gratuit",
+      "ctaNote": "Gratuit, sans carte bancaire.",
+      "bookLoggedIn": "Ouvrir mon book",
+      "catalogue": "{grilles} grilles publiques · {artistes} artistes, partagés par les musiciens du site"
     },
     "book": {
       "eyebrow": "Le cœur d'Alviena",
@@ -124,37 +110,31 @@
       "ctaLoggedIn": "Ouvrir mon book →"
     },
     "bands": {
-      "badge": "Premium",
-      "title": "Jouez ensemble.",
-      "titleBreak": "Apprenez ensemble.",
-      "subtitle": "Créez un groupe, invitez par lien. Partagez vos grilles avec tous les membres instantanément — qu'ils soient sur scène ou en cours.",
-      "musicTitle": "Groupes de musique",
-      "musicText": "Tout le groupe joue la même version. Partagez votre répertoire commun, répétez avec les mêmes accords, montez sur scène en synchronisation.",
-      "musicItem1": "Un répertoire commun pour tous les membres",
-      "musicItem2": "Chacun a les grilles dans son propre book",
-      "musicItem3": "Setlists partagées pour les concerts",
-      "musicItem4": "Mode concert synchronisé pour jouer ensemble",
-      "teachersTitle": "Professeurs",
-      "teachersText": "Vous créez une grille, toute la classe la reçoit dans son book. Par classe, par niveau, par instrument — fini l'impression et les liens perdus dans les emails.",
-      "teachersItem1": "Distribuez une grille à toute une classe en un clic",
-      "teachersItem2": "Organisez vos élèves en groupes séparés",
-      "teachersItem3": "Chaque élève accède sans avoir à chercher",
-      "teachersItem4": "Les élèves peuvent transposer et jouer en autonomie",
-      "pricingText": "Un seul abonnement pour tout le groupe.",
-      "pricingSubtext": "Professeur, élèves, musiciens — une licence commune, pas une par tête.",
-      "cta": "Créer mon groupe →",
-      "ctaLoggedIn": "Voir mes groupes →"
+      "eyebrow": "Jouer ensemble",
+      "title": "Tout le monde sur la même mesure.",
+      "titleBreak": "Sans rien installer.",
+      "subtitle": "Une page web, un lien, un QR code. Vos musiciens rejoignent depuis leur propre téléphone, et personne ne télécharge quoi que ce soit.",
+      "concertTitle": "Le mode concert",
+      "concertText": "Un membre lance le morceau, et la grille défile au même rythme sur tous les écrans. Les horloges sont recalées entre elles : la mesure surlignée est la même partout, à l'instant près.",
+      "concertItem1": "Décompte de départ et métronome pour tout le monde",
+      "concertItem2": "Setlists de groupe, dans l'ordre du concert",
+      "concertItem3": "L'écran reste allumé pendant que vous jouez",
+      "sessionTitle": "La session ouverte",
+      "sessionText": "Pour un bœuf, une répétition, un cours : on partage un code à six caractères ou un QR code, et chacun suit la grille en cours sur son écran.",
+      "sessionItem1": "Rejoindre ne demande même pas de compte",
+      "sessionItem2": "N'importe qui peut proposer le morceau suivant",
+      "sessionItem3": "Rien à installer, ça marche dans le navigateur",
+      "pricingText": "Un seul compte Pro suffit pour tout le groupe.",
+      "pricingSubtext": "Celui qui crée le groupe s'abonne ; les autres rejoignent gratuitement, et jouent avec les mêmes outils.",
+      "cta": "Créer mon groupe",
+      "ctaLoggedIn": "Mes groupes"
     },
     "features": {
-      "title": "Tout ce qu'il faut pour jouer.",
-      "subtitle": "De la création à la scène, sans friction.",
+      "title": "Et tout le reste, pour jouer.",
+      "subtitle": "L'essentiel ci-dessous ; le menu Outils porte le reste.",
       "editor": {
         "title": "Éditeur visuel",
         "text": "Crée ta grille en quelques minutes. Import depuis un site de tablatures ou saisie case par case."
-      },
-      "concert": {
-        "title": "Mode concert",
-        "text": "Défilement automatique plein écran, BPM réglable. Joue sans jamais décrocher les yeux."
       },
       "transpose": {
         "title": "Transposition",
@@ -164,10 +144,6 @@
         "title": "Tous les instruments",
         "text": "Guitare, piano, ukulélé, basse, mandoline — diagrammes d'accords générés automatiquement."
       },
-      "sharing": {
-        "title": "Partage & setlists",
-        "text": "Publie tes grilles, partage par lien, organise tes sets pour les concerts."
-      },
       "print": {
         "title": "Impression propre",
         "text": "Mise en page optimisée A4 avec diagrammes, répétitions et sections — prête en un clic."
@@ -176,43 +152,12 @@
         "title": "Détection IA",
         "text": "Prends en photo une partition ou une grille papier — l'IA reconnaît les accords et crée ta grille automatiquement."
       },
-      "dictionary": {
-        "title": "Bibliothèque d'accords",
-        "text": "Guitare, piano, ukulélé, mandoline et basse : 625 diagrammes, et une page par accord avec ses notes et ses positions."
-      },
       "learnMore": "En savoir plus",
       "import": {
         "title": "Import de texte",
         "text": "Colle une grille copiée sur un site de tablatures : l'analyse retrouve les mesures et les durées toute seule."
       },
-      "audio": {
-        "title": "Accords depuis un audio",
-        "text": "Un lien ou un fichier, et les accords sont extraits du son. Un brouillon à corriger, pas un miracle."
-      },
-      "tuner": {
-        "title": "Accordeur en ligne",
-        "text": "Guitare, basse, ukulélé, mandoline et banjo, au micro. Mode chromatique et écart en cents."
-      },
-      "detect": {
-        "title": "Reconnaissance au micro",
-        "text": "Joue un accord, il est identifié. Et pendant que tu joues, la grille surligne l'accord en cours et défile."
-      }
-    },
-    "how": {
-      "title": "Simple dès le départ.",
-      "subtitle": "Trois étapes pour passer de zéro à la scène.",
-      "step1": {
-        "title": "Crée ou importe",
-        "text": "Saisis visuellement, colle des accords copiés sur un site de tablatures, ou prends en photo une partition — l'IA s'occupe du reste."
-      },
-      "step2": {
-        "title": "Organise et partage",
-        "text": "Range dans ton book, crée des setlists, transpose. Partage avec ton groupe ou distribue à toute une classe en un clic."
-      },
-      "step3": {
-        "title": "Monte sur scène",
-        "text": "Active le mode concert : plein écran, défilement au BPM, boîte à rythmes. Synchronise tout le groupe en temps réel."
-      }
+      "more": "Voir tous les outils"
     },
     "finalCta": {
       "title": "Prêt à organiser",
@@ -222,11 +167,32 @@
       "browse": "Voir les grilles",
       "ctaLoggedIn": "Créer une grille"
     },
-    "footer": {
-      "terms": "CGU",
-      "privacy": "Confidentialité",
-      "legalNotice": "Mentions légales",
-      "copyright": "© {year} Alviena"
+    "showcase": {
+      "title": "Knockin' on Heaven's Door",
+      "artist": "Bob Dylan",
+      "key": "G",
+      "sectionA": "Couplet",
+      "sectionB": "Refrain"
+    },
+    "who": {
+      "title": "Vous vous reconnaîtrez quelque part.",
+      "subtitle": "Quatre façons de s'en servir, toutes gratuites pour commencer.",
+      "solo": {
+        "title": "Seul chez soi",
+        "text": "Le carnet où l'on note ce qu'on sait jouer, et qu'on retrouve six mois plus tard sans le chercher."
+      },
+      "band": {
+        "title": "En groupe de reprises",
+        "text": "Un répertoire commun, des setlists dans l'ordre du concert, et la même version pour tout le monde."
+      },
+      "teacher": {
+        "title": "En cours",
+        "text": "Vous écrivez la grille, l'élève l'a le soir même. Fini les photocopies et les liens perdus dans les mails."
+      },
+      "choir": {
+        "title": "En chorale, à l'église",
+        "text": "Transposez à la voix qui chante, imprimez proprement, ou projetez la même grille à tous."
+      }
     }
   },
   "Genres": {

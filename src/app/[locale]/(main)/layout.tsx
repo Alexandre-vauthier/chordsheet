@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 
 import { useAuth } from '@/lib/auth-context';
-import { LiveSessionProvider } from '@/lib/live-session-context';
 import { AddToCollectionProvider } from '@/lib/add-to-collection-context';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
@@ -112,18 +111,19 @@ export default function MainLayout({
   }
 
   return (
-    <LiveSessionProvider>
-      <AddToCollectionProvider>
-        <div className="min-h-screen flex flex-col">
-          <Navbar />
-          <ConcertBanner />
-          <LiveSessionBanner />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <OfflineBanner />
-          <NavigationHorsLigne />
-        </div>
-      </AddToCollectionProvider>
-    </LiveSessionProvider>
+    /* `LiveSessionProvider` est remonté dans `Providers`, pour que la page
+       d'accueil — qui vit hors de ce groupe de routes — puisse porter la même
+       barre de navigation. Voir le commentaire de `components/providers.tsx`. */
+    <AddToCollectionProvider>
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <ConcertBanner />
+        <LiveSessionBanner />
+        <main className="flex-1">{children}</main>
+        <Footer />
+        <OfflineBanner />
+        <NavigationHorsLigne />
+      </div>
+    </AddToCollectionProvider>
   );
 }
