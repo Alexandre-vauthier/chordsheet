@@ -19,6 +19,7 @@ import type { Sheet } from '@/types';
 import { createEmptySet, GENRES, DIFFICULTY_OPTIONS, type Difficulty } from '@/types';
 import { Link, useRouter } from '@/i18n/navigation';
 import { usePrechargement } from '@/lib/use-offline';
+import { sheetPath } from '@/lib/sheet-url';
 
 type Tab = 'all' | 'mine' | 'book' | 'sets';
 type SortOption = 'recent' | 'rated' | 'viewed';
@@ -193,7 +194,7 @@ export default function DashboardPage() {
       : displayedAll;
     if (!pool.length) return;
     const pick = pool[Math.floor(Math.random() * pool.length)];
-    router.push(`/sheet/${pick.id}`);
+    router.push(sheetPath(pick));
   }, [tab, displayedSheets, displayedBookmarks, displayedAll, router]);
 
   const isCurrentlyLoading =

@@ -8,6 +8,7 @@ import { getDb } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import type { Sheet } from '@/types';
 import { Link, useRouter } from '@/i18n/navigation';
+import { sheetPath } from '@/lib/sheet-url';
 
 export default function PendingPage() {
   const t = useTranslations('Pending');
@@ -81,7 +82,7 @@ export default function PendingPage() {
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <Link
-                  href={`/sheet/${sheet.id}`}
+                  href={sheetPath(sheet)}
                   className="px-3 py-1.5 rounded-lg border border-[var(--line)] text-xs text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
                 >
                   Consulter

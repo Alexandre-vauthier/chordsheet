@@ -11,6 +11,7 @@ import { fromFirestore, toFirestore } from '@/lib/firestore-helpers';
 import { SheetEditor } from '@/components/sheet/sheet-editor';
 import type { Sheet, NewSheet } from '@/types';
 import { useRouter } from '@/i18n/navigation';
+import { sheetIdFromSegment } from '@/lib/sheet-url';
 
 interface EditSheetPageProps {
   params: Promise<{ id: string }>;
@@ -18,7 +19,10 @@ interface EditSheetPageProps {
 
 export default function EditSheetPage({ params }: EditSheetPageProps) {
   const t = useTranslations('EditSheet');
-  const { id } = use(params);
+  // Même lecture que la page de consultation : on édite la grille dont l'adresse
+  // porte l'identifiant, quel que soit le slug qui le précède.
+  const { id: segment } = use(params);
+  const id = sheetIdFromSegment(segment);
   const router = useRouter();
   const { user, isAdmin } = useAuth();
   const [sheet, setSheet] = useState<Sheet | null>(null);

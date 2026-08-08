@@ -1,4 +1,5 @@
 import type { Sheet } from '@/types';
+import { sheetPath } from '@/lib/sheet-url';
 
 /**
  * Clé de regroupement d'un même morceau, insensible à la casse et aux espaces.
@@ -71,7 +72,7 @@ export function groupSheetsBySong(sheets: Sheet[]): SheetGroup[] {
     count: group.length,
     href:
       group.length === 1
-        ? `/sheet/${group[0].id}`
+        ? sheetPath(group[0])
         : `/song/${encodeURIComponent(group[0].title)}/${encodeURIComponent(group[0].artist || '')}`,
     bestRating: meilleureNote(group),
   }));

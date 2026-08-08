@@ -11,6 +11,7 @@ import { useAddToCollection } from '@/lib/add-to-collection-context';
 import { Link } from '@/i18n/navigation';
 import { playPreviewAudio, stopPreviewAudio } from '@/lib/preview-audio';
 import { useCardTilt } from '@/lib/use-card-tilt';
+import { sheetPath } from '@/lib/sheet-url';
 
 // Réexporté : plusieurs écrans l'importaient d'ici avant que la lecture ait son
 // propre module.
@@ -84,7 +85,7 @@ export function SheetCard({
   const fermerMenu = useCallback(() => setMenuOpen(false), []);
   const tilt = useCardTilt<HTMLDivElement>(18, fermerMenu);
 
-  const destination = href ?? `/sheet/${sheet.id}`;
+  const destination = href ?? sheetPath(sheet);
   const gradient = hashGradient((sheet.title ?? '') + (sheet.artist ?? ''));
 
   const handlePreview = (e: React.MouseEvent) => {

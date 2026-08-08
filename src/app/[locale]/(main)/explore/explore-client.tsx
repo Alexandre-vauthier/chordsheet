@@ -19,6 +19,7 @@ import { WelcomeBanner } from '@/components/explore/welcome-banner';
 import { GENRES, DIFFICULTY_OPTIONS, type Difficulty } from '@/types';
 import type { Sheet } from '@/types';
 import { useRouter } from '@/i18n/navigation';
+import { sheetPath } from '@/lib/sheet-url';
 
 type SortOption = 'recent' | 'rated' | 'viewed';
 
@@ -459,7 +460,7 @@ export function ExploreClient({
   const handleRandom = () => {
     if (sheets.length === 0) return;
     const random = sheets[Math.floor(Math.random() * sheets.length)];
-    router.push(`/sheet/${random.id}`);
+    router.push(sheetPath(random));
   };
 
   return (

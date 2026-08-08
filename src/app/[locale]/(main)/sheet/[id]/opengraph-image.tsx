@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { getAdminDb } from '@/lib/firebase-admin';
 import { SITE_NAME } from '@/lib/seo';
+import { sheetIdFromSegment } from '@/lib/sheet-url';
 
 /**
  * Image de partage propre à chaque grille.
@@ -71,8 +72,10 @@ async function loadSheet(id: string): Promise<OgSheet | null> {
 }
 
 export default async function Image({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const sheet = await loadSheet(id);
+  const { id: segment } = await params;
+  // Le segment porte désormais un slug devant l'identifiant : on lit l'identifiant
+  // comme la page le fait, sinon l'image serait absente sur la nouvelle forme.
+  const sheet = await loadSheet(sheetIdFromSegment(segment));
 
   // Grille privée ou lecture indisponible : on rend quand même une image, à la
   // marque. Un 404 sur l'image casserait l'aperçu du lien.

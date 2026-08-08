@@ -38,6 +38,7 @@ import { DictationBar } from './dictation-bar';
 import { StructurePanel } from '@/components/sheet/structure-panel';
 import { Switch } from '@/components/ui/toggle';
 import { deroulerStructure, structureUtile } from '@/lib/sheet-structure';
+import { sheetPath } from '@/lib/sheet-url';
 
 // Filtre local pour les grilles privées de l'utilisateur (petit lot déjà chargé,
 // pas besoin d'une requête Firestore dédiée par frappe).
@@ -1585,7 +1586,7 @@ export function SheetEditor({ initialSheet, onSave, isSaving = false }: SheetEdi
             </Button>
             {('id' in sheet) && (
               <Link
-                href={`/sheet/${sheet.id}`}
+                href={sheetPath(sheet)}
                 className="px-4 py-2 rounded-lg border border-[var(--line)] text-sm font-medium text-[var(--ink-light)] hover:text-[var(--ink)] hover:border-[var(--ink-faint)] transition-colors"
               >
                 {t('view')}

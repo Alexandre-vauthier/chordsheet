@@ -20,6 +20,7 @@ import { PhotoPicker } from '@/components/ui/photo-picker';
 import { groupPhotoPath } from '@/lib/upload-image';
 import type { Group, GroupRole, Sheet, NewSheet, Set, InstrumentId } from '@/types';
 import { useClickOutside } from '@/lib/use-click-outside';
+import { sheetPath } from '@/lib/sheet-url';
 
 interface MemberInfo {
   id: string;
@@ -77,7 +78,7 @@ function SheetRow({
       </div>
 
       {/* Titre + artiste */}
-      <Link href={`/sheet/${sheet.id}`} className="flex-1 min-w-0 hover:opacity-75 transition-opacity">
+      <Link href={sheetPath(sheet)} className="flex-1 min-w-0 hover:opacity-75 transition-opacity">
         <div className="text-sm font-medium text-[var(--ink)] truncate">{sheet.title}</div>
         <div className="text-xs text-[var(--ink-faint)] truncate">{sheet.artist}</div>
       </Link>

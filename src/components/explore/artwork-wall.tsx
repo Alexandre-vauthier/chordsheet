@@ -2,6 +2,7 @@
 
 import { useArtwork } from '@/lib/use-artwork';
 import { Link } from '@/i18n/navigation';
+import { sheetPath } from '@/lib/sheet-url';
 
 /**
  * Un mur de pochettes en mouvement lent.
@@ -46,7 +47,7 @@ export function CouvertureDefilante({
 
   return (
     <Link
-      href={href ?? `/sheet/${sheet.id}`}
+      href={href ?? sheetPath(sheet)}
       tabIndex={decor ? -1 : undefined}
       aria-hidden={decor || undefined}
       className="relative block aspect-square rounded-2xl overflow-hidden mb-3 shrink-0"

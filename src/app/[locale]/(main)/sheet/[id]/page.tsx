@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { permanentRedirect } from 'next/navigation';
 import { cache } from 'react';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { getAdminDb } from '@/lib/firebase-admin';
@@ -8,6 +9,7 @@ import { buildAlternates, buildOpenGraph, NO_INDEX, SITE_NAME } from '@/lib/seo'
 import { JsonLd } from '@/components/seo/json-ld';
 import { musicCompositionSchema, breadcrumbSchema } from '@/lib/seo-schema';
 import { RelatedSheets } from '@/components/seo/related-sheets';
+import { sheetIdFromSegment, sheetSegment } from '@/lib/sheet-url';
 import { SheetViewClient } from './sheet-view-client';
 
 /**
@@ -48,12 +50,15 @@ interface ViewSheetPageProps {
 }
 
 export async function generateMetadata({ params }: ViewSheetPageProps): Promise<Metadata> {
-  const { locale, id } = await params;
+  const { locale, id: segment } = await params;
+  const id = sheetIdFromSegment(segment);
   const found = await getPublicSheet(id);
   if (!found) return {};
 
   const { sheet, unlisted } = found;
-  const path = `/sheet/${id}`;
+  // Le canonique annonce la forme à jour, jamais celle qui a été demandée : une
+  // vieille adresse pointe donc explicitement vers la nouvelle.
+  const path = `/sheet/${sheetSegment(id, sheet.title, sheet.artist)}`;
 
   // Ces textes etaient ecrits en dur, en francais et sous l'ancien nom : les pages
   // anglaises servaient donc une description francaise, et Google affichait encore
@@ -85,11 +90,37 @@ export async function generateMetadata({ params }: ViewSheetPageProps): Promise<
 }
 
 export default async function ViewSheetPage({ params }: ViewSheetPageProps) {
-  const { locale, id } = await params;
+  const { locale, id: segment } = await params;
   setRequestLocale(locale);
 
+  /*
+   * L'identifiant est la seule clé de résolution : le slug qui le précède n'est
+   * jamais lu. C'est ce qui permet de renommer un morceau sans casser les liens
+   * déjà partagés.
+   */
+  const id = sheetIdFromSegment(segment);
   const found = await getPublicSheet(id);
   const sheet = found?.sheet ?? null;
+
+  /*
+   * Une seule adresse par grille.
+   *
+   * L'ancienne forme (l'identifiant nu) et les slugs périmés — un titre renommé —
+   * mènent à la forme à jour, en redirection **permanente** : la cible ne dépend
+   * pas du visiteur, contrairement aux redirections de langue, qui doivent rester
+   * temporaires puisque leur cible dépend de la langue demandée.
+   *
+   * Rien n'est redirigé quand la grille n'est pas trouvée. C'est le cas d'une
+   * grille privée : le serveur ne la lit pas, il ignore donc son titre et ne peut
+   * pas calculer son slug. C'est le client authentifié qui l'affiche, et rediriger
+   * ici enverrait vers une adresse qu'on ne saurait pas construire.
+   *
+   * La langue est conservée : on reste dans le préfixe demandé.
+   */
+  if (sheet) {
+    const canonique = sheetSegment(id, sheet.title, sheet.artist);
+    if (segment !== canonique) permanentRedirect(`/${locale}/sheet/${canonique}`);
+  }
 
   return (
     <>
@@ -104,13 +135,13 @@ export default async function ViewSheetPage({ params }: ViewSheetPageProps) {
               title: sheet.title,
               artist: sheet.artist,
               musicalKey: sheet.key,
-              path: `/sheet/${id}`,
+              path: `/sheet/${sheetSegment(id, sheet.title, sheet.artist)}`,
             }),
             breadcrumbSchema(
               [
                 { name: SITE_NAME, path: '' },
                 { name: sheet.artist, path: `/artist/${encodeURIComponent(sheet.artist)}` },
-                { name: sheet.title, path: `/sheet/${id}` },
+                { name: sheet.title, path: `/sheet/${sheetSegment(id, sheet.title, sheet.artist)}` },
               ],
               locale,
             ),

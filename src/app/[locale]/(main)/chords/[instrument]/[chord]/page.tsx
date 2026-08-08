@@ -28,6 +28,7 @@ import { getSheetsWithChord } from '@/lib/public-sheet-index';
 import { isPianoChord } from '@/types';
 import type { InstrumentId, StringChord } from '@/types';
 import { getInstrumentNames } from '@/lib/instrument-names';
+import { sheetPath } from '@/lib/sheet-url';
 
 interface PageProps {
   params: Promise<{ locale: string; instrument: string; chord: string }>;
@@ -150,7 +151,7 @@ export default async function ChordPage({ params }: PageProps) {
           <ul className="space-y-1.5">
             {sheets.map((sheet) => (
               <li key={sheet.id}>
-                <Link href={`/sheet/${sheet.id}`} className="text-sm text-[var(--accent)] hover:underline">
+                <Link href={sheetPath(sheet)} className="text-sm text-[var(--accent)] hover:underline">
                   {sheet.title}
                 </Link>
                 {sheet.artist && <span className="text-sm text-[var(--ink-faint)]"> — {sheet.artist}</span>}

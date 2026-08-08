@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server';
 import { Link } from '@/i18n/navigation';
 import { getArtistSheetRefs, songKey, type PublicSheetRef } from '@/lib/public-sheet-index';
+import { sheetPath } from '@/lib/sheet-url';
 
 /**
  * Bloc de maillage interne sous une grille : les autres versions du même morceau,
@@ -96,7 +97,7 @@ function SheetChip({ sheet, label }: { sheet: PublicSheetRef; label: string }) {
   return (
     <li>
       <Link
-        href={`/sheet/${sheet.id}`}
+        href={sheetPath(sheet)}
         className="inline-block px-3 py-1.5 rounded-lg border border-[var(--line)] bg-[var(--cell-bg)]
           text-xs text-[var(--ink-light)] hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
       >

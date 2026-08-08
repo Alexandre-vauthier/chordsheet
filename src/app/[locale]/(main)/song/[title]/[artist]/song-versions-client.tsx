@@ -13,6 +13,7 @@ import { useChordNotation } from '@/lib/use-chord-notation';
 import type { Sheet, Difficulty } from '@/types';
 import { DIFFICULTY_LABELS } from '@/types';
 import { Link } from '@/i18n/navigation';
+import { sheetPath } from '@/lib/sheet-url';
 
 interface SongVersionsClientProps {
   title: string;
@@ -41,7 +42,7 @@ function VersionRow({ sheet, isBookmarked, onToggleBookmark }: {
 
   return (
     <Link
-      href={`/sheet/${sheet.id}`}
+      href={sheetPath(sheet)}
       className="flex items-center gap-4 px-4 py-3 rounded-xl border border-[var(--line)] bg-[var(--cell-bg)]
         hover:border-[var(--accent)] hover:shadow-sm transition-all group"
     >

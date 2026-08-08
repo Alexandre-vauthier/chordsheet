@@ -7,6 +7,7 @@ import { playPreviewAudio, stopPreviewAudio } from '@/lib/preview-audio';
 import { Link } from '@/i18n/navigation';
 import { useGenreLabel, useDifficultyLabel } from '@/lib/use-genre-labels';
 import { DIFFICULTY_LABELS } from '@/types';
+import { sheetPath } from '@/lib/sheet-url';
 
 export interface Candidate {
   id: string;
@@ -407,7 +408,7 @@ export function WhatToPlayClient({ candidates }: { candidates: Candidate[] }) {
       </div>
 
       <Link
-        href={`/sheet/${courant.id}`}
+        href={sheetPath(courant)}
         className="mt-6 mx-auto block w-full max-w-xl text-center px-6 py-3 rounded-lg bg-[var(--accent)] hover:bg-[#a83d25]
           text-white font-medium transition-colors"
       >

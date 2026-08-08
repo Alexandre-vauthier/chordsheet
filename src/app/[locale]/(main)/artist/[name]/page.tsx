@@ -10,6 +10,7 @@ import { musicGroupSchema, breadcrumbSchema } from '@/lib/seo-schema';
 import { decodeParam } from '@/lib/decode-param';
 import { buildAlternates, buildOpenGraph, localeUrl, NO_INDEX, SITE_NAME } from '@/lib/seo';
 import { ArtistViewClient } from './artist-view-client';
+import { sheetPath } from '@/lib/sheet-url';
 
 interface ArtistPageProps {
   params: Promise<{ locale: string; name: string }>;
@@ -95,7 +96,7 @@ export default async function ArtistPage({ params }: ArtistPageProps) {
               name: artistName,
               path: `/artist/${name}`,
               // On ne décrit que ce que la page rend réellement.
-              items: sheets.map((s) => ({ title: s.title, url: localeUrl(locale, `/sheet/${s.id}`) })),
+              items: sheets.map((s) => ({ title: s.title, url: localeUrl(locale, sheetPath(s)) })),
             }),
             breadcrumbSchema(
               [{ name: SITE_NAME, path: '' }, { name: artistName, path: `/artist/${name}` }],

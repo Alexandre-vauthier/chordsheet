@@ -1,6 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { routing } from '@/i18n/routing';
 import { alternateLanguages, localeUrl } from '@/lib/seo';
+import { sheetPath } from '@/lib/sheet-url';
 import { getPublicBands, getPublicSheetIndex, songKey } from '@/lib/public-sheet-index';
 import { CHORD_PAGE_INSTRUMENTS, chordNamesFor, chordSlug, isCommonChord } from '@/lib/chord-page';
 
@@ -101,8 +102,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entriesFor(`/band/${b.id}`, b.updatedAt ?? now, 'weekly', 0.6),
   );
 
+  /*
+   * La forme slug + identifiant, celle vers laquelle la page redirige. Déclarer
+   * l'ancienne aurait fait explorer 986 redirections pour rien.
+   *
+   * `entriesFor` produit les `xhtml:link` par `alternateLanguages()`, la même
+   * fonction que le `<head>` des pages : les deux langues de chaque grille
+   * s'annoncent donc sous la même adresse, sans second calcul qui pourrait diverger.
+   */
   const sheetEntries = sheets.flatMap(s =>
-    entriesFor(`/sheet/${s.id}`, s.updatedAt ?? now, 'weekly', 0.6),
+    entriesFor(sheetPath(s), s.updatedAt ?? now, 'weekly', 0.6),
   );
 
   // Les pages d'artiste et de morceau ne sont pas stockées : elles se déduisent du

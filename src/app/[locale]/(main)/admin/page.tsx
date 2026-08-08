@@ -12,6 +12,7 @@ import type { Sheet, UserWithStats } from '@/types';
 import { Button } from '@/components/ui/button';
 import { AdminUsersTable } from '@/components/admin/users-table';
 import { Link, useRouter } from '@/i18n/navigation';
+import { sheetPath } from '@/lib/sheet-url';
 interface Stats {
   totalUsers: number;
   totalSheets: number;
@@ -603,7 +604,7 @@ export default function AdminPage() {
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   <Link
-                    href={`/sheet/${sheet.id}`}
+                    href={sheetPath(sheet)}
                     className="font-medium text-[var(--ink)] hover:text-[var(--accent)] truncate"
                   >
                     {sheet.title || t('untitled')}
