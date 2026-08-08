@@ -123,8 +123,21 @@ const getServerBand = cache(async (id: string): Promise<ServerBand> => {
   }
 });
 
-/** Revalidation horaire, comme les autres pages publiques dérivées du catalogue. */
-export const revalidate = 3600;
+/*
+ * Pas de `revalidate` ici, et c'est délibéré.
+ *
+ * Il y en avait un, et il ne servait à rien : `next build` classe cette route
+ * `ƒ Dynamic — server-rendered on demand`, elle est donc rendue à chaque requête
+ * et aucune durée de cache ne s'y applique. Mesuré en production : la réponse
+ * porte `cache-control: no-store` et deux requêtes de suite ne rendent pas le
+ * même HTML. La déclaration laissait croire à une mise en cache inexistante, ce
+ * qui est pire que son absence — on raisonne faux sur la fraîcheur des données.
+ *
+ * La cause n'est pas une API dynamique : avec `dynamic = 'error'`, la page se rend
+ * statiquement sans broncher. C'est l'absence de `generateStaticParams` sur un
+ * segment dynamique qui suffit à faire basculer Next en rendu par requête.
+ * Le jour où l'on voudra cacher ces pages, c'est là qu'il faudra revenir.
+ */
 
 export async function generateMetadata({ params }: BandPageProps): Promise<Metadata> {
   const { locale, id } = await params;

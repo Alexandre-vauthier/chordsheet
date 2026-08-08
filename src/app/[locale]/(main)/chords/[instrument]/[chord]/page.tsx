@@ -44,10 +44,25 @@ interface PageProps {
  *
  * Pas de `generateStaticParams` : 443 accords × 2 langues feraient 886 pages
  * pré-rendues à chaque déploiement, pour un trafic qui se concentrera sur quelques
- * dizaines d'entre elles. Rendu à la demande puis mis en cache, c'est le même
- * résultat pour un temps de construction inchangé.
+ * dizaines d'entre elles.
+ *
+ * **Mais « rendu à la demande puis mis en cache » était faux**, et c'est ce que la
+ * phrase promettait ici. Sans `generateStaticParams`, `next build` classe la route
+ * `ƒ Dynamic — server-rendered on demand` : chaque requête est rendue, rien n'est
+ * gardé. Mesuré en production — la réponse porte `cache-control: no-store` et deux
+ * requêtes de suite ne rendent pas le même HTML. Le `revalidate = 86400` qui
+ * accompagnait ce commentaire était donc sans effet, et il a été retiré.
+ *
+ * Ce n'est pas une API dynamique qui l'impose : avec `dynamic = 'error'`, la page se
+ * rend statiquement sans broncher. C'est bien la seule absence de
+ * `generateStaticParams`.
+ *
+ * **Le levier, mesuré.** Ajouter `generateStaticParams() { return [] }` fait passer
+ * la route de `ƒ` à `●` : aucune page n'est pré-rendue à la construction, mais les
+ * pages demandées sont alors mises en cache et `revalidate` reprend son effet.
+ * C'est exactement l'intention d'origine, en une fonction — et c'est par là qu'il
+ * faudra passer le jour où le trafic sur ces pages justifiera de les cacher.
  */
-export const revalidate = 86400;
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale, instrument, chord: slug } = await params;
