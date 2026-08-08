@@ -486,7 +486,9 @@
       "sameRootHeading": "Les autres accords de {root}",
       "sameFamilyHeading": "La même couleur, sur une autre fondamentale",
       "elsewhereHeading": "{chord} sur les autres instruments",
-      "elsewhereLink": "{chord} {instrumentAt}"
+      "elsewhereLink": "{chord} {instrumentAt}",
+      "neighboursHeading": "Avec quels accords {chord} se joue",
+      "neighboursLead": "Dans les grilles du catalogue, {chord} revient le plus souvent aux côtés de ces accords. Les apprendre ensemble, c’est pouvoir jouer un morceau entier."
     },
     "editorGuide": {
       "h1": "L'éditeur de grilles d'accords",

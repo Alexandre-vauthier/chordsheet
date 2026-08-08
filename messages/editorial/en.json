@@ -486,7 +486,9 @@
       "sameRootHeading": "Other {root} chords",
       "sameFamilyHeading": "The same colour, on another root",
       "elsewhereHeading": "{chord} on other instruments",
-      "elsewhereLink": "{chord} {instrumentAt}"
+      "elsewhereLink": "{chord} {instrumentAt}",
+      "neighboursHeading": "Which chords go with {chord}",
+      "neighboursLead": "Across the sheets in the catalogue, {chord} most often appears alongside these chords. Learn them together and you can play a whole song."
     },
     "editorGuide": {
       "h1": "The chord chart editor",

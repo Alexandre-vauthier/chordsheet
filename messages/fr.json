@@ -1501,9 +1501,7 @@
       },
       "chord": {
         "title": "Accord {chord} ({frenchChord}) {instrumentAt} : comment le jouer",
-        "description": "Comment jouer l'accord {chord} {instrumentAt} : diagramme, doigté et notes ({notes}). En notation française, {chord} s'écrit {frenchChord} et se lit {frenchNotes}.",
-        "neighboursHeading": "Avec quels accords {chord} se joue",
-        "neighboursLead": "Dans les grilles du catalogue, {chord} revient le plus souvent aux côtés de ces accords. Les apprendre ensemble, c’est pouvoir jouer un morceau entier."
+        "description": "Comment jouer l'accord {chord} {instrumentAt} : diagramme, doigté et notes ({notes}). En notation française, {chord} s'écrit {frenchChord} et se lit {frenchNotes}."
       },
       "sheet": {
         "title": "{title} — {artist}",
